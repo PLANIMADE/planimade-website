@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="de" class="select-none">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLANIMADE® | Visuelle Digitalkreation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* PERFEKTE ILLUSION: SYSTEM-MAUSZEIGER DEAKTIVIEREN */
+        html, body, a, button, input, textarea, select, option, .tab-trigger {
+            cursor: none !important;
+        }
+
+        /* Subtile Filmkorn-Textur */
+        .noise-bg {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.025'/%3E%3C/svg%3E");
+        }
+        
+        .text-stroke {
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.15);
+            color: transparent;
+        }
+        .text-stroke:hover {
+            -webkit-text-stroke: 1px #fff;
+            color: #fff;
+            transition: all 0.4s ease;
+        }
+        
+        @keyframes marquee {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-33.33%, 0, 0); }
+        }
+        .animate-marquee {
+            animation: marquee 20s linear infinite;
+        }
+
+        /* SCANLINES FÜR DEN VIDEO VIEWPORT */
+        .scanlines {
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%);
+            background-size: 100% 4px;
+        }
+
+        /* REINER TEXTFLUSS FÜR DAS FORMULAR OHNE HÄSSLICHE RAHMEN */
+        .seamless-field {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            outline: none;
+            padding: 0px 4px;
+            margin: 0;
+            color: #a855f7;
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+            transition: all 0.3s ease;
+        }
+        .seamless-field:focus {
+            outline: none;
+            border-bottom-color: #a855f7;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+
+        /* RGB GLITCH TEXT EFFEKT */
+        @keyframes rgbGlitch {
+            0% { text-shadow: 3px 2px 0 #a855f7, -3px -2px 0 #3b82f6; }
+            33% { text-shadow: -4px 1px 0 #ef4444, 2px -3px 0 #a855f7; }
+            66% { text-shadow: 3px -3px 0 #3b82f6, -2px 3px 0 #ef4444; }
+            100% { text-shadow: 3px 2px 0 #a855f7, -3px -2px 0 #3b82f6; }
+        }
+        .glitch-hover:hover .glitch-text {
+            animation: rgbGlitch 0.15s infinite linear;
+        }
+
+        /* GESTAFFELTE HAMMER-ANIMATION DER ANGEBOTS-CARDS */
+        .offer-card-animate {
+            opacity: 0;
+            transform: translate3d(0, 50px, 0) scale3d(0.96, 0.96, 1);
+            transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.7s ease-out, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .offer-card-animate.card-active {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+        }
+    </style>
+</head>
+<body class="bg-[#020203] text-zinc-100 font-sans antialiased overflow-x-hidden noise-bg">
+
+    <div id="custom-cursor" class="fixed w-3 h-3 bg-white rounded-full pointer-events-none z-[9999] mix-blend-difference top-0 left-0 transition-transform duration-[40ms] ease-out hidden md:block" style="transform: translate3d(0px, 0px, 0px) translate(-50%, -50%);"></div>
+
+    <div class="fixed top-[-10%] left-[-10%] w-[70vw] h-[70vw] rounded-full bg-red-950/15 blur-[150px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-purple-950/15 blur-[150px] pointer-events-none z-0"></div>
+    <canvas id="interactive-grid" class="fixed inset-0 w-full h-full pointer-events-none z-0 opacity-15"></canvas>
+
+    <header class="absolute top-0 left-0 w-full z-50 mix-blend-difference">
+        <div class="max-w-[95%] mx-auto h-24 flex items-center justify-between border-b border-white/10">
+            <a href="#" class="nav-link flex items-center gap-3" data-target="body">
+                <img src="logo.png" alt="PLANIMADE" class="h-8 w-auto" onerror="this.style.display='none'; document.getElementById('logo-text').style.display='block';">
+                <span id="logo-text" class="text-xl font-black uppercase tracking-[0.2em] text-white">PLANIMADE</span>
+            </a>
+            
+            <nav class="hidden md:flex items-center space-x-12 text-xs uppercase tracking-[0.3em] text-zinc-400 font-mono">
+                <a href="#" class="nav-link hover:text-white transition-colors" data-target="body">Start</a>
+                <a href="#leistungen" class="nav-link hover:text-white transition-colors" data-target="#leistungen">Fähigkeiten</a>
+                <a href="#angebote" class="nav-link hover:text-white transition-colors" data-target="#angebote">Angebote</a>
+                <a href="#kontakt" class="nav-link hover:text-white transition-colors" data-target="#kontakt">Kontakt</a>
+            </nav>
+
+            <div class="flex items-center gap-3 text-xs uppercase tracking-[0.15em] text-zinc-400 font-mono">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                <span>Status: Aktiv</span>
+            </div>
+        </div>
+    </header>
+
+    <section class="relative min-h-screen w-full flex flex-col justify-between pt-36 pb-12 px-[2.5%] z-10">
+        <div class="absolute inset-0 w-full h-full z-0 p-[2.5%] md:p-[5%] pointer-events-none">
+            <div class="w-full h-full rounded-2xl overflow-hidden opacity-15 border border-white/5 shadow-2xl relative scanlines">
+                <video class="w-full h-full object-cover filter grayscale contrast-125" autoplay loop muted playsinline>
+                    <source src="dein-showreel.mp4" type="video/mp4">
+                </video>
+                <div class="absolute inset-0 bg-gradient-to-t from-[#020203] via-transparent to-[#020203]/90"></div>
+            </div>
+        </div>
+
+        <div class="w-full flex justify-between items-start font-mono text-[10px] text-zinc-500 uppercase tracking-widest mix-blend-difference z-10">
+            <div>[ KREATIVE ANZIEHUNGSKRAFT IM DIGITALEN KOSMOS ]</div>
+            <div class="text-right hidden sm:block">[ PLANETARISCHE ÄSTHETIK ]</div>
+        </div>
+
+        <div class="my-auto z-10">
+            <h1 class="text-[11vw] md:text-[8.5vw] font-black tracking-tighter uppercase leading-[0.82]">
+                <span class="block text-white">Wir erschaffen</span>
+                <span class="block text-stroke transition-all duration-500">Digitale</span>
+                <span class="block text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 via-zinc-400 to-zinc-500">Galaxien.</span>
+            </h1>
+            
+            <div class="mt-12 max-w-xl md:ml-[35vw] flex flex-col items-start gap-8">
+                <p class="text-zinc-400 text-sm md:text-base tracking-wide leading-relaxed font-light">
+                    PLANIMADE® zertrümmert das digitale Trägheitsgesetz. Vom animierten Weltenbau in Blender und der Echtzeit-Umlaufbahn in der Unreal Engine 5 bis zum videoschnittbasierten Urknall. Wir geben deiner Marke unaufhaltsame Anziehungskraft. Orbit für Orbit.
+                </p>
+                <a href="#angebote" class="nav-link group relative px-8 py-5 rounded-full overflow-hidden border border-white/10 bg-white/5 backdrop-blur-sm transition-colors duration-300" data-target="#angebote">
+                    <div class="absolute inset-0 bg-gradient-to-r from-red-800 to-purple-800 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0"></div>
+                    <div class="relative z-10 flex items-center gap-4">
+                        <span class="text-xs uppercase tracking-[0.2em] font-bold text-white">Angebote entdecken</span>
+                        <div class="h-5 w-5 rounded-full bg-white text-black flex items-center justify-center text-xs font-bold group-hover:translate-x-1 transition-transform">→</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="w-full grid grid-cols-2 md:grid-cols-4 gap-8 pt-8 border-t border-white/5 font-mono z-10">
+            <div>
+                <div class="text-[10px] text-zinc-500 tracking-wider mb-1 uppercase">Kern-Fokus</div>
+                <div class="text-xs text-zinc-400">UE5 / Blender / Custom Code</div>
+            </div>
+            <div>
+                <div class="text-[10px] text-zinc-500 tracking-wider mb-1 uppercase">Modell</div>
+                <div class="text-xs text-zinc-400">Direkt-Studio / Agentur-Freelancer</div>
+            </div>
+            <div>
+                <div class="text-[10px] text-zinc-500 tracking-wider mb-1 uppercase">Workflow</div>
+                <div class="text-xs text-zinc-400">Ultra-Schnell / KI-Unterstützt</div>
+            </div>
+            <div class="text-right">
+                <div class="text-[10px] text-zinc-500 tracking-wider mb-1 uppercase">Erkunden</div>
+                <div class="text-xs text-white animate-pulse">↓</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="w-full bg-white text-black py-4 overflow-hidden select-none border-y border-white/10 z-20 relative mix-blend-screen">
+        <div class="flex whitespace-nowrap animate-marquee font-mono text-xs uppercase tracking-[0.3em] font-black">
+            <span class="mx-4">PLANIMADE® // DESIGNING VISUAL ORBITS // 3D CAPABILITIES // MOTION DESIGN ENGINE // INDIVIDUAL DEVELOPMENT //</span>
+            <span class="mx-4">PLANIMADE® // DESIGNING VISUAL ORBITS // 3D CAPABILITIES // MOTION DESIGN ENGINE // INDIVIDUAL DEVELOPMENT //</span>
+        </div>
+    </div>
+
+    <section id="leistungen" class="relative py-32 px-4 border-t border-white/5 bg-[#020203] z-10">
+        
+        <canvas id="canvas-3d-layer" class="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-300 pointer-events-none z-0 bg-gradient-to-b from-blue-950/20 via-[#020203] to-[#020203]"></canvas>
+        <canvas id="canvas-video-layer" class="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-300 pointer-events-none z-0 scanlines bg-gradient-to-b from-purple-950/20 via-[#020203] to-[#020203]"></canvas>
+        <canvas id="canvas-code-layer" class="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-300 pointer-events-none z-0 bg-gradient-to-b from-red-950/20 via-[#020203] to-[#020203]"></canvas>
+
+        <div class="max-w-6xl mx-auto relative z-10">
+            <div class="mb-20 font-mono">
+                <div class="text-[10px] text-zinc-500 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <span class="h-1 w-1 bg-white rounded-full"></span>
+                    [ VISUELLES SPEKTRUM // ABLAUF ]
+                </div>
+                <h2 class="text-xs uppercase tracking-[0.2em] text-zinc-400 font-sans">Fähigkeiten & Workflows</h2>
+            </div>
+
+            <div id="cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <div id="tilt-wrapper" class="relative h-[420px]">
+                    <div id="parallax-card-3d" class="absolute inset-0 bg-[#060608]/90 border border-white/5 rounded-xl p-8 flex flex-col justify-between h-full shadow-2xl overflow-hidden" style="transform-style: preserve-3d; backface-visibility: hidden; transition: transform 0.1s ease-out;">
+                        <div class="card-glow absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style="background: radial-gradient(240px circle at var(--x) var(--y), rgba(59, 130, 246, 0.15), transparent 80%);"></div>
+                        <div style="transform: translateZ(50px);">
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-8">
+                                <span>[ 01 // INTERAKTIVE GEOMETRIE ]</span>
+                                <span class="text-blue-400 animate-pulse">● AMBIENT_ON</span>
+                            </div>
+                            <h3 class="text-2xl font-black uppercase tracking-tight text-white mb-4">3D & Animation</h3>
+                            <p class="text-zinc-400 text-sm font-light leading-relaxed">
+                                Ich baue digitale Realitäten. Mit Unreal Engine 5 und Blender erschaffe ich komplexe 3D-Modelle, cinematische Animationen, fotorealistische Renderings und Produktinszenierungen. Alles, was physisch unmöglich scheint, bringe ich fehlerfrei auf den Bildschirm.
+                            </p>
+                        </div>
+                        <div class="font-mono text-[9px] uppercase tracking-wider text-zinc-500 border-t border-white/5 pt-4">Unreal Engine 5 / Blender / Simulationen</div>
+                    </div>
+                </div>
+
+                <div id="card-trigger-video" class="glitch-hover group relative bg-[#060608]/90 border border-white/5 hover:border-purple-500/40 rounded-xl p-8 flex flex-col justify-between h-[420px] transition-all duration-300 shadow-2xl overflow-hidden">
+                    <div class="card-glow absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style="background: radial-gradient(240px circle at var(--x) var(--y), rgba(168, 85, 247, 0.15), transparent 80%);"></div>
+                    <div>
+                        <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-8">
+                            <span>[ 02 // TIMELINE ARCHITEKTUR ]</span>
+                            <span class="text-purple-400 animate-pulse">● NACHBEARBEITUNG</span>
+                        </div>
+                        <h3 class="glitch-text text-2xl font-black uppercase tracking-tight text-white mb-4"><span class="glitch-text">Video & Schnitt</span></h3>
+                        <p class="text-zinc-400 text-sm font-light leading-relaxed">
+                            Schnitt auf absolutem Benchmark-Niveau. Ich beherrsche die komplette Nachbearbeitung: Hauchdünner, rhythmischer Videoschnitt, atmosphärisches Sound-Design und cinematische Color Grading. Gemacht für maximale Bindung.
+                        </p>
+                    </div>
+                    <div class="font-mono text-[9px] uppercase tracking-wider text-zinc-500 border-t border-white/5 pt-4">Schnitt / Audio Architektur / Color Grading</div>
+                </div>
+
+                <div id="card-trigger-code" class="scramble-hover group relative bg-[#060608]/90 border border-white/5 hover:border-red-500/40 rounded-xl p-8 flex flex-col justify-between h-[420px] transition-all duration-300 shadow-2xl overflow-hidden">
+                    <div class="card-glow absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style="background: radial-gradient(240px circle at var(--x) var(--y), rgba(239, 68, 68, 0.15), transparent 80%);"></div>
+                    <div>
+                        <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-8">
+                            <span>[ 03 // VISUELLE IDENTITÄT ]</span>
+                            <span class="text-red-400 animate-pulse">● DESIGN_CODE</span>
+                        </div>
+                        <h3 id="scramble-title" data-value="DIGITAL & PRINT" class="text-2xl font-black uppercase tracking-tight text-white mb-4">Digital & Print</h3>
+                        <p class="text-zinc-400 text-sm font-light leading-relaxed">
+                            Handgemachter Code und kompromissloser Print-Brutalismus. Ich programmiere pfeilschnelle Web-Plattformen via moderner KI-unterstützter Zyklen (HTML/Tailwind) und beherrsche die Gesetze von Typografie und Rastern für edle Printmedien perfekt.
+                        </p>
+                    </div>
+                    <div class="font-mono text-[9px] uppercase tracking-wider text-zinc-500 border-t border-white/5 pt-4">Web-Entwicklung / Typografie / Print Layouts</div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section id="angebote" class="relative py-32 px-4 border-t border-white/5 bg-[#020203] z-10">
+        <div class="max-w-6xl mx-auto flex flex-col items-center text-center">
+            
+            <div class="mb-16 font-mono">
+                <div class="text-[10px] text-zinc-500 uppercase tracking-widest flex items-center justify-center gap-2 mb-3">
+                    <span class="h-1 w-1 bg-white rounded-full"></span>
+                    [ LEISTUNGSKATALOG // KONDITIONEN ]
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-black uppercase tracking-tight text-white mb-6">Wähle eine Sphäre</h2>
+                <p class="text-zinc-400 text-sm max-w-xl mx-auto">Klicke auf eines der drei Haupt-Modelle, um die schlüsselfertigen Leistungspakete und Freelancer-Angebote direkt freizuschalten.</p>
+            </div>
+            
+            <div class="flex flex-wrap justify-center gap-4 font-mono text-xs uppercase tracking-wider mb-16 relative z-30">
+                <button class="tab-trigger border border-white/10 text-zinc-400 hover:border-white px-8 py-5 rounded-xl transition-all duration-300 font-bold" data-target="tab-3d">3D & CGI</button>
+                <button class="tab-trigger border border-white/10 text-zinc-400 hover:border-white px-8 py-5 rounded-xl transition-all duration-300 font-bold" data-target="tab-video">Video & Animation</button>
+                <button class="tab-trigger border border-white/10 text-zinc-400 hover:border-white px-8 py-5 rounded-xl transition-all duration-300 font-bold" data-target="tab-digital">Digital & Design</button>
+            </div>
+
+            <div id="tab-content-wrapper" class="w-full text-left relative z-20">
+                
+                <div id="tab-3d" class="tab-panel hidden grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                    <div class="offer-card-animate border border-white/5 bg-[#060608] hover:border-blue-500/30 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(59,130,246,0.15)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-6"><span>[ CGI_PRODUKT ]</span><span class="text-white font-bold">AB 1.450 €</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">CGI Produkt-Inszenierung</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Fotorealistische High-End Renderings und Produkt-Modellierungen (Blender). Mach deine Produkte digital unschlagbar edel greifbar.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-zinc-500 uppercase">+ 4K Renderings & Produkt-Turnarounds<br>+ Übergabe aller Rohdaten & 3D-Assets<br>+ Uneingeschränkte kommerzielle Rechte</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-zinc-500 border-t border-white/5 pt-4">Direktauftrag / Projektbasis</div>
+                    </div>
+                    <div class="offer-card-animate border border-white/5 bg-[#060608] hover:border-blue-500/30 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(59,130,246,0.15)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-6"><span>[ UE5_ENVIRONMENT ]</span><span class="text-white font-bold">AB 2.400 €</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">UE5 Echtzeit-Welten</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Immersive Echtzeit-Umgebungen, komplexe Kamera-Sequenzen, interaktive Szenen oder Simulationen auf Basis der Unreal Engine 5.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-zinc-500 uppercase">+ Interaktive Szenerien & Welten<br>+ High-Fidelity Texturen & Lichtsetups<br>+ Bereitstellung lauffähiger Builds</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-zinc-500 border-t border-white/5 pt-4">Direktauftrag / Projektbasis</div>
+                    </div>
+                    <div class="offer-card-animate border border-blue-500/20 bg-[#06060c] hover:border-blue-500/50 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-blue-400 mb-6"><span>[ FREELANCE_3D ]</span><span class="text-blue-400 font-bold">TAGESSATZ</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">3D Agentur-Unterstützung</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Deine Agentur brennt, eine Deadline droht? Ich klinke mich sofort als Freelancer in deine bestehenden Workflows ein (Blender/UE5). Absolut diskret und verlässlich.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-blue-500/50 uppercase">+ Direktes Einbinden in interne Pipelines<br>+ Tagessatz- oder Pauschalabrechnung<br>+ Schnelles Handling bei Engpässen</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-blue-400/50 border-t border-blue-500/10 pt-4">Werbeagenturen / Externer Taskforce-Einsatz</div>
+                    </div>
+                </div>
+
+                <div id="tab-video" class="tab-panel hidden grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                    <div class="offer-card-animate border border-white/5 bg-[#060608] hover:border-purple-500/30 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(168,85,247,0.15)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-6"><span>[ MONATS_SUITE ]</span><span class="text-white font-bold">AB 850 € / MTL.</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">Videoschnitt Retainer</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Kontinuierliche Nachbearbeitung für Social Media, Marken-Content oder Kanäle. Flüssiger Rhythmus aus modernem Schnitt, präzisem Audio-Design und cinematischem Grading.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-zinc-500 uppercase">+ Volle Postproduktion (Socials/Image)<br>+ Professionelles Sounddesign & Effekte<br>+ Exportoptimierung für alle Kanäle</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-zinc-500 border-t border-white/5 pt-4">Laufender B2B Content-Support</div>
+                    </div>
+                    <div class="offer-card-animate border border-white/5 bg-[#060608] hover:border-purple-500/30 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(168,85,247,0.15)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-6"><span>[ CGI_TEASER ]</span><span class="text-white font-bold">AB 1.200 €</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">Motion Graphics Teaser</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Dynamischer Grafik-Schnitt und 3D-Motion Elements kombiniert in packenden Imagefilmen oder zielgerichteten Werbe-Kampagnen.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-zinc-500 uppercase">+ Konzeption & Storyboard-Support<br>+ Edle Audio-Untermalung & Mastering<br>+ Gestochen scharfer Export (4K)</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-zinc-500 border-t border-white/5 pt-4">Direktauftrag / Projektbasis</div>
+                    </div>
+                    <div class="offer-card-animate border border-purple-500/20 bg-[#06050c] hover:border-purple-500/50 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(168,85,247,0.25)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-purple-400 mb-6"><span>[ FREELANCE_CUT ]</span><span class="text-purple-400 font-bold">TAGESSATZ</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">Video Agentur-Unterstützung</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Unerwartete Deadlines bedrohen deine Timelines? On-Demand Einbindung in Werbeagenturen für Postproduktion, Motion Design oder Rohmaterial-Schnitt.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-purple-500/50 uppercase">+ Schnitt in Premiere / After Effects / DaVinci<br>+ Nahtlose Anbindung an Team-Server<br>+ Exakt getaktete Lieferung unter Druck</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-purple-400/50 border-t border-purple-500/10 pt-4">Werbeagenturen / Externer Taskforce-Einsatz</div>
+                    </div>
+                </div>
+
+                <div id="tab-digital" class="tab-panel hidden grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                    <div class="offer-card-animate border border-white/5 bg-[#060608] hover:border-red-500/30 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(239,68,68,0.15)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-6"><span>[ CLEAN_CODE ]</span><span class="text-white font-bold">AB 1.800 €</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">Individual Web-Code</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Pfeilschnelle, maßgeschneiderte Landingpages oder Portfolios aus reinem HTML, Tailwind und JS. Ohne trägen WordPress-Ballast gebaut.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-zinc-500 uppercase">+ Radikale Ladezeiten- & SEO-Optimierung<br>+ Handgemachter, schlanker Code-Aufbau<br>+ Volle Mobilgeräte-Garantie</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-zinc-500 border-t border-white/5 pt-4">Individual-Entwicklung / Direktauftrag</div>
+                    </div>
+                    <div class="offer-card-animate border border-white/5 bg-[#060608] hover:border-red-500/30 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(239,68,68,0.15)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-6"><span>[ BRAND_DESIGN ]</span><span class="text-white font-bold">AB 950 €</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">Digital- & Printmedien</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Ganzheitliches Branding, kompromisslose Typografie und präzise Raster für Broschüren, Geschäftsausstattungen oder digitale Layout-Pakete.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-zinc-500 uppercase">+ Layoutierung für Web & Printerzeugnisse<br>+ Druckfertige Übergabe (Farbprofile)<br>+ Durchgängiges, starkes Corporate Design</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-zinc-500 border-t border-white/5 pt-4">Visuelle Identität / Gestaltung</div>
+                    </div>
+                    <div class="offer-card-animate border border-red-500/20 bg-[#060404] hover:border-red-500/50 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(239,68,68,0.25)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-red-400 mb-6"><span>[ FREELANCE_DESIGN ]</span><span class="text-red-400 font-bold">TAGESSATZ</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">Design Agentur-Unterstützung</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Unterstützung für ausgelastete Design- oder Web-Abteilungen in Kreativagenturen. On-Demand Abruf für Reinzeichnungen, Layouts oder digitale Grafiken.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-red-500/50 uppercase">+ Figma / Creative Cloud / HTML-Strukturen<br>+ Präzises Arbeiten in bestehenden Design-Systemen<br>+ Zuverlässiges Bindeglied für dein Team</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-red-400/50 border-t border-red-500/10 pt-4">Werbeagenturen / Externer Taskforce-Einsatz</div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <section id="kontakt" class="relative py-32 px-4 border-t border-white/5 bg-[#010102] z-10">
+        <div class="max-w-4xl mx-auto border border-white/10 rounded-2xl bg-[#040406] p-8 md:p-16 shadow-2xl relative overflow-hidden">
+            
+            <div class="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-red-600 via-purple-600 to-blue-600"></div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                
+                <div class="lg:col-span-4 flex flex-col justify-between font-mono">
+                    <div class="space-y-6">
+                        <div class="text-[10px] text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                            <span class="h-2 w-2 bg-purple-500 rounded-full animate-pulse"></span>
+                            [ DIREKT-KONTAKT ]
+                        </div>
+                        <h3 class="text-3xl font-black uppercase tracking-tight text-white leading-none">Projekt starten.</h3>
+                        <p class="text-zinc-400 text-xs font-light leading-relaxed normal-case font-sans">
+                            Trage deine Wünsche direkt in den Freitext rechts ein. Ich melde mich innerhalb von 12 Stunden bei dir zurück.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-8">
+                    <form action="#" class="space-y-12">
+                        
+                        <div class="text-white text-xl sm:text-2xl md:text-3xl font-bold tracking-tight leading-relaxed md:leading-normal font-sans text-left uppercase space-y-6">
+                            Hallo, ich bin 
+                            <input type="text" class="seamless-field w-full sm:w-[220px] font-medium font-sans normal-case text-center placeholder:text-zinc-800" placeholder="[ Name ]" required> 
+                            von 
+                            <input type="text" class="seamless-field w-full sm:w-[240px] font-medium font-sans normal-case text-center placeholder:text-zinc-800" placeholder="[ Firma ]" required>.
+                            <span class="block h-2"></span>
+                            Du erreichst mich über mein Mail-Gateway 
+                            <input type="email" class="seamless-field w-full sm:w-[300px] font-medium font-sans normal-case text-center placeholder:text-zinc-800" placeholder="[ deine@email.de ]" required>.
+                            <span class="block h-2"></span>
+                            Ich plane die Beauftragung von 
+                            <span class="relative inline-block">
+                                <select class="seamless-field w-full sm:w-[360px] text-zinc-300 font-mono text-sm uppercase appearance-none cursor-none py-1 text-center">
+                                    <option value="3D">3D-Visualisierung & CGI</option>
+                                    <option value="UE5">UE5 Echtzeit-Welten</option>
+                                    <option value="VIDEO">Videoschnitt Suite Retainer</option>
+                                    <option value="CODE">Individual Web-Code</option>
+                                    <option value="PRINT">Digital- & Printmedien</option>
+                                </select>
+                            </span>.
+                            <span class="block h-2"></span>
+                            Das konkrete Projekt und meine Termin-Vorgabe lauten:
+                            <textarea class="seamless-field w-full h-24 mt-4 font-sans font-normal normal-case text-base text-zinc-400 placeholder:text-zinc-700 block focus:h-32 focus:outline-none resize-none" placeholder="Beschreibe kurz das Projekt, die gewünschten Assets oder deine akute Deadline..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full relative px-8 py-5 rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors font-black tracking-[0.25em] uppercase duration-300 text-center text-xs shadow-xl shadow-white/5">
+                            Anfrage senden
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-[#020203] border-t border-white/5 py-12 px-4 font-mono text-[10px] text-zinc-600 uppercase tracking-widest z-10 relative">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-6">
+            <div>PLANIMADE® DIGITAL STUDIO ©2026 // ALLE RECHTE VORBEHALTEN</div>
+            <div class="flex gap-8">
+                <a href="#impressum" class="hover:text-white transition-colors">Impressum</a>
+                <a href="#datenschutz" class="hover:text-white transition-colors">Datenschutz</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const cursor = document.getElementById('custom-cursor');
+        let mouse = { x: undefined, y: undefined };
+
+        // 1. HARDWARE-ACCELERATED CURSOR
+        document.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            cursor.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0px)`;
+        });
+
+        const interactiveElements = document.querySelectorAll('nav a, header a, button, select, option, input, textarea, .group, h3, #tilt-wrapper, .seamless-field, .tab-trigger, .offer-card-animate');
+        interactiveElements.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursor.classList.remove('w-3', 'h-3');
+                cursor.classList.add('w-14', 'h-14', 'bg-white/20');
+            });
+            el.addEventListener('mouseleave', () => {
+                cursor.classList.remove('w-14', 'h-14', 'bg-white/20');
+                cursor.classList.add('w-3', 'h-3');
+            });
+        });
+
+        // 2. KINETIC INTERACTIVE BACKGROUND GRID
+        const canvas = document.getElementById('interactive-grid');
+        const ctx = canvas.getContext('2d');
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const gridSize = 50;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                for (let y = 0; y < canvas.height; y += gridSize) {
+                    let cx = x; let cy = y;
+                    if (mouse.x !== undefined && mouse.y !== undefined) {
+                        let dx = mouse.x - x; let dy = mouse.y - y;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 180) {
+                            let force = (180 - dist) / 180;
+                            cx -= dx * force * 0.15; cy -= dy * force * 0.15;
+                            ctx.fillStyle = `rgba(255, 255, 255, ${force * 0.2})`;
+                            ctx.fillRect(cx - 1, cy - 1, 2, 2);
+                        }
+                    }
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.02)'; ctx.fillRect(cx, cy, 1, 1);
+                }
+            }
+            requestAnimationFrame(drawGrid);
+        }
+        drawGrid();
+
+        // BACKGROUND CANVASES DECLARATION
+        const layer3d = document.getElementById('canvas-3d-layer');
+        const layerVideo = document.getElementById('canvas-video-layer');
+        const layerCode = document.getElementById('canvas-code-layer');
+        const tiltWrapper = document.getElementById('tilt-wrapper');
+        const card3d = document.getElementById('parallax-card-3d');
+        let activeLayer = null;
+
+        function resizeLayers() {
+            const sec = document.getElementById('leistungen');
+            if(sec) {
+                layer3d.width = sec.offsetWidth; layer3d.height = sec.offsetHeight;
+                layerVideo.width = sec.offsetWidth; layerVideo.height = sec.offsetHeight;
+                layerCode.width = sec.offsetWidth; layerCode.height = sec.offsetHeight;
+            }
+        }
+        window.addEventListener('resize', resizeLayers); resizeLayers();
+
+        tiltWrapper.addEventListener('mouseenter', () => { layer3d.style.opacity = "1"; activeLayer = "3d"; });
+        tiltWrapper.addEventListener('mouseleave', () => { layer3d.style.opacity = "0"; activeLayer = null; });
+
+        document.getElementById('card-trigger-video').addEventListener('mouseenter', () => { layerVideo.style.opacity = "1"; activeLayer = "video"; });
+        document.getElementById('card-trigger-video').addEventListener('mouseleave', () => { layerVideo.style.opacity = "0"; activeLayer = null; });
+
+        document.getElementById('card-trigger-code').addEventListener('mouseenter', () => { layerCode.style.opacity = "1"; activeLayer = "code"; });
+        document.getElementById('card-trigger-code').addEventListener('mouseleave', () => { layerCode.style.opacity = "0"; activeLayer = null; });
+
+        // 3. JITTER-FREIER TILT
+        let rect3d = null;
+        tiltWrapper.addEventListener('mouseenter', () => { rect3d = tiltWrapper.getBoundingClientRect(); });
+        tiltWrapper.addEventListener('mousemove', (e) => {
+            if (!rect3d) return;
+            const x = e.clientX - rect3d.left - rect3d.width / 2;
+            const y = e.clientY - rect3d.top - rect3d.height / 2;
+            card3d.style.transform = `perspective(1000px) rotateX(${-y / 4.5}deg) rotateY(${x / 4.5}deg) scale3d(1.03, 1.03, 1.03)`;
+        });
+        tiltWrapper.addEventListener('mouseleave', () => {
+            card3d.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+            rect3d = null;
+        });
+
+        // MOUSE GLOW
+        document.getElementById('cards-container').onmousemove = e => {
+            for(const card of document.getElementsByClassName('card-glow')) {
+                const rect = card.parentElement.getBoundingClientRect(),
+                      x = e.clientX - rect.left, y = e.clientY - rect.top;
+                card.parentElement.style.setProperty('--x', `${x}px`);
+                card.parentElement.style.setProperty('--y', `${y}px`);
+            }
+        }
+
+        // 4. THE REAL TAB LOGIK MIT SMOOTHER AUFPLOPP-TRANSITION
+        const tabTriggers = document.querySelectorAll('.tab-trigger');
+        const tabPanels = document.querySelectorAll('.tab-panel');
+
+        tabTriggers.forEach(trigger => {
+            trigger.addEventListener('click', () => {
+                tabTriggers.forEach(t => {
+                    t.classList.remove('bg-white', 'text-black', 'font-bold');
+                    t.classList.add('text-zinc-400', 'border-white/10');
+                });
+                trigger.classList.add('bg-white', 'text-black', 'font-bold');
+                trigger.classList.remove('text-zinc-400', 'border-white/10');
+
+                const targetId = trigger.getAttribute('data-target');
+
+                tabPanels.forEach(panel => {
+                    if (panel.id === targetId) {
+                        panel.classList.remove('hidden');
+                        panel.classList.add('grid');
+                        
+                        panel.offsetHeight; // Force reflow
+                        
+                        const cards = panel.querySelectorAll('.offer-card-animate');
+                        cards.forEach((card, index) => {
+                            setTimeout(() => {
+                                card.classList.add('card-active');
+                            }, index * 100); 
+                        });
+                    } else {
+                        const cards = panel.querySelectorAll('.offer-card-animate');
+                        cards.forEach(card => card.classList.remove('card-active'));
+                        panel.classList.remove('grid');
+                        panel.classList.add('hidden');
+                    }
+                });
+                setTimeout(resizeLayers, 100);
+            });
+        });
+
+        // 5. SMOOTH SCROLL ENGINE FÜR DIE NAVIGATION
+        document.querySelectorAll('.nav-link').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetSelector = this.getAttribute('data-target');
+                if(!targetSelector) return;
+                
+                let targetPosition = 0;
+                if(targetSelector !== 'body') {
+                    const element = document.querySelector(targetSelector);
+                    if(!element) return;
+                    targetPosition = element.getBoundingClientRect().top + window.pageYOffset - 40;
+                }
+
+                const startPosition = window.pageYOffset;
+                const distance = targetPosition - startPosition;
+                const duration = 1200; 
+                let startTime = null;
+
+                function scrollAnimation(currentTime) {
+                    if (startTime === null) startTime = currentTime;
+                    const timeElapsed = currentTime - startTime;
+                    const run = easeOutCubic(timeElapsed, startPosition, distance, duration);
+                    window.scrollTo(0, run);
+                    if (timeElapsed < duration) requestAnimationFrame(scrollAnimation);
+                }
+
+                function easeOutCubic(t, b, c, d) {
+                    t /= d; t--;
+                    return c * (t * t * t + 1) + b;
+                }
+                requestAnimationFrame(scrollAnimation);
+            });
+        });
+
+        // 6. CANVAS LAYER 01: 3D WIREFRAME
+        const ctx3d = layer3d.getContext('2d'); let angle3d = 0;
+        function render3DLayer() {
+            if(activeLayer === "3d") {
+                ctx3d.clearRect(0, 0, layer3d.width, layer3d.height);
+                ctx3d.strokeStyle = 'rgba(6, 182, 212, 0.25)'; ctx3d.lineWidth = 1.5;
+                let cx = layer3d.width / 2; let cy = layer3d.height / 2;
+                let size = window.innerWidth > 768 ? 260 : 130;
+                let vertices = [
+                    {x: -size, y: -size, z: -size}, {x: size, y: -size, z: -size},
+                    {x: size, y: size, z: -size}, {x: -size, y: size, z: -size},
+                    {x: -size, y: -size, z: size}, {x: size, y: -size, z: size},
+                    {x: size, y: size, z: size}, {x: -size, y: size, z: size}
+                ];
+                let rotated = vertices.map(v => {
+                    let x1 = v.x * Math.cos(angle3d) - v.z * Math.sin(angle3d);
+                    let z1 = v.x * Math.sin(angle3d) + v.z * Math.cos(angle3d);
+                    let y2 = v.y * Math.cos(angle3d * 0.4) - z1 * Math.sin(angle3d * 0.4);
+                    return {x: x1 + cx, y: y2 + cy};
+                });
+                const connect = (i, j) => {
+                    ctx3d.beginPath(); ctx3d.moveTo(rotated[i].x, rotated[i].y);
+                    ctx3d.lineTo(rotated[j].x, rotated[j].y); ctx3d.stroke();
+                };
+                for (let i = 0; i < 4; i++) { connect(i, (i + 1) % 4); connect(i + 4, ((i + 1) % 4) + 4); connect(i, i + 4); }
+                angle3d += 0.005;
+            }
+            requestAnimationFrame(render3DLayer);
+        }
+        render3DLayer();
+
+        // 7. CANVAS LAYER 02: SINE WAVES
+        const ctxVideo = layerVideo.getContext('2d'); let waveIndex = 0;
+        function renderVideoLayer() {
+            if(activeLayer === "video") {
+                ctxVideo.clearRect(0, 0, layerVideo.width, layerVideo.height); ctxVideo.lineWidth = 2;
+                ctxVideo.strokeStyle = 'rgba(168, 85, 247, 0.3)'; ctxVideo.beginPath();
+                for(let i = 0; i < layerVideo.width; i += 5) {
+                    let y = layerVideo.height / 2 + Math.sin(i * 0.008 + waveIndex) * 120 * Math.sin(i * 0.0015);
+                    if(i === 0) ctxVideo.moveTo(i, y); else ctxVideo.lineTo(i, y);
+                }
+                ctxVideo.stroke();
+                ctxVideo.strokeStyle = 'rgba(59, 130, 246, 0.15)'; ctxVideo.beginPath();
+                for(let i = 0; i < layerVideo.width; i += 5) {
+                    let y = layerVideo.height / 2 + Math.cos(i * 0.012 + waveIndex) * 70 * Math.cos(i * 0.002);
+                    if(i === 0) ctxVideo.moveTo(i, y); else ctxVideo.lineTo(i, y);
+                }
+                ctxVideo.stroke(); waveIndex += 0.04;
+            }
+            requestAnimationFrame(renderVideoLayer);
+        }
+        renderVideoLayer();
+
+        // 8. CANVAS LAYER 03: MATRIX RAIN
+        const ctxCode = layerCode.getContext('2d');
+        const matrixFontSize = 14; const matrixColumns = Math.floor(window.innerWidth / matrixFontSize) + 1;
+        const matrixDrops = []; for (let i = 0; i < matrixColumns; i++) matrixDrops[i] = 1;
+
+        function renderCodeLayer() {
+            if(activeLayer === "code") {
+                ctxCode.fillStyle = 'rgba(2, 2, 3, 0.06)'; ctxCode.fillRect(0, 0, layerCode.width, layerCode.height);
+                ctxCode.fillStyle = 'rgba(239, 68, 68, 0.4)'; ctxCode.font = matrixFontSize + 'px monospace';
+                for (let i = 0; i < matrixDrops.length; i++) {
+                    const text = Math.random() > 0.5 ? "1" : "0"; const x = i * matrixFontSize; const y = matrixDrops[i] * matrixFontSize;
+                    ctxCode.fillText(text, x, y);
+                    if (y > layerCode.height && Math.random() > 0.975) matrixDrops[i] = 0;
+                    matrixDrops[i]++;
+                }
+            }
+            requestAnimationFrame(renderCodeLayer);
+        }
+        renderCodeLayer();
+
+        // INITIAL LAYER POSITION CONFIG
+        setTimeout(resizeLayers, 100);
+
+        // TEXT SCRAMBLE
+        const scrambleTitle = document.getElementById('scramble-title');
+        const originalValue = scrambleTitle.getAttribute('data-value');
+        let scrambleInterval = null;
+
+        document.querySelector('.scramble-hover').addEventListener('mouseenter', () => {
+            let iteration = 0; clearInterval(scrambleInterval);
+            scrambleInterval = setInterval(() => {
+                scrambleTitle.innerText = originalValue.split("").map((letter, index) => {
+                    if(index < iteration) return originalValue[index];
+                    return chars[Math.floor(Math.random() * chars.length)];
+                }).join("");
+                if(iteration >= originalValue.length) clearInterval(scrambleInterval);
+                iteration += 1 / 3;
+            }, 30);
+        });
+    </script>
+</body>
+</html>

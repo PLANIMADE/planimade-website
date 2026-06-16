@@ -1,0 +1,34 @@
+backend:
+  name: git-gateway
+  branch: main
+
+# Sprache des Dashboards
+locale: de
+
+# Hochgeladene Dateien landen im Ordner "media" und werden als "/media/…" verlinkt
+media_folder: "media"
+public_folder: "/media"
+
+# Logo auf der Login-Seite (optional)
+logo_url: /media/logo-lang.png
+
+collections:
+  - name: "portfolio"
+    label: "Portfolio"
+    label_singular: "Portfolio"
+    files:
+      - name: "projects"
+        label: "Projekte"
+        file: "data/portfolio.json"
+        description: "Hier verwaltest du deine Portfolio-Videos. Reihenfolge per Drag & Drop ändern. Der erste Eintrag wird groß als Highlight angezeigt."
+        fields:
+          - label: "Projekte"
+            name: "items"
+            widget: "list"
+            label_singular: "Projekt"
+            summary: "{{fields.title}}"
+            fields:
+              - { label: "Titel", name: "title", widget: "string" }
+              - { label: "Kategorie", name: "category", widget: "string", required: false, hint: "z. B. 3D / CGI, Video, Motion Design" }
+              - { label: "Video (MP4 oder WebM)", name: "src", widget: "file", hint: "Web-optimiertes MP4/WebM hochladen. Große Originaldateien vorher konvertieren." }
+              - { label: "Vorschaubild (optional)", name: "poster", widget: "image", required: false, hint: "Ohne Bild wird automatisch das erste Frame des Videos genutzt." }

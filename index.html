@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="de" class="select-none scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLANIMADE® | Visuelle Digitalkreation — 3D, Motion & Code</title>
+    <meta name="description" content="PLANIMADE® — Visuelle Digitalkreation. Animierter Weltenbau in Blender, Echtzeit-Umlaufbahnen in Unreal Engine 5, cinematischer Videoschnitt und handgemachter Web-Code. Wir geben deiner Marke unaufhaltsame Anziehungskraft.">
+    <meta name="theme-color" content="#020203">
+
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="PLANIMADE® | Visuelle Digitalkreation">
+    <meta property="og:description" content="Vom animierten Weltenbau bis zum videoschnittbasierten Urknall. Wir erschaffen digitale Galaxien.">
+    <meta property="og:image" content="media/showreel-poster.jpg">
+
+    <link rel="icon" href="media/logo.png">
+    <link rel="apple-touch-icon" href="media/logo.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Archivo', 'system-ui', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root { --x: 50%; --y: 50%; }
+
+        html { -webkit-font-smoothing: antialiased; }
+        body { overscroll-behavior-y: none; }
+
+        /* PERFEKTE ILLUSION: SYSTEM-MAUSZEIGER NUR AUF FEINZEIGER-GERÄTEN DEAKTIVIEREN */
+        @media (pointer: fine) {
+            html, body, a, button, input, textarea, select, option, .tab-trigger {
+                cursor: none !important;
+            }
+        }
+
+        /* Subtile Filmkorn-Textur */
+        .noise-bg {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.025'/%3E%3C/svg%3E");
+        }
+        .grain-overlay::after {
+            content: "";
+            position: absolute; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none; mix-blend-mode: overlay; z-index: 4;
+        }
+
+        .text-stroke {
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.18);
+            color: transparent;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .text-stroke:hover {
+            -webkit-text-stroke: 1px #fff;
+            color: #fff;
+        }
+
+        @keyframes marquee {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+        }
+        .animate-marquee { animation: marquee 28s linear infinite; }
+
+        /* SCANLINES FÜR DEN VIDEO VIEWPORT */
+        .scanlines {
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
+            background-size: 100% 4px;
+        }
+
+        /* HERO VIDEO GRADING – in Farbe, damit das echte Showreel sichtbar läuft.
+           Für den ursprünglichen Mono-Look: grayscale(100%) ergänzen. */
+        .hero-video {
+            filter: saturate(1.12) contrast(1.03) brightness(1.18);
+        }
+
+        /* ORBIT RING (Preloader + Hero Ambient) */
+        @keyframes spin-slow { to { transform: rotate(360deg); } }
+        @keyframes spin-rev  { to { transform: rotate(-360deg); } }
+        .spin-slow { animation: spin-slow 22s linear infinite; }
+        .spin-rev  { animation: spin-rev 40s linear infinite; }
+
+        /* REINER TEXTFLUSS FÜR DAS FORMULAR */
+        .seamless-field {
+            background: transparent; border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            outline: none; padding: 0px 4px; margin: 0;
+            color: #a855f7; text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+            transition: all 0.3s ease;
+        }
+        .seamless-field:focus {
+            outline: none; border-bottom-color: #a855f7;
+            color: #fff; text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+        select.seamless-field option { background: #060608; color: #d4d4d8; }
+
+        /* RGB GLITCH TEXT EFFEKT */
+        @keyframes rgbGlitch {
+            0% { text-shadow: 3px 2px 0 #a855f7, -3px -2px 0 #3b82f6; }
+            33% { text-shadow: -4px 1px 0 #ef4444, 2px -3px 0 #a855f7; }
+            66% { text-shadow: 3px -3px 0 #3b82f6, -2px 3px 0 #ef4444; }
+            100% { text-shadow: 3px 2px 0 #a855f7, -3px -2px 0 #3b82f6; }
+        }
+        .glitch-hover:hover .glitch-text { animation: rgbGlitch 0.15s infinite linear; }
+
+        /* GESTAFFELTE CARD-ANIMATION + FANCY HOVER */
+        .offer-card-animate {
+            opacity: 0;
+            transform: translate3d(0, 60px, 0) scale3d(0.92, 0.92, 1);
+            transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.85s ease-out, border-color 0.35s ease, box-shadow 0.35s ease;
+            transform-style: preserve-3d;
+        }
+        .offer-card-animate.card-active {
+            opacity: 1; transform: perspective(1100px) translate3d(0, 0, 0) scale3d(1, 1, 1);
+        }
+        /* Schneller Übergang während des 3D-Tilts (überschreibt die Entrance-Transition) */
+        .offer-card-animate.tilting {
+            transition: transform 90ms linear, box-shadow 0.35s ease, border-color 0.35s ease !important;
+        }
+        /* Cursor-Spotlight pro Card */
+        .offer-glow {
+            position: absolute; inset: 0; z-index: 0; border-radius: inherit;
+            opacity: 0; transition: opacity 0.4s ease; pointer-events: none;
+        }
+        .offer-card-animate:hover .offer-glow { opacity: 1; }
+        /* Glanz-Sweep über die Card beim Hover */
+        .offer-shine {
+            position: absolute; top: 0; left: -80%; width: 65%; height: 100%; z-index: 1; pointer-events: none;
+            background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
+            transform: skewX(-16deg); transition: left 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .offer-card-animate:hover .offer-shine { left: 145%; }
+        /* Hover-CTA "Projekt anfragen" */
+        .offer-cta {
+            position: absolute; top: 1.55rem; right: 1.75rem; z-index: 4; pointer-events: none;
+            font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: #fff;
+            opacity: 0; transform: translateX(8px); transition: opacity 0.35s ease, transform 0.35s ease;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .offer-card-animate:hover .offer-cta { opacity: 0.95; transform: translateX(0); }
+        .offer-cta .dot { width: 1.35rem; height: 1.35rem; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.45); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+        /* Preis weicht beim Hover der CTA */
+        .offer-price { transition: opacity 0.3s ease; }
+        .offer-card-animate:hover .offer-price { opacity: 0; }
+
+        /* ANGEBOTE: GLEITENDE TAB-PILLE */
+        #tab-bar { position: relative; }
+        #tab-indicator {
+            position: absolute; top: 0; left: 0; z-index: 0; border-radius: 0.75rem; background: #fff; opacity: 0;
+            box-shadow: 0 0 35px rgba(255, 255, 255, 0.25);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), width 0.5s cubic-bezier(0.16, 1, 0.3, 1), height 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        }
+        .tab-trigger { position: relative; z-index: 1; }
+
+        /* SCROLL REVEAL */
+        .reveal { opacity: 0; transform: translateY(42px); transition: opacity 1s cubic-bezier(0.16,1,0.3,1), transform 1s cubic-bezier(0.16,1,0.3,1); }
+        .reveal.in { opacity: 1; transform: none; }
+
+        /* KINETISCHER ZEILEN-REVEAL (HERO HEADLINE) */
+        .line-mask { overflow: hidden; }
+        .line-inner { display: block; transform: translateY(110%); transition: transform 1.1s cubic-bezier(0.16,1,0.3,1); }
+        .reveal-on .line-inner { transform: translateY(0); }
+
+        /* HEADER: SOLIDER ZUSTAND BEIM SCROLLEN (nicht transparent) */
+        #site-header.scrolled {
+            background: rgba(5, 5, 8, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+        }
+        #site-header.scrolled .header-inner {
+            mix-blend-mode: normal !important;
+            border-bottom-color: transparent !important;
+            height: 4rem;
+        }
+
+        /* SCROLL PROGRESS */
+        #scroll-progress {
+            position: fixed; top: 0; left: 0; height: 2px; width: 0%;
+            background: linear-gradient(to right, #ef4444, #a855f7, #3b82f6);
+            z-index: 9998; transition: width 0.1s linear;
+        }
+
+        /* PRELOADER */
+        #preloader {
+            position: fixed; inset: 0; z-index: 10000;
+            background: #020203;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.5rem;
+            transition: transform 1s cubic-bezier(0.76, 0, 0.24, 1);
+        }
+        #preloader.done { transform: translateY(-100%); }
+        .pre-bar { width: min(280px, 60vw); height: 1px; background: rgba(255,255,255,0.12); position: relative; overflow: hidden; }
+        .pre-bar span { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: #fff; }
+
+        ::selection { background: #a855f7; color: #fff; }
+
+        /* REDUCED MOTION – bewusst dezent gehalten:
+           Das Showreel, die Banderole und die Hover-Effekte bleiben erhalten
+           (Bewegtbild IST hier das Produkt). Nur als Fallback sicherstellen,
+           dass Reveal-Inhalte sichtbar sind, falls JS/Observer nicht greift. */
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+        }
+    </style>
+
+    <!-- Netlify Identity (für das Admin-Dashboard /admin – Login & Einladungen) -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body class="bg-[#020203] text-zinc-100 font-sans antialiased overflow-x-hidden noise-bg">
+
+    <!-- SCROLL PROGRESS -->
+    <div id="scroll-progress"></div>
+
+    <!-- PRELOADER -->
+    <div id="preloader">
+        <div class="relative h-28 w-28 flex items-center justify-center">
+            <div class="absolute inset-0 rounded-full border border-white/10 spin-slow"></div>
+            <div class="absolute inset-2 rounded-full border-t border-white/40 spin-rev"></div>
+            <img src="media/logo.png" alt="PLANIMADE" class="h-12 w-12 object-contain">
+        </div>
+        <div class="pre-bar"><span id="pre-bar-fill"></span></div>
+        <div class="font-mono text-[10px] uppercase tracking-[0.4em] text-zinc-500 flex items-center gap-3">
+            <span>Lade Orbit</span>
+            <span id="pre-count" class="text-white tabular-nums">000</span>
+        </div>
+    </div>
+
+    <!-- CUSTOM CURSOR -->
+    <div id="custom-cursor" class="fixed w-3 h-3 bg-white rounded-full pointer-events-none z-[9999] mix-blend-difference top-0 left-0 transition-[width,height,background-color] duration-200 ease-out hidden md:block" style="transform: translate3d(0px, 0px, 0px) translate(-50%, -50%);"></div>
+
+    <!-- AMBIENT BACKDROP -->
+    <div class="fixed top-[-10%] left-[-10%] w-[70vw] h-[70vw] rounded-full bg-red-950/15 blur-[150px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-purple-950/15 blur-[150px] pointer-events-none z-0"></div>
+    <canvas id="interactive-grid" class="fixed inset-0 w-full h-full pointer-events-none z-0 opacity-15"></canvas>
+
+    <!-- HEADER -->
+    <header id="site-header" class="fixed top-0 left-0 w-full z-50 transition-all duration-500">
+        <div class="header-inner max-w-[95%] mx-auto h-20 md:h-24 flex items-center justify-between border-b border-white/10 mix-blend-difference transition-all duration-500">
+            <a href="#" class="nav-link flex items-center gap-3 group" data-target="body" aria-label="PLANIMADE Start">
+                <img src="media/logo.png" alt="PLANIMADE Logo" class="h-9 w-9 object-contain transition-transform duration-700 ease-out group-hover:rotate-[360deg]">
+                <span class="text-lg md:text-xl font-black uppercase tracking-[0.2em] text-white">PLANIMADE</span>
+            </a>
+
+            <nav class="hidden lg:flex items-center space-x-8 text-xs uppercase tracking-[0.25em] text-zinc-400 font-mono">
+                <a href="#" class="nav-link hover:text-white transition-colors" data-target="body">Start</a>
+                <a href="#leistungen" class="nav-link hover:text-white transition-colors" data-target="#leistungen">Fähigkeiten</a>
+                <a href="#portfolio" class="nav-link hover:text-white transition-colors" data-target="#portfolio">Portfolio</a>
+                <a href="#angebote" class="nav-link hover:text-white transition-colors" data-target="#angebote">Angebote</a>
+                <a href="#kontakt" class="nav-link hover:text-white transition-colors" data-target="#kontakt">Kontakt</a>
+            </nav>
+
+            <div class="flex items-center gap-5 text-xs uppercase tracking-[0.15em] text-zinc-400 font-mono">
+                <span class="hidden lg:flex items-center gap-3 whitespace-nowrap">
+                    <span class="relative flex h-1.5 w-1.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    <span>Status: Aktiv</span>
+                </span>
+                <button id="menu-toggle" class="lg:hidden flex flex-col gap-[6px] w-7 items-end" aria-label="Menü öffnen" aria-expanded="false">
+                    <span class="bar block h-[2px] w-7 bg-white transition-all duration-300"></span>
+                    <span class="bar block h-[2px] w-5 bg-white transition-all duration-300"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MOBILE MENU -->
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#040406]/95 backdrop-blur-xl flex-col items-center justify-center gap-10 hidden">
+        <a href="#" class="nav-link mobile-link text-3xl font-black uppercase tracking-tight text-white" data-target="body">Start</a>
+        <a href="#leistungen" class="nav-link mobile-link text-3xl font-black uppercase tracking-tight text-zinc-400" data-target="#leistungen">Fähigkeiten</a>
+        <a href="#portfolio" class="nav-link mobile-link text-3xl font-black uppercase tracking-tight text-zinc-400" data-target="#portfolio">Portfolio</a>
+        <a href="#angebote" class="nav-link mobile-link text-3xl font-black uppercase tracking-tight text-zinc-400" data-target="#angebote">Angebote</a>
+        <a href="#kontakt" class="nav-link mobile-link text-3xl font-black uppercase tracking-tight text-zinc-400" data-target="#kontakt">Kontakt</a>
+        <div class="absolute bottom-12 font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600 flex items-center gap-3">
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Status: Aktiv
+        </div>
+    </div>
+
+    <!-- HERO -->
+    <section id="hero" class="relative min-h-[100svh] w-full flex flex-col justify-between pt-28 md:pt-36 pb-10 px-[2.5%] z-10 overflow-hidden grain-overlay">
+
+        <!-- SHOWREEL BACKGROUND (läuft immer) -->
+        <div class="absolute inset-0 w-full h-full z-0 pointer-events-none">
+            <video id="hero-video" class="hero-video absolute inset-0 w-full h-full object-cover opacity-[0.95]"
+                   autoplay loop muted playsinline preload="auto" poster="media/showreel-poster.jpg" aria-hidden="true">
+                <source src="media/showreel.webm" type="video/webm">
+                <source src="media/showreel.mp4" type="video/mp4">
+            </video>
+            <!-- Cinematic Grading Overlays (bewusst leicht – das Showreel soll klar sichtbar laufen) -->
+            <div class="absolute inset-0 scanlines opacity-[0.15]"></div>
+            <div class="absolute inset-0" style="background: linear-gradient(to top, #020203 0%, rgba(2,2,3,0.22) 32%, transparent 62%);"></div>
+            <div class="absolute inset-0" style="background: linear-gradient(to bottom, rgba(2,2,3,0.55) 0%, transparent 16%);"></div>
+            <div class="absolute inset-0" style="background: radial-gradient(140% 110% at 50% 40%, transparent 66%, rgba(2,2,3,0.22) 100%);"></div>
+        </div>
+
+        <!-- Riesige rotierende Orbit-Ambient-Marke -->
+        <img src="media/logo.png" alt="" aria-hidden="true"
+             class="hidden md:block absolute right-[-12vw] top-1/2 -translate-y-1/2 w-[55vw] max-w-[760px] opacity-[0.04] spin-slow pointer-events-none z-0">
+
+        <!-- TOP META ROW -->
+        <div class="reveal w-full flex justify-between items-start font-mono text-[10px] text-zinc-400 uppercase tracking-widest z-10">
+            <div>[ KREATIVE ANZIEHUNGSKRAFT IM DIGITALEN KOSMOS ]</div>
+            <div class="text-right hidden sm:block">[ PLANETARISCHE ÄSTHETIK ]</div>
+        </div>
+
+        <!-- HEADLINE BLOCK -->
+        <div class="my-auto z-10">
+            <h1 id="hero-headline" class="text-[12vw] md:text-[8.5vw] font-black tracking-tighter uppercase leading-[0.82]">
+                <span class="line-mask block"><span class="line-inner text-white" style="transition-delay:.05s">Wir erschaffen</span></span>
+                <span class="line-mask block"><span class="line-inner text-stroke" style="transition-delay:.15s">Digitale</span></span>
+                <span class="line-mask block"><span class="line-inner text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-300 to-zinc-500" style="transition-delay:.25s">Galaxien.</span></span>
+            </h1>
+
+            <div class="reveal mt-10 md:mt-12 max-w-2xl flex flex-col items-start gap-8">
+                <p class="text-zinc-200 text-sm md:text-base tracking-wide leading-relaxed font-light [text-shadow:0_2px_24px_rgba(2,2,3,0.95),0_1px_3px_rgba(2,2,3,0.9)]">
+                    PLANIMADE® zertrümmert das digitale Trägheitsgesetz. Vom animierten Weltenbau in Blender und der Echtzeit-Umlaufbahn in der Unreal Engine 5 bis zum videoschnittbasierten Urknall. Wir geben deiner Marke unaufhaltsame Anziehungskraft. Orbit für Orbit.
+                </p>
+                <a href="#angebote" class="magnetic nav-link group relative px-8 py-5 rounded-full overflow-hidden border border-white/10 bg-white/5 backdrop-blur-sm transition-colors duration-300" data-target="#angebote">
+                    <div class="absolute inset-0 bg-gradient-to-r from-red-800 to-purple-800 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0"></div>
+                    <div class="relative z-10 flex items-center gap-4">
+                        <span class="text-xs uppercase tracking-[0.2em] font-bold text-white">Angebote entdecken</span>
+                        <div class="h-5 w-5 rounded-full bg-white text-black flex items-center justify-center text-xs font-bold group-hover:translate-x-1 transition-transform">→</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- STATS ROW -->
+        <div class="reveal w-full grid grid-cols-2 md:grid-cols-4 gap-8 pt-8 border-t border-white/10 font-mono z-10">
+            <div>
+                <div class="text-[10px] text-zinc-500 tracking-wider mb-1 uppercase">Kern-Fokus</div>
+                <div class="text-xs text-zinc-300">UE5 / Blender / Custom Code</div>
+            </div>
+            <div>
+                <div class="text-[10px] text-zinc-500 tracking-wider mb-1 uppercase">Modell</div>
+                <div class="text-xs text-zinc-300">Direkt-Studio / Agentur-Freelancer</div>
+            </div>
+            <div>
+                <div class="text-[10px] text-zinc-500 tracking-wider mb-1 uppercase">Workflow</div>
+                <div class="text-xs text-zinc-300">Ultra-Schnell / KI-Unterstützt</div>
+            </div>
+            <div class="text-right">
+                <div class="text-[10px] text-zinc-500 tracking-wider mb-1 uppercase">Erkunden</div>
+                <div class="text-xs text-white animate-bounce">↓</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MARQUEE -->
+    <div class="w-full bg-white text-black py-4 overflow-hidden select-none border-y border-white/10 z-20 relative">
+        <div class="flex whitespace-nowrap animate-marquee font-mono text-xs uppercase tracking-[0.3em] font-black">
+            <span class="mx-4">PLANIMADE® // DESIGNING VISUAL ORBITS // 3D CAPABILITIES // MOTION DESIGN ENGINE // INDIVIDUAL DEVELOPMENT //&nbsp;</span>
+            <span class="mx-4">PLANIMADE® // DESIGNING VISUAL ORBITS // 3D CAPABILITIES // MOTION DESIGN ENGINE // INDIVIDUAL DEVELOPMENT //&nbsp;</span>
+        </div>
+    </div>
+
+    <!-- LEISTUNGEN -->
+    <section id="leistungen" class="relative py-32 px-4 border-t border-white/5 bg-[#020203] z-10">
+
+        <canvas id="canvas-3d-layer" class="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-300 pointer-events-none z-0 bg-gradient-to-b from-blue-950/20 via-[#020203] to-[#020203]"></canvas>
+        <canvas id="canvas-video-layer" class="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-300 pointer-events-none z-0 scanlines bg-gradient-to-b from-purple-950/20 via-[#020203] to-[#020203]"></canvas>
+        <canvas id="canvas-code-layer" class="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-300 pointer-events-none z-0 bg-gradient-to-b from-red-950/20 via-[#020203] to-[#020203]"></canvas>
+
+        <div class="max-w-6xl mx-auto relative z-10">
+            <div class="reveal mb-20 font-mono">
+                <div class="text-[10px] text-zinc-500 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <span class="h-1 w-1 bg-white rounded-full"></span>
+                    [ VISUELLES SPEKTRUM // ABLAUF ]
+                </div>
+                <h2 class="text-xs uppercase tracking-[0.2em] text-zinc-400 font-sans">Fähigkeiten & Workflows</h2>
+            </div>
+
+            <div id="cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                <div id="tilt-wrapper" class="reveal relative h-[420px]">
+                    <div id="parallax-card-3d" class="absolute inset-0 bg-[#060608]/90 border border-white/5 rounded-xl p-8 flex flex-col justify-between h-full shadow-2xl overflow-hidden" style="transform-style: preserve-3d; backface-visibility: hidden; transition: transform 0.1s ease-out;">
+                        <div class="card-glow absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style="background: radial-gradient(240px circle at var(--x) var(--y), rgba(59, 130, 246, 0.15), transparent 80%);"></div>
+                        <div style="transform: translateZ(50px);">
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-8">
+                                <span>[ 01 // INTERAKTIVE GEOMETRIE ]</span>
+                                <span class="text-blue-400 animate-pulse">● AMBIENT_ON</span>
+                            </div>
+                            <h3 class="text-2xl font-black uppercase tracking-tight text-white mb-4">3D & Animation</h3>
+                            <p class="text-zinc-400 text-sm font-light leading-relaxed">
+                                Ich baue digitale Realitäten. Mit Unreal Engine 5 und Blender erschaffe ich komplexe 3D-Modelle, cinematische Animationen, fotorealistische Renderings und Produktinszenierungen. Alles, was physisch unmöglich scheint, bringe ich fehlerfrei auf den Bildschirm.
+                            </p>
+                        </div>
+                        <div class="font-mono text-[9px] uppercase tracking-wider text-zinc-500 border-t border-white/5 pt-4">Unreal Engine 5 / Blender / Simulationen</div>
+                    </div>
+                </div>
+
+                <div id="card-trigger-video" class="reveal glitch-hover group relative bg-[#060608]/90 border border-white/5 hover:border-purple-500/40 rounded-xl p-8 flex flex-col justify-between h-[420px] transition-all duration-300 shadow-2xl overflow-hidden" style="transition-delay:.1s">
+                    <div class="card-glow absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style="background: radial-gradient(240px circle at var(--x) var(--y), rgba(168, 85, 247, 0.15), transparent 80%);"></div>
+                    <div>
+                        <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-8">
+                            <span>[ 02 // TIMELINE ARCHITEKTUR ]</span>
+                            <span class="text-purple-400 animate-pulse">● NACHBEARBEITUNG</span>
+                        </div>
+                        <h3 class="glitch-text text-2xl font-black uppercase tracking-tight text-white mb-4"><span class="glitch-text">Video & Schnitt</span></h3>
+                        <p class="text-zinc-400 text-sm font-light leading-relaxed">
+                            Schnitt auf absolutem Benchmark-Niveau. Ich beherrsche die komplette Nachbearbeitung: Hauchdünner, rhythmischer Videoschnitt, atmosphärisches Sound-Design und cinematische Color Grading. Gemacht für maximale Bindung.
+                        </p>
+                    </div>
+                    <div class="font-mono text-[9px] uppercase tracking-wider text-zinc-500 border-t border-white/5 pt-4">Schnitt / Audio Architektur / Color Grading</div>
+                </div>
+
+                <div id="card-trigger-code" class="reveal scramble-hover group relative bg-[#060608]/90 border border-white/5 hover:border-red-500/40 rounded-xl p-8 flex flex-col justify-between h-[420px] transition-all duration-300 shadow-2xl overflow-hidden" style="transition-delay:.2s">
+                    <div class="card-glow absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style="background: radial-gradient(240px circle at var(--x) var(--y), rgba(239, 68, 68, 0.15), transparent 80%);"></div>
+                    <div>
+                        <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-8">
+                            <span>[ 03 // VISUELLE IDENTITÄT ]</span>
+                            <span class="text-red-400 animate-pulse">● DESIGN_CODE</span>
+                        </div>
+                        <h3 id="scramble-title" data-value="DIGITAL & PRINT" class="text-2xl font-black uppercase tracking-tight text-white mb-4">Digital & Print</h3>
+                        <p class="text-zinc-400 text-sm font-light leading-relaxed">
+                            Handgemachter Code und kompromissloser Print-Brutalismus. Ich programmiere pfeilschnelle Web-Plattformen via moderner KI-unterstützter Zyklen (HTML/Tailwind) und beherrsche die Gesetze von Typografie und Rastern für edle Printmedien perfekt.
+                        </p>
+                    </div>
+                    <div class="font-mono text-[9px] uppercase tracking-wider text-zinc-500 border-t border-white/5 pt-4">Web-Entwicklung / Typografie / Print Layouts</div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- PORTFOLIO -->
+    <section id="portfolio" class="relative py-32 px-4 border-t border-white/5 bg-[#020203] z-10">
+        <div class="max-w-6xl mx-auto">
+            <div class="reveal mb-16 font-mono">
+                <div class="text-[10px] text-zinc-500 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <span class="h-1 w-1 bg-white rounded-full"></span>
+                    [ AUSGEWÄHLTE ARBEITEN // REFERENZEN ]
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-black uppercase tracking-tight text-white font-sans">Portfolio</h2>
+                <p class="text-zinc-400 text-sm max-w-xl mt-4 font-sans normal-case">Eine Auswahl meiner bisherigen Arbeiten. Fahre über ein Projekt für die Vorschau – klicke für die volle Ansicht.</p>
+            </div>
+
+            <!-- wird per JS aus der PORTFOLIO-Liste befüllt -->
+            <div id="portfolio-featured" class="reveal mb-6"></div>
+            <div id="portfolio-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <p id="portfolio-empty" class="hidden text-center text-zinc-500 font-mono text-xs uppercase tracking-widest py-10">Portfolio wird in Kürze gefüllt.</p>
+        </div>
+    </section>
+
+    <!-- PORTFOLIO LIGHTBOX -->
+    <div id="pf-lightbox" class="fixed inset-0 z-[200] bg-black/92 backdrop-blur-xl hidden items-center justify-center p-4 md:p-12">
+        <button id="pf-close" class="absolute top-6 right-6 z-10 h-12 w-12 rounded-full border border-white/20 text-white flex items-center justify-center hover:bg-white/10 transition-colors text-lg" aria-label="Schließen">✕</button>
+        <div class="w-full max-w-5xl">
+            <video id="pf-lightbox-video" class="w-full rounded-xl shadow-2xl bg-black max-h-[80vh]" controls playsinline></video>
+            <div id="pf-lightbox-title" class="mt-4 font-mono text-xs uppercase tracking-widest text-zinc-400 text-center"></div>
+        </div>
+    </div>
+
+    <!-- ANGEBOTE -->
+    <section id="angebote" class="relative py-32 px-4 border-t border-white/5 bg-[#020203] z-10">
+        <div class="max-w-6xl mx-auto flex flex-col items-center text-center">
+
+            <div class="reveal mb-16 font-mono">
+                <div class="text-[10px] text-zinc-500 uppercase tracking-widest flex items-center justify-center gap-2 mb-3">
+                    <span class="h-1 w-1 bg-white rounded-full"></span>
+                    [ LEISTUNGSKATALOG // KONDITIONEN ]
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-black uppercase tracking-tight text-white mb-6 font-sans">Wähle eine Sphäre</h2>
+                <p class="text-zinc-400 text-sm max-w-xl mx-auto font-sans">Wähle eines der drei Haupt-Modelle, um die schlüsselfertigen Leistungspakete und Freelancer-Angebote direkt freizuschalten.</p>
+            </div>
+
+            <div id="tab-bar" class="reveal flex flex-wrap justify-center gap-4 font-mono text-xs uppercase tracking-wider mb-16 z-30">
+                <div id="tab-indicator"></div>
+                <button class="tab-trigger border border-white/10 text-zinc-400 hover:border-white/40 px-8 py-5 rounded-xl transition-colors duration-300 font-bold" data-target="tab-3d">3D & CGI</button>
+                <button class="tab-trigger border border-white/10 text-zinc-400 hover:border-white/40 px-8 py-5 rounded-xl transition-colors duration-300 font-bold" data-target="tab-video">Video & Animation</button>
+                <button class="tab-trigger border border-white/10 text-zinc-400 hover:border-white/40 px-8 py-5 rounded-xl transition-colors duration-300 font-bold" data-target="tab-digital">Digital & Design</button>
+            </div>
+
+            <div id="tab-content-wrapper" class="w-full text-left relative z-20">
+
+                <div id="tab-3d" class="tab-panel hidden grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                    <div class="offer-card-animate border border-white/5 bg-[#060608] hover:border-blue-500/30 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(59,130,246,0.15)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-6"><span>[ CGI_PRODUKT ]</span><span class="text-white font-bold">AB 1.450 €</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">CGI Produkt-Inszenierung</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Fotorealistische High-End Renderings und Produkt-Modellierungen (Blender). Mach deine Produkte digital unschlagbar edel greifbar.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-zinc-500 uppercase">+ 4K Renderings & Produkt-Turnarounds<br>+ Übergabe aller Rohdaten & 3D-Assets<br>+ Uneingeschränkte kommerzielle Rechte</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-zinc-500 border-t border-white/5 pt-4">Direktauftrag / Projektbasis</div>
+                    </div>
+                    <div class="offer-card-animate border border-white/5 bg-[#060608] hover:border-blue-500/30 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(59,130,246,0.15)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-6"><span>[ UE5_ENVIRONMENT ]</span><span class="text-white font-bold">AB 2.400 €</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">UE5 Echtzeit-Welten</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Immersive Echtzeit-Umgebungen, komplexe Kamera-Sequenzen, interaktive Szenen oder Simulationen auf Basis der Unreal Engine 5.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-zinc-500 uppercase">+ Interaktive Szenerien & Welten<br>+ High-Fidelity Texturen & Lichtsetups<br>+ Bereitstellung lauffähiger Builds</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-zinc-500 border-t border-white/5 pt-4">Direktauftrag / Projektbasis</div>
+                    </div>
+                    <div class="offer-card-animate border border-blue-500/20 bg-[#06060c] hover:border-blue-500/50 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-blue-400 mb-6"><span>[ FREELANCE_3D ]</span><span class="text-blue-400 font-bold">TAGESSATZ</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">3D Agentur-Unterstützung</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Deine Agentur brennt, eine Deadline droht? Ich klinke mich sofort als Freelancer in deine bestehenden Workflows ein (Blender/UE5). Absolut diskret und verlässlich.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-blue-500/50 uppercase">+ Direktes Einbinden in interne Pipelines<br>+ Tagessatz- oder Pauschalabrechnung<br>+ Schnelles Handling bei Engpässen</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-blue-400/50 border-t border-blue-500/10 pt-4">Werbeagenturen / Externer Taskforce-Einsatz</div>
+                    </div>
+                </div>
+
+                <div id="tab-video" class="tab-panel hidden grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                    <div class="offer-card-animate border border-white/5 bg-[#060608] hover:border-purple-500/30 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(168,85,247,0.15)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-6"><span>[ MONATS_SUITE ]</span><span class="text-white font-bold">AB 850 € / MTL.</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">Videoschnitt Retainer</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Kontinuierliche Nachbearbeitung für Social Media, Marken-Content oder Kanäle. Flüssiger Rhythmus aus modernem Schnitt, präzisem Audio-Design und cinematischem Grading.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-zinc-500 uppercase">+ Volle Postproduktion (Socials/Image)<br>+ Professionelles Sounddesign & Effekte<br>+ Exportoptimierung für alle Kanäle</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-zinc-500 border-t border-white/5 pt-4">Laufender B2B Content-Support</div>
+                    </div>
+                    <div class="offer-card-animate border border-white/5 bg-[#060608] hover:border-purple-500/30 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(168,85,247,0.15)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-6"><span>[ CGI_TEASER ]</span><span class="text-white font-bold">AB 1.200 €</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">Motion Graphics Teaser</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Dynamischer Grafik-Schnitt und 3D-Motion Elements kombiniert in packenden Imagefilmen oder zielgerichteten Werbe-Kampagnen.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-zinc-500 uppercase">+ Konzeption & Storyboard-Support<br>+ Edle Audio-Untermalung & Mastering<br>+ Gestochen scharfer Export (4K)</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-zinc-500 border-t border-white/5 pt-4">Direktauftrag / Projektbasis</div>
+                    </div>
+                    <div class="offer-card-animate border border-purple-500/20 bg-[#06050c] hover:border-purple-500/50 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(168,85,247,0.25)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-purple-400 mb-6"><span>[ FREELANCE_CUT ]</span><span class="text-purple-400 font-bold">TAGESSATZ</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">Video Agentur-Unterstützung</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Unerwartete Deadlines bedrohen deine Timelines? On-Demand Einbindung in Werbeagenturen für Postproduktion, Motion Design oder Rohmaterial-Schnitt.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-purple-500/50 uppercase">+ Schnitt in Premiere / After Effects / DaVinci<br>+ Nahtlose Anbindung an Team-Server<br>+ Exakt getaktete Lieferung unter Druck</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-purple-400/50 border-t border-purple-500/10 pt-4">Werbeagenturen / Externer Taskforce-Einsatz</div>
+                    </div>
+                </div>
+
+                <div id="tab-digital" class="tab-panel hidden grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                    <div class="offer-card-animate border border-white/5 bg-[#060608] hover:border-red-500/30 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(239,68,68,0.15)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-6"><span>[ CLEAN_CODE ]</span><span class="text-white font-bold">AB 1.800 €</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">Individual Web-Code</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Pfeilschnelle, maßgeschneiderte Landingpages oder Portfolios aus reinem HTML, Tailwind und JS. Ohne trägen WordPress-Ballast gebaut.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-zinc-500 uppercase">+ Radikale Ladezeiten- & SEO-Optimierung<br>+ Handgemachter, schlanker Code-Aufbau<br>+ Volle Mobilgeräte-Garantie</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-zinc-500 border-t border-white/5 pt-4">Individual-Entwicklung / Direktauftrag</div>
+                    </div>
+                    <div class="offer-card-animate border border-white/5 bg-[#060608] hover:border-red-500/30 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(239,68,68,0.15)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-zinc-600 mb-6"><span>[ BRAND_DESIGN ]</span><span class="text-white font-bold">AB 950 €</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">Digital- & Printmedien</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Ganzheitliches Branding, kompromisslose Typografie und präzise Raster für Broschüren, Geschäftsausstattungen oder digitale Layout-Pakete.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-zinc-500 uppercase">+ Layoutierung für Web & Printerzeugnisse<br>+ Druckfertige Übergabe (Farbprofile)<br>+ Durchgängiges, starkes Corporate Design</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-zinc-500 border-t border-white/5 pt-4">Visuelle Identität / Gestaltung</div>
+                    </div>
+                    <div class="offer-card-animate border border-red-500/20 bg-[#060404] hover:border-red-500/50 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(239,68,68,0.25)] rounded-2xl p-8 flex flex-col justify-between h-[480px] shadow-2xl">
+                        <div>
+                            <div class="flex justify-between items-center font-mono text-[10px] text-red-400 mb-6"><span>[ FREELANCE_DESIGN ]</span><span class="text-red-400 font-bold">TAGESSATZ</span></div>
+                            <h4 class="text-xl font-black uppercase text-white mb-4">Design Agentur-Unterstützung</h4>
+                            <p class="text-zinc-400 text-xs font-light leading-relaxed mb-6">Unterstützung für ausgelastete Design- oder Web-Abteilungen in Kreativagenturen. On-Demand Abruf für Reinzeichnungen, Layouts oder digitale Grafiken.</p>
+                            <ul class="space-y-1.5 font-mono text-[10px] text-red-500/50 uppercase">+ Figma / Creative Cloud / HTML-Strukturen<br>+ Präzises Arbeiten in bestehenden Design-Systemen<br>+ Zuverlässiges Bindeglied für dein Team</ul>
+                        </div>
+                        <div class="text-[10px] font-mono text-red-400/50 border-t border-red-500/10 pt-4">Werbeagenturen / Externer Taskforce-Einsatz</div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- KONTAKT -->
+    <section id="kontakt" class="relative py-32 px-4 border-t border-white/5 bg-[#010102] z-10">
+        <div class="reveal max-w-4xl mx-auto border border-white/10 rounded-2xl bg-[#040406] p-8 md:p-16 shadow-2xl relative overflow-hidden">
+
+            <div class="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-red-600 via-purple-600 to-blue-600"></div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+
+                <div class="lg:col-span-4 flex flex-col justify-between font-mono">
+                    <div class="space-y-6">
+                        <div class="text-[10px] text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                            <span class="h-2 w-2 bg-purple-500 rounded-full animate-pulse"></span>
+                            [ DIREKT-KONTAKT ]
+                        </div>
+                        <h3 class="text-3xl font-black uppercase tracking-tight text-white leading-none font-sans">Projekt starten.</h3>
+                        <p class="text-zinc-400 text-xs font-light leading-relaxed normal-case font-sans">
+                            Trage deine Wünsche direkt in den Freitext rechts ein. Ich melde mich innerhalb von 12 Stunden bei dir zurück.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-8">
+                    <form id="contact-form" action="#" class="space-y-12">
+
+                        <div class="text-white text-lg sm:text-xl md:text-[1.6rem] font-bold tracking-tight leading-[1.7] md:leading-[1.65] font-sans text-left uppercase">
+                            Hallo, ich bin
+                            <input type="text" name="name" class="seamless-field w-[150px] sm:w-[200px] font-medium font-sans normal-case text-center placeholder:text-zinc-800" placeholder="[ Name ]" required>
+                            von
+                            <input type="text" name="firma" class="seamless-field w-[150px] sm:w-[220px] font-medium font-sans normal-case text-center placeholder:text-zinc-800" placeholder="[ Firma ]" required>.
+                            Du erreichst mich über mein Mail-Gateway
+                            <input type="email" name="email" class="seamless-field w-[200px] sm:w-[280px] font-medium font-sans normal-case text-center placeholder:text-zinc-800" placeholder="[ deine@email.de ]" required>.
+                            Ich plane die Beauftragung von
+                            <span class="relative inline-block">
+                                <select name="leistung" class="seamless-field w-[230px] sm:w-[340px] text-zinc-300 font-mono text-sm uppercase appearance-none py-1 text-center align-baseline">
+                                    <option value="3D-Visualisierung & CGI">3D-Visualisierung & CGI</option>
+                                    <option value="UE5 Echtzeit-Welten">UE5 Echtzeit-Welten</option>
+                                    <option value="Videoschnitt Suite Retainer">Videoschnitt Suite Retainer</option>
+                                    <option value="Individual Web-Code">Individual Web-Code</option>
+                                    <option value="Digital- & Printmedien">Digital- & Printmedien</option>
+                                </select></span>.
+                            Das konkrete Projekt und meine Termin-Vorgabe lauten:
+                            <textarea name="nachricht" class="seamless-field w-full h-20 mt-3 font-sans font-normal normal-case text-base leading-relaxed text-zinc-300 placeholder:text-zinc-700 block focus:h-28 focus:outline-none resize-none" placeholder="Beschreibe kurz das Projekt, die gewünschten Assets oder deine akute Deadline..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="magnetic w-full relative px-8 py-5 rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors font-black tracking-[0.25em] uppercase duration-300 text-center text-xs shadow-xl shadow-white/5">
+                            <span id="submit-label">Anfrage senden</span>
+                        </button>
+                        <p id="form-feedback" class="hidden font-mono text-[11px] uppercase tracking-widest text-emerald-400 text-center"></p>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-[#020203] border-t border-white/5 py-16 px-4 z-10 relative">
+        <div class="max-w-6xl mx-auto flex flex-col items-center gap-10">
+            <img src="media/logo-lang.png" alt="PLANIMADE" class="h-7 md:h-9 w-auto object-contain opacity-90">
+            <div class="w-full flex flex-col sm:flex-row justify-between items-center gap-6 font-mono text-[10px] text-zinc-600 uppercase tracking-widest border-t border-white/5 pt-8">
+                <div>PLANIMADE® DIGITAL STUDIO ©2026 // ALLE RECHTE VORBEHALTEN</div>
+                <div class="flex gap-8">
+                    <a href="#impressum" class="hover:text-white transition-colors">Impressum</a>
+                    <a href="#datenschutz" class="hover:text-white transition-colors">Datenschutz</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        /* ===== 0. PRELOADER ===== */
+        (function () {
+            const pre = document.getElementById('preloader');
+            const count = document.getElementById('pre-count');
+            const fill = document.getElementById('pre-bar-fill');
+            const headline = document.getElementById('hero-headline');
+
+            function finish() {
+                pre.classList.add('done');
+                if (headline) headline.classList.add('reveal-on');
+                document.querySelectorAll('#hero .reveal').forEach(el => el.classList.add('in'));
+                setTimeout(() => pre.remove(), 1100);
+            }
+
+            if (prefersReduced) { count.textContent = '100'; fill.style.width = '100%'; finish(); return; }
+
+            const start = performance.now();
+            const duration = 1600;
+            function tick(now) {
+                const p = Math.min((now - start) / duration, 1);
+                const eased = 1 - Math.pow(1 - p, 3);
+                const val = Math.round(eased * 100);
+                count.textContent = String(val).padStart(3, '0');
+                fill.style.width = val + '%';
+                if (p < 1) requestAnimationFrame(tick);
+                else setTimeout(finish, 200);
+            }
+            window.addEventListener('load', () => requestAnimationFrame(tick));
+            // Fallback falls 'load' bereits durch ist
+            setTimeout(() => { if (!pre.classList.contains('done')) requestAnimationFrame(tick); }, 3000);
+        })();
+
+        /* ===== HERO-VIDEO: AUTOPLAY ABSICHERN ===== */
+        (function () {
+            const hv = document.getElementById('hero-video');
+            if (!hv) return;
+            const tryPlay = () => { const p = hv.play(); if (p && p.catch) p.catch(() => {}); };
+            tryPlay();
+            hv.addEventListener('canplay', tryPlay, { once: true });
+            // Falls der Browser Autoplay zunächst blockt: beim ersten Interagieren starten
+            const kick = () => { tryPlay(); window.removeEventListener('pointerdown', kick); window.removeEventListener('scroll', kick); window.removeEventListener('keydown', kick); };
+            window.addEventListener('pointerdown', kick, { passive: true });
+            window.addEventListener('scroll', kick, { passive: true });
+            window.addEventListener('keydown', kick);
+        })();
+
+        /* ===== 1. CUSTOM CURSOR (nur Feinzeiger) ===== */
+        const cursor = document.getElementById('custom-cursor');
+        const finePointer = window.matchMedia('(pointer: fine)').matches;
+        let mouse = { x: undefined, y: undefined };
+
+        if (finePointer) {
+            document.addEventListener('mousemove', (e) => {
+                mouse.x = e.clientX; mouse.y = e.clientY;
+                cursor.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0px) translate(-50%, -50%)`;
+            });
+            const interactiveElements = document.querySelectorAll('nav a, header a, button, select, option, input, textarea, .group, h3, #tilt-wrapper, .seamless-field, .tab-trigger, .offer-card-animate, .magnetic');
+            interactiveElements.forEach(el => {
+                el.addEventListener('mouseenter', () => { cursor.classList.remove('w-3', 'h-3'); cursor.classList.add('w-14', 'h-14', 'bg-white/20'); });
+                el.addEventListener('mouseleave', () => { cursor.classList.remove('w-14', 'h-14', 'bg-white/20'); cursor.classList.add('w-3', 'h-3'); });
+            });
+        } else {
+            cursor.remove();
+        }
+
+        /* ===== MOBILE MENU TOGGLE ===== */
+        const menuToggle = document.getElementById('menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const bars = menuToggle.querySelectorAll('.bar');
+        let menuOpen = false;
+        function setMenu(open) {
+            menuOpen = open;
+            mobileMenu.classList.toggle('hidden', !open);
+            mobileMenu.classList.toggle('flex', open);
+            document.body.style.overflow = open ? 'hidden' : '';
+            menuToggle.setAttribute('aria-expanded', String(open));
+            if (open) {
+                bars[0].style.transform = 'translateY(8px) rotate(45deg)';
+                bars[1].style.transform = 'translateY(-1px) rotate(-45deg)';
+                bars[1].style.width = '1.75rem';
+            } else {
+                bars[0].style.transform = ''; bars[1].style.transform = ''; bars[1].style.width = '';
+            }
+        }
+        menuToggle.addEventListener('click', () => setMenu(!menuOpen));
+        document.querySelectorAll('.mobile-link').forEach(l => l.addEventListener('click', () => setMenu(false)));
+
+        /* ===== 2. KINETIC INTERACTIVE BACKGROUND GRID ===== */
+        const canvas = document.getElementById('interactive-grid');
+        const ctx = canvas.getContext('2d');
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const gridSize = 50;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                for (let y = 0; y < canvas.height; y += gridSize) {
+                    let cx = x; let cy = y;
+                    if (mouse.x !== undefined && mouse.y !== undefined) {
+                        let dx = mouse.x - x; let dy = mouse.y - y;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 180) {
+                            let force = (180 - dist) / 180;
+                            cx -= dx * force * 0.15; cy -= dy * force * 0.15;
+                            ctx.fillStyle = `rgba(255, 255, 255, ${force * 0.2})`;
+                            ctx.fillRect(cx - 1, cy - 1, 2, 2);
+                        }
+                    }
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.02)'; ctx.fillRect(cx, cy, 1, 1);
+                }
+            }
+            requestAnimationFrame(drawGrid);
+        }
+        drawGrid();
+
+        /* ===== HEADER SCROLL STATE ===== */
+        const header = document.getElementById('site-header');
+        const headerInner = header.querySelector('.header-inner');
+        const scrollProgress = document.getElementById('scroll-progress');
+        function onScroll() {
+            const sc = window.pageYOffset;
+            header.classList.toggle('scrolled', sc > 40);
+            const h = document.documentElement.scrollHeight - window.innerHeight;
+            scrollProgress.style.width = (h > 0 ? (sc / h) * 100 : 0) + '%';
+        }
+        window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+        /* ===== SCROLL REVEAL ===== */
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) { entry.target.classList.add('in'); revealObserver.unobserve(entry.target); }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+        document.querySelectorAll('.reveal').forEach(el => { if (!el.closest('#hero')) revealObserver.observe(el); });
+
+        /* ============================================================
+           PORTFOLIO – HIER VIDEOS PFLEGEN
+           Neues Projekt: Videodatei (.mp4 oder .webm) in den Ordner
+           "media" legen und unten EINE Zeile ergänzen. Kein weiterer
+           Code-Umbau nötig. "poster" ist optional (Vorschaubild);
+           ohne Poster wird automatisch das erste Frame verwendet.
+           Der erste Eintrag wird groß als Highlight angezeigt.
+           ============================================================ */
+        // Fallback-Liste: greift lokal (Doppelklick) und solange noch kein CMS-Inhalt existiert.
+        // Im Live-Betrieb kommen die Projekte aus data/portfolio.json, gepflegt über das Admin-Dashboard (/admin).
+        const PORTFOLIO_FALLBACK = [
+            { title: "Showreel 2024", category: "Showreel", src: "media/showreel.mp4", poster: "media/showreel-poster.jpg" },
+        ];
+
+        (async function initPortfolio() {
+            const featuredWrap = document.getElementById('portfolio-featured');
+            const grid = document.getElementById('portfolio-grid');
+            const empty = document.getElementById('portfolio-empty');
+            const lightbox = document.getElementById('pf-lightbox');
+            const lbVideo = document.getElementById('pf-lightbox-video');
+            const lbTitle = document.getElementById('pf-lightbox-title');
+
+            // Vom CMS gepflegte Liste laden – schlägt das fehl (z.B. lokal), greift der Fallback.
+            let PORTFOLIO = PORTFOLIO_FALLBACK;
+            try {
+                const res = await fetch('data/portfolio.json', { cache: 'no-store' });
+                if (res.ok) { const j = await res.json(); if (j && Array.isArray(j.items) && j.items.length) PORTFOLIO = j.items; }
+            } catch (e) { /* lokal/offline → Fallback nutzen */ }
+
+            if (!PORTFOLIO.length) { empty.classList.remove('hidden'); grid.classList.add('hidden'); return; }
+
+            function makeCard(item, featured) {
+                const card = document.createElement('div');
+                card.className = 'pf-card group relative rounded-2xl overflow-hidden border border-white/5 bg-[#060608] shadow-2xl ' + (featured ? 'aspect-[16/8]' : 'aspect-video');
+                const vid = document.createElement('video');
+                vid.muted = true; vid.loop = true; vid.playsInline = true; vid.preload = 'metadata';
+                vid.className = 'absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105';
+                if (item.poster) vid.poster = item.poster;
+                const src = document.createElement('source');
+                src.src = item.src; src.type = item.src.endsWith('.webm') ? 'video/webm' : 'video/mp4';
+                vid.appendChild(src);
+                if (!item.poster) { vid.preload = 'auto'; vid.addEventListener('loadeddata', () => { try { vid.currentTime = 0.1; } catch (e) {} }, { once: true }); }
+
+                const overlay = document.createElement('div');
+                overlay.className = 'absolute inset-0 bg-gradient-to-t from-[#020203] via-[#020203]/10 to-transparent pointer-events-none';
+                const play = document.createElement('div');
+                play.className = 'absolute inset-0 flex items-center justify-center pointer-events-none';
+                play.innerHTML = '<span class="h-16 w-16 rounded-full border border-white/40 bg-black/30 backdrop-blur-sm flex items-center justify-center text-white text-lg opacity-90 group-hover:opacity-0 transition-opacity duration-300">▶</span>';
+                const meta = document.createElement('div');
+                meta.className = 'absolute bottom-0 left-0 right-0 p-6 flex items-end justify-between gap-4 pointer-events-none';
+                meta.innerHTML =
+                    '<div><div class="font-mono text-[10px] uppercase tracking-widest text-zinc-300 mb-1">' + (item.category || '') + '</div>' +
+                    '<div class="font-black uppercase tracking-tight text-white ' + (featured ? 'text-2xl md:text-4xl' : 'text-lg') + '">' + item.title + '</div></div>' +
+                    '<span class="font-mono text-[10px] uppercase tracking-widest text-white/70 whitespace-nowrap">Ansehen ↗</span>';
+
+                card.append(vid, overlay, play, meta);
+
+                if (finePointer) {
+                    card.addEventListener('mouseenter', () => {
+                        const p = vid.play(); if (p && p.catch) p.catch(() => {});
+                        cursor && (cursor.classList.remove('w-3', 'h-3'), cursor.classList.add('w-14', 'h-14', 'bg-white/20'));
+                    });
+                    card.addEventListener('mouseleave', () => {
+                        vid.pause();
+                        cursor && (cursor.classList.remove('w-14', 'h-14', 'bg-white/20'), cursor.classList.add('w-3', 'h-3'));
+                    });
+                }
+                card.addEventListener('click', () => openLightbox(item));
+                return card;
+            }
+
+            function openLightbox(item) {
+                lbVideo.src = item.src;
+                lbTitle.textContent = (item.category ? item.category + ' — ' : '') + item.title;
+                lightbox.classList.remove('hidden'); lightbox.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+                const p = lbVideo.play(); if (p && p.catch) p.catch(() => {});
+            }
+            function closeLightbox() {
+                lbVideo.pause(); lbVideo.removeAttribute('src'); lbVideo.load();
+                lightbox.classList.add('hidden'); lightbox.classList.remove('flex');
+                document.body.style.overflow = '';
+            }
+            document.getElementById('pf-close').addEventListener('click', closeLightbox);
+            lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+            window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lightbox.classList.contains('hidden')) closeLightbox(); });
+
+            featuredWrap.appendChild(makeCard(PORTFOLIO[0], true));
+            if (PORTFOLIO.length > 1) {
+                PORTFOLIO.slice(1).forEach(item => grid.appendChild(makeCard(item, false)));
+            } else {
+                grid.classList.add('hidden');
+            }
+
+            document.querySelectorAll('#portfolio .pf-card').forEach(c => { c.classList.add('reveal'); revealObserver.observe(c); });
+        })();
+
+        /* ===== MAGNETIC BUTTONS ===== */
+        if (finePointer) {
+            document.querySelectorAll('.magnetic').forEach(btn => {
+                btn.addEventListener('mousemove', (e) => {
+                    const r = btn.getBoundingClientRect();
+                    const mx = e.clientX - r.left - r.width / 2;
+                    const my = e.clientY - r.top - r.height / 2;
+                    btn.style.transform = `translate(${mx * 0.18}px, ${my * 0.28}px)`;
+                });
+                btn.addEventListener('mouseleave', () => { btn.style.transform = 'translate(0,0)'; });
+            });
+        }
+
+        /* ===== 3D / VIDEO / CODE BACKGROUND LAYERS ===== */
+        const layer3d = document.getElementById('canvas-3d-layer');
+        const layerVideo = document.getElementById('canvas-video-layer');
+        const layerCode = document.getElementById('canvas-code-layer');
+        const tiltWrapper = document.getElementById('tilt-wrapper');
+        const card3d = document.getElementById('parallax-card-3d');
+        let activeLayer = null;
+
+        function resizeLayers() {
+            const sec = document.getElementById('leistungen');
+            if (sec) {
+                [layer3d, layerVideo, layerCode].forEach(l => { l.width = sec.offsetWidth; l.height = sec.offsetHeight; });
+            }
+        }
+        window.addEventListener('resize', resizeLayers); resizeLayers();
+
+        tiltWrapper.addEventListener('mouseenter', () => { layer3d.style.opacity = "1"; activeLayer = "3d"; });
+        tiltWrapper.addEventListener('mouseleave', () => { layer3d.style.opacity = "0"; activeLayer = null; });
+        document.getElementById('card-trigger-video').addEventListener('mouseenter', () => { layerVideo.style.opacity = "1"; activeLayer = "video"; });
+        document.getElementById('card-trigger-video').addEventListener('mouseleave', () => { layerVideo.style.opacity = "0"; activeLayer = null; });
+        document.getElementById('card-trigger-code').addEventListener('mouseenter', () => { layerCode.style.opacity = "1"; activeLayer = "code"; });
+        document.getElementById('card-trigger-code').addEventListener('mouseleave', () => { layerCode.style.opacity = "0"; activeLayer = null; });
+
+        /* ===== JITTER-FREIER TILT ===== */
+        let rect3d = null;
+        tiltWrapper.addEventListener('mouseenter', () => { rect3d = tiltWrapper.getBoundingClientRect(); });
+        tiltWrapper.addEventListener('mousemove', (e) => {
+            if (!rect3d) return;
+            const x = e.clientX - rect3d.left - rect3d.width / 2;
+            const y = e.clientY - rect3d.top - rect3d.height / 2;
+            card3d.style.transform = `perspective(1000px) rotateX(${-y / 4.5}deg) rotateY(${x / 4.5}deg) scale3d(1.03, 1.03, 1.03)`;
+        });
+        tiltWrapper.addEventListener('mouseleave', () => {
+            card3d.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+            rect3d = null;
+        });
+
+        /* ===== MOUSE GLOW ===== */
+        document.getElementById('cards-container').onmousemove = e => {
+            for (const card of document.getElementsByClassName('card-glow')) {
+                const rect = card.parentElement.getBoundingClientRect(),
+                    x = e.clientX - rect.left, y = e.clientY - rect.top;
+                card.parentElement.style.setProperty('--x', `${x}px`);
+                card.parentElement.style.setProperty('--y', `${y}px`);
+            }
+        };
+
+        /* ===== TAB LOGIK + GLEITENDE PILLE ===== */
+        const tabTriggers = document.querySelectorAll('.tab-trigger');
+        const tabPanels = document.querySelectorAll('.tab-panel');
+        const tabIndicator = document.getElementById('tab-indicator');
+        let currentTrigger = null;
+
+        function moveIndicator(trigger) {
+            if (!trigger) return;
+            tabIndicator.style.opacity = '1';
+            tabIndicator.style.width = trigger.offsetWidth + 'px';
+            tabIndicator.style.height = trigger.offsetHeight + 'px';
+            tabIndicator.style.transform = `translate(${trigger.offsetLeft}px, ${trigger.offsetTop}px)`;
+        }
+
+        function activateTab(trigger) {
+            currentTrigger = trigger;
+            tabTriggers.forEach(t => { t.classList.remove('text-black'); t.classList.add('text-zinc-400'); });
+            trigger.classList.add('text-black'); trigger.classList.remove('text-zinc-400');
+            moveIndicator(trigger);
+
+            const targetId = trigger.getAttribute('data-target');
+            tabPanels.forEach(panel => {
+                if (panel.id === targetId) {
+                    panel.classList.remove('hidden'); panel.classList.add('grid');
+                    panel.offsetHeight; // Force reflow
+                    const cards = panel.querySelectorAll('.offer-card-animate');
+                    cards.forEach((card, index) => setTimeout(() => {
+                        card.classList.add('card-active');
+                        animatePrice(card);
+                    }, index * 110));
+                } else {
+                    panel.querySelectorAll('.offer-card-animate').forEach(card => card.classList.remove('card-active'));
+                    panel.classList.remove('grid'); panel.classList.add('hidden');
+                }
+            });
+            setTimeout(resizeLayers, 100);
+        }
+        tabTriggers.forEach(trigger => trigger.addEventListener('click', () => activateTab(trigger)));
+        // Ersten Tab automatisch öffnen, sobald die Sektion sichtbar wird
+        const angeboteObserver = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => { if (entry.isIntersecting) { activateTab(tabTriggers[0]); obs.disconnect(); } });
+        }, { threshold: 0.2 });
+        angeboteObserver.observe(document.getElementById('angebote'));
+        window.addEventListener('resize', () => moveIndicator(currentTrigger));
+
+        /* ===== ANGEBOTE: PREIS-COUNT-UP ===== */
+        function animatePrice(card) {
+            const el = card.querySelector('.offer-price');
+            if (!el || el.dataset.counted === '1') return;
+            const raw = el.dataset.priceText;
+            const m = raw.match(/(\d[\d.]*)/);
+            if (!m) { el.dataset.counted = '1'; return; }
+            const target = parseInt(m[1].replace(/\./g, ''), 10);
+            el.dataset.counted = '1';
+            const dur = 950; const start = performance.now();
+            (function step(now) {
+                const p = Math.min((now - start) / dur, 1);
+                const eased = 1 - Math.pow(1 - p, 3);
+                const val = Math.round(eased * target);
+                el.textContent = raw.replace(m[1], val.toLocaleString('de-DE'));
+                if (p < 1) requestAnimationFrame(step);
+                else el.textContent = raw;
+            })(start);
+        }
+
+        /* ===== ANGEBOTE: SPOTLIGHT, TILT, SHINE, CTA, CLICK→KONTAKT ===== */
+        const offerToOption = {
+            'CGI Produkt-Inszenierung': '3D-Visualisierung & CGI',
+            'UE5 Echtzeit-Welten': 'UE5 Echtzeit-Welten',
+            '3D Agentur-Unterstützung': '3D-Visualisierung & CGI',
+            'Videoschnitt Retainer': 'Videoschnitt Suite Retainer',
+            'Motion Graphics Teaser': 'Videoschnitt Suite Retainer',
+            'Video Agentur-Unterstützung': 'Videoschnitt Suite Retainer',
+            'Individual Web-Code': 'Individual Web-Code',
+            'Digital- & Printmedien': 'Digital- & Printmedien',
+            'Design Agentur-Unterstützung': 'Digital- & Printmedien'
+        };
+        const offerAccent = { 'tab-3d': '59,130,246', 'tab-video': '168,85,247', 'tab-digital': '239,68,68' };
+
+        tabPanels.forEach(panel => {
+            const rgb = offerAccent[panel.id] || '255,255,255';
+            panel.querySelectorAll('.offer-card-animate').forEach(card => {
+                // Card als Positionsanker + clippt Spotlight/Shine
+                card.classList.add('relative', 'overflow-hidden');
+                // bestehende Inhalte über die injizierten Layer heben
+                [...card.children].forEach(ch => { ch.style.position = 'relative'; ch.style.zIndex = '2'; });
+
+                // Preis-Span markieren
+                const priceSpan = card.querySelector('.flex.justify-between span:last-child');
+                if (priceSpan) { priceSpan.classList.add('offer-price'); priceSpan.dataset.priceText = priceSpan.textContent.trim(); }
+
+                // Spotlight + Shine + CTA injizieren
+                const glow = document.createElement('div');
+                glow.className = 'offer-glow';
+                glow.style.background = `radial-gradient(320px circle at var(--gx,50%) var(--gy,50%), rgba(${rgb},0.20), transparent 70%)`;
+                const shine = document.createElement('div'); shine.className = 'offer-shine';
+                const title = (card.querySelector('h4') || {}).textContent ? card.querySelector('h4').textContent.trim() : '';
+                const cta = document.createElement('div');
+                cta.className = 'offer-cta';
+                cta.innerHTML = 'Anfragen <span class="dot">↗</span>';
+                card.append(glow, shine, cta);
+
+                // 3D-Tilt + Spotlight
+                if (finePointer) {
+                    let r = null;
+                    card.addEventListener('mouseenter', () => { r = card.getBoundingClientRect(); card.classList.add('tilting'); });
+                    card.addEventListener('mousemove', (e) => {
+                        if (!r) r = card.getBoundingClientRect();
+                        const px = e.clientX - r.left, py = e.clientY - r.top;
+                        const rx = ((py / r.height) - 0.5) * -7;
+                        const ry = ((px / r.width) - 0.5) * 7;
+                        card.style.transform = `perspective(1100px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0) scale3d(1.02,1.02,1.02)`;
+                        card.style.setProperty('--gx', px + 'px');
+                        card.style.setProperty('--gy', py + 'px');
+                    });
+                    card.addEventListener('mouseleave', () => {
+                        card.classList.remove('tilting');
+                        card.style.transform = '';
+                        r = null;
+                    });
+                }
+
+                // Klick → passende Leistung im Kontaktformular vorauswählen + hinscrollen
+                card.addEventListener('click', () => {
+                    const opt = offerToOption[title];
+                    const select = document.querySelector('select[name="leistung"]');
+                    if (opt && select) {
+                        select.value = opt;
+                        select.style.color = '#fff';
+                        setTimeout(() => { select.style.color = ''; }, 1500);
+                    }
+                    smoothTo('#kontakt');
+                });
+            });
+        });
+
+        /* ===== SMOOTH SCROLL ENGINE ===== */
+        function easeOutCubicScroll(t, b, c, d) { t /= d; t--; return c * (t * t * t + 1) + b; }
+        function smoothTo(targetSelector) {
+            if (!targetSelector) return;
+            let targetPosition = 0;
+            if (targetSelector !== 'body') {
+                const element = document.querySelector(targetSelector);
+                if (!element) return;
+                targetPosition = element.getBoundingClientRect().top + window.pageYOffset - 40;
+            }
+            const startPosition = window.pageYOffset;
+            const distance = targetPosition - startPosition;
+            const duration = 1200;
+            let startTime = null;
+            function scrollAnimation(currentTime) {
+                if (startTime === null) startTime = currentTime;
+                const timeElapsed = currentTime - startTime;
+                window.scrollTo(0, easeOutCubicScroll(timeElapsed, startPosition, distance, duration));
+                if (timeElapsed < duration) requestAnimationFrame(scrollAnimation);
+            }
+            requestAnimationFrame(scrollAnimation);
+        }
+        document.querySelectorAll('.nav-link').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                smoothTo(this.getAttribute('data-target'));
+            });
+        });
+
+        /* ===== CANVAS LAYER 01: 3D WIREFRAME ===== */
+        const ctx3d = layer3d.getContext('2d'); let angle3d = 0;
+        function render3DLayer() {
+            if (activeLayer === "3d") {
+                ctx3d.clearRect(0, 0, layer3d.width, layer3d.height);
+                ctx3d.strokeStyle = 'rgba(6, 182, 212, 0.25)'; ctx3d.lineWidth = 1.5;
+                let cx = layer3d.width / 2; let cy = layer3d.height / 2;
+                let size = window.innerWidth > 768 ? 260 : 130;
+                let vertices = [
+                    { x: -size, y: -size, z: -size }, { x: size, y: -size, z: -size },
+                    { x: size, y: size, z: -size }, { x: -size, y: size, z: -size },
+                    { x: -size, y: -size, z: size }, { x: size, y: -size, z: size },
+                    { x: size, y: size, z: size }, { x: -size, y: size, z: size }
+                ];
+                let rotated = vertices.map(v => {
+                    let x1 = v.x * Math.cos(angle3d) - v.z * Math.sin(angle3d);
+                    let z1 = v.x * Math.sin(angle3d) + v.z * Math.cos(angle3d);
+                    let y2 = v.y * Math.cos(angle3d * 0.4) - z1 * Math.sin(angle3d * 0.4);
+                    return { x: x1 + cx, y: y2 + cy };
+                });
+                const connect = (i, j) => { ctx3d.beginPath(); ctx3d.moveTo(rotated[i].x, rotated[i].y); ctx3d.lineTo(rotated[j].x, rotated[j].y); ctx3d.stroke(); };
+                for (let i = 0; i < 4; i++) { connect(i, (i + 1) % 4); connect(i + 4, ((i + 1) % 4) + 4); connect(i, i + 4); }
+                angle3d += 0.005;
+            }
+            requestAnimationFrame(render3DLayer);
+        }
+        render3DLayer();
+
+        /* ===== CANVAS LAYER 02: SINE WAVES ===== */
+        const ctxVideo = layerVideo.getContext('2d'); let waveIndex = 0;
+        function renderVideoLayer() {
+            if (activeLayer === "video") {
+                ctxVideo.clearRect(0, 0, layerVideo.width, layerVideo.height); ctxVideo.lineWidth = 2;
+                ctxVideo.strokeStyle = 'rgba(168, 85, 247, 0.3)'; ctxVideo.beginPath();
+                for (let i = 0; i < layerVideo.width; i += 5) {
+                    let y = layerVideo.height / 2 + Math.sin(i * 0.008 + waveIndex) * 120 * Math.sin(i * 0.0015);
+                    if (i === 0) ctxVideo.moveTo(i, y); else ctxVideo.lineTo(i, y);
+                }
+                ctxVideo.stroke();
+                ctxVideo.strokeStyle = 'rgba(59, 130, 246, 0.15)'; ctxVideo.beginPath();
+                for (let i = 0; i < layerVideo.width; i += 5) {
+                    let y = layerVideo.height / 2 + Math.cos(i * 0.012 + waveIndex) * 70 * Math.cos(i * 0.002);
+                    if (i === 0) ctxVideo.moveTo(i, y); else ctxVideo.lineTo(i, y);
+                }
+                ctxVideo.stroke(); waveIndex += 0.04;
+            }
+            requestAnimationFrame(renderVideoLayer);
+        }
+        renderVideoLayer();
+
+        /* ===== CANVAS LAYER 03: MATRIX RAIN ===== */
+        const ctxCode = layerCode.getContext('2d');
+        const matrixFontSize = 14; const matrixColumns = Math.floor(window.innerWidth / matrixFontSize) + 1;
+        const matrixDrops = []; for (let i = 0; i < matrixColumns; i++) matrixDrops[i] = 1;
+        function renderCodeLayer() {
+            if (activeLayer === "code") {
+                ctxCode.fillStyle = 'rgba(2, 2, 3, 0.06)'; ctxCode.fillRect(0, 0, layerCode.width, layerCode.height);
+                ctxCode.fillStyle = 'rgba(239, 68, 68, 0.4)'; ctxCode.font = matrixFontSize + 'px monospace';
+                for (let i = 0; i < matrixDrops.length; i++) {
+                    const text = Math.random() > 0.5 ? "1" : "0"; const x = i * matrixFontSize; const y = matrixDrops[i] * matrixFontSize;
+                    ctxCode.fillText(text, x, y);
+                    if (y > layerCode.height && Math.random() > 0.975) matrixDrops[i] = 0;
+                    matrixDrops[i]++;
+                }
+            }
+            requestAnimationFrame(renderCodeLayer);
+        }
+        renderCodeLayer();
+
+        setTimeout(resizeLayers, 100);
+
+        /* ===== TEXT SCRAMBLE (Fix: chars definiert) ===== */
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!<>-_\\/[]{}=+*#";
+        const scrambleTitle = document.getElementById('scramble-title');
+        const originalValue = scrambleTitle.getAttribute('data-value');
+        let scrambleInterval = null;
+        document.querySelector('.scramble-hover').addEventListener('mouseenter', () => {
+            let iteration = 0; clearInterval(scrambleInterval);
+            scrambleInterval = setInterval(() => {
+                scrambleTitle.innerText = originalValue.split("").map((letter, index) => {
+                    if (index < iteration) return originalValue[index];
+                    return chars[Math.floor(Math.random() * chars.length)];
+                }).join("");
+                if (iteration >= originalValue.length) clearInterval(scrambleInterval);
+                iteration += 1 / 3;
+            }, 30);
+        });
+
+        /* ===== KONTAKTFORMULAR: mailto-Anfrage + Bestätigung ===== */
+        const form = document.getElementById('contact-form');
+        const submitLabel = document.getElementById('submit-label');
+        const feedback = document.getElementById('form-feedback');
+        const CONTACT_EMAIL = 'hello.dominicmajewski@gmail.com'; // <- hier ggf. Business-Mail eintragen
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!form.checkValidity()) { form.reportValidity(); return; }
+            const data = new FormData(form);
+            const subject = `Projektanfrage: ${data.get('leistung')} — ${data.get('firma')}`;
+            const body =
+`Name: ${data.get('name')}
+Firma: ${data.get('firma')}
+E-Mail: ${data.get('email')}
+Leistung: ${data.get('leistung')}
+
+Projekt / Deadline:
+${data.get('nachricht')}`;
+            const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            submitLabel.textContent = 'Gesendet ✓';
+            feedback.textContent = '[ Dein Mail-Programm öffnet sich… ]';
+            feedback.classList.remove('hidden');
+            window.location.href = mailto;
+        });
+
+        /* ===== NETLIFY IDENTITY: nach Login/Einladung ins Admin-Dashboard leiten ===== */
+        if (window.netlifyIdentity) {
+            window.netlifyIdentity.on('init', user => {
+                if (!user) {
+                    window.netlifyIdentity.on('login', () => { document.location.href = '/admin/'; });
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "items": [
+    {
+      "title": "Showreel 2024",
+      "category": "Showreel",
+      "src": "/media/showreel.mp4",
+      "poster": "/media/showreel-poster.jpg"
+    }
+  ]
+}

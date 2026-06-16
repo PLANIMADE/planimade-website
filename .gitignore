@@ -1,0 +1,9 @@
+# Lokale Claude-/Editor-Hilfsdateien
+.claude/
+
+# Unbenutzte, große Originaldatei (HEVC, ~24 MB) – das Web-Showreel liegt als media/showreel.mp4/.webm vor
+media/demoreel_planimade.mp4
+
+# Betriebssystem-Müll
+.DS_Store
+Thumbs.db
