@@ -81,9 +81,13 @@
         }
 
         /* HERO VIDEO GRADING – in Farbe, damit das echte Showreel sichtbar läuft.
-           Für den ursprünglichen Mono-Look: grayscale(100%) ergänzen. */
+           Für den ursprünglichen Mono-Look: grayscale(100%) ergänzen.
+           transform: scale() zoomt die einkodierten Letterbox-Balken (je 88px
+           oben/unten, Inhalt 1280×544) heraus → 720/544 ≈ 1.33. */
         .hero-video {
             filter: saturate(1.12) contrast(1.03) brightness(1.18);
+            transform: scale(1.33);
+            transform-origin: center center;
         }
 
         /* ORBIT RING (Preloader + Hero Ambient) */
@@ -295,7 +299,7 @@
 
         <!-- SHOWREEL BACKGROUND (läuft immer) -->
         <div class="absolute inset-0 w-full h-full z-0 pointer-events-none">
-            <video id="hero-video" class="hero-video absolute inset-0 w-full h-full object-cover opacity-[0.95]"
+            <video id="hero-video" class="hero-video absolute inset-0 w-full h-full object-cover opacity-40"
                    autoplay loop muted playsinline preload="auto" poster="media/showreel-poster.jpg" aria-hidden="true">
                 <source src="media/showreel.webm" type="video/webm">
                 <source src="media/showreel.mp4" type="video/mp4">
