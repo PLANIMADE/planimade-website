@@ -167,4 +167,15 @@ return [
     ],
   ],
 
+  // ================= RECHTLICHES =================
+  'legal' => [
+    'label' => 'Rechtliches',
+    'icon'  => '⚖️',
+    'file'  => __DIR__ . '/../data/legal.json',
+    'fields' => [
+      ['name'=>'impressum','label'=>'Impressum','widget'=>'markdown','hint'=>'Pflichtangaben nach § 5 TMG. Platzhalter in [ ] ersetzen. Im Zweifel rechtlich prüfen lassen.'],
+      ['name'=>'datenschutz','label'=>'Datenschutzerklärung','widget'=>'markdown','hint'=>'Datenschutzhinweise (DSGVO). Platzhalter ersetzen und an genutzte Dienste anpassen.'],
+    ],
+  ],
+
 ];

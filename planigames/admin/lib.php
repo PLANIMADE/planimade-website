@@ -66,6 +66,7 @@ function pg_areas_map(){
     'studio'      => 'Studio & Startseite',
     'games'       => 'Spiele',
     'patchnotes'  => 'Devlog & Patch Notes',
+    'legal'       => 'Rechtliches',
     'subscribers' => 'Newsletter-Abos',
   ];
 }

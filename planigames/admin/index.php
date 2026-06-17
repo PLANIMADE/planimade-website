@@ -337,6 +337,7 @@ foreach ($SCHEMA as $key => $coll) {
     'studio' => 'Startseite, Über-uns, Team, Kontakt &amp; Footer.',
     'games' => 'Spiele anlegen und ihre Seiten mit Blöcken bauen.',
     'patchnotes' => 'Devlog-Einträge, Ankündigungen &amp; Patch Notes.',
+    'legal' => 'Impressum &amp; Datenschutzerklärung bearbeiten.',
   ][$key] ?? '';
   echo '<a class="card" href="index.php?collection=' . pg_h($key) . '">'
      . '<span class="card-ico">' . pg_h($coll['icon']) . '</span>'

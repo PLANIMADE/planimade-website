@@ -627,6 +627,31 @@
         initMagnetic();
     }
 
+    /* =========================================================
+       7) RECHTLICHES (Impressum / Datenschutz)
+       ========================================================= */
+    async function renderLegal() {
+        const data = await fetchJSON("data/legal.json") || {};
+        const root = $("[data-legal]");
+        if (!root) return;
+        const doc = qs.get("doc");
+        const section = (body) => `<div class="prose-pg">${md(body || "_Inhalt folgt._")}</div>`;
+        let inner, title;
+        if (doc === "datenschutz") { inner = section(data.datenschutz); title = "Datenschutz"; }
+        else if (doc === "impressum") { inner = section(data.impressum); title = "Impressum"; }
+        else {
+            inner = section(data.impressum) + `<hr class="my-16 border-white/10">` + section(data.datenschutz);
+            title = "Rechtliches";
+        }
+        document.title = `${title} — PLANIGAMES`;
+        root.innerHTML = `<section class="px-6 pt-36 pb-24"><div class="max-w-3xl mx-auto reveal">
+            <div class="flex gap-2 mb-10">
+                <a href="rechtliches.html?doc=impressum" class="badge px-4 py-1.5 rounded-full border ${doc === "impressum" ? "bg-white text-black border-white" : "border-white/15 text-zinc-300 hover:border-white/40"}">Impressum</a>
+                <a href="rechtliches.html?doc=datenschutz" class="badge px-4 py-1.5 rounded-full border ${doc === "datenschutz" ? "bg-white text-black border-white" : "border-white/15 text-zinc-300 hover:border-white/40"}">Datenschutz</a>
+            </div>${inner}</div></section>`;
+        observeReveals(root);
+    }
+
     function notFound(msg) {
         return `<div class="min-h-[60vh] grid place-items-center text-center px-6">
             <div><div class="text-6xl mb-6">🪄</div>
@@ -736,6 +761,10 @@
                     </div>
                     <div class="mt-16 pt-8 border-t border-white/8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-600">
                         <div>© <span data-year></span> PLANIGAMES — Alle Rechte vorbehalten.</div>
+                        <div class="flex items-center gap-5">
+                            <a href="rechtliches.html?doc=impressum" class="hover:text-white">Impressum</a>
+                            <a href="rechtliches.html?doc=datenschutz" class="hover:text-white">Datenschutz</a>
+                        </div>
                         <div class="font-mono uppercase tracking-widest">Made with 🧡 in Germany</div>
                     </div>
                 </div>
@@ -822,6 +851,7 @@
             games: renderGamesList,
             game: renderGame,
             devlog: renderDevlog,
+            legal: renderLegal,
         }[page] || (() => {}))();
         // Studio-Daten für den Footer sicherstellen (auch ohne Home)
         if (!DATA.studio) await loadData("studio");
