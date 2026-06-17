@@ -579,20 +579,23 @@
         }
 
         initTilt(root); initMagnetic(); observeReveals(root);
+        initLightbox(); initFaq(root); initCountdowns(root); initCounters(root);
     }
 
-    // Mapped jeden Block-Typ auf HTML. Neue Typen hier + in admin/config.yml ergänzen.
+    // Mapped jeden Block-Typ auf HTML. Neue Typen hier + in admin/schema.php ergänzen.
     function renderBlock(b, g, i) {
         const type = b.type || b._type;
         switch (type) {
             case "hero": return blockHero(b, g);
             case "richtext": return blockRichtext(b);
             case "features": return blockFeatures(b);
-            case "gallery": return blockGallery(b);
+            case "gallery": return blockGallery(b, i);
             case "trailer": return blockTrailer(b);
             case "quotes": return blockQuotes(b);
             case "stats": return blockStats(b);
             case "roadmap": return blockRoadmap(b);
+            case "faq": return blockFaq(b);
+            case "countdown": return blockCountdown(b);
             case "cta": return blockCTA(b, g);
             case "spacer": return `<div style="height:${Math.max(0, +b.size || 48)}px"></div>`;
             default: return "";
@@ -648,14 +651,16 @@
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">${items}</div>`, "py-20 md:py-28");
     }
 
-    function blockGallery(b) {
-        const imgs = (b.images || []).map((im, i) => {
-            const src = typeof im === "string" ? im : im.image;
-            return `<a href="${esc(src)}" target="_blank" rel="noopener" class="reveal group relative block overflow-hidden rounded-xl border border-white/10 ${i % 5 === 0 ? "sm:col-span-2 sm:row-span-2" : ""}" style="transition-delay:${i * 50}ms">
-                <img src="${esc(src)}" alt="" class="w-full h-full object-cover aspect-video transition-transform duration-700 group-hover:scale-105">
+    function blockGallery(b, gi = 0) {
+        const list = (b.images || []).map(im => (typeof im === "string" ? im : im.image)).filter(Boolean);
+        const grp = "g" + gi;
+        const imgs = list.map((src, i) => `
+            <button type="button" data-lb data-lb-group="${grp}" data-lb-index="${i}" class="reveal group relative block overflow-hidden rounded-xl border border-white/10 ${i % 5 === 0 ? "sm:col-span-2 sm:row-span-2" : ""}" style="transition-delay:${i * 50}ms">
+                <img src="${esc(src)}" alt="" loading="lazy" class="w-full h-full object-cover aspect-video transition-transform duration-700 group-hover:scale-105">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            </a>`;
-        }).join("");
+                <div class="absolute bottom-2 right-2 text-white/0 group-hover:text-white/90 text-lg transition-colors">⤢</div>
+            </button>`).join("");
+        if (!list.length) return "";
         return sec(`
             ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-12 reveal">${esc(b.heading)}</h2>` : ""}
             <div class="grid sm:grid-cols-3 gap-3 auto-rows-[1fr]">${imgs}</div>`, "py-20 md:py-28");
@@ -692,7 +697,7 @@
     function blockStats(b) {
         const items = (b.items || []).map((st, i) => `
             <div class="reveal text-center" style="transition-delay:${i * 70}ms">
-                <div class="font-display text-4xl md:text-6xl font-extrabold text-gradient">${esc(st.value || "")}</div>
+                <div class="font-display text-4xl md:text-6xl font-extrabold text-gradient" data-count>${esc(st.value || "")}</div>
                 <div class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 mt-2">${esc(st.label || "")}</div>
             </div>`).join("");
         return sec(`<div class="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 border-y border-white/10">${items}</div>`, "py-16");
@@ -714,6 +719,41 @@
             <div class="max-w-2xl">${items}</div>`, "py-20 md:py-28");
     }
 
+    function blockFaq(b) {
+        const items = (b.items || []).map((q, i) => `
+            <div class="reveal faq-item border-b border-white/10" style="transition-delay:${i * 50}ms">
+                <button type="button" class="faq-q w-full flex items-center justify-between gap-4 text-left py-5 group" aria-expanded="false">
+                    <span class="text-lg md:text-xl font-semibold text-white group-hover:text-gradient">${esc(q.question || "")}</span>
+                    <span class="faq-ico shrink-0 w-8 h-8 rounded-full border border-white/15 grid place-items-center text-[color:var(--accent)] text-lg transition-transform">+</span>
+                </button>
+                <div class="faq-a overflow-hidden" style="max-height:0;transition:max-height .4s cubic-bezier(0.16,1,0.3,1)">
+                    <div class="prose-pg pb-6 pr-12">${md(q.answer || "")}</div>
+                </div>
+            </div>`).join("");
+        if (!items) return "";
+        return sec(`
+            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-10 reveal">${esc(b.heading)}</h2>` : ""}
+            <div class="max-w-3xl">${items}</div>`, "py-20 md:py-28");
+    }
+
+    function blockCountdown(b) {
+        const ts = b.date ? Date.parse(b.date) : NaN;
+        const valid = !isNaN(ts);
+        const units = [["d", "Tage", "days"], ["h", "Std", "hrs"], ["m", "Min", "min"], ["s", "Sek", "sec"]];
+        const cells = units.map(([k, de, en]) => `
+            <div class="text-center">
+                <div class="cd-num font-display text-4xl md:text-6xl font-extrabold text-gradient tabular-nums" data-cd="${k}">--</div>
+                <div class="font-mono text-[10px] uppercase tracking-widest text-zinc-500 mt-1">${LANG === "en" ? en : de}</div>
+            </div>`).join("");
+        return sec(`
+            <div class="reveal relative overflow-hidden rounded-3xl border border-white/10 p-10 md:p-14 text-center" style="background:radial-gradient(120% 120% at 50% 0%, color-mix(in srgb,var(--accent) 22%, transparent), transparent 60%)">
+                ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3">${esc(b.heading)}</h2>` : ""}
+                ${b.label ? `<p class="text-zinc-300 mb-8">${esc(b.label)}</p>` : ""}
+                <div class="cd-grid grid grid-cols-4 gap-4 md:gap-8 max-w-xl mx-auto" data-countdown="${valid ? ts : ""}">${cells}</div>
+                <div class="cd-done hidden mt-2 text-2xl font-bold text-[color:var(--accent)]"></div>
+            </div>`, "py-20 md:py-28");
+    }
+
     function blockCTA(b, g) {
         const href = b.url || g.wishlistUrl || "#";
         return sec(`
@@ -722,6 +762,99 @@
                 ${b.text ? `<p class="text-zinc-300 text-lg max-w-2xl mx-auto mb-9">${esc(b.text)}</p>` : ""}
                 <a href="${esc(href)}" target="_blank" rel="noopener" class="btn-accent magnetic inline-block px-10 py-4 rounded-full font-semibold text-lg">${esc(b.label || "Jetzt wishlisten")}</a>
             </div>`, "py-20 md:py-28");
+    }
+
+    /* ---------- Interaktive Block-Helfer ---------- */
+    let _lbBound = false, _lbList = [], _lbIdx = 0;
+    function initLightbox() {
+        if (!$("#lightbox")) {
+            document.body.insertAdjacentHTML("beforeend", `
+                <div id="lightbox" class="hidden" aria-hidden="true">
+                    <button class="lb-close" data-lb-close aria-label="Schließen">✕</button>
+                    <button class="lb-nav lb-prev" data-lb-prev aria-label="Zurück">‹</button>
+                    <img class="lb-img" alt="">
+                    <button class="lb-nav lb-next" data-lb-next aria-label="Weiter">›</button>
+                    <div class="lb-count"></div>
+                </div>`);
+        }
+        if (_lbBound) return; _lbBound = true;
+        const lb = $("#lightbox"), img = $(".lb-img", lb), counter = $(".lb-count", lb);
+        const show = () => { img.src = _lbList[_lbIdx] || ""; counter.textContent = `${_lbIdx + 1} / ${_lbList.length}`; };
+        const open = (group, idx) => {
+            _lbList = $$(`[data-lb][data-lb-group="${group}"]`).sort((a, b) => a.dataset.lbIndex - b.dataset.lbIndex)
+                .map(el => el.querySelector("img")?.src).filter(Boolean);
+            _lbIdx = idx; show();
+            lb.classList.remove("hidden"); document.body.classList.add("menu-open");
+        };
+        const close = () => { lb.classList.add("hidden"); document.body.classList.remove("menu-open"); };
+        const step = (d) => { _lbIdx = (_lbIdx + d + _lbList.length) % _lbList.length; show(); };
+        document.addEventListener("click", (e) => {
+            const trig = e.target.closest("[data-lb]");
+            if (trig) { e.preventDefault(); open(trig.dataset.lbGroup, +trig.dataset.lbIndex); return; }
+            if (e.target.closest("[data-lb-close]") || e.target.id === "lightbox") return close();
+            if (e.target.closest("[data-lb-next]")) return step(1);
+            if (e.target.closest("[data-lb-prev]")) return step(-1);
+        });
+        addEventListener("keydown", (e) => {
+            if (lb.classList.contains("hidden")) return;
+            if (e.key === "Escape") close(); else if (e.key === "ArrowRight") step(1); else if (e.key === "ArrowLeft") step(-1);
+        });
+    }
+
+    function initFaq(root = document) {
+        $$(".faq-q", root).forEach(btn => btn.addEventListener("click", () => {
+            const item = btn.closest(".faq-item"), ans = $(".faq-a", item), ico = $(".faq-ico", btn);
+            const open = item.classList.toggle("open");
+            ans.style.maxHeight = open ? ans.scrollHeight + "px" : "0";
+            btn.setAttribute("aria-expanded", String(open));
+            if (ico) ico.textContent = open ? "–" : "+";
+        }));
+    }
+
+    function initCountdowns(root = document) {
+        const els = $$("[data-countdown]", root);
+        els.forEach(grid => {
+            const ts = parseInt(grid.dataset.countdown, 10);
+            const done = grid.parentElement.querySelector(".cd-done");
+            const tick = () => {
+                if (!ts) return;
+                let diff = Math.floor((ts - Date.now()) / 1000);
+                if (diff <= 0) {
+                    grid.style.display = "none";
+                    if (done) { done.classList.remove("hidden"); done.textContent = LANG === "en" ? "Out now! 🎉" : "Jetzt verfügbar! 🎉"; }
+                    return false;
+                }
+                const d = Math.floor(diff / 86400); diff -= d * 86400;
+                const h = Math.floor(diff / 3600); diff -= h * 3600;
+                const m = Math.floor(diff / 60); const s = diff - m * 60;
+                const set = (k, v) => { const el = grid.querySelector(`[data-cd="${k}"]`); if (el) el.textContent = String(v).padStart(2, "0"); };
+                set("d", d); set("h", h); set("m", m); set("s", s);
+                return true;
+            };
+            if (tick() !== false) { const iv = setInterval(() => { if (tick() === false) clearInterval(iv); }, 1000); }
+        });
+    }
+
+    function initCounters(root = document) {
+        if (!("IntersectionObserver" in window)) return;
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach(en => {
+                if (!en.isIntersecting) return;
+                io.unobserve(en.target);
+                const el = en.target, raw = el.textContent.trim();
+                const m = raw.match(/^(\D*)(\d[\d,]*)(\D*)$/);
+                if (!m) return;
+                const target = parseFloat(m[2].replace(/,/g, "")), pre = m[1], suf = m[3];
+                const t0 = performance.now(), dur = 1200;
+                const step = (t) => {
+                    const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+                    el.textContent = pre + Math.round(target * e) + suf;
+                    if (p < 1) requestAnimationFrame(step);
+                };
+                requestAnimationFrame(step);
+            });
+        }, { threshold: 0.4 });
+        $$("[data-count]", root).forEach(el => io.observe(el));
     }
 
     /* =========================================================

@@ -154,6 +154,18 @@ return [
               ['name'=>'text','label'=>'Beschreibung','widget'=>'text'],
             ]],
           ]],
+          'faq'=>['label'=>'FAQ (Fragen & Antworten)','fields'=>[
+            ['name'=>'heading','label'=>'Überschrift','widget'=>'string'],
+            ['name'=>'items','label'=>'Fragen','widget'=>'list','summary'=>'question','fields'=>[
+              ['name'=>'question','label'=>'Frage','widget'=>'string'],
+              ['name'=>'answer','label'=>'Antwort','widget'=>'markdown'],
+            ]],
+          ]],
+          'countdown'=>['label'=>'Release-Countdown','fields'=>[
+            ['name'=>'heading','label'=>'Überschrift','widget'=>'string','hint'=>'z. B. Release in'],
+            ['name'=>'label','label'=>'Unterzeile','widget'=>'string'],
+            ['name'=>'date','label'=>'Zieldatum/-zeit','widget'=>'datetime','hint'=>'Zeitpunkt, auf den heruntergezählt wird.'],
+          ]],
           'cta'=>['label'=>'Call-to-Action (Banner)','fields'=>[
             ['name'=>'heading','label'=>'Überschrift','widget'=>'string'],
             ['name'=>'text','label'=>'Text','widget'=>'text'],

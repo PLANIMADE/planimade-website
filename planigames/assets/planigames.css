@@ -204,6 +204,23 @@ body.fx-off .glow-blob, body.fx-off #fx-canvas { display: none; }
 .prose-pg ul.changelog li { position: relative; padding-left: 1.4rem; }
 .prose-pg ul.changelog li::before { content: ""; position: absolute; left: 0; top: .55em; width: .5rem; height: .5rem; border-radius: 9999px; background: var(--accent); }
 
+/* ---------- Lightbox (Screenshot-Galerie) ---------- */
+#lightbox { position: fixed; inset: 0; z-index: 70; background: rgba(3,3,4,0.95);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center; }
+#lightbox.hidden { display: none; }
+#lightbox .lb-img { max-width: 92vw; max-height: 84vh; border-radius: 12px; box-shadow: 0 30px 90px rgba(0,0,0,.7); }
+#lightbox .lb-close, #lightbox .lb-nav {
+    position: absolute; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+    color: #fff; border-radius: 9999px; cursor: pointer; display: grid; place-items: center; transition: background .2s, border-color .2s; }
+#lightbox .lb-close:hover, #lightbox .lb-nav:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.4); }
+#lightbox .lb-close { top: 1.2rem; right: 1.4rem; width: 44px; height: 44px; font-size: 1.1rem; }
+#lightbox .lb-nav { top: 50%; transform: translateY(-50%); width: 52px; height: 52px; font-size: 2rem; line-height: 1; }
+#lightbox .lb-prev { left: 1.2rem; } #lightbox .lb-next { right: 1.2rem; }
+#lightbox .lb-count { position: absolute; bottom: 1.3rem; left: 50%; transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #b9b9c4; letter-spacing: .1em; }
+@media (max-width: 640px) { #lightbox .lb-nav { width: 42px; height: 42px; font-size: 1.5rem; } }
+
 ::selection { background: var(--accent); color: #050505; }
 
 /* Reduced motion: nur sicherstellen, dass Inhalte sichtbar bleiben */

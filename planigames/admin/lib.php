@@ -353,6 +353,9 @@ function pg_render_field($f, $val, $name, $pathKey){
     case 'date':
       $field = '<input type="date" name="' . pg_h($name) . '" value="' . pg_h($val) . '">';
       break;
+    case 'datetime':
+      $field = '<input type="datetime-local" name="' . pg_h($name) . '" value="' . pg_h($val) . '">';
+      break;
     case 'image':
     case 'file':
       $accept = $w === 'image' ? 'image/*' : 'image/*,video/*';
