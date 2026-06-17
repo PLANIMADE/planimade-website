@@ -64,6 +64,7 @@ function pg_is_owner(){ return pg_current_role() === 'owner'; }
 function pg_areas_map(){
   return [
     'studio'      => 'Studio & Startseite',
+    'team'        => 'Team',
     'games'       => 'Spiele',
     'patchnotes'  => 'Devlog & Patch Notes',
     'legal'       => 'Rechtliches',

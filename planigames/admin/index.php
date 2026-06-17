@@ -242,10 +242,10 @@ if (($_GET['view'] ?? '') === 'users') {
       else { pg_user_delete($email); $flash = '<div class="flash ok">Zugang entfernt.</div>'; }
     }
   }
-  pg_view_head('Team & Zugänge');
+  pg_view_head('Zugänge');
   pg_view_topbar($SCHEMA, null);
   echo '<div class="editor">';
-  echo '<div class="editor-head"><div><h1>👥 Team &amp; Zugänge</h1>'
+  echo '<div class="editor-head"><div><h1>🔑 Zugänge &amp; Rollen</h1>'
      . '<p class="muted">Wer darf das Dashboard bearbeiten? Lade Leute per E-Mail ein.</p></div></div>';
   echo $flash;
   if ($inviteLink) echo '<div class="field"><label class="flabel">Einladungslink (kopieren &amp; senden)</label>'
@@ -373,7 +373,8 @@ echo '<div class="cards">';
 foreach ($SCHEMA as $key => $coll) {
   if (!pg_can($key)) continue;
   $desc = [
-    'studio' => 'Startseite, Über-uns, Team, Kontakt &amp; Footer.',
+    'studio' => 'Startseite, Über-uns, Kontakt &amp; Footer.',
+    'team' => 'Teammitglieder mit Foto, Name &amp; Rolle.',
     'games' => 'Spiele anlegen und ihre Seiten mit Blöcken bauen.',
     'patchnotes' => 'Devlog-Einträge, Ankündigungen &amp; Patch Notes.',
     'legal' => 'Impressum &amp; Datenschutzerklärung bearbeiten.',
@@ -391,8 +392,8 @@ if (pg_can('subscribers')) {
 }
 if (pg_is_owner()) {
   echo '<a class="card" href="index.php?view=users">'
-     . '<span class="card-ico">👥</span><span class="card-title">Team &amp; Zugänge</span>'
-     . '<span class="card-desc">Mitglieder per E-Mail einladen &amp; verwalten.</span></a>';
+     . '<span class="card-ico">🔑</span><span class="card-title">Zugänge &amp; Rollen</span>'
+     . '<span class="card-desc">Login-Zugänge per E-Mail einladen &amp; Rechte vergeben.</span></a>';
 }
 echo '</div>';
 echo '<div class="dash-links"><a href="../index.html" target="_blank">↗ Website ansehen</a> '
@@ -420,7 +421,7 @@ function pg_view_topbar($SCHEMA, $active){
     echo '<a' . $cls . ' href="index.php?collection=' . pg_h($key) . '">' . pg_h($coll['label']) . '</a>';
   }
   if (pg_can('subscribers')) echo '<a href="index.php?view=subscribers">Abos</a>';
-  if (pg_is_owner()) echo '<a href="index.php?view=users">Team</a>';
+  if (pg_is_owner()) echo '<a href="index.php?view=users">Zugänge</a>';
   echo '</nav>';
   echo '<span class="tb-right">';
   if (pg_logged_in()) echo '<span class="tb-user" title="' . pg_h(pg_current_email()) . '">' . pg_h(pg_current_email()) . '</span>';

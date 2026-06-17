@@ -20,7 +20,7 @@ return [
     'file'  => __DIR__ . '/../data/studio.json',
     'fields' => [
       ['name'=>'name','label'=>'Studio-Name','widget'=>'string'],
-      ['name'=>'logo','label'=>'Logo (optional)','widget'=>'image','hint'=>'Transparentes PNG/SVG. Ersetzt den Schriftzug in Kopf-/Fußzeile. Leer = Wortmarke.'],
+      ['name'=>'logo','label'=>'Logo (optional)','widget'=>'image','hint'=>'Transparentes PNG/SVG, Höhe ~80 px (z. B. 240×80). Ersetzt den Schriftzug in Kopf-/Fußzeile. Leer = Wortmarke.'],
       ['name'=>'tagline','label'=>'Untertitel / Tagline','widget'=>'string'],
       ['name'=>'founded','label'=>'Gegründet (Jahr)','widget'=>'string'],
       ['name'=>'heroLine1','label'=>'Hero – Zeile 1','widget'=>'string','hint'=>'Große Überschrift, erste Zeile.'],
@@ -32,12 +32,6 @@ return [
         ['name'=>'icon','label'=>'Icon / Emoji','widget'=>'string','hint'=>'z. B. 🪄'],
         ['name'=>'title','label'=>'Titel','widget'=>'string'],
         ['name'=>'text','label'=>'Text','widget'=>'text'],
-      ]],
-      ['name'=>'team','label'=>'Team','widget'=>'list','summary'=>'name','fields'=>[
-        ['name'=>'name','label'=>'Name','widget'=>'string'],
-        ['name'=>'role','label'=>'Rolle','widget'=>'string'],
-        ['name'=>'photo','label'=>'Foto','widget'=>'image'],
-        ['name'=>'emoji','label'=>'Emoji (falls kein Foto)','widget'=>'string','default'=>'🧙'],
       ]],
       ['name'=>'newsletter','label'=>'Newsletter-Anmeldung','widget'=>'object','hint'=>'Steuert das Anmeldeformular (Startseite & Footer).','fields'=>[
         ['name'=>'enabled','label'=>'Newsletter aktiv','widget'=>'boolean','default'=>true],
@@ -69,6 +63,21 @@ return [
     ],
   ],
 
+  // ================= TEAM =================
+  'team' => [
+    'label' => 'Team',
+    'icon'  => '👥',
+    'file'  => __DIR__ . '/../data/team.json',
+    'fields' => [
+      ['name'=>'members','label'=>'Teammitglieder','widget'=>'list','summary'=>'name','fields'=>[
+        ['name'=>'name','label'=>'Name','widget'=>'string'],
+        ['name'=>'role','label'=>'Rolle','widget'=>'string','hint'=>'z. B. Founder · Code & Design'],
+        ['name'=>'photo','label'=>'Foto','widget'=>'image','hint'=>'Quadratisch, ca. 400×400 px (JPG/PNG). Ohne Foto wird das Emoji gezeigt.'],
+        ['name'=>'emoji','label'=>'Emoji (falls kein Foto)','widget'=>'string','default'=>'🧙'],
+      ]],
+    ],
+  ],
+
   // ================= SPIELE =================
   'games' => [
     'label' => 'Spiele',
@@ -85,15 +94,15 @@ return [
         ['name'=>'accent','label'=>'Akzentfarbe','widget'=>'color','default'=>'#ff7d1a','hint'=>'Hauptfarbe der Game-Welt (HEX).'],
         ['name'=>'accent2','label'=>'Zweitfarbe','widget'=>'color','default'=>'#e6a015','hint'=>'Zweite HEX-Farbe für Verläufe.'],
         ['name'=>'featured','label'=>'Hervorgehoben (Startseite)','widget'=>'boolean'],
-        ['name'=>'cover','label'=>'Cover-Bild','widget'=>'image','hint'=>'Querformat 16:10. Für Karten & Startseite.'],
-        ['name'=>'logo','label'=>'Logo (transparent)','widget'=>'image','hint'=>'PNG – wird im Hero statt des Titels gezeigt.'],
+        ['name'=>'cover','label'=>'Cover-Bild','widget'=>'image','hint'=>'Querformat 16:10, ca. 1600×1000 px (JPG/WebP). Für Karten & Startseite.'],
+        ['name'=>'logo','label'=>'Logo (transparent)','widget'=>'image','hint'=>'Transparentes PNG, ca. 800×400 px – wird im Hero statt des Titels gezeigt.'],
         ['name'=>'wishlistUrl','label'=>'Wishlist / Store-Link','widget'=>'string','hint'=>'z. B. Steam-Seite.'],
         ['name'=>'blocks','label'=>'Seiten-Blöcke (Website-Builder)','widget'=>'blocks','types'=>[
           'hero'=>['label'=>'Hero (Kopfbereich)','fields'=>[
             ['name'=>'tagline','label'=>'Tagline (überschreibt Standard)','widget'=>'text'],
-            ['name'=>'background','label'=>'Hintergrundbild','widget'=>'image'],
+            ['name'=>'background','label'=>'Hintergrundbild','widget'=>'image','hint'=>'Querformat, ca. 2000×1200 px (JPG/WebP).'],
             ['name'=>'video','label'=>'Hintergrund-Video (mp4)','widget'=>'file'],
-            ['name'=>'poster','label'=>'Video-Vorschaubild','widget'=>'image'],
+            ['name'=>'poster','label'=>'Video-Vorschaubild','widget'=>'image','hint'=>'Querformat 16:9, ca. 1600×900 px.'],
             ['name'=>'ctaLabel','label'=>'Button-Text','widget'=>'string','default'=>'Auf Steam wishlisten'],
             ['name'=>'trailerUrl','label'=>'Trailer-Link (Button)','widget'=>'string'],
           ]],
@@ -112,13 +121,13 @@ return [
           ]],
           'gallery'=>['label'=>'Bildergalerie','fields'=>[
             ['name'=>'heading','label'=>'Überschrift','widget'=>'string'],
-            ['name'=>'images','label'=>'Bilder','widget'=>'list','field'=>['name'=>'image','label'=>'Bild','widget'=>'image']],
+            ['name'=>'images','label'=>'Bilder','widget'=>'list','hint'=>'Screenshots im Querformat 16:9, ca. 1920×1080 px.','field'=>['name'=>'image','label'=>'Bild','widget'=>'image']],
           ]],
           'trailer'=>['label'=>'Trailer / Video','fields'=>[
             ['name'=>'heading','label'=>'Überschrift','widget'=>'string'],
             ['name'=>'youtube','label'=>'YouTube-Link','widget'=>'string','hint'=>'Voller YouTube-Link. Alternativ Datei unten.'],
             ['name'=>'file','label'=>'Video-Datei (mp4)','widget'=>'file'],
-            ['name'=>'poster','label'=>'Vorschaubild','widget'=>'image'],
+            ['name'=>'poster','label'=>'Vorschaubild','widget'=>'image','hint'=>'Querformat 16:9, ca. 1600×900 px.'],
           ]],
           'quotes'=>['label'=>'Zitate / Reviews','fields'=>[
             ['name'=>'heading','label'=>'Überschrift','widget'=>'string'],
@@ -172,7 +181,7 @@ return [
         ['name'=>'game','label'=>'Spiel (Slug)','widget'=>'string','hint'=>'Slug des Spiels, z. B. wobbly-wizards. Leer = allgemeine News.'],
         ['name'=>'version','label'=>'Version','widget'=>'string','hint'=>'z. B. 0.3.0 – erscheint als Badge.'],
         ['name'=>'tags','label'=>'Tags','widget'=>'list','field'=>['name'=>'tag','label'=>'Tag','widget'=>'string']],
-        ['name'=>'cover','label'=>'Titelbild','widget'=>'image'],
+        ['name'=>'cover','label'=>'Titelbild','widget'=>'image','hint'=>'Querformat 16:9, ca. 1600×900 px.'],
         ['name'=>'excerpt','label'=>'Kurzfassung','widget'=>'text','hint'=>'Teaser für die Übersicht.'],
         ['name'=>'body','label'=>'Inhalt','widget'=>'markdown'],
       ]],

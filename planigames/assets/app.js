@@ -138,7 +138,6 @@
        1) SHELL — globale Effekte
        ========================================================= */
     function initShell() {
-        initPreloader();
         initCursor();
         initScrollProgress();
         initHeader();
@@ -167,7 +166,7 @@
 
         const ctx = canvas.getContext("2d");
         const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-        const AREA = { low: 75000, med: 46000, high: 28000 }[cfg.density] || 46000;   // kleiner = mehr
+        const AREA = { low: 55000, med: 34000, high: 21000 }[cfg.density] || 34000;   // kleiner = mehr
         const SP = { calm: 0.55, normal: 1, lively: 1.8 }[cfg.speed] || 1;
         const col = hexToRgb(cfg.color || "#ff7d1a");
         let w = 0, h = 0, dpr = 1, particles = [], raf = 0;
@@ -185,7 +184,7 @@
         })();
 
         function spawn(initial) {
-            const size = 1 + Math.random() * 3.5;
+            const size = 1.4 + Math.random() * 4;
             const x = Math.random() * w;
             return {
                 baseX: x, x,
@@ -195,16 +194,18 @@
                 ampl: 8 + Math.random() * 26,
                 phase: Math.random() * Math.PI * 2,
                 freq: (0.00012 + Math.random() * 0.00028) * SP,
-                a: 0.06 + Math.random() * 0.20,
+                a: 0.12 + Math.random() * 0.30,
                 tw: (0.4 + Math.random() * 1.4) * SP,
             };
         }
         function resize() {
             dpr = Math.min(window.devicePixelRatio || 1, 2);
-            w = canvas.clientWidth; h = canvas.clientHeight;
+            // Fallback auf Fenstergröße, falls das fixe Canvas (je nach Browser) 0 meldet
+            w = canvas.clientWidth || window.innerWidth;
+            h = canvas.clientHeight || window.innerHeight;
             canvas.width = Math.max(1, w * dpr); canvas.height = Math.max(1, h * dpr);
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            const count = Math.round(Math.min(90, Math.max(14, (w * h) / AREA)));
+            const count = Math.round(Math.min(130, Math.max(20, (w * h) / AREA)));
             particles = Array.from({ length: count }, () => spawn(true));
         }
         function draw(t) {
@@ -238,25 +239,6 @@
             const b = e.target.closest("[data-setlang]");
             if (b) { e.preventDefault(); setLang(b.dataset.setlang); }
         });
-    }
-
-    function initPreloader() {
-        const pre = $("#preloader");
-        if (!pre) return;
-        const fill = $("#pre-bar-fill"), count = $("#pre-count");
-        let p = 0;
-        const tick = setInterval(() => {
-            p = Math.min(100, p + Math.random() * 18);
-            if (fill) fill.style.width = p + "%";
-            if (count) count.textContent = String(Math.floor(p)).padStart(3, "0");
-            if (p >= 100) {
-                clearInterval(tick);
-                setTimeout(() => {
-                    pre.classList.add("done");
-                    document.body.classList.remove("overflow-hidden");
-                }, 350);
-            }
-        }, 130);
     }
 
     function initCursor() {
@@ -305,12 +287,17 @@
     function initMobileMenu() {
         const btn = $("#menu-toggle"), menu = $("#mobile-menu");
         if (!btn || !menu) return;
-        const close = () => { menu.classList.add("hidden"); btn.setAttribute("aria-expanded", "false"); };
-        btn.addEventListener("click", () => {
-            const open = menu.classList.toggle("hidden");
-            btn.setAttribute("aria-expanded", String(!open));
-        });
-        $$("a", menu).forEach(a => a.addEventListener("click", close));
+        const setOpen = (open) => {
+            menu.classList.toggle("open", open);
+            btn.classList.toggle("open", open);
+            btn.setAttribute("aria-expanded", String(open));
+            btn.setAttribute("aria-label", open ? "Menü schließen" : "Menü öffnen");
+            menu.setAttribute("aria-hidden", String(!open));
+            document.body.classList.toggle("menu-open", open);
+        };
+        btn.addEventListener("click", () => setOpen(!menu.classList.contains("open")));
+        $$("a", menu).forEach(a => a.addEventListener("click", () => setOpen(false)));
+        addEventListener("keydown", (e) => { if (e.key === "Escape") setOpen(false); });
     }
 
     function initReveal() {
@@ -396,7 +383,7 @@
        ========================================================= */
     const DATA = {};
     async function loadData(...names) {
-        const map = { studio: "data/studio.json", games: "data/games.json", patchnotes: "data/patchnotes.json", legal: "data/legal.json" };
+        const map = { studio: "data/studio.json", team: "data/team.json", games: "data/games.json", patchnotes: "data/patchnotes.json", legal: "data/legal.json" };
         await Promise.all(names.map(async n => {
             if (DATA[n] !== undefined) return;   // schon geladen
             const de = await fetchJSON(map[n]);
@@ -414,7 +401,7 @@
        3) STUDIO-HOME
        ========================================================= */
     async function renderHome() {
-        await loadData("studio", "games", "patchnotes");
+        await loadData("studio", "team", "games", "patchnotes");
         const s = DATA.studio || {};
         const games = (DATA.games && DATA.games.games) || [];
         const posts = ((DATA.patchnotes && DATA.patchnotes.posts) || [])
@@ -444,17 +431,19 @@
             initTilt(pillars); observeReveals(pillars);
         }
 
-        // Team
+        // Team (eigene Datei team.json)
         const team = $("[data-studio='team']");
-        if (team && Array.isArray(s.team) && s.team.length) {
-            team.innerHTML = s.team.map((m, i) => `
-                <div class="reveal text-center w-36" style="transition-delay:${i * 70}ms">
-                    <div class="relative mx-auto w-28 h-28 rounded-2xl overflow-hidden border border-white/10 bg-white/5">
+        const members = (DATA.team && DATA.team.members) || [];
+        if (team && members.length) {
+            team.innerHTML = members.map((m, i) => `
+                <div class="reveal text-center w-48 sm:w-56" style="transition-delay:${i * 70}ms">
+                    <div class="relative mx-auto w-40 h-40 sm:w-48 sm:h-48 rounded-3xl overflow-hidden border border-white/10 bg-white/5 transition-transform duration-500 hover:scale-[1.03]">
                         ${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.name)}" class="w-full h-full object-cover">`
-                                  : `<div class="w-full h-full grid place-items-center text-3xl">${esc(m.emoji || "🧙")}</div>`}
+                                  : `<div class="w-full h-full grid place-items-center text-6xl">${esc(m.emoji || "🧙")}</div>`}
+                        <div class="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-3xl"></div>
                     </div>
-                    <div class="mt-4 font-bold text-white">${esc(m.name || "")}</div>
-                    <div class="font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] mt-1">${esc(m.role || "")}</div>
+                    <div class="mt-5 text-xl font-bold text-white">${esc(m.name || "")}</div>
+                    <div class="font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] mt-1.5">${esc(m.role || "")}</div>
                 </div>`).join("");
             observeReveals(team);
         } else { $("#team-section")?.remove(); }
@@ -864,8 +853,15 @@
     function navLinks(extra = "") {
         const here = location.pathname.split("/").pop() || "index.html";
         return NAV.map(([href, key]) => {
-            const active = href.split("#")[0] === here;
+            const active = !href.includes("#") && href === here;
             return `<a href="${href}" class="${extra} ${active ? "text-white" : "text-zinc-400 hover:text-white"} transition-colors">${t(key)}</a>`;
+        }).join("");
+    }
+    function mobileNavLinks() {
+        const here = location.pathname.split("/").pop() || "index.html";
+        return NAV.map(([href, key], i) => {
+            const active = !href.includes("#") && href === here;
+            return `<a href="${href}" class="mm-link${active ? " is-active" : ""}" style="--i:${i}">${t(key)}</a>`;
         }).join("");
     }
     function langSwitch() {
@@ -881,17 +877,6 @@
                 <div id="scroll-progress"></div>
                 <canvas id="fx-canvas"></canvas>
                 <div id="cursor-ring"></div><div id="cursor-dot"></div>
-                <div id="preloader">
-                    <div class="relative h-24 w-24 grid place-items-center">
-                        <div class="absolute inset-0 rounded-full border border-white/10 spin-slow"></div>
-                        <div class="absolute inset-2 rounded-full border-t border-[color:var(--accent)] spin-rev"></div>
-                        <span class="inline-block w-5 h-5 rotate-45 rounded-[3px]" style="background:linear-gradient(135deg,var(--accent-2),var(--accent))"></span>
-                    </div>
-                    <div class="pre-bar"><span id="pre-bar-fill"></span></div>
-                    <div class="font-mono text-[10px] uppercase tracking-[0.4em] text-zinc-500 flex items-center gap-3">
-                        <span>Lade Welt</span><span id="pre-count" class="text-white tabular-nums">000</span>
-                    </div>
-                </div>
                 <div class="glow-blob glow-1" style="top:-12%;left:-12%;width:60vw;height:60vw;background:color-mix(in srgb,var(--accent) 16%,transparent)"></div>
                 <div class="glow-blob glow-2" style="bottom:-12%;right:-12%;width:55vw;height:55vw;background:color-mix(in srgb,var(--accent-2) 14%,transparent)"></div>`);
         }
@@ -911,13 +896,18 @@
                         ${langSwitch()}
                         <a href="games.html" class="btn-accent magnetic px-5 py-2.5 rounded-full text-sm font-semibold">${t("cta_discover")}</a>
                     </div>
-                    <button id="menu-toggle" class="md:hidden text-white p-2" aria-label="Menü" aria-expanded="false">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+                    <button id="menu-toggle" class="burger md:hidden" aria-label="Menü öffnen" aria-expanded="false">
+                        <span></span><span></span><span></span>
                     </button>
                 </div>
-                <div id="mobile-menu" class="hidden md:hidden border-t border-white/10 bg-[#06060a]/95 backdrop-blur-xl">
-                    <nav class="flex flex-col px-6 py-5 gap-4 text-lg">${navLinks("py-1")}
-                        <div class="pt-3">${langSwitch()}</div>
+                <div id="mobile-menu" class="mobile-menu md:hidden" aria-hidden="true">
+                    <nav class="mm-nav">
+                        ${mobileNavLinks()}
+                        <a href="rechtliches.html?doc=impressum" class="mm-sub" style="--i:5">${t("foot_impressum")}</a>
+                        <div class="mm-actions" style="--i:6">
+                            <a href="games.html" class="btn-accent magnetic px-7 py-3.5 rounded-full text-base font-semibold">${t("cta_discover")}</a>
+                            ${langSwitch()}
+                        </div>
                     </nav>
                 </div>
             </header>`;

@@ -16,9 +16,6 @@
     { "icon": "⚡", "title": "Klein & schnell", "text": "Als kleines Team treffen wir Entscheidungen heute und sehen sie morgen im Spiel." },
     { "icon": "💜", "title": "Für die Ewigkeit gebaut", "text": "Wir machen Spiele, an die man sich erinnert — nicht solche, die man wegklickt." }
   ],
-  "team": [
-    { "name": "Dominic Majewski", "role": "Founder · Code & Design", "emoji": "🧙" }
-  ],
   "newsletter": {
     "enabled": true,
     "heading": "Sei dabei, bevor die Magie startet.",
