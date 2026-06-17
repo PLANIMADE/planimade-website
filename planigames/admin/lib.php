@@ -175,14 +175,20 @@ function pg_translate_text($text, $from = 'de', $to = 'en'){
     if (trim($part) === '') { $out .= $part; continue; }
     $url = 'https://api.mymemory.translated.net/get?q=' . rawurlencode($part) . '&langpair=' . $from . '|' . $to
          . ($email ? '&de=' . rawurlencode($email) : '');
-    $res = pg_http_get($url);
-    $j = $res ? json_decode($res, true) : null;
-    $tr = $j['responseData']['translatedText'] ?? null;
-    $status = $j['responseStatus'] ?? 0;
-    if ($tr && ((int)$status === 200)) $out .= html_entity_decode($tr, ENT_QUOTES, 'UTF-8');
-    else $out .= $part; // Fallback: Original behalten
+    $tr = null;
+    for ($try = 0; $try < 2 && $tr === null; $try++) {
+      if ($try) usleep(900000); // bei Fehler kurz warten und erneut versuchen
+      $res = pg_http_get($url);
+      $j = $res ? json_decode($res, true) : null;
+      $cand = $j['responseData']['translatedText'] ?? null;
+      if ($cand && (int)($j['responseStatus'] ?? 0) === 200) $tr = html_entity_decode($cand, ENT_QUOTES, 'UTF-8');
+    }
+    $out .= $tr !== null ? $tr : $part; // Fallback: Original behalten
     usleep(120000); // freundlich zum kostenlosen Dienst
   }
+  // Markdown reparieren: Leerzeichen direkt innerhalb von **fett** / *kursiv* entfernen
+  $out = preg_replace_callback('/\*\*\s*(.+?)\s*\*\*/s', fn($m) => '**' . trim($m[1]) . '**', $out);
+  $out = preg_replace_callback('/(?<!\*)\*(?!\*)\s*(.+?)\s*(?<!\*)\*(?!\*)/s', fn($m) => '*' . trim($m[1]) . '*', $out);
   return $out;
 }
 
