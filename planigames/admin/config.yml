@@ -31,6 +31,7 @@ collections:
         file: "planigames/data/studio.json"
         fields:
           - { label: "Studio-Name", name: "name", widget: "string" }
+          - { label: "Logo (optional)", name: "logo", widget: "image", required: false, hint: "Transparentes PNG/SVG. Ersetzt den Schriftzug in Kopf- und Fußzeile. Leer = Wortmarke PLANIGAMES." }
           - { label: "Untertitel / Tagline", name: "tagline", widget: "string", required: false }
           - { label: "Gegründet (Jahr)", name: "founded", widget: "string", required: false }
           - { label: "Hero – Zeile 1", name: "heroLine1", widget: "string", hint: "Große Überschrift, erste Zeile." }
@@ -99,8 +100,8 @@ collections:
                   - { label: "Demo verfügbar", value: "demo" }
                   - { label: "Early Access", value: "early" }
                   - { label: "Veröffentlicht", value: "released" }
-              - { label: "Akzentfarbe", name: "accent", widget: "string", default: "#a855f7", hint: "Hauptfarbe der Game-Welt, als HEX (z. B. #a855f7)." }
-              - { label: "Zweitfarbe", name: "accent2", widget: "string", required: false, default: "#22d3ee", hint: "Zweite HEX-Farbe für Verläufe (z. B. #22d3ee)." }
+              - { label: "Akzentfarbe", name: "accent", widget: "string", default: "#ff7d1a", hint: "Hauptfarbe der Game-Welt, als HEX (z. B. #ff7d1a)." }
+              - { label: "Zweitfarbe", name: "accent2", widget: "string", required: false, default: "#e6a015", hint: "Zweite HEX-Farbe für Verläufe (z. B. #e6a015)." }
               - { label: "Hervorgehoben (Startseite)", name: "featured", widget: "boolean", default: false, required: false }
               - { label: "Cover-Bild", name: "cover", widget: "image", required: false, hint: "Querformat 16:10. Für Karten & Startseite." }
               - { label: "Logo (transparent)", name: "logo", widget: "image", required: false, hint: "PNG mit Transparenz – wird im Hero statt des Titels gezeigt." }

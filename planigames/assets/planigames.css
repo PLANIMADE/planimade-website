@@ -8,11 +8,12 @@
 :root {
     --x: 50%;
     --y: 50%;
-    /* Studio-Akzent (Standard). Game-Seiten überschreiben --accent live. */
-    --accent: #8b5cf6;          /* violet-500  */
-    --accent-2: #22d3ee;        /* cyan-400    */
-    --accent-3: #e879f9;        /* fuchsia-400 */
-    --bg: #06060a;
+    /* Studio-Akzent (Standard): Schwarz / Weiß / Orange.
+       Game-Seiten überschreiben --accent live für ihre eigene Welt. */
+    --accent: #ff7d1a;          /* Orange       */
+    --accent-2: #e6a015;        /* dunkles Gold  */
+    --accent-3: #ffa53d;        /* helles Orange */
+    --bg: #050505;              /* (fast) Schwarz, neutral */
 }
 
 html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
@@ -39,7 +40,8 @@ body { overscroll-behavior-y: none; background: var(--bg); }
 /* ---------- Marken-Typo-Helfer ---------- */
 .font-display { font-family: 'Clash Display', 'Archivo', system-ui, sans-serif; }
 .text-gradient {
-    background: linear-gradient(110deg, var(--accent), var(--accent-3) 45%, var(--accent-2));
+    /* Verlauf dunkles Gelb -> Orange (wie im Logo-Schriftzug "GAMES") */
+    background: linear-gradient(110deg, var(--accent-2), var(--accent) 75%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .text-stroke {
@@ -92,7 +94,7 @@ body.cursor-active #cursor-ring { width: 64px; height: 64px; background: rgba(25
 /* ---------- Header ---------- */
 #site-header { transition: all .5s cubic-bezier(0.16,1,0.3,1); }
 #site-header.scrolled {
-    background: rgba(6, 6, 10, 0.82);
+    background: rgba(5, 5, 5, 0.82);
     backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.07);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
@@ -161,7 +163,7 @@ body.cursor-active #cursor-ring { width: 64px; height: 64px; background: rgba(25
 .prose-pg ul.changelog li { position: relative; padding-left: 1.4rem; }
 .prose-pg ul.changelog li::before { content: ""; position: absolute; left: 0; top: .55em; width: .5rem; height: .5rem; border-radius: 9999px; background: var(--accent); }
 
-::selection { background: var(--accent); color: #fff; }
+::selection { background: var(--accent); color: #050505; }
 
 /* Reduced motion: nur sicherstellen, dass Inhalte sichtbar bleiben */
 @media (prefers-reduced-motion: reduce) {

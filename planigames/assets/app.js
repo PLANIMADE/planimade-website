@@ -202,9 +202,9 @@
 
     const STATUS = {
         released:   { label: "Veröffentlicht", cls: "text-emerald-300 border-emerald-400/30 bg-emerald-400/10" },
-        early:      { label: "Early Access",   cls: "text-amber-300 border-amber-400/30 bg-amber-400/10" },
-        demo:       { label: "Demo verfügbar", cls: "text-cyan-300 border-cyan-400/30 bg-cyan-400/10" },
-        development:{ label: "In Entwicklung",  cls: "text-violet-300 border-violet-400/30 bg-violet-400/10" },
+        early:      { label: "Early Access",   cls: "text-orange-300 border-orange-400/30 bg-orange-400/10" },
+        demo:       { label: "Demo verfügbar", cls: "text-amber-200 border-amber-300/30 bg-amber-300/10" },
+        development:{ label: "In Entwicklung",  cls: "text-orange-300 border-orange-400/30 bg-orange-400/10" },
         announced:  { label: "Angekündigt",    cls: "text-zinc-300 border-white/20 bg-white/5" },
     };
     function statusBadge(s) {
@@ -667,7 +667,7 @@
                     <div class="relative h-24 w-24 grid place-items-center">
                         <div class="absolute inset-0 rounded-full border border-white/10 spin-slow"></div>
                         <div class="absolute inset-2 rounded-full border-t border-[color:var(--accent)] spin-rev"></div>
-                        <span class="text-3xl">🪄</span>
+                        <span class="inline-block w-5 h-5 rotate-45 rounded-[3px]" style="background:linear-gradient(135deg,var(--accent-2),var(--accent))"></span>
                     </div>
                     <div class="pre-bar"><span id="pre-bar-fill"></span></div>
                     <div class="font-mono text-[10px] uppercase tracking-[0.4em] text-zinc-500 flex items-center gap-3">
@@ -682,9 +682,11 @@
         if (headerMount) headerMount.outerHTML = `
             <header id="site-header" class="fixed top-0 left-0 w-full z-50">
                 <div class="max-w-[95%] mx-auto h-20 flex items-center justify-between">
-                    <a href="index.html" class="flex items-center gap-3 group">
-                        <span class="text-xl">🎮</span>
-                        <span class="font-display text-lg font-extrabold uppercase tracking-[0.18em] text-white">PLANI<span class="text-gradient">GAMES</span></span>
+                    <a href="index.html" class="group" aria-label="PLANIGAMES Start">
+                        <span data-brand="sm" class="flex items-center gap-3">
+                            <span class="inline-block w-3 h-3 rotate-45 rounded-[2px] transition-transform duration-500 group-hover:rotate-[225deg]" style="background:linear-gradient(135deg,var(--accent-2),var(--accent))"></span>
+                            <span class="font-display text-lg font-extrabold uppercase tracking-[0.18em] text-white">PLANI<span class="text-gradient">GAMES</span></span>
+                        </span>
                     </a>
                     <nav class="hidden md:flex items-center gap-9 font-medium text-sm">${navLinks()}</nav>
                     <a href="games.html" class="hidden md:inline-block btn-accent magnetic px-5 py-2.5 rounded-full text-sm font-semibold">Spiele entdecken</a>
@@ -703,10 +705,10 @@
                 <div class="max-w-6xl mx-auto px-6 py-20">
                     <div class="grid md:grid-cols-[1.5fr_1fr_1fr] gap-12">
                         <div>
-                            <div class="flex items-center gap-3 mb-5">
-                                <span class="text-2xl">🎮</span>
+                            <a href="index.html" data-brand="lg" class="flex items-center gap-3 mb-5">
+                                <span class="inline-block w-4 h-4 rotate-45 rounded-[3px]" style="background:linear-gradient(135deg,var(--accent-2),var(--accent))"></span>
                                 <span class="font-display text-2xl font-extrabold uppercase tracking-[0.15em] text-white">PLANI<span class="text-gradient">GAMES</span></span>
-                            </div>
+                            </a>
                             <p class="text-zinc-400 max-w-sm leading-relaxed" data-studio="footerNote">Ein unabhängiges Indie-Spielestudio. Wir bauen Welten, die wackeln, zaubern und im Kopf bleiben.</p>
                             <form name="newsletter" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="mt-7 flex max-w-sm gap-2">
                                 <input type="hidden" name="form-name" value="newsletter">
@@ -734,7 +736,7 @@
                     </div>
                     <div class="mt-16 pt-8 border-t border-white/8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-600">
                         <div>© <span data-year></span> PLANIGAMES — Alle Rechte vorbehalten.</div>
-                        <div class="font-mono uppercase tracking-widest">Made with 🪄 in Germany</div>
+                        <div class="font-mono uppercase tracking-widest">Made with 🧡 in Germany</div>
                     </div>
                 </div>
             </footer>`;
@@ -743,6 +745,13 @@
     function fillStudioFooter() {
         const s = DATA.studio;
         if (!s) return;
+        // Eigenes Logo-Bild (falls im CMS hinterlegt) ersetzt die Wortmarke überall
+        if (s.logo) {
+            $$("[data-brand]").forEach(el => {
+                const lg = el.dataset.brand === "lg";
+                el.innerHTML = `<img src="${esc(s.logo)}" alt="${esc(s.name || "PLANIGAMES")}" class="${lg ? "h-9 md:h-10" : "h-7 md:h-8"} w-auto object-contain">`;
+            });
+        }
         if (s.footerNote) setText("[data-studio='footerNote']", s.footerNote);
         if (s.email) {
             setText("[data-studio='email']", s.email);
