@@ -39,6 +39,15 @@ return [
         ['name'=>'photo','label'=>'Foto','widget'=>'image'],
         ['name'=>'emoji','label'=>'Emoji (falls kein Foto)','widget'=>'string','default'=>'🧙'],
       ]],
+      ['name'=>'newsletter','label'=>'Newsletter-Anmeldung','widget'=>'object','hint'=>'Steuert das Anmeldeformular (Startseite & Footer).','fields'=>[
+        ['name'=>'enabled','label'=>'Newsletter aktiv','widget'=>'boolean','default'=>true],
+        ['name'=>'heading','label'=>'Überschrift (Startseite)','widget'=>'string'],
+        ['name'=>'text','label'=>'Text','widget'=>'text'],
+        ['name'=>'buttonLabel','label'=>'Button-Text','widget'=>'string','default'=>'Auf die Warteliste'],
+        ['name'=>'placeholder','label'=>'Platzhalter im Eingabefeld','widget'=>'string','default'=>'deine@mail.de'],
+        ['name'=>'successMessage','label'=>'Danke-Nachricht','widget'=>'string','default'=>'Danke! Du bist dabei. 🧡'],
+        ['name'=>'notifyEmail','label'=>'Benachrichtigung an (E-Mail)','widget'=>'string','hint'=>'Bei jeder Anmeldung eine Mail hierhin. Leer = an die Kontakt-E-Mail.'],
+      ]],
       ['name'=>'footerNote','label'=>'Footer – Kurzbeschreibung','widget'=>'text'],
       ['name'=>'email','label'=>'Kontakt-E-Mail','widget'=>'string'],
       ['name'=>'socials','label'=>'Social Links','widget'=>'list','summary'=>'label','fields'=>[

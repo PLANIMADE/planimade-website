@@ -119,6 +119,20 @@ button{font:inherit;cursor:pointer}
 .item.folded .item-body{display:none}
 .item.folded [data-fold]{transform:rotate(-90deg)}
 
+/* Abo-Tabelle */
+.subs{width:100%;border-collapse:collapse;font-size:.9rem;margin-top:.5rem}
+.subs th,.subs td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--line)}
+.subs th{color:var(--muted);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+.subs td:first-child{word-break:break-all}
+.clear-form{margin-top:1.5rem}
+.btn-danger{background:transparent;border:1px solid rgba(255,80,80,.4);color:#ff8585;
+  padding:.5rem 1rem;border-radius:999px;font-weight:600;font-size:.85rem}
+.btn-danger:hover{background:rgba(255,80,80,.12)}
+
+/* Objekt-Gruppe (z. B. Newsletter-Einstellungen) */
+.objectfield{border:1px solid var(--line);border-radius:14px;padding:1rem;background:rgba(255,255,255,.015)}
+.object-body{display:flex;flex-direction:column;gap:1.1rem;margin-top:.8rem}
+
 /* verschachtelte Listen etwas absetzen */
 .item-body .listfield,.item-body .blocksfield{background:rgba(255,255,255,.025)}
 

@@ -710,11 +710,11 @@
                                 <span class="font-display text-2xl font-extrabold uppercase tracking-[0.15em] text-white">PLANI<span class="text-gradient">GAMES</span></span>
                             </a>
                             <p class="text-zinc-400 max-w-sm leading-relaxed" data-studio="footerNote">Ein unabhängiges Indie-Spielestudio. Wir bauen Welten, die wackeln, zaubern und im Kopf bleiben.</p>
-                            <form name="newsletter" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="mt-7 flex max-w-sm gap-2">
-                                <input type="hidden" name="form-name" value="newsletter">
-                                <p class="hidden"><label>Nicht ausfüllen: <input name="bot-field"></label></p>
-                                <input type="email" name="email" required placeholder="deine@mail.de" class="flex-1 bg-white/[0.04] border border-white/12 rounded-full px-5 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-[color:var(--accent)] outline-none">
-                                <button class="btn-accent magnetic px-5 py-3 rounded-full text-sm font-semibold shrink-0">Updates</button>
+                            <form action="subscribe.php" method="POST" data-newsletter data-source="footer" class="mt-7 flex max-w-sm gap-2">
+                                <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
+                                <input type="hidden" name="source" value="footer">
+                                <input type="email" name="email" required placeholder="deine@mail.de" data-nl-input class="flex-1 bg-white/[0.04] border border-white/12 rounded-full px-5 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-[color:var(--accent)] outline-none">
+                                <button class="btn-accent magnetic px-5 py-3 rounded-full text-sm font-semibold shrink-0">Abonnieren</button>
                             </form>
                             <p class="text-[11px] text-zinc-600 mt-2">Kein Spam. Nur News zu neuen Spielen & großen Patches.</p>
                         </div>
@@ -761,6 +761,53 @@
         if (soc && Array.isArray(s.socials)) {
             soc.innerHTML = s.socials.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener" class="hover:text-white">${esc(x.label)}</a>`).join("");
         }
+        // Favicon an das Logo angleichen (falls hinterlegt)
+        if (s.logo) { const fav = $("link[rel='icon']"); if (fav) fav.href = s.logo; }
+        fillNewsletter(s.newsletter || {});
+    }
+
+    function fillNewsletter(nl) {
+        // Newsletter komplett aus, falls deaktiviert
+        if (nl.enabled === false) {
+            $$("[data-newsletter-section]").forEach(el => el.remove());
+            $$("form[data-newsletter]").forEach(f => f.closest("div")?.remove() || f.remove());
+            return;
+        }
+        if (nl.heading) setText("[data-nl='heading']", nl.heading);
+        if (nl.text) setText("[data-nl='text']", nl.text);
+        if (nl.buttonLabel) setText("[data-nl='button']", nl.buttonLabel);
+        if (nl.placeholder) $$("[data-nl-input]").forEach(i => i.placeholder = nl.placeholder);
+    }
+
+    // Anmeldeformulare ohne Seitenneuladen abschicken
+    function initNewsletter() {
+        document.addEventListener("submit", async (e) => {
+            const form = e.target.closest("form[data-newsletter]");
+            if (!form) return;
+            e.preventDefault();
+            if (form.dataset.busy) return;
+            form.dataset.busy = "1";
+            const nl = (DATA.studio && DATA.studio.newsletter) || {};
+            try {
+                const r = await fetch(form.getAttribute("action") || "subscribe.php", { method: "POST", body: new FormData(form) });
+                const j = await r.json().catch(() => ({}));
+                if (r.ok && j.ok) {
+                    const msg = j.message || nl.successMessage || "Danke! Du bist dabei. 🧡";
+                    form.innerHTML = `<div class="w-full text-center text-[color:var(--accent)] font-semibold py-2">${esc(msg)}</div>`;
+                } else {
+                    flashFormError(form, j.error || "Hat nicht geklappt. Bitte später erneut.");
+                }
+            } catch {
+                flashFormError(form, "Verbindung fehlgeschlagen. Bitte später erneut.");
+            }
+            delete form.dataset.busy;
+        });
+    }
+
+    function flashFormError(form, msg) {
+        let n = form.querySelector("[data-nl-err]");
+        if (!n) { n = document.createElement("div"); n.dataset.nlErr = "1"; n.className = "w-full text-center text-red-400 text-sm mt-2 basis-full"; form.appendChild(n); }
+        n.textContent = msg;
     }
 
     /* =========================================================
@@ -779,6 +826,7 @@
         // Studio-Daten für den Footer sicherstellen (auch ohne Home)
         if (!DATA.studio) await loadData("studio");
         fillStudioFooter();
+        initNewsletter();
     }
 
     if (document.readyState === "loading") addEventListener("DOMContentLoaded", boot);

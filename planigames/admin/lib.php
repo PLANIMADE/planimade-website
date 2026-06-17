@@ -100,9 +100,14 @@ function pg_render_field($f, $val, $name, $pathKey){
   $label = pg_h($f['label'] ?? $f['name']);
   $hint = !empty($f['hint']) ? '<p class="hint">' . pg_h($f['hint']) . '</p>' : '';
 
-  // Listen & Blöcke rendern ihre eigene Hülle
+  // Listen, Blöcke & Objekt-Gruppen rendern ihre eigene Hülle
   if ($w === 'list')   return pg_render_list($f, is_array($val) ? $val : [], $name, $pathKey);
   if ($w === 'blocks') return pg_render_blocks($f, is_array($val) ? $val : [], $name, $pathKey);
+  if ($w === 'object') {
+    $inner = pg_render_fields($f['fields'], is_array($val) ? $val : [], $name, $pathKey);
+    return '<div class="field objectfield"><label class="flabel">' . $label . '</label>'
+         . $hint . '<div class="object-body">' . $inner . '</div></div>';
+  }
 
   $field = '';
   switch ($w) {
@@ -279,6 +284,8 @@ function pg_normalize_field($f, $val, $siblingRaw = []){
         $res[] = ['type' => $type] + pg_normalize_fields($f['types'][$type]['fields'], $it);
       }
       return $res;
+    case 'object':
+      return pg_normalize_fields($f['fields'], is_array($val) ? $val : []);
     default: // alle Text-/String-Widgets
       $s = is_array($val) ? '' : trim((string)$val);
       if (!empty($f['slug'])) {

@@ -125,16 +125,16 @@
     </section>
 
     <!-- ================= NEWSLETTER CTA ================= -->
-    <section class="relative px-6 pb-10">
+    <section class="relative px-6 pb-10" data-newsletter-section>
         <div class="max-w-6xl mx-auto reveal relative overflow-hidden rounded-3xl border border-white/10 p-10 md:p-16 text-center"
              style="background:radial-gradient(120% 130% at 50% 0%, color-mix(in srgb,var(--accent) 26%, transparent), transparent 62%)">
-            <h2 class="font-display text-3xl md:text-6xl font-extrabold text-white mb-5">Sei dabei, bevor die Magie startet.</h2>
-            <p class="text-zinc-300 text-lg max-w-xl mx-auto mb-9">Trag dich ein und erfahre als Erste*r von Release-Terminen, Demos und großen Updates.</p>
-            <form name="newsletter-hero" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                <input type="hidden" name="form-name" value="newsletter-hero">
-                <p class="hidden"><label>Nicht ausfüllen: <input name="bot-field"></label></p>
-                <input type="email" name="email" required placeholder="deine@mail.de" class="flex-1 bg-black/30 border border-white/15 rounded-full px-6 py-4 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none">
-                <button class="btn-accent magnetic px-8 py-4 rounded-full font-semibold whitespace-nowrap">Auf die Warteliste</button>
+            <h2 class="font-display text-3xl md:text-6xl font-extrabold text-white mb-5" data-nl="heading">Sei dabei, bevor die Magie startet.</h2>
+            <p class="text-zinc-300 text-lg max-w-xl mx-auto mb-9" data-nl="text">Trag dich ein und erfahre als Erste*r von Release-Terminen, Demos und großen Updates.</p>
+            <form action="subscribe.php" method="POST" data-newsletter data-source="home" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
+                <input type="hidden" name="source" value="home">
+                <input type="email" name="email" required placeholder="deine@mail.de" data-nl-input class="flex-1 bg-black/30 border border-white/15 rounded-full px-6 py-4 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none">
+                <button class="btn-accent magnetic px-8 py-4 rounded-full font-semibold whitespace-nowrap" data-nl="button">Auf die Warteliste</button>
             </form>
         </div>
     </section>

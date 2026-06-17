@@ -83,6 +83,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
   exit;
 }
 
+/* ---- Newsletter-Abos: CSV-Export ---- */
+if ($action === 'subscribers_csv') {
+  $list = pg_load_json(PG_DATA_DIR . '/subscribers.json');
+  header('Content-Type: text/csv; charset=utf-8');
+  header('Content-Disposition: attachment; filename="newsletter-abos.csv"');
+  $out = fopen('php://output', 'w');
+  fputcsv($out, ['email', 'date', 'source']);
+  foreach ($list as $r) fputcsv($out, [$r['email'] ?? '', $r['date'] ?? '', $r['source'] ?? '']);
+  fclose($out); exit;
+}
+
+/* ---- Newsletter-Abos: leeren ---- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_subscribers'])) {
+  pg_csrf_check();
+  pg_save_json(PG_DATA_DIR . '/subscribers.json', []);
+  header('Location: index.php?view=subscribers&cleared=1'); exit;
+}
+
+/* ---- Newsletter-Abos: Ansicht ---- */
+if (($_GET['view'] ?? '') === 'subscribers') {
+  $list = pg_load_json(PG_DATA_DIR . '/subscribers.json');
+  $list = array_reverse($list);
+  pg_view_head('Newsletter-Abos');
+  pg_view_topbar($SCHEMA, null);
+  echo '<div class="editor">';
+  if (isset($_GET['cleared'])) echo '<div class="flash ok">✓ Liste geleert.</div>';
+  echo '<div class="editor-head"><div><h1>📬 Newsletter-Abos</h1>'
+     . '<p class="muted">' . count($list) . ' Anmeldung' . (count($list) === 1 ? '' : 'en') . '. Werden bei jeder Anmeldung auf der Website ergänzt.</p></div>';
+  if ($list) echo '<a class="btn-primary" href="index.php?action=subscribers_csv">CSV exportieren</a>';
+  echo '</div>';
+  if (!$list) {
+    echo '<p class="muted">Noch keine Anmeldungen.</p>';
+  } else {
+    echo '<table class="subs"><thead><tr><th>E-Mail</th><th>Datum</th><th>Quelle</th></tr></thead><tbody>';
+    foreach ($list as $r) {
+      echo '<tr><td>' . pg_h($r['email'] ?? '') . '</td><td>'
+         . pg_h(substr($r['date'] ?? '', 0, 10)) . '</td><td>' . pg_h($r['source'] ?? '') . '</td></tr>';
+    }
+    echo '</tbody></table>';
+    echo '<form method="post" class="clear-form" onsubmit="return confirm(\'Wirklich ALLE Abos löschen? (Vorher exportieren!)\')">'
+       . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+       . '<button class="btn-danger" name="clear_subscribers" value="1">Alle Abos löschen</button></form>';
+  }
+  echo '</div>';
+  pg_view_foot();
+  exit;
+}
+
 /* ---- Editor ---- */
 if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
   $key = $_GET['collection'];
@@ -124,6 +172,10 @@ foreach ($SCHEMA as $key => $coll) {
      . '<span class="card-title">' . pg_h($coll['label']) . '</span>'
      . '<span class="card-desc">' . $desc . '</span></a>';
 }
+$subCount = count(pg_load_json(PG_DATA_DIR . '/subscribers.json'));
+echo '<a class="card" href="index.php?view=subscribers">'
+   . '<span class="card-ico">📬</span><span class="card-title">Newsletter-Abos</span>'
+   . '<span class="card-desc">' . $subCount . ' Anmeldung' . ($subCount === 1 ? '' : 'en') . ' · ansehen &amp; exportieren.</span></a>';
 echo '</div>';
 echo '<div class="dash-links"><a href="../index.html" target="_blank">↗ Website ansehen</a> '
    . '<a href="index.php?action=logout">Abmelden</a></div>';
@@ -148,6 +200,7 @@ function pg_view_topbar($SCHEMA, $active){
     $cls = $key === $active ? ' class="on"' : '';
     echo '<a' . $cls . ' href="index.php?collection=' . pg_h($key) . '">' . pg_h($coll['label']) . '</a>';
   }
+  echo '<a href="index.php?view=subscribers">Abos</a>';
   echo '</nav>';
   echo '<span class="tb-right"><a href="../index.html" target="_blank">↗ Seite</a><a href="index.php?action=logout">Abmelden</a></span>';
   echo '</header>';

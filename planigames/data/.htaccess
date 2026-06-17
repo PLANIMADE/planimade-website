@@ -1,6 +1,6 @@
-# JSON-Inhalte sind öffentlich (die Website lädt sie). Aber den Passwort-Hash
-# und temporäre Schreibdateien nie ausliefern:
-<FilesMatch "(auth\.php|\.tmp|\.bak)$">
+# JSON-Inhalte sind öffentlich (die Website lädt sie). Aber den Passwort-Hash,
+# die Abonnentenliste (Datenschutz!) und temporäre Dateien nie ausliefern:
+<FilesMatch "(auth\.php|subscribers\.json|\.tmp|\.bak)$">
   Require all denied
 </FilesMatch>
 Options -Indexes

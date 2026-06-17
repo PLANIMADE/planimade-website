@@ -1,3 +1,4 @@
-# Vom PHP-Admin zur Laufzeit erzeugt (enthält den Passwort-Hash) – NICHT committen
+# Zur Laufzeit erzeugt – NICHT committen (Passwort-Hash bzw. personenbezogene Daten)
 data/auth.php
+data/subscribers.json
 data/*.tmp

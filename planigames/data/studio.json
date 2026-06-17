@@ -19,6 +19,15 @@
   "team": [
     { "name": "Dominic Majewski", "role": "Founder · Code & Design", "emoji": "🧙" }
   ],
+  "newsletter": {
+    "enabled": true,
+    "heading": "Sei dabei, bevor die Magie startet.",
+    "text": "Trag dich ein und erfahre als Erste*r von Release-Terminen, Demos und großen Updates.",
+    "buttonLabel": "Auf die Warteliste",
+    "placeholder": "deine@mail.de",
+    "successMessage": "Danke! Du bist dabei. 🧡",
+    "notifyEmail": ""
+  },
   "footerNote": "Ein unabhängiges Indie-Spielestudio. Wir bauen Welten, die wackeln, zaubern und im Kopf bleiben.",
   "email": "hello.dominicmajewski@gmail.com",
   "socials": [
