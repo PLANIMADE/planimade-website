@@ -474,7 +474,7 @@
         wrap.style.setProperty("--accent", g.accent || "#8b5cf6");
         wrap.innerHTML = `
             <div class="relative grid lg:grid-cols-2 gap-10 items-center rounded-3xl border border-white/10 overflow-hidden bg-gradient-to-br from-white/[0.04] to-transparent p-2 md:p-3">
-                <a href="game.html?slug=${esc(g.slug)}" class="block relative aspect-[16/10] rounded-2xl overflow-hidden group">
+                <a href="game.php?slug=${esc(g.slug)}" class="block relative aspect-[16/10] rounded-2xl overflow-hidden group">
                     ${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.title)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">`
                               : `<div class="w-full h-full grid-lines bg-white/[0.03]"></div>`}
                     <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent"></div>
@@ -486,7 +486,7 @@
                              : `<h2 class="font-display text-4xl md:text-6xl font-extrabold text-white mb-4">${esc(g.title)}</h2>`}
                     <p class="text-zinc-300 text-lg leading-relaxed mb-7 max-w-xl">${esc(g.tagline || "")}</p>
                     <div class="flex flex-wrap gap-3">
-                        <a href="game.html?slug=${esc(g.slug)}" class="btn-accent magnetic px-7 py-3.5 rounded-full font-semibold text-sm">${t("to_game")}</a>
+                        <a href="game.php?slug=${esc(g.slug)}" class="btn-accent magnetic px-7 py-3.5 rounded-full font-semibold text-sm">${t("to_game")}</a>
                         ${g.wishlistUrl ? `<a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-ghost magnetic px-7 py-3.5 rounded-full font-semibold text-sm">${t("wishlist")}</a>` : ""}
                     </div>
                 </div>
@@ -496,7 +496,7 @@
 
     function gameCard(g) {
         return `
-        <a href="game.html?slug=${esc(g.slug)}" class="reveal tilt-card group relative block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]" style="--accent:${esc(g.accent || "#8b5cf6")}">
+        <a href="game.php?slug=${esc(g.slug)}" class="reveal tilt-card group relative block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]" style="--accent:${esc(g.accent || "#8b5cf6")}">
             <div class="card-glow"></div><div class="card-shine"></div>
             <div class="relative aspect-[16/10] overflow-hidden">
                 ${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.title)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">`
@@ -516,7 +516,7 @@
     function devlogRow(p, games) {
         const g = games.find(x => x.slug === p.game);
         return `
-        <a href="devlog.html?slug=${esc(p.slug)}" class="reveal group flex items-center gap-5 py-5 border-b border-white/8 hover:border-white/20 transition-colors">
+        <a href="devlog.php?slug=${esc(p.slug)}" class="reveal group flex items-center gap-5 py-5 border-b border-white/8 hover:border-white/20 transition-colors">
             <div class="font-mono text-xs text-zinc-500 w-28 shrink-0">${esc(fmtDate(p.date))}</div>
             <div class="flex-1">
                 <div class="flex items-center gap-2 flex-wrap">
@@ -569,7 +569,7 @@
                 .sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 4);
             if (posts.length) {
                 pnMount.innerHTML = posts.map(p => `
-                    <a href="devlog.html?slug=${esc(p.slug)}" class="reveal group flex items-center gap-4 py-4 border-b border-white/8 hover:border-white/20">
+                    <a href="devlog.php?slug=${esc(p.slug)}" class="reveal group flex items-center gap-4 py-4 border-b border-white/8 hover:border-white/20">
                         <span class="font-mono text-xs text-zinc-500 w-28 shrink-0">${esc(fmtDate(p.date))}</span>
                         ${p.version ? `<span class="badge text-[color:var(--accent)]">v${esc(p.version)}</span>` : ""}
                         <span class="flex-1 text-white font-medium group-hover:text-gradient">${esc(p.title)}</span>
@@ -877,15 +877,15 @@
         const filterWrap = $("[data-devlog='filters']");
         const activeGame = qs.get("game");
         if (filterWrap) {
-            filterWrap.innerHTML = [`<a href="devlog.html" class="badge px-4 py-1.5 rounded-full border ${!activeGame ? "bg-white text-black border-white" : "border-white/15 text-zinc-300 hover:border-white/40"}">${t("all")}</a>`]
-                .concat(games.map(g => `<a href="devlog.html?game=${esc(g.slug)}" class="badge px-4 py-1.5 rounded-full border ${activeGame === g.slug ? "bg-white text-black border-white" : "border-white/15 text-zinc-300 hover:border-white/40"}">${esc(g.title)}</a>`)).join("");
+            filterWrap.innerHTML = [`<a href="devlog.php" class="badge px-4 py-1.5 rounded-full border ${!activeGame ? "bg-white text-black border-white" : "border-white/15 text-zinc-300 hover:border-white/40"}">${t("all")}</a>`]
+                .concat(games.map(g => `<a href="devlog.php?game=${esc(g.slug)}" class="badge px-4 py-1.5 rounded-full border ${activeGame === g.slug ? "bg-white text-black border-white" : "border-white/15 text-zinc-300 hover:border-white/40"}">${esc(g.title)}</a>`)).join("");
         }
 
         const shown = activeGame ? posts.filter(p => p.game === activeGame) : posts;
         list.innerHTML = shown.map(p => {
             const g = games.find(x => x.slug === p.game);
             return `
-            <a href="devlog.html?slug=${esc(p.slug)}" class="reveal tilt-card group relative block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]" style="--accent:${esc(g?.accent || "#8b5cf6")}">
+            <a href="devlog.php?slug=${esc(p.slug)}" class="reveal tilt-card group relative block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]" style="--accent:${esc(g?.accent || "#8b5cf6")}">
                 <div class="card-glow"></div>
                 <div class="grid md:grid-cols-[260px_1fr]">
                     <div class="relative aspect-video md:aspect-auto overflow-hidden">
@@ -920,10 +920,10 @@
         document.title = `${p.title} — PLANIGAMES Devlog`;
         root.innerHTML = `
             <div class="max-w-3xl mx-auto px-6 pt-36 pb-24">
-                <a href="devlog.html" class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 hover:text-white">${t("back_all")}</a>
+                <a href="devlog.php" class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 hover:text-white">${t("back_all")}</a>
                 <div class="flex items-center gap-2 flex-wrap mt-8 mb-5">
                     <span class="font-mono text-xs text-zinc-500">${esc(fmtDate(p.date))}</span>
-                    ${g ? `<a href="game.html?slug=${esc(g.slug)}" class="badge px-2 py-0.5 rounded border border-white/10 text-zinc-300 hover:border-white/40">${esc(g.title)}</a>` : ""}
+                    ${g ? `<a href="game.php?slug=${esc(g.slug)}" class="badge px-2 py-0.5 rounded border border-white/10 text-zinc-300 hover:border-white/40">${esc(g.title)}</a>` : ""}
                     ${p.version ? `<span class="badge text-[color:var(--accent)]">v${esc(p.version)}</span>` : ""}
                     ${(p.tags || []).map(t => `<span class="badge text-zinc-600">#${esc(t)}</span>`).join("")}
                 </div>
@@ -980,7 +980,7 @@
     const NAV = [
         ["index.html", "nav_studio"],
         ["games.html", "nav_games"],
-        ["devlog.html", "nav_devlog"],
+        ["devlog.php", "nav_devlog"],
         ["index.html#kontakt", "nav_contact"],
     ];
     function navLinks(extra = "") {
@@ -1068,7 +1068,7 @@
                             <div class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 mb-5">${t("foot_discover")}</div>
                             <ul class="space-y-3 text-zinc-300">
                                 <li><a href="games.html" class="hover:text-white">${t("foot_allgames")}</a></li>
-                                <li><a href="devlog.html" class="hover:text-white">${t("foot_devlog")}</a></li>
+                                <li><a href="devlog.php" class="hover:text-white">${t("foot_devlog")}</a></li>
                                 <li><a href="index.html#studio" class="hover:text-white">${t("foot_about")}</a></li>
                             </ul>
                         </div>
@@ -1184,6 +1184,21 @@
         if (!DATA.studio) await loadData("studio");
         fillStudioFooter();
         initNewsletter();
+        injectOrgJsonLd();
+    }
+
+    // Strukturierte Daten (Organization) für Seiten ohne serverseitiges JSON-LD
+    function injectOrgJsonLd() {
+        if (document.querySelector('script[type="application/ld+json"]')) return;
+        const s = DATA.studio; if (!s) return;
+        const base = location.origin;
+        const sameAs = (s.socials || []).map(x => x.url).filter(u => u && u !== "#");
+        const org = { "@context": "https://schema.org", "@type": "Organization", name: s.name || "PLANIGAMES", url: base + "/", logo: base + "/media/og.jpg" };
+        if (s.email) org.email = s.email;
+        if (sameAs.length) org.sameAs = sameAs;
+        const sc = document.createElement("script");
+        sc.type = "application/ld+json"; sc.textContent = JSON.stringify(org);
+        document.head.appendChild(sc);
     }
 
     if (document.readyState === "loading") addEventListener("DOMContentLoaded", boot);

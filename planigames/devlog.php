@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Devlog & Patch Notes | PLANIGAMES</title>
-    <meta name="description" content="Entwicklungstagebuch, Updates und Patch Notes von PLANIGAMES.">
+<?php require __DIR__ . '/seo.php'; pg_seo_post(); ?>
     <meta name="theme-color" content="#050505">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎮%3C/text%3E%3C/svg%3E">
 

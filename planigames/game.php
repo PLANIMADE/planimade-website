@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spiel | PLANIGAMES</title>
-    <meta name="description" content="Ein Spiel von PLANIGAMES.">
+<?php require __DIR__ . '/seo.php'; pg_seo_game(); ?>
     <meta name="theme-color" content="#050505">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎮%3C/text%3E%3C/svg%3E">
 
@@ -36,7 +35,7 @@
         <div class="max-w-3xl mx-auto">
             <div class="flex items-end justify-between mb-8 reveal">
                 <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white" data-i18n="patchnotes">Patch Notes</h2>
-                <a href="devlog.html" class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 hover:text-white" data-i18n="all_games_arrow">Alle →</a>
+                <a href="devlog.php" class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 hover:text-white" data-i18n="all_games_arrow">Alle →</a>
             </div>
             <div data-game-patchnotes></div>
         </div>

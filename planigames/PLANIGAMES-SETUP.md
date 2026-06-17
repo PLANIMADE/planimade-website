@@ -14,8 +14,8 @@ GitHub, ohne Netlify, ohne Code anzufassen.
 |---------------------------|-----------------------------------------------------------------|
 | `index.html`              | Studio-Startseite                                               |
 | `games.html`              | Übersicht aller Spiele                                          |
-| `game.html`               | Detailseite eines Spiels — aus frei platzierbaren **Blöcken**   |
-| `devlog.html`             | Devlog & Patch Notes (Liste + Einzelbeitrag)                   |
+| `game.php`               | Detailseite eines Spiels — aus frei platzierbaren **Blöcken**   |
+| `devlog.php`             | Devlog & Patch Notes (Liste + Einzelbeitrag)                   |
 | `admin/`                  | **PHP-Login-Dashboard** (das CMS)                              |
 | `admin/schema.php`        | Definiert alle Felder & den Block-Baukasten (Single Source)    |
 | `data/*.json`             | Deine Inhalte (Studio, Spiele, Patch Notes)                   |
@@ -73,7 +73,7 @@ für `data/` und `media/` ggf. **775**.
 
 ## Der „Website-Builder" für Game-Seiten
 
-Jede Game-Seite (`game.html?slug=…`) besteht aus **Blöcken**, die du im
+Jede Game-Seite (`game.php?slug=…`) besteht aus **Blöcken**, die du im
 Dashboard frei hinzufügst, sortierst und füllst:
 
 **Hero**, **Textabschnitt**, **Feature-Kacheln**, **Bildergalerie**,
@@ -121,10 +121,12 @@ Gut zu wissen:
 - **Sicherheit:** `/admin/` ist passwortgeschützt (Session + CSRF). Für
   zusätzlichen Schutz kannst du in KAS unter **Tools → Verzeichnisschutz**
   den Ordner `admin/` zusätzlich mit HTTP-Auth absichern.
-- **Newsletter-Formular:** Das Anmeldeformular nutzt aktuell Netlify Forms
-  und funktioniert auf All-Inkl **nicht** automatisch. Sag Bescheid, dann
-  baue ich dir einen kleinen PHP-Mailversand (an deine Adresse) oder binde
-  einen Dienst (z. B. Mailchimp/Brevo) ein.
+- **Newsletter:** Das Anmeldeformular läuft über `subscribe.php` direkt auf
+  All-Inkl. Anmeldungen landen in `data/subscribers.json` und sind im
+  Dashboard unter **Newsletter-Abos** einseh-/exportierbar.
+- **SEO:** `sitemap.php` (erreichbar als `/sitemap.xml`) und `robots.txt`
+  sind dabei; Game-/Devlog-Seiten (`game.php`/`devlog.php`) liefern korrekte
+  Titel & Social-Vorschaubilder. Standard-Vorschaubild: `media/og.jpg`.
 - **Backups:** Deine Inhalte stecken komplett in `data/*.json` — einfach
   per FTP herunterladen = fertiges Backup.
 

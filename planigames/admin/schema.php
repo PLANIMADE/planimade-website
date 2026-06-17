@@ -86,7 +86,7 @@ return [
     'fields' => [
       ['name'=>'games','label'=>'Spiele','widget'=>'list','summary'=>'title','fields'=>[
         ['name'=>'title','label'=>'Titel','widget'=>'string'],
-        ['name'=>'slug','label'=>'Slug (URL)','widget'=>'string','slug'=>true,'hint'=>'Kleinbuchstaben & Bindestriche. Leer = automatisch aus Titel. Adresse: game.html?slug=…'],
+        ['name'=>'slug','label'=>'Slug (URL)','widget'=>'string','slug'=>true,'hint'=>'Kleinbuchstaben & Bindestriche. Leer = automatisch aus Titel. Adresse: game.php?slug=…'],
         ['name'=>'tagline','label'=>'Kurzbeschreibung / Tagline','widget'=>'text'],
         ['name'=>'status','label'=>'Status','widget'=>'select','default'=>'development','options'=>[
           'development'=>'In Entwicklung','announced'=>'Angekündigt','demo'=>'Demo verfügbar','early'=>'Early Access','released'=>'Veröffentlicht',
