@@ -1,101 +1,118 @@
-# PLANIGAMES — Website & Admin-Dashboard
+# PLANIGAMES — Website & Admin (für All-Inkl / KAS)
 
-Eine eigenständige Website für dein Indie-Studio **PLANIGAMES** — mit
-Studio-Vorstellung, Spielen, frei baubaren Game-Seiten und einem Devlog
-für Patch Notes. Inhalte pflegst du komplett im Browser über ein
-Login-Dashboard (**Decap CMS**), ohne Code anzufassen — genau wie bei
-planimade.de.
-
-Die Seite liegt im Unterordner **`planigames/`** desselben Repos und wird
-als **eigene Netlify-Site** veröffentlicht.
+Eine eigenständige Website für dein Indie-Studio **PLANIGAMES** mit
+Studio-Vorstellung, Spielen, frei baubaren Game-Seiten und Devlog/Patch
+Notes. Inhalte pflegst du komplett im Browser über ein **eigenes
+PHP-Dashboard**, das direkt auf deinem All-Inkl-Webspace läuft — ohne
+GitHub, ohne Netlify, ohne Code anzufassen.
 
 ---
 
-## Was schon drin ist
+## Was drin ist
 
 | Datei / Ordner            | Wofür                                                            |
 |---------------------------|-----------------------------------------------------------------|
-| `index.html`              | Studio-Startseite (Hero, aktuelles Spiel, Über uns, Team, Devlog) |
-| `games.html`              | Übersicht aller Spiele                                           |
-| `game.html`               | Detailseite eines Spiels — aus frei platzierbaren **Blöcken**    |
-| `devlog.html`             | Devlog & Patch Notes (Liste + Einzelbeitrag)                    |
-| `admin/`                  | Das Login-Dashboard (Decap CMS)                                 |
-| `admin/config.yml`        | Definiert alle Felder & den Block-Baukasten                    |
-| `data/studio.json`        | Globale Studio-Inhalte                                          |
-| `data/games.json`         | Alle Spiele inkl. ihrer Seiten-Blöcke                          |
-| `data/patchnotes.json`    | Devlog-/Patchnote-Einträge                                     |
-| `assets/`                 | Gemeinsames CSS & JavaScript (Effekte, Renderer)               |
-| `media/`                  | Hochgeladene Bilder & Videos                                   |
+| `index.html`              | Studio-Startseite                                               |
+| `games.html`              | Übersicht aller Spiele                                          |
+| `game.html`               | Detailseite eines Spiels — aus frei platzierbaren **Blöcken**   |
+| `devlog.html`             | Devlog & Patch Notes (Liste + Einzelbeitrag)                   |
+| `admin/`                  | **PHP-Login-Dashboard** (das CMS)                              |
+| `admin/schema.php`        | Definiert alle Felder & den Block-Baukasten (Single Source)    |
+| `data/*.json`             | Deine Inhalte (Studio, Spiele, Patch Notes)                   |
+| `data/auth.php`           | Wird beim ersten Login erzeugt (Passwort-Hash) — bleibt am Server |
+| `media/`                  | Hochgeladene Bilder & Videos                                  |
+| `assets/`                 | Gemeinsames CSS & JavaScript der Website                       |
+
+---
+
+## Schritt 1 – Dateien auf All-Inkl hochladen (FTP / KAS)
+
+1. In **KAS** (https://kas.all-inkl.com) einloggen.
+2. FTP-Zugangsdaten findest du unter **FTP → FTP-Accounts** (oder einen
+   neuen anlegen). Damit verbindest du dich z. B. mit **FileZilla**:
+   - Server: dein FTP-Host (z. B. `wXXXXXX.kasserver.com`)
+   - Benutzer / Passwort: dein FTP-Account
+3. Lade den **kompletten Inhalt des Ordners `planigames/`** in das
+   Web-Verzeichnis der Domain `planigames.de` hoch. Das ist meist
+   `/` bzw. der in KAS unter **Domain → planigames.de** eingestellte
+   **Dokumenten-Pfad** (oft etwas wie `/planigames.de/`).
+   > Wichtig: Es soll **der Inhalt** von `planigames/` direkt im
+   > Domain-Root liegen — also `index.html`, `admin/`, `data/`, `media/`,
+   > `assets/` direkt dort. Nicht den Ordner `planigames` selbst.
+4. PHP muss für die Domain aktiv sein (bei All-Inkl Standard; ggf. unter
+   **Domain → PHP-Version** eine aktuelle Version wählen, z. B. PHP 8.x).
+
+## Schritt 2 – Schreibrechte prüfen
+
+Das Dashboard schreibt deine Inhalte direkt in `data/` und Uploads nach
+`media/`. Bei All-Inkl sind selbst hochgeladene Dateien normalerweise
+schreibbar. Falls Speichern/Upload fehlschlägt, im FTP-Programm die
+**Schreibrechte (CHMOD) auf 755 (Ordner) bzw. 644 (Dateien)** setzen —
+für `data/` und `media/` ggf. **775**.
+
+## Schritt 3 – Admin einrichten
+
+1. Öffne **`https://planigames.de/admin/`**.
+2. Beim **allerersten Mal** legst du dein **Passwort** fest (min. 8
+   Zeichen). Es wird verschlüsselt in `data/auth.php` gespeichert.
+3. Danach loggst du dich immer mit diesem Passwort ein.
+
+> Passwort vergessen? Lösche per FTP die Datei `data/auth.php` — beim
+> nächsten Aufruf von `/admin/` kannst du ein neues Passwort setzen.
+
+## Schritt 4 – Loslegen
+
+- **Studio & Startseite:** Texte, Über-uns, Team, Kontakt, Logo, Footer.
+- **Spiele:** neues Spiel anlegen, Slug + Akzentfarbe wählen, Seite aus
+  **Blöcken** bauen (Drag-frei per ↑/↓ sortieren, ✕ löschen, ▾ einklappen).
+- **Devlog & Patch Notes:** Beiträge schreiben, Spiel zuordnen, Version
+  setzen.
+- **Speichern** → die Änderung ist **sofort live** auf der Website.
 
 ---
 
 ## Der „Website-Builder" für Game-Seiten
 
-Jede Game-Seite (`game.html?slug=…`) wird aus **Blöcken** zusammengesetzt,
-die du im Dashboard frei hinzufügst, sortierst (Drag & Drop) und füllst:
+Jede Game-Seite (`game.html?slug=…`) besteht aus **Blöcken**, die du im
+Dashboard frei hinzufügst, sortierst und füllst:
 
-- **Hero** – großer Kopfbereich mit Bild/Video, Logo & Buttons
-- **Textabschnitt** – Überschrift + formatierter Text (Markdown)
-- **Feature-Kacheln** – Icon, Titel, Text
-- **Bildergalerie** – Screenshots im Raster
-- **Trailer/Video** – YouTube-Link oder eigene Datei
-- **Zitate/Reviews** – Pressestimmen & Community-Feedback
-- **Kennzahlen** – große Zahlen (z. B. „1–4 Spieler")
-- **Roadmap** – Zeitstrahl mit Status (erledigt / in Arbeit / geplant)
-- **Call-to-Action** – Banner mit Button
-- **Abstand** – Leerraum zum Feinjustieren
+**Hero**, **Textabschnitt**, **Feature-Kacheln**, **Bildergalerie**,
+**Trailer/Video** (YouTube-Link oder Datei), **Zitate/Reviews**,
+**Kennzahlen**, **Roadmap** (Zeitstrahl), **Call-to-Action**, **Abstand**.
 
-Jedes Spiel hat eine eigene **Akzentfarbe** (HEX) — damit bekommt jede
-Game-Welt ihren eigenen farbigen Look, während der Studio-Rahmen edel
-dunkel bleibt.
-
----
-
-## Schritt 1 – Code ist schon im Repo
-
-Alles liegt unter `planigames/` im Repo `planimade/planimade-website`.
-
-## Schritt 2 – Eigene Netlify-Site anlegen
-1. Auf **https://www.netlify.com** einloggen.
-2. **Add new site → Import an existing project → GitHub** → dieses Repo wählen.
-3. Build-Einstellungen:
-   - **Base directory:** `planigames`
-   - **Build command:** *(leer)*
-   - **Publish directory:** `planigames` (bzw. `.` wenn Base gesetzt ist)
-4. **Deploy** klicken → du bekommst eine URL wie `https://xyz.netlify.app`.
-
-> Tipp: So bleibt planimade.de als eigene Site bestehen — PLANIGAMES ist
-> komplett getrennt, nur im selben Repo.
-
-## Schritt 3 – Login aktivieren (Netlify Identity + Git Gateway)
-1. In der **PLANIGAMES**-Site: **Identity → Enable Identity**.
-2. **Identity → Registration → Invite only**.
-3. **Identity → Services → Git Gateway → Enable**.
-4. **Identity → Invite users** → deine E-Mail → Einladung annehmen → Passwort setzen.
-
-## Schritt 4 – Loslegen
-- Öffne **`https://deine-seite.netlify.app/admin/`** und logge dich ein.
-- **Studio-Einstellungen** → Startseite, Über-uns, Team, Kontakt pflegen.
-- **Spiele** → neues Spiel anlegen, Slug + Akzentfarbe setzen, Blöcke bauen.
-- **Devlog & Patch Notes** → Beiträge schreiben, Spiel zuordnen, Version eintragen.
-- **Publish** → nach wenigen Sekunden ist alles live.
+Jedes Spiel hat eine eigene **Akzentfarbe** — so bekommt jede Game-Welt
+ihren eigenen Look, während der Studio-Rahmen edel schwarz bleibt.
 
 ---
 
 ## Gut zu wissen
 
-- **Branch:** Das Dashboard committet auf den Branch `main`
-  (`admin/config.yml` → `backend.branch`). Wenn deine Netlify-Site von einem
-  anderen Branch deployt, dort denselben Branch eintragen.
-- **Bilder/Videos:** Web-optimiert hochladen (MP4/H.264 bzw. WebM, komprimierte
-  PNG/JPG). Sehr große Trailer besser über YouTube einbinden.
-- **Eigene Domain:** In Netlify unter **Domain settings** verbinden
-  (z. B. `planigames.de`).
-- **Newsletter/Wishlist:** Das Anmeldeformular nutzt **Netlify Forms** —
-  ohne Zusatz-Setup landen Einträge unter **Forms** im Netlify-Dashboard.
-- **Lokales Testen:** Wegen der `fetch`-Aufrufe auf `data/*.json` einen
-  kleinen Server starten, z. B. im Ordner `planigames/`:
-  `python3 -m http.server 8080` → dann `http://localhost:8080`.
-  (Reiner Doppelklick lädt die JSON-Daten browserbedingt nicht.)
-- **Slugs:** Slug eines Spiels = Adresse `game.html?slug=<slug>`. Bei Patch
-  Notes verbindet das Feld „Spiel (Slug)" den Beitrag mit dem Spiel.
+- **Design / Schriften:** Die Seite lädt Tailwind & Fonts per CDN beim
+  Besucher — funktioniert auf All-Inkl ohne weiteres Setup.
+- **Bilder/Videos:** Web-optimiert hochladen (komprimierte PNG/JPG, MP4/
+  WebM). Sehr große Trailer besser über YouTube einbinden (Block „Trailer").
+  Maximale Upload-Größe richtet sich nach der PHP-Einstellung
+  `upload_max_filesize` (in KAS unter PHP-Einstellungen anpassbar).
+- **Eigenes Logo:** Unter **Studio → Logo** ein transparentes PNG/SVG
+  hochladen — ersetzt automatisch den Schriftzug in Kopf- und Fußzeile.
+- **Sicherheit:** `/admin/` ist passwortgeschützt (Session + CSRF). Für
+  zusätzlichen Schutz kannst du in KAS unter **Tools → Verzeichnisschutz**
+  den Ordner `admin/` zusätzlich mit HTTP-Auth absichern.
+- **Newsletter-Formular:** Das Anmeldeformular nutzt aktuell Netlify Forms
+  und funktioniert auf All-Inkl **nicht** automatisch. Sag Bescheid, dann
+  baue ich dir einen kleinen PHP-Mailversand (an deine Adresse) oder binde
+  einen Dienst (z. B. Mailchimp/Brevo) ein.
+- **Backups:** Deine Inhalte stecken komplett in `data/*.json` — einfach
+  per FTP herunterladen = fertiges Backup.
+
+## Lokal testen (optional)
+
+Im Ordner `planigames/` einen lokalen PHP-Server starten:
+
+```
+php -S localhost:8080
+```
+
+Dann `http://localhost:8080` (Website) bzw. `http://localhost:8080/admin/`
+(Dashboard). So funktionieren sowohl die JSON-Inhalte als auch das Admin
+wie auf dem echten Server.

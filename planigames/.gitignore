@@ -1,0 +1,3 @@
+# Vom PHP-Admin zur Laufzeit erzeugt (enthält den Passwort-Hash) – NICHT committen
+data/auth.php
+data/*.tmp
