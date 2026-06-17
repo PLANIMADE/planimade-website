@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="de" class="select-none">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLANIGAMES | Indie Game Studio — Wir bauen verzauberte Welten</title>
+    <meta name="description" content="PLANIGAMES ist ein unabhängiges Indie-Spielestudio. Aktuell entsteht Wobbly Wizards — ein chaotisch-magisches Abenteuer. Spiele, Devlogs, Patch Notes & mehr.">
+    <meta name="theme-color" content="#06060a">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="PLANIGAMES | Indie Game Studio">
+    <meta property="og:description" content="Wir bauen Welten, die wackeln, zaubern und im Kopf bleiben. Aktuelles Projekt: Wobbly Wizards.">
+    <meta property="og:image" content="media/og.jpg">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎮%3C/text%3E%3C/svg%3E">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700,800&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: {
+            sans: ['Archivo', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+            display: ['"Clash Display"', 'Archivo', 'sans-serif'],
+        } } } };
+    </script>
+    <link rel="stylesheet" href="assets/planigames.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="assets/app.js" defer></script>
+</head>
+<body data-page="home" class="bg-[#06060a] text-zinc-100 font-sans antialiased overflow-x-hidden noise-bg grain-overlay overflow-hidden">
+
+    <div data-shell="header"></div>
+
+    <!-- ================= HERO ================= -->
+    <section class="relative min-h-screen flex items-center pt-28 pb-20 px-6 overflow-hidden">
+        <div class="absolute inset-0 grid-lines opacity-60"></div>
+        <div class="relative max-w-6xl mx-auto w-full">
+            <div class="reveal-on inline-flex items-center gap-2 badge px-4 py-1.5 rounded-full border border-white/12 text-zinc-300 mb-8">
+                <span class="w-1.5 h-1.5 rounded-full bg-[color:var(--accent)] animate-pulse"></span>
+                Indie Game Studio · seit <span data-studio="founded">2024</span>
+            </div>
+            <h1 class="font-display font-extrabold text-white leading-[0.92] tracking-tight text-5xl sm:text-7xl lg:text-8xl">
+                <span class="line-mask reveal-on"><span class="line-inner block" data-studio="heroLine1">Wir bauen Welten,</span></span>
+                <span class="line-mask reveal-on" style="transition-delay:.1s"><span class="line-inner block text-gradient" data-studio="heroLine2">die verzaubern.</span></span>
+            </h1>
+            <p class="reveal mt-8 text-lg md:text-2xl text-zinc-300 max-w-2xl leading-relaxed" data-studio="intro">
+                PLANIGAMES ist ein unabhängiges Studio für eigensinnige Spiele. Gerade zaubern wir an Wobbly Wizards — chaotisch, charmant und voller Magie.
+            </p>
+            <div class="reveal mt-10 flex flex-wrap gap-4">
+                <a href="games.html" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold">Spiele entdecken →</a>
+                <a href="devlog.html" class="btn-ghost magnetic px-8 py-4 rounded-full font-semibold">Devlog lesen</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= LAUFBAND ================= -->
+    <div class="relative py-6 border-y border-white/8 overflow-hidden bg-white/[0.015]">
+        <div class="flex whitespace-nowrap animate-marquee will-change-transform">
+            <span class="flex items-center gap-8 font-display text-2xl md:text-4xl font-bold text-zinc-700 pr-8">
+                <span>Original Worlds</span><span class="text-[color:var(--accent)]">✦</span><span>Handcrafted Magic</span><span class="text-[color:var(--accent)]">✦</span><span>Indie & Proud</span><span class="text-[color:var(--accent)]">✦</span><span>Wobbly Wizards</span><span class="text-[color:var(--accent)]">✦</span>
+            </span>
+            <span aria-hidden="true" class="flex items-center gap-8 font-display text-2xl md:text-4xl font-bold text-zinc-700 pr-8">
+                <span>Original Worlds</span><span class="text-[color:var(--accent)]">✦</span><span>Handcrafted Magic</span><span class="text-[color:var(--accent)]">✦</span><span>Indie & Proud</span><span class="text-[color:var(--accent)]">✦</span><span>Wobbly Wizards</span><span class="text-[color:var(--accent)]">✦</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- ================= FEATURED GAME ================= -->
+    <section class="relative px-6 py-24 md:py-32">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-end justify-between mb-12 reveal">
+                <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white">Aktuelles Projekt</h2>
+                <a href="games.html" class="hidden md:inline-block font-mono text-[11px] uppercase tracking-widest text-zinc-500 hover:text-white">Alle Spiele →</a>
+            </div>
+            <div data-featured class="reveal"></div>
+        </div>
+    </section>
+
+    <!-- ================= WEITERE GAMES ================= -->
+    <section class="relative px-6 py-12 md:py-20">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-end justify-between mb-10 reveal">
+                <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white">Unsere Spiele</h2>
+                <a href="games.html" class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 hover:text-white">Alle →</a>
+            </div>
+            <div data-games="teaser" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+        </div>
+    </section>
+
+    <!-- ================= STUDIO / ÜBER UNS ================= -->
+    <section id="studio" class="relative px-6 py-24 md:py-32">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-12 items-start mb-16">
+                <div class="reveal">
+                    <div class="font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] mb-5">Über das Studio</div>
+                    <h2 class="font-display text-4xl md:text-6xl font-extrabold text-white leading-[1.05]" data-studio="aboutTitle">Klein. Unabhängig. Besessen von guten Ideen.</h2>
+                </div>
+                <div class="reveal prose-pg" data-studio="aboutBody">
+                    <p>Wir sind ein junges Indie-Studio mit einer simplen Mission: Spiele machen, die wir selbst spielen wollen würden. Keine Komitees, keine Trends von der Stange — nur eigensinnige Welten mit Charakter.</p>
+                </div>
+            </div>
+            <div data-studio="pillars" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+        </div>
+    </section>
+
+    <!-- ================= TEAM ================= -->
+    <section id="team-section" class="relative px-6 py-16 md:py-24">
+        <div class="max-w-5xl mx-auto">
+            <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white text-center mb-14 reveal">Die Köpfe dahinter</h2>
+            <div data-studio="team" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-10"></div>
+        </div>
+    </section>
+
+    <!-- ================= DEVLOG ================= -->
+    <section id="devlog-section" class="relative px-6 py-24 md:py-32">
+        <div class="max-w-5xl mx-auto">
+            <div class="flex items-end justify-between mb-8 reveal">
+                <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white">Frisch aus dem Devlog</h2>
+                <a href="devlog.html" class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 hover:text-white">Alle Beiträge →</a>
+            </div>
+            <div data-devlog="latest"></div>
+        </div>
+    </section>
+
+    <!-- ================= NEWSLETTER CTA ================= -->
+    <section class="relative px-6 pb-10">
+        <div class="max-w-6xl mx-auto reveal relative overflow-hidden rounded-3xl border border-white/10 p-10 md:p-16 text-center"
+             style="background:radial-gradient(120% 130% at 50% 0%, color-mix(in srgb,var(--accent) 26%, transparent), transparent 62%)">
+            <h2 class="font-display text-3xl md:text-6xl font-extrabold text-white mb-5">Sei dabei, bevor die Magie startet.</h2>
+            <p class="text-zinc-300 text-lg max-w-xl mx-auto mb-9">Trag dich ein und erfahre als Erste*r von Release-Terminen, Demos und großen Updates.</p>
+            <form name="newsletter-hero" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                <input type="hidden" name="form-name" value="newsletter-hero">
+                <p class="hidden"><label>Nicht ausfüllen: <input name="bot-field"></label></p>
+                <input type="email" name="email" required placeholder="deine@mail.de" class="flex-1 bg-black/30 border border-white/15 rounded-full px-6 py-4 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none">
+                <button class="btn-accent magnetic px-8 py-4 rounded-full font-semibold whitespace-nowrap">Auf die Warteliste</button>
+            </form>
+        </div>
+    </section>
+
+    <div data-shell="footer"></div>
+</body>
+</html>

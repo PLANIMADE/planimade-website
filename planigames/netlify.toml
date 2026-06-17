@@ -1,0 +1,23 @@
+# Netlify-Konfiguration für die PLANIGAMES-Website.
+# In den Netlify-Site-Einstellungen als "Base directory" -> planigames setzen,
+# dann ist dieser Ordner die Wurzel der Seite.
+
+[build]
+  publish = "."
+  command = ""
+
+# Saubere URLs / kleine Helfer
+[[redirects]]
+  from = "/studio"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin/index.html"
+  status = 200
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

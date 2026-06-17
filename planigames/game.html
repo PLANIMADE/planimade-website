@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="de" class="select-none">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spiel | PLANIGAMES</title>
+    <meta name="description" content="Ein Spiel von PLANIGAMES.">
+    <meta name="theme-color" content="#06060a">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎮%3C/text%3E%3C/svg%3E">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700,800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: {
+            sans: ['Archivo', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+            display: ['"Clash Display"', 'Archivo', 'sans-serif'],
+        } } } };
+    </script>
+    <link rel="stylesheet" href="assets/planigames.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="assets/app.js" defer></script>
+</head>
+<body data-page="game" class="bg-[#06060a] text-zinc-100 font-sans antialiased overflow-x-hidden noise-bg grain-overlay overflow-hidden">
+
+    <div data-shell="header"></div>
+
+    <!-- Hier rendert app.js die frei konfigurierten Blöcke des Spiels -->
+    <main data-game-root></main>
+
+    <!-- Patch Notes des Spiels (wird ausgeblendet, falls keine vorhanden) -->
+    <section data-game-patchnotes-section class="relative px-6 py-20 md:py-28">
+        <div class="max-w-3xl mx-auto">
+            <div class="flex items-end justify-between mb-8 reveal">
+                <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white">Patch Notes</h2>
+                <a href="devlog.html" class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 hover:text-white">Alle →</a>
+            </div>
+            <div data-game-patchnotes></div>
+        </div>
+    </section>
+
+    <div data-shell="footer"></div>
+</body>
+</html>

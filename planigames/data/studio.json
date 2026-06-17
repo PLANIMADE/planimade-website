@@ -1,0 +1,28 @@
+{
+  "name": "PLANIGAMES",
+  "tagline": "Indie Game Studio",
+  "founded": "2024",
+  "heroLine1": "Wir bauen Welten,",
+  "heroLine2": "die verzaubern.",
+  "intro": "PLANIGAMES ist ein unabhängiges Studio für eigensinnige Spiele. Gerade zaubern wir an Wobbly Wizards — chaotisch, charmant und voller Magie.",
+  "aboutTitle": "Klein. Unabhängig. Besessen von guten Ideen.",
+  "aboutBody": "Wir sind ein junges Indie-Studio mit einer simplen Mission: Spiele machen, die wir selbst spielen wollen würden. Keine Komitees, keine Trends von der Stange — nur eigensinnige Welten mit Charakter, handgemachter Liebe zum Detail und einem Humor, der hängen bleibt.\n\nVon der ersten Skizze bis zum letzten Partikeleffekt entsteht alles in-house. Das hält uns ehrlich — und unsere Spiele eigen.",
+  "pillars": [
+    { "icon": "🪄", "title": "Handgemachte Magie", "text": "Jede Mechanik, jeder Sound, jeder Pixel ist bewusst gesetzt. Keine Asset-Flips, keine Abkürzungen." },
+    { "icon": "🌀", "title": "Spielgefühl zuerst", "text": "Bevor eine Idee ins Spiel kommt, muss sie sich gut anfühlen. Punkt. Wir prototypen, bis es klickt." },
+    { "icon": "🤝", "title": "Community an Bord", "text": "Wir entwickeln offen. Devlogs, Demos und euer Feedback formen das Spiel mit." },
+    { "icon": "🎨", "title": "Eigener Look", "text": "Jedes Spiel bekommt seine eigene visuelle Welt — wiedererkennbar und mit Haltung." },
+    { "icon": "⚡", "title": "Klein & schnell", "text": "Als kleines Team treffen wir Entscheidungen heute und sehen sie morgen im Spiel." },
+    { "icon": "💜", "title": "Für die Ewigkeit gebaut", "text": "Wir machen Spiele, an die man sich erinnert — nicht solche, die man wegklickt." }
+  ],
+  "team": [
+    { "name": "Dominic Majewski", "role": "Founder · Code & Design", "emoji": "🧙" }
+  ],
+  "footerNote": "Ein unabhängiges Indie-Spielestudio. Wir bauen Welten, die wackeln, zaubern und im Kopf bleiben.",
+  "email": "hello.dominicmajewski@gmail.com",
+  "socials": [
+    { "label": "Discord", "url": "#" },
+    { "label": "YouTube", "url": "#" },
+    { "label": "Bluesky", "url": "#" }
+  ]
+}

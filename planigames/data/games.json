@@ -1,0 +1,90 @@
+{
+  "games": [
+    {
+      "slug": "wobbly-wizards",
+      "title": "Wobbly Wizards",
+      "tagline": "Ein chaotisch-magisches Physik-Abenteuer für 1–4 Zauberlehrlinge. Schleudert Sprüche, stolpert durch wackelige Dungeons und zaubert euch zum Sieg — oder ins Verderben.",
+      "status": "development",
+      "accent": "#a855f7",
+      "accent2": "#22d3ee",
+      "featured": true,
+      "cover": "",
+      "logo": "",
+      "wishlistUrl": "#",
+      "blocks": [
+        {
+          "type": "hero",
+          "tagline": "Ein chaotisch-magisches Physik-Abenteuer für 1–4 Zauberlehrlinge.",
+          "background": "",
+          "video": "",
+          "ctaLabel": "Auf Steam wishlisten",
+          "trailerUrl": ""
+        },
+        {
+          "type": "richtext",
+          "kicker": "Die Idee",
+          "heading": "Magie, die wackelt.",
+          "body": "**Wobbly Wizards** ist ein Couch- und Online-Koop-Abenteuer, in dem ihr als tollpatschige Zauberlehrlinge durch physikbasierte Dungeons stolpert. Jeder Spruch hat Wucht — und Konsequenzen. Ein Feuerball verfehlt das Monster und trifft den besten Freund. Ein Teleport landet mitten im Lavabecken. Genau das ist der Plan.\n\nWir verbinden **knackige Spruch-Mechaniken** mit einer Welt, die auf jede Aktion reagiert. Kein Run gleicht dem anderen, kein Chaos dem vorherigen."
+        },
+        {
+          "type": "features",
+          "heading": "Was euch erwartet",
+          "items": [
+            { "icon": "🤹", "title": "Wackelige Physik", "text": "Jeder Zauber, jeder Schritt, jeder Sturz ist physiksimuliert. Komik garantiert." },
+            { "icon": "🧙‍♂️", "title": "1–4 Spieler Koop", "text": "Allein meisterbar, zu viert ein herrliches Durcheinander — Couch & Online." },
+            { "icon": "🔮", "title": "Dutzende Sprüche", "text": "Kombiniert Elemente zu eigenen Zaubern. Feuer + Wind = sehr schlechte Idee." },
+            { "icon": "🏰", "title": "Verwinkelte Dungeons", "text": "Handgebaute Level mit Geheimnissen, Fallen und absurden Bosskämpfen." },
+            { "icon": "🎭", "title": "Charakter-Anpassung", "text": "Bastelt euch euren eigenen Wizard — Hut, Bart und fragwürdige Mode inklusive." },
+            { "icon": "🌪️", "title": "Chaos-Modus", "text": "Modifikatoren drehen jeden Run ins Lächerliche. Für die ganz Mutigen." }
+          ]
+        },
+        {
+          "type": "stats",
+          "items": [
+            { "value": "1–4", "label": "Spieler Koop" },
+            { "value": "40+", "label": "Sprüche & Kombos" },
+            { "value": "∞", "label": "Wege zu scheitern" },
+            { "value": "2025", "label": "Geplanter Release" }
+          ]
+        },
+        {
+          "type": "gallery",
+          "heading": "Eindrücke",
+          "images": []
+        },
+        {
+          "type": "trailer",
+          "heading": "Erster Blick",
+          "youtube": "",
+          "file": ""
+        },
+        {
+          "type": "quotes",
+          "heading": "Stimmen",
+          "items": [
+            { "text": "So viel Charme habe ich lange nicht mehr in einem Indie-Koop gesehen.", "author": "Playtester", "source": "Demo-Build" },
+            { "text": "Wir haben Tränen gelacht. Und uns gegenseitig in den Abgrund gezaubert.", "author": "Community", "source": "Discord" }
+          ]
+        },
+        {
+          "type": "roadmap",
+          "heading": "Roadmap",
+          "items": [
+            { "status": "done", "date": "2024", "title": "Prototyp & Core-Loop", "text": "Spruch-System, Physik und Koop-Grundgerüst stehen." },
+            { "status": "active", "date": "2025 Q1", "title": "Vertical Slice", "text": "Erster polierter Dungeon mit Boss und allen Kern-Features." },
+            { "status": "planned", "date": "2025", "title": "Closed Playtest", "text": "Ausgewählte Wizards testen den Koop auf Herz und Nieren." },
+            { "status": "planned", "date": "2025", "title": "Steam Demo", "text": "Eine spielbare Demo für alle — Next Fest, wir kommen." },
+            { "status": "planned", "date": "TBA", "title": "Early Access", "text": "Release in den Early Access mit der Community an Bord." }
+          ]
+        },
+        {
+          "type": "cta",
+          "heading": "Werde Teil der Magie.",
+          "text": "Setz Wobbly Wizards auf deine Wishlist und sei beim Start des Chaos dabei.",
+          "label": "Jetzt wishlisten",
+          "url": "#"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "posts": [
+    {
+      "title": "Willkommen im Devlog!",
+      "slug": "willkommen-im-devlog",
+      "date": "2026-06-01",
+      "game": "wobbly-wizards",
+      "version": "",
+      "tags": ["studio", "news"],
+      "cover": "",
+      "excerpt": "Wir öffnen die Türen zur Werkstatt: ab jetzt teilen wir hier regelmäßig Fortschritt, Patchnotes und Blicke hinter die Kulissen.",
+      "body": "Hallo und herzlich willkommen! 👋\n\nAb heute gibt es bei **PLANIGAMES** ein offenes Entwicklungstagebuch. Hier erfährst du als Erste*r, woran wir gerade basteln — vom kleinsten Bugfix bis zum großen Feature.\n\n## Was dich erwartet\n\n- Regelmäßige **Devlog-Einträge** zu Wobbly Wizards\n- Detaillierte **Patch Notes** zu jedem Build\n- Blicke hinter die Kulissen: Konzepte, Prototypen, Fehlschläge\n\nBleib dran — die Magie fängt gerade erst an. 🪄"
+    },
+    {
+      "title": "Build 0.3 — Spruch-Kombos & wackeligere Physik",
+      "slug": "build-0-3-spruch-kombos",
+      "date": "2026-06-12",
+      "game": "wobbly-wizards",
+      "version": "0.3.0",
+      "tags": ["patchnotes", "gameplay"],
+      "cover": "",
+      "excerpt": "Neue Spruch-Kombinationen, überarbeitete Ragdoll-Physik und jede Menge Feinschliff am Koop.",
+      "body": "Dieser Build dreht ordentlich am Chaos-Regler. 🌪️\n\n## ✨ Neu\n\n- **Spruch-Kombos:** Elemente lassen sich jetzt kombinieren — Feuer + Wind ergibt eine Flammenwand.\n- **Neuer Dungeon-Abschnitt:** Die *Wackelhallen* mit beweglichen Plattformen.\n- **Charakter-Editor:** Erste Hüte und Bärte stehen zur Auswahl.\n\n## 🔧 Verbessert\n\n- Ragdoll-Physik fühlt sich beim Stolpern deutlich befriedigender an.\n- Koop-Synchronisation bei schnellen Zaubern stabiler.\n- Performance in großen Räumen um ~20% verbessert.\n\n## 🐛 Behoben\n\n- Teleport landete gelegentlich in Wänden.\n- Bossgegner konnte sich selbst aus dem Level zaubern.\n- UI-Skalierung auf Ultrawide-Monitoren korrigiert.\n\nDanke an alle Tester*innen im Discord für das Feedback! 💜"
+    }
+  ]
+}
