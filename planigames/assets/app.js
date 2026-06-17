@@ -148,6 +148,76 @@
         initTilt();
         initYear();
         initLangSwitch();
+        initBackgroundFX();
+    }
+
+    /* Schwebende Magie-/Glut-Partikel im Hintergrund (Canvas) */
+    function initBackgroundFX() {
+        const canvas = $("#fx-canvas");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        let w = 0, h = 0, dpr = 1, particles = [], raf = 0;
+
+        // Weiches Glüh-Sprite einmal vorrendern (warmes Orange/Gold)
+        const sprite = document.createElement("canvas");
+        (() => {
+            const r = 32; sprite.width = sprite.height = r * 2;
+            const g = sprite.getContext("2d");
+            const grd = g.createRadialGradient(r, r, 0, r, r, r);
+            grd.addColorStop(0, "rgba(255,190,110,0.95)");
+            grd.addColorStop(0.4, "rgba(255,140,45,0.40)");
+            grd.addColorStop(1, "rgba(255,120,20,0)");
+            g.fillStyle = grd; g.beginPath(); g.arc(r, r, r, 0, Math.PI * 2); g.fill();
+        })();
+
+        function spawn(initial) {
+            const size = 1 + Math.random() * 3.5;
+            const x = Math.random() * w;
+            return {
+                baseX: x, x,
+                y: initial ? Math.random() * h : h + 30,
+                r: size,
+                vy: -(0.04 + Math.random() * 0.16) * (size / 2),  // langsam aufsteigend
+                ampl: 8 + Math.random() * 26,
+                phase: Math.random() * Math.PI * 2,
+                freq: 0.00012 + Math.random() * 0.00028,
+                a: 0.06 + Math.random() * 0.20,
+                tw: 0.4 + Math.random() * 1.4,
+            };
+        }
+        function resize() {
+            dpr = Math.min(window.devicePixelRatio || 1, 2);
+            w = canvas.clientWidth; h = canvas.clientHeight;
+            canvas.width = Math.max(1, w * dpr); canvas.height = Math.max(1, h * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            const count = Math.round(Math.min(60, Math.max(18, (w * h) / 46000)));
+            particles = Array.from({ length: count }, () => spawn(true));
+        }
+        function draw(t) {
+            ctx.clearRect(0, 0, w, h);
+            ctx.globalCompositeOperation = "lighter";
+            for (const p of particles) {
+                p.y += p.vy;
+                p.x = p.baseX + Math.sin(t * p.freq + p.phase) * p.ampl;
+                const alpha = p.a * (0.55 + 0.45 * Math.sin(t * 0.001 * p.tw + p.phase));
+                ctx.globalAlpha = alpha < 0 ? 0 : alpha;
+                const d = p.r * 6;
+                ctx.drawImage(sprite, p.x - d / 2, p.y - d / 2, d, d);
+                if (p.y < -40) Object.assign(p, spawn(false));
+            }
+            ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+        }
+        function loop(t) { draw(t); raf = requestAnimationFrame(loop); }
+
+        addEventListener("resize", () => { cancelAnimationFrame(raf); resize(); if (!reduce) raf = requestAnimationFrame(loop); }, { passive: true });
+        resize();
+        if (reduce) { draw(0); return; }            // statisch zeichnen
+        raf = requestAnimationFrame(loop);
+        document.addEventListener("visibilitychange", () => {
+            cancelAnimationFrame(raf);
+            if (!document.hidden) raf = requestAnimationFrame(loop);
+        });
     }
 
     function initLangSwitch() {
@@ -795,6 +865,7 @@
         if (!$("#scroll-progress")) {
             document.body.insertAdjacentHTML("afterbegin", `
                 <div id="scroll-progress"></div>
+                <canvas id="fx-canvas"></canvas>
                 <div id="cursor-ring"></div><div id="cursor-dot"></div>
                 <div id="preloader">
                     <div class="relative h-24 w-24 grid place-items-center">
@@ -807,8 +878,8 @@
                         <span>Lade Welt</span><span id="pre-count" class="text-white tabular-nums">000</span>
                     </div>
                 </div>
-                <div class="glow-blob" style="top:-12%;left:-12%;width:60vw;height:60vw;background:color-mix(in srgb,var(--accent) 16%,transparent)"></div>
-                <div class="glow-blob" style="bottom:-12%;right:-12%;width:55vw;height:55vw;background:color-mix(in srgb,var(--accent-2) 14%,transparent)"></div>`);
+                <div class="glow-blob glow-1" style="top:-12%;left:-12%;width:60vw;height:60vw;background:color-mix(in srgb,var(--accent) 16%,transparent)"></div>
+                <div class="glow-blob glow-2" style="bottom:-12%;right:-12%;width:55vw;height:55vw;background:color-mix(in srgb,var(--accent-2) 14%,transparent)"></div>`);
         }
 
         const headerMount = $("[data-shell='header']");
