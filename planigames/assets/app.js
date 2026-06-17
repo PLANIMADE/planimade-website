@@ -40,12 +40,99 @@
     function fmtDate(iso) {
         if (!iso) return "";
         try {
-            return new Date(iso).toLocaleDateString("de-DE",
+            return new Date(iso).toLocaleDateString(LOCALE(),
                 { day: "2-digit", month: "long", year: "numeric" });
         } catch { return iso; }
     }
 
     const qs = new URLSearchParams(location.search);
+
+    /* =========================================================
+       0) SPRACHE (i18n) — DE / EN
+       ========================================================= */
+    const I18N = {
+        de: {
+            nav_studio: "Studio", nav_games: "Games", nav_devlog: "Devlog", nav_contact: "Kontakt",
+            cta_discover: "Spiele entdecken", cta_explore: "Spiele entdecken →", cta_devlog: "Devlog lesen",
+            foot_discover: "Entdecken", foot_allgames: "Alle Spiele", foot_devlog: "Devlog & Patch Notes",
+            foot_about: "Über das Studio", foot_contact: "Kontakt & Presse", foot_newsletter_btn: "Abonnieren",
+            foot_newsletter_note: "Kein Spam. Nur News zu neuen Spielen & großen Patches.",
+            foot_rights: "Alle Rechte vorbehalten.", foot_made: "Made with 🧡 in Germany",
+            foot_impressum: "Impressum", foot_datenschutz: "Datenschutz",
+            studio_since: "Indie Game Studio · seit",
+            st_released: "Veröffentlicht", st_early: "Early Access", st_demo: "Demo verfügbar",
+            st_development: "In Entwicklung", st_announced: "Angekündigt",
+            current_project: "Aktuelles Projekt", more_info: "Mehr erfahren", to_game: "Zum Spiel →",
+            wishlist: "Auf Steam wishlisten", read_more: "Weiterlesen →", all: "Alle",
+            all_posts: "Alle Beiträge", all_games_arrow: "Alle →", back_all: "← Alle Beiträge",
+            patchnotes: "Patch Notes", ourgames: "Unsere Spiele", team_heading: "Die Köpfe dahinter",
+            devlog_fresh: "Frisch aus dem Devlog", about_kicker: "Über das Studio",
+            games_title: "Unsere Spiele", games_sub: "Jede Welt mit eigenem Charakter, eigener Farbe, eigener Magie. Klick dich rein.",
+            games_kicker: "Unsere Titel",
+            devlog_title: "Devlog & Patch Notes", devlog_kicker: "Entwicklungstagebuch",
+            devlog_sub: "Updates, Patchnotes und Blicke hinter die Kulissen. Frisch aus der Werkstatt.",
+            nf_text: "Das gibt es hier leider nicht.", nf_home: "Zur Startseite",
+             msg_no_games: "Noch keine Spiele angelegt.", msg_no_posts: "Noch keine Einträge.",
+            nl_loading: "Lädt…", current_project_tag: "Aktuelles Projekt",
+        },
+        en: {
+            nav_studio: "Studio", nav_games: "Games", nav_devlog: "Devlog", nav_contact: "Contact",
+            cta_discover: "Explore games", cta_explore: "Explore games →", cta_devlog: "Read the devlog",
+            foot_discover: "Explore", foot_allgames: "All games", foot_devlog: "Devlog & patch notes",
+            foot_about: "About the studio", foot_contact: "Contact & press", foot_newsletter_btn: "Subscribe",
+            foot_newsletter_note: "No spam. Just news on new games & major patches.",
+            foot_rights: "All rights reserved.", foot_made: "Made with 🧡 in Germany",
+            foot_impressum: "Imprint", foot_datenschutz: "Privacy",
+            studio_since: "Indie game studio · since",
+            st_released: "Released", st_early: "Early Access", st_demo: "Demo available",
+            st_development: "In development", st_announced: "Announced",
+            current_project: "Current project", more_info: "Learn more", to_game: "View game →",
+            wishlist: "Wishlist on Steam", read_more: "Read more →", all: "All",
+            all_posts: "All posts", all_games_arrow: "All →", back_all: "← All posts",
+            patchnotes: "Patch notes", ourgames: "Our games", team_heading: "The people behind it",
+            devlog_fresh: "Fresh from the devlog", about_kicker: "About the studio",
+            games_title: "Our games", games_sub: "Each world with its own character, colour and magic. Dive in.",
+            games_kicker: "Our titles",
+            devlog_title: "Devlog & patch notes", devlog_kicker: "Development diary",
+            devlog_sub: "Updates, patch notes and behind-the-scenes looks. Fresh from the workshop.",
+            nf_text: "Sorry, this doesn't exist.", nf_home: "Back to home",
+            msg_no_games: "No games yet.", msg_no_posts: "No entries yet.",
+            nl_loading: "Loading…", current_project_tag: "Current project",
+        },
+    };
+    function detectLang() {
+        const q = qs.get("lang");
+        if (q === "en" || q === "de") { try { localStorage.setItem("pg_lang", q); } catch {} return q; }
+        try { const s = localStorage.getItem("pg_lang"); if (s === "en" || s === "de") return s; } catch {}
+        return "de";
+    }
+    let LANG = detectLang();
+    const t = (k) => (I18N[LANG] && I18N[LANG][k]) || I18N.de[k] || k;
+    const LOCALE = () => (LANG === "en" ? "en-GB" : "de-DE");
+    function setLang(l) {
+        if (l !== "de" && l !== "en") return;
+        try { localStorage.setItem("pg_lang", l); } catch {}
+        const u = new URL(location.href); u.searchParams.delete("lang"); history.replaceState(null, "", u);
+        LANG = l; location.reload();
+    }
+    function applyI18n(root = document) {
+        $$("[data-i18n]", root).forEach(el => { el.textContent = t(el.dataset.i18n); });
+        $$("[data-i18n-ph]", root).forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+    }
+    // Tiefen-Merge: englische Werte über deutsche legen, leeres EN fällt auf DE zurück
+    function mergeLang(de, en) {
+        if (en === undefined || en === null || en === "") return de;
+        if (Array.isArray(de)) {
+            if (!Array.isArray(en)) return de;
+            return de.map((d, i) => mergeLang(d, en[i]));
+        }
+        if (de && typeof de === "object") {
+            const out = Array.isArray(de) ? [] : { ...de };
+            for (const k of Object.keys(de)) out[k] = mergeLang(de[k], en ? en[k] : undefined);
+            return out;
+        }
+        return en; // Skalar: EN gewinnt (wenn nicht leer, s. o.)
+    }
 
     /* =========================================================
        1) SHELL — globale Effekte
@@ -60,6 +147,14 @@
         initMagnetic();
         initTilt();
         initYear();
+        initLangSwitch();
+    }
+
+    function initLangSwitch() {
+        document.addEventListener("click", (e) => {
+            const b = e.target.closest("[data-setlang]");
+            if (b) { e.preventDefault(); setLang(b.dataset.setlang); }
+        });
     }
 
     function initPreloader() {
@@ -201,16 +296,16 @@
     }
 
     const STATUS = {
-        released:   { label: "Veröffentlicht", cls: "text-emerald-300 border-emerald-400/30 bg-emerald-400/10" },
-        early:      { label: "Early Access",   cls: "text-orange-300 border-orange-400/30 bg-orange-400/10" },
-        demo:       { label: "Demo verfügbar", cls: "text-amber-200 border-amber-300/30 bg-amber-300/10" },
-        development:{ label: "In Entwicklung",  cls: "text-orange-300 border-orange-400/30 bg-orange-400/10" },
-        announced:  { label: "Angekündigt",    cls: "text-zinc-300 border-white/20 bg-white/5" },
+        released:   { key: "st_released",    cls: "text-emerald-300 border-emerald-400/30 bg-emerald-400/10" },
+        early:      { key: "st_early",       cls: "text-orange-300 border-orange-400/30 bg-orange-400/10" },
+        demo:       { key: "st_demo",        cls: "text-amber-200 border-amber-300/30 bg-amber-300/10" },
+        development:{ key: "st_development", cls: "text-orange-300 border-orange-400/30 bg-orange-400/10" },
+        announced:  { key: "st_announced",   cls: "text-zinc-300 border-white/20 bg-white/5" },
     };
     function statusBadge(s) {
         const m = STATUS[s] || STATUS.development;
         return `<span class="badge inline-flex items-center gap-2 px-3 py-1 rounded-full border ${m.cls}">
-            <span class="w-1.5 h-1.5 rounded-full bg-current"></span>${m.label}</span>`;
+            <span class="w-1.5 h-1.5 rounded-full bg-current"></span>${t(m.key)}</span>`;
     }
 
     /* =========================================================
@@ -218,8 +313,16 @@
        ========================================================= */
     const DATA = {};
     async function loadData(...names) {
-        const map = { studio: "data/studio.json", games: "data/games.json", patchnotes: "data/patchnotes.json" };
-        await Promise.all(names.map(async n => { DATA[n] = await fetchJSON(map[n]); }));
+        const map = { studio: "data/studio.json", games: "data/games.json", patchnotes: "data/patchnotes.json", legal: "data/legal.json" };
+        await Promise.all(names.map(async n => {
+            const de = await fetchJSON(map[n]);
+            if (LANG === "en" && de) {
+                const en = await fetchJSON(map[n].replace(/\.json$/, ".en.json"));
+                DATA[n] = en ? mergeLang(de, en) : de;
+            } else {
+                DATA[n] = de;
+            }
+        }));
         return DATA;
     }
 
@@ -305,13 +408,13 @@
                 </a>
                 <div class="p-5 md:p-8">
                     <div class="flex items-center gap-3 mb-5">${statusBadge(g.status)}
-                        <span class="badge text-zinc-500">Aktuelles Projekt</span></div>
+                        <span class="badge text-zinc-500">${t("current_project")}</span></div>
                     ${g.logo ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="h-16 md:h-20 mb-4 object-contain">`
                              : `<h2 class="font-display text-4xl md:text-6xl font-extrabold text-white mb-4">${esc(g.title)}</h2>`}
                     <p class="text-zinc-300 text-lg leading-relaxed mb-7 max-w-xl">${esc(g.tagline || "")}</p>
                     <div class="flex flex-wrap gap-3">
-                        <a href="game.html?slug=${esc(g.slug)}" class="btn-accent magnetic px-7 py-3.5 rounded-full font-semibold text-sm">Zum Spiel →</a>
-                        ${g.wishlistUrl ? `<a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-ghost magnetic px-7 py-3.5 rounded-full font-semibold text-sm">Auf Steam wishlisten</a>` : ""}
+                        <a href="game.html?slug=${esc(g.slug)}" class="btn-accent magnetic px-7 py-3.5 rounded-full font-semibold text-sm">${t("to_game")}</a>
+                        ${g.wishlistUrl ? `<a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-ghost magnetic px-7 py-3.5 rounded-full font-semibold text-sm">${t("wishlist")}</a>` : ""}
                     </div>
                 </div>
             </div>`;
@@ -332,7 +435,7 @@
                 <h3 class="font-display text-2xl font-extrabold text-white group-hover:text-gradient">${esc(g.title)}</h3>
                 <p class="text-sm text-zinc-400 mt-2 line-clamp-2">${esc(g.tagline || "")}</p>
                 <div class="mt-4 font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] flex items-center gap-2">
-                    Mehr erfahren <span class="transition-transform group-hover:translate-x-1">→</span></div>
+                    ${t("more_info")} <span class="transition-transform group-hover:translate-x-1">→</span></div>
             </div>
         </a>`;
     }
@@ -361,10 +464,10 @@
         const games = (DATA.games && DATA.games.games) || [];
         const grid = $("[data-games='all']");
         if (!grid) return;
-        if (!games.length) { grid.innerHTML = `<p class="text-zinc-500">Noch keine Spiele angelegt.</p>`; return; }
+        if (!games.length) { grid.innerHTML = `<p class="text-zinc-500">${t("msg_no_games")}</p>`; return; }
         grid.innerHTML = games.map(gameCard).join("");
         initTilt(grid); observeReveals(grid);
-        setText("[data-games='count']", games.length + (games.length === 1 ? " Titel" : " Titel"));
+        setText("[data-games='count']", games.length + " " + (LANG === "en" ? "titles" : "Titel"));
     }
 
     /* =========================================================
@@ -377,7 +480,7 @@
         const g = games.find(x => x.slug === slug) || games[0];
         const root = $("[data-game-root]");
         if (!root) return;
-        if (!g) { root.innerHTML = notFound("Dieses Spiel gibt es (noch) nicht."); return; }
+        if (!g) { root.innerHTML = notFound(t("nf_text")); return; }
 
         applyAccent(g.accent || "#8b5cf6", g.accent2 || "#22d3ee");
         document.title = `${g.title} — PLANIGAMES`;
@@ -443,8 +546,8 @@
                          : `<h1 class="font-display text-6xl md:text-8xl font-extrabold text-white mb-6 reveal-on"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`}
                 <p class="text-xl md:text-2xl text-zinc-200 max-w-2xl mb-9 reveal">${esc(b.tagline || g.tagline || "")}</p>
                 <div class="flex flex-wrap gap-3 reveal">
-                    ${g.wishlistUrl ? `<a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold">${esc(b.ctaLabel || "Auf Steam wishlisten")}</a>` : ""}
-                    ${b.trailerUrl ? `<a href="${esc(b.trailerUrl)}" target="_blank" rel="noopener" class="btn-ghost magnetic px-8 py-4 rounded-full font-semibold inline-flex items-center gap-2">▶ Trailer ansehen</a>` : ""}
+                    ${g.wishlistUrl ? `<a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold">${esc(b.ctaLabel || t("wishlist"))}</a>` : ""}
+                    ${b.trailerUrl ? `<a href="${esc(b.trailerUrl)}" target="_blank" rel="noopener" class="btn-ghost magnetic px-8 py-4 rounded-full font-semibold inline-flex items-center gap-2">▶ ${LANG === "en" ? "Watch trailer" : "Trailer ansehen"}</a>` : ""}
                 </div>
             </div>
         </section>`;
@@ -562,13 +665,13 @@
 
         const list = $("[data-devlog='list']");
         if (!list) return;
-        if (!posts.length) { list.innerHTML = `<p class="text-zinc-500">Noch keine Einträge.</p>`; return; }
+        if (!posts.length) { list.innerHTML = `<p class="text-zinc-500">${t("msg_no_posts")}</p>`; return; }
 
         // Filter-Chips pro Spiel
         const filterWrap = $("[data-devlog='filters']");
         const activeGame = qs.get("game");
         if (filterWrap) {
-            filterWrap.innerHTML = [`<a href="devlog.html" class="badge px-4 py-1.5 rounded-full border ${!activeGame ? "bg-white text-black border-white" : "border-white/15 text-zinc-300 hover:border-white/40"}">Alle</a>`]
+            filterWrap.innerHTML = [`<a href="devlog.html" class="badge px-4 py-1.5 rounded-full border ${!activeGame ? "bg-white text-black border-white" : "border-white/15 text-zinc-300 hover:border-white/40"}">${t("all")}</a>`]
                 .concat(games.map(g => `<a href="devlog.html?game=${esc(g.slug)}" class="badge px-4 py-1.5 rounded-full border ${activeGame === g.slug ? "bg-white text-black border-white" : "border-white/15 text-zinc-300 hover:border-white/40"}">${esc(g.title)}</a>`)).join("");
         }
 
@@ -591,7 +694,7 @@
                         </div>
                         <h2 class="font-display text-2xl font-extrabold text-white group-hover:text-gradient">${esc(p.title)}</h2>
                         ${p.excerpt ? `<p class="text-zinc-400 mt-2 line-clamp-2">${esc(p.excerpt)}</p>` : ""}
-                        <div class="mt-4 font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)]">Weiterlesen →</div>
+                        <div class="mt-4 font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)]">${t("read_more")}</div>
                     </div>
                 </div>
             </a>`;
@@ -605,13 +708,13 @@
         if (list) list.classList.add("hidden");
         if (!root) return;
         root.classList.remove("hidden");
-        if (!p) { root.innerHTML = notFound("Diesen Beitrag gibt es nicht."); return; }
+        if (!p) { root.innerHTML = notFound(t("nf_text")); return; }
         const g = games.find(x => x.slug === p.game);
         if (g) applyAccent(g.accent, g.accent2);
         document.title = `${p.title} — PLANIGAMES Devlog`;
         root.innerHTML = `
             <div class="max-w-3xl mx-auto px-6 pt-36 pb-24">
-                <a href="devlog.html" class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 hover:text-white">← Alle Beiträge</a>
+                <a href="devlog.html" class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 hover:text-white">${t("back_all")}</a>
                 <div class="flex items-center gap-2 flex-wrap mt-8 mb-5">
                     <span class="font-mono text-xs text-zinc-500">${esc(fmtDate(p.date))}</span>
                     ${g ? `<a href="game.html?slug=${esc(g.slug)}" class="badge px-2 py-0.5 rounded border border-white/10 text-zinc-300 hover:border-white/40">${esc(g.title)}</a>` : ""}
@@ -656,7 +759,7 @@
         return `<div class="min-h-[60vh] grid place-items-center text-center px-6">
             <div><div class="text-6xl mb-6">🪄</div>
             <p class="text-zinc-400 mb-6">${esc(msg)}</p>
-            <a href="index.html" class="btn-ghost magnetic inline-block px-7 py-3 rounded-full">Zur Startseite</a></div></div>`;
+            <a href="index.html" class="btn-ghost magnetic inline-block px-7 py-3 rounded-full">${t("nf_home")}</a></div></div>`;
     }
 
     /* ---------- mini DOM-Helfer für statische Slots ---------- */
@@ -669,17 +772,22 @@
        schlank bleiben und Navigation überall identisch ist.
        ========================================================= */
     const NAV = [
-        ["index.html", "Studio"],
-        ["games.html", "Games"],
-        ["devlog.html", "Devlog"],
-        ["index.html#kontakt", "Kontakt"],
+        ["index.html", "nav_studio"],
+        ["games.html", "nav_games"],
+        ["devlog.html", "nav_devlog"],
+        ["index.html#kontakt", "nav_contact"],
     ];
     function navLinks(extra = "") {
         const here = location.pathname.split("/").pop() || "index.html";
-        return NAV.map(([href, label]) => {
+        return NAV.map(([href, key]) => {
             const active = href.split("#")[0] === here;
-            return `<a href="${href}" class="${extra} ${active ? "text-white" : "text-zinc-400 hover:text-white"} transition-colors">${label}</a>`;
+            return `<a href="${href}" class="${extra} ${active ? "text-white" : "text-zinc-400 hover:text-white"} transition-colors">${t(key)}</a>`;
         }).join("");
+    }
+    function langSwitch() {
+        const o = LANG === "en" ? "de" : "en";
+        return `<button type="button" data-setlang="${o}" class="font-mono text-[11px] uppercase tracking-widest border border-white/15 rounded-full px-3 py-1.5 text-zinc-300 hover:text-white hover:border-white/40 transition-colors" aria-label="Sprache wechseln">
+            <span class="${LANG === "de" ? "text-white" : "text-zinc-500"}">DE</span><span class="text-zinc-600 mx-1">/</span><span class="${LANG === "en" ? "text-white" : "text-zinc-500"}">EN</span></button>`;
     }
 
     function injectChrome() {
@@ -714,13 +822,18 @@
                         </span>
                     </a>
                     <nav class="hidden md:flex items-center gap-9 font-medium text-sm">${navLinks()}</nav>
-                    <a href="games.html" class="hidden md:inline-block btn-accent magnetic px-5 py-2.5 rounded-full text-sm font-semibold">Spiele entdecken</a>
+                    <div class="hidden md:flex items-center gap-3">
+                        ${langSwitch()}
+                        <a href="games.html" class="btn-accent magnetic px-5 py-2.5 rounded-full text-sm font-semibold">${t("cta_discover")}</a>
+                    </div>
                     <button id="menu-toggle" class="md:hidden text-white p-2" aria-label="Menü" aria-expanded="false">
                         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
                     </button>
                 </div>
                 <div id="mobile-menu" class="hidden md:hidden border-t border-white/10 bg-[#06060a]/95 backdrop-blur-xl">
-                    <nav class="flex flex-col px-6 py-5 gap-4 text-lg">${navLinks("py-1")}</nav>
+                    <nav class="flex flex-col px-6 py-5 gap-4 text-lg">${navLinks("py-1")}
+                        <div class="pt-3">${langSwitch()}</div>
+                    </nav>
                 </div>
             </header>`;
 
@@ -739,20 +852,20 @@
                                 <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
                                 <input type="hidden" name="source" value="footer">
                                 <input type="email" name="email" required placeholder="deine@mail.de" data-nl-input class="flex-1 bg-white/[0.04] border border-white/12 rounded-full px-5 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-[color:var(--accent)] outline-none">
-                                <button class="btn-accent magnetic px-5 py-3 rounded-full text-sm font-semibold shrink-0">Abonnieren</button>
+                                <button class="btn-accent magnetic px-5 py-3 rounded-full text-sm font-semibold shrink-0">${t("foot_newsletter_btn")}</button>
                             </form>
-                            <p class="text-[11px] text-zinc-600 mt-2">Kein Spam. Nur News zu neuen Spielen & großen Patches.</p>
+                            <p class="text-[11px] text-zinc-600 mt-2">${t("foot_newsletter_note")}</p>
                         </div>
                         <div>
-                            <div class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 mb-5">Entdecken</div>
+                            <div class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 mb-5">${t("foot_discover")}</div>
                             <ul class="space-y-3 text-zinc-300">
-                                <li><a href="games.html" class="hover:text-white">Alle Spiele</a></li>
-                                <li><a href="devlog.html" class="hover:text-white">Devlog & Patch Notes</a></li>
-                                <li><a href="index.html#studio" class="hover:text-white">Über das Studio</a></li>
+                                <li><a href="games.html" class="hover:text-white">${t("foot_allgames")}</a></li>
+                                <li><a href="devlog.html" class="hover:text-white">${t("foot_devlog")}</a></li>
+                                <li><a href="index.html#studio" class="hover:text-white">${t("foot_about")}</a></li>
                             </ul>
                         </div>
                         <div>
-                            <div class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 mb-5">Kontakt & Presse</div>
+                            <div class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 mb-5">${t("foot_contact")}</div>
                             <ul class="space-y-3 text-zinc-300">
                                 <li><a href="mailto:hello.dominicmajewski@gmail.com" class="hover:text-white" data-studio="email">hello.dominicmajewski@gmail.com</a></li>
                                 <li class="flex gap-4 pt-2 text-zinc-400" data-studio="socials"></li>
@@ -760,12 +873,12 @@
                         </div>
                     </div>
                     <div class="mt-16 pt-8 border-t border-white/8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-600">
-                        <div>© <span data-year></span> PLANIGAMES — Alle Rechte vorbehalten.</div>
+                        <div>© <span data-year></span> PLANIGAMES — ${t("foot_rights")}</div>
                         <div class="flex items-center gap-5">
-                            <a href="rechtliches.html?doc=impressum" class="hover:text-white">Impressum</a>
-                            <a href="rechtliches.html?doc=datenschutz" class="hover:text-white">Datenschutz</a>
+                            <a href="rechtliches.html?doc=impressum" class="hover:text-white">${t("foot_impressum")}</a>
+                            <a href="rechtliches.html?doc=datenschutz" class="hover:text-white">${t("foot_datenschutz")}</a>
                         </div>
-                        <div class="font-mono uppercase tracking-widest">Made with 🧡 in Germany</div>
+                        <div class="font-mono uppercase tracking-widest">${t("foot_made")}</div>
                     </div>
                 </div>
             </footer>`;
@@ -843,7 +956,9 @@
        BOOT
        ========================================================= */
     async function boot() {
+        document.documentElement.lang = LANG;
         injectChrome();
+        applyI18n();          // statische [data-i18n]-Texte übersetzen
         initShell();
         const page = document.body.dataset.page;
         await ({

@@ -131,9 +131,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
   $key = $_POST['collection'] ?? '';
   if (!isset($SCHEMA[$key])) { http_response_code(404); exit('Unbekannter Bereich.'); }
   if (!pg_can($key)) { http_response_code(403); exit('Keine Berechtigung für diesen Bereich.'); }
+  $lang = ($_POST['lang'] ?? 'de') === 'en' ? 'en' : 'de';
   $data = pg_normalize_fields($SCHEMA[$key]['fields'], $_POST['d'] ?? []);
-  $ok = pg_save_json($SCHEMA[$key]['file'], $data);
-  header('Location: index.php?collection=' . urlencode($key) . ($ok ? '&saved=1' : '&error=1'));
+  $ok = pg_save_json(pg_lang_file($SCHEMA[$key]['file'], $lang), $data);
+  header('Location: index.php?collection=' . urlencode($key) . '&lang=' . $lang . ($ok ? '&saved=1' : '&error=1'));
+  exit;
+}
+
+/* ---- Automatisch ins Englische übersetzen ---- */
+if ($action === 'translate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+  pg_csrf_check();
+  $key = $_POST['collection'] ?? '';
+  if (!isset($SCHEMA[$key]) || !pg_can($key)) { http_response_code(403); exit('Keine Berechtigung.'); }
+  @set_time_limit(180);
+  $de = pg_load_json($SCHEMA[$key]['file']);
+  $en = pg_translate_data($SCHEMA[$key]['fields'], $de);
+  $ok = pg_save_json(pg_lang_file($SCHEMA[$key]['file'], 'en'), $en);
+  header('Location: index.php?collection=' . urlencode($key) . '&lang=en&' . ($ok ? 'translated=1' : 'error=1'));
   exit;
 }
 
@@ -305,15 +319,40 @@ if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
   $key = $_GET['collection'];
   if (!pg_can($key)) { header('Location: index.php'); exit; }
   $coll = $SCHEMA[$key];
-  $data = pg_load_json($coll['file']);
+  $lang = ($_GET['lang'] ?? 'de') === 'en' ? 'en' : 'de';
+  $enFile = pg_lang_file($coll['file'], 'en');
+  $enExists = is_file($enFile);
+  // EN-Datei laden falls vorhanden, sonst Deutsch als Startvorlage übernehmen
+  $data = ($lang === 'en' && $enExists) ? pg_load_json($enFile) : pg_load_json($coll['file']);
+
   pg_view_head($coll['label']);
   pg_view_topbar($SCHEMA, $key);
-  if (isset($_GET['saved']))  echo '<div class="flash ok">✓ Gespeichert. Änderungen sind live auf der Website.</div>';
-  if (isset($_GET['error']))  echo '<div class="flash err">Konnte nicht speichern – Schreibrechte am Ordner data/ prüfen.</div>';
+  if (isset($_GET['saved']))      echo '<div class="flash ok">✓ Gespeichert (' . strtoupper($lang) . '). Änderungen sind live auf der Website.</div>';
+  if (isset($_GET['translated'])) echo '<div class="flash ok">🌐 Automatisch übersetzt. Bitte gegenlesen und ggf. anpassen, dann speichern reicht – ist bereits gesichert.</div>';
+  if (isset($_GET['error']))      echo '<div class="flash err">Konnte nicht speichern/übersetzen – Schreibrechte am Ordner data/ bzw. Internet-Zugriff prüfen.</div>';
+
+  // Sprach-Umschalter
+  echo '<div class="editor lang-bar">';
+  echo '<div class="lang-toggle">'
+     . '<a class="' . ($lang === 'de' ? 'on' : '') . '" href="index.php?collection=' . pg_h($key) . '&lang=de">🇩🇪 Deutsch</a>'
+     . '<a class="' . ($lang === 'en' ? 'on' : '') . '" href="index.php?collection=' . pg_h($key) . '&lang=en">🇬🇧 English' . ($enExists ? '' : ' <span class="muted">(neu)</span>') . '</a>'
+     . '</div>';
+  if ($lang === 'en') {
+    echo '<form method="post" action="index.php?action=translate" class="tr-form" '
+       . 'onsubmit="return confirm(\'Englische Felder automatisch aus dem Deutschen füllen? Vorhandene englische Inhalte werden überschrieben. Das kann einen Moment dauern.\')">'
+       . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+       . '<input type="hidden" name="collection" value="' . pg_h($key) . '">'
+       . '<button class="btn-translate" type="submit">🌐 Automatisch aus dem Deutschen übersetzen</button></form>';
+  }
+  echo '</div>';
+  if ($lang === 'en') echo '<div class="editor lang-hint-wrap"><p class="muted lang-hint">Tipp: Leere englische Felder fallen auf der Website automatisch auf Deutsch zurück. Nicht-Textfelder (Bilder, Farben, Links) gelten für beide Sprachen.</p></div>';
+
   echo '<form method="post" class="editor" id="editor">';
   echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
   echo '<input type="hidden" name="collection" value="' . pg_h($key) . '">';
-  echo '<div class="editor-head"><div><h1>' . pg_h($coll['icon']) . ' ' . pg_h($coll['label']) . '</h1>'
+  echo '<input type="hidden" name="lang" value="' . pg_h($lang) . '">';
+  echo '<div class="editor-head"><div><h1>' . pg_h($coll['icon']) . ' ' . pg_h($coll['label'])
+     . ' <span class="lang-pill">' . strtoupper($lang) . '</span></h1>'
      . '<p class="muted">Änderungen werden direkt auf dem Server gespeichert.</p></div>'
      . '<button class="btn-primary" type="submit" name="save" value="1">Speichern</button></div>';
   echo '<div class="fields">';

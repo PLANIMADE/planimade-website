@@ -85,6 +85,29 @@ ihren eigenen Look, während der Studio-Rahmen edel schwarz bleibt.
 
 ---
 
+## Mehrsprachigkeit (Deutsch / Englisch)
+
+Die Website hat einen **Sprachumschalter (DE/EN)** oben rechts. So pflegst
+du Englisch:
+
+1. Im Dashboard einen Bereich öffnen (z. B. Spiele) und oben auf
+   **🇬🇧 English** umschalten.
+2. **„🌐 Automatisch aus dem Deutschen übersetzen"** klicken — füllt alle
+   Textfelder automatisch ins Englische (über den kostenlosen Dienst
+   *MyMemory*, **kein API-Key nötig**).
+3. Englisch **gegenlesen/anpassen** und **Speichern**.
+
+Gut zu wissen:
+- Englische Übersetzungen liegen in `data/*.en.json` (getrennt vom Deutschen).
+- **Leere** englische Felder fallen auf der Website automatisch auf Deutsch
+  zurück — die Seite ist also nie „halb leer".
+- **Nicht-Textfelder** (Bilder, Farben, Slugs, Links) gelten für beide
+  Sprachen.
+- Der Auto-Übersetzer braucht **Internet-Zugriff vom Server** (bei All-Inkl
+  vorhanden). Qualität ist maschinell — für den Feinschliff kurz drüberlesen.
+
+---
+
 ## Gut zu wissen
 
 - **Design / Schriften:** Die Seite lädt Tailwind & Fonts per CDN beim

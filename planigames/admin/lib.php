@@ -138,6 +138,107 @@ function pg_invite_html($link, $roleLabel, $inviter = ''){
     . '</table></td></tr></table></body></html>';
 }
 
+/* ---------------- Mehrsprachigkeit ---------------- */
+// Pfad zur Sprachvariante: 'de' = Original, 'en' = …​.en.json
+function pg_lang_file($file, $lang){
+  return $lang === 'en' ? preg_replace('/\.json$/', '.en.json', $file) : $file;
+}
+
+// HTTP-GET (curl bevorzugt, sonst file_get_contents)
+function pg_http_get($url){
+  if (function_exists('curl_init')) {
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>12, CURLOPT_FOLLOWLOCATION=>true,
+      CURLOPT_USERAGENT=>'PLANIGAMES-CMS', CURLOPT_HTTPHEADER=>['Accept: application/json']]);
+    $r = curl_exec($ch); curl_close($ch);
+    return $r ?: null;
+  }
+  $ctx = stream_context_create(['http'=>['timeout'=>12, 'header'=>"User-Agent: PLANIGAMES-CMS\r\n"]]);
+  $r = @file_get_contents($url, false, $ctx);
+  return $r ?: null;
+}
+
+// Kontakt-E-Mail erhöht das kostenlose MyMemory-Kontingent (anonym ~5k, mit Mail ~50k Wörter/Tag)
+function pg_translate_contact(){
+  static $e = null;
+  if ($e === null) { $s = pg_load_json(PG_DATA_DIR . '/studio.json'); $e = $s['email'] ?? ''; }
+  return filter_var($e, FILTER_VALIDATE_EMAIL) ? $e : '';
+}
+
+// Einzeltext via MyMemory (kein API-Key nötig) übersetzen; bei Fehlern Original behalten
+function pg_translate_text($text, $from = 'de', $to = 'en'){
+  $text = (string)$text;
+  if (trim($text) === '') return $text;
+  $email = pg_translate_contact();
+  $out = '';
+  foreach (pg_chunk_text($text, 480) as $part) {
+    if (trim($part) === '') { $out .= $part; continue; }
+    $url = 'https://api.mymemory.translated.net/get?q=' . rawurlencode($part) . '&langpair=' . $from . '|' . $to
+         . ($email ? '&de=' . rawurlencode($email) : '');
+    $res = pg_http_get($url);
+    $j = $res ? json_decode($res, true) : null;
+    $tr = $j['responseData']['translatedText'] ?? null;
+    $status = $j['responseStatus'] ?? 0;
+    if ($tr && ((int)$status === 200)) $out .= html_entity_decode($tr, ENT_QUOTES, 'UTF-8');
+    else $out .= $part; // Fallback: Original behalten
+    usleep(120000); // freundlich zum kostenlosen Dienst
+  }
+  return $out;
+}
+
+// Lange Texte an Absätzen/Sätzen in <= $max-Stücke teilen
+function pg_chunk_text($text, $max = 480){
+  if (mb_strlen($text) <= $max) return [$text];
+  $chunks = [];
+  foreach (preg_split('/(\n{2,})/', $text, -1, PREG_SPLIT_DELIM_CAPTURE) as $para) {
+    if (mb_strlen($para) <= $max) { $chunks[] = $para; continue; }
+    $buf = '';
+    foreach (preg_split('/(?<=[.!?]) /', $para) as $sent) {
+      if (mb_strlen($buf . ' ' . $sent) > $max && $buf !== '') { $chunks[] = $buf; $buf = $sent; }
+      else { $buf = $buf === '' ? $sent : $buf . ' ' . $sent; }
+    }
+    if ($buf !== '') $chunks[] = $buf;
+  }
+  return $chunks;
+}
+
+// Komplette Datenstruktur gemäß Schema übersetzen (nur Textfelder)
+function pg_translate_data($fields, $data){
+  $out = is_array($data) ? $data : [];
+  foreach ($fields as $f) {
+    if (!array_key_exists($f['name'], $out)) continue;
+    $out[$f['name']] = pg_translate_value($f, $out[$f['name']]);
+  }
+  return $out;
+}
+function pg_translate_value($f, $val){
+  $w = $f['widget'];
+  if (in_array($w, ['select','date','image','file','color','number','boolean'], true)) return $val;
+  if (!empty($f['slug'])) return $val;
+  if (preg_match('/url$/i', $f['name']) || in_array($f['name'], ['email','accent','accent2','game','slug','icon','emoji'], true)) return $val;
+  switch ($w) {
+    case 'string': case 'text': case 'markdown':
+      return pg_translate_text((string)$val);
+    case 'object':
+      return pg_translate_data($f['fields'], is_array($val) ? $val : []);
+    case 'list':
+      if (!is_array($val)) return $val;
+      if (isset($f['field'])) {
+        if (in_array($f['field']['widget'], ['image','file'], true)) return $val;
+        return array_map(fn($v) => pg_translate_text((string)$v), $val);
+      }
+      return array_map(fn($it) => pg_translate_data($f['fields'], is_array($it) ? $it : []), $val);
+    case 'blocks':
+      if (!is_array($val)) return $val;
+      return array_map(function($it) use ($f){
+        $type = $it['type'] ?? '';
+        if (!isset($f['types'][$type])) return $it;
+        return ['type'=>$type] + pg_translate_data($f['types'][$type]['fields'], $it);
+      }, $val);
+  }
+  return $val;
+}
+
 /* ---------------- CSRF ---------------- */
 function pg_csrf(){ if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(18)); return $_SESSION['csrf']; }
 function pg_csrf_check(){
