@@ -101,6 +101,8 @@ body.cursor-active #cursor-ring { width: 64px; height: 64px; background: rgba(25
 .glow-2 { animation: blobDriftB 32s ease-in-out infinite alternate; }
 @keyframes blobDriftA { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(6vw,4vh,0) scale(1.14); } }
 @keyframes blobDriftB { from { transform: translate3d(0,0,0) scale(1.06); } to { transform: translate3d(-5vw,-4vh,0) scale(0.92); } }
+/* Effekt-Stufen (im Admin wählbar): "Aus / minimal" blendet alles bis auf die Vignette aus */
+body.fx-off .glow-blob, body.fx-off #fx-canvas { display: none; }
 
 /* ---------- Header ---------- */
 #site-header { transition: all .5s cubic-bezier(0.16,1,0.3,1); }

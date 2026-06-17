@@ -151,23 +151,36 @@
         initBackgroundFX();
     }
 
-    /* Schwebende Magie-/Glut-Partikel im Hintergrund (Canvas) */
+    function hexToRgb(hex) {
+        const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
+        if (!m) return { r: 255, g: 150, b: 60 };
+        const n = parseInt(m[1], 16);
+        return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+    }
+
+    /* Schwebende Magie-/Glut-Partikel im Hintergrund (Canvas, im Admin konfigurierbar) */
     function initBackgroundFX() {
         const canvas = $("#fx-canvas");
         if (!canvas) return;
+        const cfg = (DATA.studio && DATA.studio.background) || {};
+        if ((cfg.effect || "particles") !== "particles") return;  // nur Glow / aus -> keine Partikel
+
         const ctx = canvas.getContext("2d");
         const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const AREA = { low: 75000, med: 46000, high: 28000 }[cfg.density] || 46000;   // kleiner = mehr
+        const SP = { calm: 0.55, normal: 1, lively: 1.8 }[cfg.speed] || 1;
+        const col = hexToRgb(cfg.color || "#ff7d1a");
         let w = 0, h = 0, dpr = 1, particles = [], raf = 0;
 
-        // Weiches Glüh-Sprite einmal vorrendern (warmes Orange/Gold)
+        // Weiches Glüh-Sprite einmal in der gewählten Farbe vorrendern
         const sprite = document.createElement("canvas");
         (() => {
             const r = 32; sprite.width = sprite.height = r * 2;
             const g = sprite.getContext("2d");
             const grd = g.createRadialGradient(r, r, 0, r, r, r);
-            grd.addColorStop(0, "rgba(255,190,110,0.95)");
-            grd.addColorStop(0.4, "rgba(255,140,45,0.40)");
-            grd.addColorStop(1, "rgba(255,120,20,0)");
+            grd.addColorStop(0, `rgba(${Math.min(255, col.r + 40)},${Math.min(255, col.g + 40)},${Math.min(255, col.b + 50)},0.95)`);
+            grd.addColorStop(0.4, `rgba(${col.r},${col.g},${col.b},0.40)`);
+            grd.addColorStop(1, `rgba(${col.r},${col.g},${col.b},0)`);
             g.fillStyle = grd; g.beginPath(); g.arc(r, r, r, 0, Math.PI * 2); g.fill();
         })();
 
@@ -178,12 +191,12 @@
                 baseX: x, x,
                 y: initial ? Math.random() * h : h + 30,
                 r: size,
-                vy: -(0.04 + Math.random() * 0.16) * (size / 2),  // langsam aufsteigend
+                vy: -(0.04 + Math.random() * 0.16) * (size / 2) * SP,  // langsam aufsteigend
                 ampl: 8 + Math.random() * 26,
                 phase: Math.random() * Math.PI * 2,
-                freq: 0.00012 + Math.random() * 0.00028,
+                freq: (0.00012 + Math.random() * 0.00028) * SP,
                 a: 0.06 + Math.random() * 0.20,
-                tw: 0.4 + Math.random() * 1.4,
+                tw: (0.4 + Math.random() * 1.4) * SP,
             };
         }
         function resize() {
@@ -191,7 +204,7 @@
             w = canvas.clientWidth; h = canvas.clientHeight;
             canvas.width = Math.max(1, w * dpr); canvas.height = Math.max(1, h * dpr);
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            const count = Math.round(Math.min(60, Math.max(18, (w * h) / 46000)));
+            const count = Math.round(Math.min(90, Math.max(14, (w * h) / AREA)));
             particles = Array.from({ length: count }, () => spawn(true));
         }
         function draw(t) {
@@ -385,6 +398,7 @@
     async function loadData(...names) {
         const map = { studio: "data/studio.json", games: "data/games.json", patchnotes: "data/patchnotes.json", legal: "data/legal.json" };
         await Promise.all(names.map(async n => {
+            if (DATA[n] !== undefined) return;   // schon geladen
             const de = await fetchJSON(map[n]);
             if (LANG === "en" && de) {
                 const en = await fetchJSON(map[n].replace(/\.json$/, ".en.json"));
@@ -1029,6 +1043,9 @@
        ========================================================= */
     async function boot() {
         document.documentElement.lang = LANG;
+        await loadData("studio");   // früh laden (Hintergrund-Effekt braucht die Config)
+        const fx = (DATA.studio && DATA.studio.background && DATA.studio.background.effect) || "particles";
+        document.body.classList.add("fx-" + (["particles", "glow", "off"].includes(fx) ? fx : "particles"));
         injectChrome();
         applyI18n();          // statische [data-i18n]-Texte übersetzen
         initShell();

@@ -48,6 +48,18 @@ return [
         ['name'=>'successMessage','label'=>'Danke-Nachricht','widget'=>'string','default'=>'Danke! Du bist dabei. 🧡'],
         ['name'=>'notifyEmail','label'=>'Benachrichtigung an (E-Mail)','widget'=>'string','hint'=>'Bei jeder Anmeldung eine Mail hierhin. Leer = an die Kontakt-E-Mail.'],
       ]],
+      ['name'=>'background','label'=>'Hintergrund & Atmosphäre','widget'=>'object','hint'=>'Steuert die Animation im Seitenhintergrund.','fields'=>[
+        ['name'=>'effect','label'=>'Effekt','widget'=>'select','default'=>'particles','options'=>[
+          'particles'=>'Partikel + Glow (Standard)','glow'=>'Nur Glow-Lichter','off'=>'Aus / minimal',
+        ]],
+        ['name'=>'density','label'=>'Partikel-Menge','widget'=>'select','default'=>'med','options'=>[
+          'low'=>'Wenig','med'=>'Mittel','high'=>'Viel',
+        ]],
+        ['name'=>'speed','label'=>'Tempo','widget'=>'select','default'=>'normal','options'=>[
+          'calm'=>'Ruhig','normal'=>'Normal','lively'=>'Lebhaft',
+        ]],
+        ['name'=>'color','label'=>'Partikel-Farbe','widget'=>'color','default'=>'#ff7d1a','hint'=>'Standard: Orange. Für eine andere Stimmung anpassbar.'],
+      ]],
       ['name'=>'footerNote','label'=>'Footer – Kurzbeschreibung','widget'=>'text'],
       ['name'=>'email','label'=>'Kontakt-E-Mail','widget'=>'string'],
       ['name'=>'socials','label'=>'Social Links','widget'=>'list','summary'=>'label','fields'=>[

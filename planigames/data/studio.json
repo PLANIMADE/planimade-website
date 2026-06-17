@@ -28,6 +28,12 @@
     "successMessage": "Danke! Du bist dabei. 🧡",
     "notifyEmail": ""
   },
+  "background": {
+    "effect": "particles",
+    "density": "med",
+    "speed": "normal",
+    "color": "#ff7d1a"
+  },
   "footerNote": "Ein unabhängiges Indie-Spielestudio. Wir bauen Welten, die wackeln, zaubern und im Kopf bleiben.",
   "email": "hello.dominicmajewski@gmail.com",
   "socials": [
