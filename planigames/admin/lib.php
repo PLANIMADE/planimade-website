@@ -4,10 +4,11 @@
  * Auth, CSRF, JSON-I/O, schema-getriebenes Rendern & Normalisieren.
  */
 
-const PG_DATA_DIR  = __DIR__ . '/../data';
-const PG_MEDIA_DIR = __DIR__ . '/../media';
-const PG_AUTH_FILE = __DIR__ . '/../data/auth.php';
-const PG_UPLOAD_EXT = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov'];
+const PG_DATA_DIR    = __DIR__ . '/../data';
+const PG_MEDIA_DIR   = __DIR__ . '/../media';
+const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
+const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
+const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov'];
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -23,16 +24,64 @@ function pg_session_boot(){
   }
 }
 
-/* ---------------- Auth ---------------- */
-function pg_auth_get(){ return is_file(PG_AUTH_FILE) ? include PG_AUTH_FILE : null; }
-function pg_auth_is_setup(){ $a = pg_auth_get(); return is_array($a) && !empty($a['hash']); }
-function pg_auth_set_password($pw){
-  $php = "<?php\n// Automatisch erzeugt. NICHT löschen – enthält den Passwort-Hash fürs Admin.\nreturn "
-       . var_export(['hash' => password_hash($pw, PASSWORD_DEFAULT)], true) . ";\n";
-  file_put_contents(PG_AUTH_FILE, $php, LOCK_EX);
+/* ---------------- Benutzer & Auth ---------------- */
+function pg_users_load(){ $u = pg_load_json(PG_USERS_FILE); return is_array($u) ? $u : []; }
+function pg_users_save($u){ return pg_save_json(PG_USERS_FILE, array_values($u)); }
+function pg_users_exist(){ return count(pg_users_load()) > 0; }
+function pg_user_find($email){
+  foreach (pg_users_load() as $u) if (isset($u['email']) && strcasecmp($u['email'], $email) === 0) return $u;
+  return null;
 }
-function pg_auth_check($pw){ $a = pg_auth_get(); return is_array($a) && !empty($a['hash']) && password_verify($pw, $a['hash']); }
-function pg_logged_in(){ return !empty($_SESSION['pg_ok']); }
+function pg_user_add($email, $pw, $role = 'editor', $name = ''){
+  $users = pg_users_load();
+  $users[] = ['email'=>$email, 'name'=>$name, 'role'=>$role,
+              'hash'=>password_hash($pw, PASSWORD_DEFAULT), 'created'=>date('c')];
+  pg_users_save($users);
+}
+function pg_user_delete($email){
+  pg_users_save(array_filter(pg_users_load(), fn($u) => strcasecmp($u['email'] ?? '', $email) !== 0));
+}
+function pg_user_check($email, $pw){
+  $u = pg_user_find($email);
+  return ($u && !empty($u['hash']) && password_verify($pw, $u['hash'])) ? $u : null;
+}
+function pg_owner_count(){ return count(array_filter(pg_users_load(), fn($u) => ($u['role'] ?? '') === 'owner')); }
+
+function pg_login_user($u){ $_SESSION['pg_user'] = $u['email']; $_SESSION['pg_role'] = $u['role'] ?? 'editor'; }
+function pg_logged_in(){ return !empty($_SESSION['pg_user']); }
+function pg_current_email(){ return $_SESSION['pg_user'] ?? ''; }
+function pg_current_role(){ return $_SESSION['pg_role'] ?? ''; }
+function pg_is_owner(){ return pg_current_role() === 'owner'; }
+
+/* ---------------- Einladungen ---------------- */
+function pg_invites_load(){ $i = pg_load_json(PG_INVITES_FILE); return is_array($i) ? $i : []; }
+function pg_invites_save($i){ return pg_save_json(PG_INVITES_FILE, array_values($i)); }
+function pg_invite_create($email, $role = 'editor'){
+  $token = bin2hex(random_bytes(24));
+  $inv = array_filter(pg_invites_load(), fn($x) => strcasecmp($x['email'] ?? '', $email) !== 0);
+  $inv[] = ['email'=>$email, 'role'=>$role, 'token'=>$token, 'created'=>date('c'), 'expires'=>time() + 7 * 86400];
+  pg_invites_save($inv);
+  return $token;
+}
+function pg_invite_find($token){
+  if (!$token) return null;
+  foreach (pg_invites_load() as $x) {
+    if (isset($x['token']) && hash_equals($x['token'], (string)$token)) {
+      return (($x['expires'] ?? 0) >= time()) ? $x : null;
+    }
+  }
+  return null;
+}
+function pg_invite_delete($token){
+  pg_invites_save(array_filter(pg_invites_load(), fn($x) => !hash_equals($x['token'] ?? '', (string)$token)));
+}
+
+function pg_base_url(){
+  $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+  $host = preg_replace('/[^a-z0-9.\-:]/i', '', $_SERVER['HTTP_HOST'] ?? 'localhost');
+  $dir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/admin/index.php')), '/');
+  return $scheme . '://' . $host . $dir;
+}
 
 /* ---------------- CSRF ---------------- */
 function pg_csrf(){ if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(18)); return $_SESSION['csrf']; }

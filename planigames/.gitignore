@@ -1,4 +1,6 @@
-# Zur Laufzeit erzeugt – NICHT committen (Passwort-Hash bzw. personenbezogene Daten)
+# Zur Laufzeit erzeugt – NICHT committen (Passwort-Hashes, Tokens, personenbez. Daten)
 data/auth.php
+data/users.json
+data/invites.json
 data/subscribers.json
 data/*.tmp

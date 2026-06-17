@@ -119,6 +119,15 @@ button{font:inherit;cursor:pointer}
 .item.folded .item-body{display:none}
 .item.folded [data-fold]{transform:rotate(-90deg)}
 
+/* Team & Zugänge */
+.sub-h{font-size:1.1rem;font-weight:700;margin:2rem 0 .6rem}
+.invite-form{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.invite-form input[type=email]{flex:1;min-width:220px;background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:.7rem .85rem;border-radius:10px}
+.invite-form select{background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:.7rem .85rem;border-radius:10px}
+.role-owner{color:var(--accent);font-weight:700}
+.btn-danger.sm{padding:.35rem .8rem;font-size:.8rem}
+.tb-user{color:var(--muted);font-size:.8rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 /* Abo-Tabelle */
 .subs{width:100%;border-collapse:collapse;font-size:.9rem;margin-top:.5rem}
 .subs th,.subs td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--line)}

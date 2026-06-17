@@ -261,7 +261,7 @@
         const team = $("[data-studio='team']");
         if (team && Array.isArray(s.team) && s.team.length) {
             team.innerHTML = s.team.map((m, i) => `
-                <div class="reveal text-center" style="transition-delay:${i * 70}ms">
+                <div class="reveal text-center w-36" style="transition-delay:${i * 70}ms">
                     <div class="relative mx-auto w-28 h-28 rounded-2xl overflow-hidden border border-white/10 bg-white/5">
                         ${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.name)}" class="w-full h-full object-cover">`
                                   : `<div class="w-full h-full grid place-items-center text-3xl">${esc(m.emoji || "🧙")}</div>`}
