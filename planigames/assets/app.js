@@ -877,6 +877,7 @@
                         <div class="flex items-center gap-5">
                             <a href="rechtliches.html?doc=impressum" class="hover:text-white">${t("foot_impressum")}</a>
                             <a href="rechtliches.html?doc=datenschutz" class="hover:text-white">${t("foot_datenschutz")}</a>
+                            <a href="admin/" class="hover:text-white inline-flex items-center gap-1" title="Zum Dashboard">🔒 Admin</a>
                         </div>
                         <div class="font-mono uppercase tracking-widest">${t("foot_made")}</div>
                     </div>
