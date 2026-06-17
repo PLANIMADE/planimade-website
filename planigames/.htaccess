@@ -17,14 +17,18 @@ Options -Indexes
   AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
 </IfModule>
 
-# Caching für statische Assets
+# Caching: Bilder/Videos lange, aber Code (HTML/CSS/JS) immer frisch prüfen
+# (so erscheinen Änderungen sofort, statt aus dem Browser-Cache zu kommen)
 <IfModule mod_expires.c>
   ExpiresActive On
-  ExpiresByType text/css "access plus 7 days"
-  ExpiresByType application/javascript "access plus 7 days"
   ExpiresByType image/jpeg "access plus 30 days"
   ExpiresByType image/png "access plus 30 days"
   ExpiresByType image/webp "access plus 30 days"
   ExpiresByType image/svg+xml "access plus 30 days"
   ExpiresByType video/mp4 "access plus 30 days"
+</IfModule>
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|css|js)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
 </IfModule>

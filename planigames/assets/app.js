@@ -359,6 +359,17 @@
 
     function initYear() { $$("[data-year]").forEach(el => el.textContent = new Date().getFullYear()); }
 
+    // Laufband nahtlos füllen: jede Hälfte breiter als der Viewport -> kein „Stopp"
+    function initMarquee() {
+        const halves = $$(".marquee-half");
+        if (!halves.length) return;
+        const phrases = ["Original Worlds", "Handcrafted Magic", "Indie & Proud", "Wobbly Wizards"];
+        const group = phrases.map(p => `<span>${esc(p)}</span><span class="text-[color:var(--accent)]">✦</span>`).join("");
+        const reps = Math.max(3, Math.ceil((window.innerWidth * 1.3) / 420));
+        const html = group.repeat(reps);
+        halves.forEach(h => h.innerHTML = html);
+    }
+
     /* Akzentfarbe live setzen (Game-Welten) */
     function applyAccent(hex, hex2) {
         if (hex)  document.documentElement.style.setProperty("--accent", hex);
@@ -415,6 +426,8 @@
         setHTML("[data-studio='heroLine2']", esc(s.heroLine2 || ""));
         setText("[data-studio='intro']", s.intro);
         setText("[data-studio='aboutTitle']", s.aboutTitle);
+
+        initMarquee();
 
         // Hero-Hintergrund (Bild/Video) – optional aus den Studio-Einstellungen
         const heroBg = $("[data-hero-bg]");
@@ -494,7 +507,7 @@
                 <div class="p-5 md:p-8">
                     <div class="flex items-center gap-3 mb-5">${statusBadge(g.status)}
                         <span class="badge text-zinc-500">${t("current_project")}</span></div>
-                    ${g.logo ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-4 object-contain object-left" style="height:${Math.round(76 * ls)}px;max-width:80%">`
+                    ${g.logo ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-4 object-contain object-left" style="height:${Math.round(80 * ls)}px;width:auto;max-width:100%">`
                              : `<h2 class="font-display text-4xl md:text-6xl font-extrabold text-white mb-4">${esc(g.title)}</h2>`}
                     <p class="text-zinc-300 text-lg leading-relaxed mb-7 max-w-xl">${esc(g.tagline || "")}</p>
                     <div class="flex flex-wrap gap-3">
@@ -633,7 +646,7 @@
             <div class="absolute inset-0 bg-black/30"></div>
             <div class="relative max-w-6xl mx-auto w-full px-6 pb-16 md:pb-24">
                 <div class="mb-6 reveal-on">${statusBadge(g.status)}</div>
-                ${g.logo ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-6 object-contain object-left reveal" style="height:${Math.round(150 * ls)}px;max-height:36vh;max-width:90vw">`
+                ${g.logo ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-6 object-contain object-left reveal" style="height:${Math.round(150 * ls)}px;width:auto;max-width:92vw">`
                          : `<h1 class="font-display text-6xl md:text-8xl font-extrabold text-white mb-6 reveal-on"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`}
                 <p class="text-xl md:text-2xl text-zinc-200 max-w-2xl mb-9 reveal">${esc(b.tagline || g.tagline || "")}</p>
                 <div class="flex flex-wrap gap-3 reveal">
@@ -1127,11 +1140,13 @@
         if (soc && Array.isArray(s.socials)) {
             soc.innerHTML = s.socials.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener" class="hover:text-white">${esc(x.label)}</a>`).join("");
         }
-        // Favicon (eigenes Feld, unabhängig vom Logo)
+        // Favicon (eigenes Feld, unabhängig vom Logo) – altes Icon ersetzen
         if (s.favicon) {
-            let fav = $("link[rel='icon']");
-            if (!fav) { fav = document.createElement("link"); fav.rel = "icon"; document.head.appendChild(fav); }
-            fav.href = s.favicon;
+            $$("link[rel~='icon'], link[rel='apple-touch-icon']").forEach(l => l.remove());
+            const fav = document.createElement("link"); fav.rel = "icon"; fav.href = s.favicon;
+            document.head.appendChild(fav);
+            const at = document.createElement("link"); at.rel = "apple-touch-icon"; at.href = s.favicon;
+            document.head.appendChild(at);
         }
         fillNewsletter(s.newsletter || {});
     }

@@ -32,9 +32,9 @@
             display: ['"Clash Display"', 'Archivo', 'sans-serif'],
         } } } };
     </script>
-    <link rel="stylesheet" href="assets/planigames.css">
+    <link rel="stylesheet" href="assets/planigames.css?v=2">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="assets/app.js" defer></script>
+    <script src="assets/app.js?v=2" defer></script>
 </head>
 <body data-page="home" class="bg-[#050505] text-zinc-100 font-sans antialiased overflow-x-hidden noise-bg grain-overlay">
 
@@ -65,13 +65,9 @@
 
     <!-- ================= LAUFBAND ================= -->
     <div class="relative py-4 border-y border-white/8 overflow-hidden bg-white/[0.015]">
-        <div class="flex whitespace-nowrap animate-marquee will-change-transform">
-            <span class="flex items-center gap-6 font-display text-base md:text-xl font-bold text-zinc-700 pr-6">
-                <span>Original Worlds</span><span class="text-[color:var(--accent)]">✦</span><span>Handcrafted Magic</span><span class="text-[color:var(--accent)]">✦</span><span>Indie & Proud</span><span class="text-[color:var(--accent)]">✦</span><span>Wobbly Wizards</span><span class="text-[color:var(--accent)]">✦</span>
-            </span>
-            <span aria-hidden="true" class="flex items-center gap-6 font-display text-base md:text-xl font-bold text-zinc-700 pr-6">
-                <span>Original Worlds</span><span class="text-[color:var(--accent)]">✦</span><span>Handcrafted Magic</span><span class="text-[color:var(--accent)]">✦</span><span>Indie & Proud</span><span class="text-[color:var(--accent)]">✦</span><span>Wobbly Wizards</span><span class="text-[color:var(--accent)]">✦</span>
-            </span>
+        <div class="flex whitespace-nowrap animate-marquee will-change-transform" data-marquee>
+            <span class="marquee-half flex items-center gap-6 font-display text-base md:text-xl font-bold text-zinc-700 pr-6"></span>
+            <span aria-hidden="true" class="marquee-half flex items-center gap-6 font-display text-base md:text-xl font-bold text-zinc-700 pr-6"></span>
         </div>
     </div>
 
