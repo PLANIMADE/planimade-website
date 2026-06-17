@@ -199,13 +199,13 @@
             };
         }
         function resize() {
-            dpr = Math.min(window.devicePixelRatio || 1, 2);
+            dpr = Math.min(window.devicePixelRatio || 1, 1.5);   // Cap für gute Performance (auch Safari)
             // Fallback auf Fenstergröße, falls das fixe Canvas (je nach Browser) 0 meldet
             w = canvas.clientWidth || window.innerWidth;
             h = canvas.clientHeight || window.innerHeight;
-            canvas.width = Math.max(1, w * dpr); canvas.height = Math.max(1, h * dpr);
+            canvas.width = Math.max(1, Math.round(w * dpr)); canvas.height = Math.max(1, Math.round(h * dpr));
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            const count = Math.round(Math.min(130, Math.max(20, (w * h) / AREA)));
+            const count = Math.round(Math.min(95, Math.max(20, (w * h) / AREA)));
             particles = Array.from({ length: count }, () => spawn(true));
         }
         function draw(t) {
@@ -415,6 +415,17 @@
         setHTML("[data-studio='heroLine2']", esc(s.heroLine2 || ""));
         setText("[data-studio='intro']", s.intro);
         setText("[data-studio='aboutTitle']", s.aboutTitle);
+
+        // Hero-Hintergrund (Bild/Video) – optional aus den Studio-Einstellungen
+        const heroBg = $("[data-hero-bg]");
+        if (heroBg && (s.heroVideo || s.heroBackground)) {
+            const media = s.heroVideo
+                ? `<video class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline ${s.heroBackground ? `poster="${esc(s.heroBackground)}"` : ""}><source src="${esc(s.heroVideo)}"></video>`
+                : `<img src="${esc(s.heroBackground)}" alt="" class="absolute inset-0 w-full h-full object-cover">`;
+            heroBg.innerHTML = media
+                + `<div class="absolute inset-0" style="background:linear-gradient(to top, var(--bg) 6%, color-mix(in srgb,var(--accent) 10%, transparent) 60%, rgba(0,0,0,.45))"></div>`
+                + `<div class="absolute inset-0 bg-black/40"></div>`;
+        }
         const aboutBody = $("[data-studio='aboutBody']");
         if (aboutBody && s.aboutBody) aboutBody.innerHTML = md(s.aboutBody);
 
@@ -472,6 +483,7 @@
         if (!wrap) return;
         // Game-Farbe nur innerhalb der Featured-Card – der Studio-Rahmen behält seinen Look.
         wrap.style.setProperty("--accent", g.accent || "#8b5cf6");
+        const ls = logoScale(g);
         wrap.innerHTML = `
             <div class="relative grid lg:grid-cols-2 gap-10 items-center rounded-3xl border border-white/10 overflow-hidden bg-gradient-to-br from-white/[0.04] to-transparent p-2 md:p-3">
                 <a href="game.php?slug=${esc(g.slug)}" class="block relative aspect-[16/10] rounded-2xl overflow-hidden group">
@@ -482,7 +494,7 @@
                 <div class="p-5 md:p-8">
                     <div class="flex items-center gap-3 mb-5">${statusBadge(g.status)}
                         <span class="badge text-zinc-500">${t("current_project")}</span></div>
-                    ${g.logo ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="h-16 md:h-20 mb-4 object-contain">`
+                    ${g.logo ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-4 object-contain object-left" style="height:${Math.round(76 * ls)}px;max-width:80%">`
                              : `<h2 class="font-display text-4xl md:text-6xl font-extrabold text-white mb-4">${esc(g.title)}</h2>`}
                     <p class="text-zinc-300 text-lg leading-relaxed mb-7 max-w-xl">${esc(g.tagline || "")}</p>
                     <div class="flex flex-wrap gap-3">
@@ -605,8 +617,11 @@
     const sec = (inner, extra = "") =>
         `<section class="relative px-6 ${extra}"><div class="max-w-6xl mx-auto">${inner}</div></section>`;
 
+    function logoScale(g) { return Math.min(3, Math.max(0.3, (+g.logoScale || 100) / 100)); }
+
     function blockHero(b, g) {
         const bg = b.background || g.cover;
+        const ls = logoScale(g);
         const media = b.video
             ? `<video class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline ${b.poster ? `poster="${esc(b.poster)}"` : ""}><source src="${esc(b.video)}"></video>`
             : (bg ? `<img src="${esc(bg)}" alt="" class="absolute inset-0 w-full h-full object-cover">`
@@ -618,7 +633,7 @@
             <div class="absolute inset-0 bg-black/30"></div>
             <div class="relative max-w-6xl mx-auto w-full px-6 pb-16 md:pb-24">
                 <div class="mb-6 reveal-on">${statusBadge(g.status)}</div>
-                ${g.logo ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="h-24 md:h-40 mb-6 object-contain reveal">`
+                ${g.logo ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-6 object-contain object-left reveal" style="height:${Math.round(150 * ls)}px;max-height:36vh;max-width:90vw">`
                          : `<h1 class="font-display text-6xl md:text-8xl font-extrabold text-white mb-6 reveal-on"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`}
                 <p class="text-xl md:text-2xl text-zinc-200 max-w-2xl mb-9 reveal">${esc(b.tagline || g.tagline || "")}</p>
                 <div class="flex flex-wrap gap-3 reveal">
@@ -1008,10 +1023,10 @@
         if (!$("#scroll-progress")) {
             document.body.insertAdjacentHTML("afterbegin", `
                 <div id="scroll-progress"></div>
-                <canvas id="fx-canvas"></canvas>
                 <div id="cursor-ring"></div><div id="cursor-dot"></div>
-                <div class="glow-blob glow-1" style="top:-12%;left:-12%;width:60vw;height:60vw;background:color-mix(in srgb,var(--accent) 16%,transparent)"></div>
-                <div class="glow-blob glow-2" style="bottom:-12%;right:-12%;width:55vw;height:55vw;background:color-mix(in srgb,var(--accent-2) 14%,transparent)"></div>`);
+                <div class="glow-blob glow-1" style="top:-12%;left:-12%;width:55vw;height:55vw;background:color-mix(in srgb,var(--accent) 13%,transparent)"></div>
+                <div class="glow-blob glow-2" style="bottom:-12%;right:-12%;width:50vw;height:50vw;background:color-mix(in srgb,var(--accent-2) 11%,transparent)"></div>
+                <canvas id="fx-canvas"></canvas>`);
         }
 
         const headerMount = $("[data-shell='header']");
@@ -1112,8 +1127,12 @@
         if (soc && Array.isArray(s.socials)) {
             soc.innerHTML = s.socials.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener" class="hover:text-white">${esc(x.label)}</a>`).join("");
         }
-        // Favicon an das Logo angleichen (falls hinterlegt)
-        if (s.logo) { const fav = $("link[rel='icon']"); if (fav) fav.href = s.logo; }
+        // Favicon (eigenes Feld, unabhängig vom Logo)
+        if (s.favicon) {
+            let fav = $("link[rel='icon']");
+            if (!fav) { fav = document.createElement("link"); fav.rel = "icon"; document.head.appendChild(fav); }
+            fav.href = s.favicon;
+        }
         fillNewsletter(s.newsletter || {});
     }
 

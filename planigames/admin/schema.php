@@ -21,11 +21,14 @@ return [
     'fields' => [
       ['name'=>'name','label'=>'Studio-Name','widget'=>'string'],
       ['name'=>'logo','label'=>'Logo (optional)','widget'=>'image','hint'=>'Transparentes PNG/SVG, Höhe ~80 px (z. B. 240×80). Ersetzt den Schriftzug in Kopf-/Fußzeile. Leer = Wortmarke.'],
+      ['name'=>'favicon','label'=>'Favicon (Browser-Tab-Icon)','widget'=>'image','hint'=>'Quadratisch, z. B. 64×64 oder 192×192 px (PNG/SVG/ICO). Separat vom Logo.'],
       ['name'=>'tagline','label'=>'Untertitel / Tagline','widget'=>'string'],
       ['name'=>'founded','label'=>'Gegründet (Jahr)','widget'=>'string'],
       ['name'=>'heroLine1','label'=>'Hero – Zeile 1','widget'=>'string','hint'=>'Große Überschrift, erste Zeile.'],
       ['name'=>'heroLine2','label'=>'Hero – Zeile 2 (farbig)','widget'=>'string','hint'=>'Zweite Zeile, wird im Gold/Orange-Verlauf dargestellt.'],
       ['name'=>'intro','label'=>'Hero – Einleitungstext','widget'=>'text'],
+      ['name'=>'heroBackground','label'=>'Hero – Hintergrundbild (optional)','widget'=>'image','hint'=>'Querformat, ca. 2000×1200 px. Liegt hinter der Startseiten-Überschrift.'],
+      ['name'=>'heroVideo','label'=>'Hero – Hintergrund-Video (optional, mp4)','widget'=>'file','hint'=>'Läuft automatisch, stumm, als Loop. Überschreibt das Bild.'],
       ['name'=>'aboutTitle','label'=>'Über uns – Überschrift','widget'=>'string'],
       ['name'=>'aboutBody','label'=>'Über uns – Text','widget'=>'markdown'],
       ['name'=>'pillars','label'=>'Werte / Stärken (Kacheln)','widget'=>'list','summary'=>'title','fields'=>[
@@ -96,6 +99,7 @@ return [
         ['name'=>'featured','label'=>'Hervorgehoben (Startseite)','widget'=>'boolean'],
         ['name'=>'cover','label'=>'Cover-Bild','widget'=>'image','hint'=>'Querformat 16:10, ca. 1600×1000 px (JPG/WebP). Für Karten & Startseite.'],
         ['name'=>'logo','label'=>'Logo (transparent)','widget'=>'image','hint'=>'Transparentes PNG, ca. 800×400 px – wird im Hero statt des Titels gezeigt.'],
+        ['name'=>'logoScale','label'=>'Logo-Größe (%)','widget'=>'number','default'=>100,'hint'=>'100 = Standard. Wirkt auf Hero & Startseiten-Card. z. B. 60 (kleiner) oder 160 (größer).'],
         ['name'=>'wishlistUrl','label'=>'Wishlist / Store-Link','widget'=>'string','hint'=>'z. B. Steam-Seite.'],
         ['name'=>'blocks','label'=>'Seiten-Blöcke (Website-Builder)','widget'=>'blocks','types'=>[
           'hero'=>['label'=>'Hero (Kopfbereich)','fields'=>[

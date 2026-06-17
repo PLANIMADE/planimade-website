@@ -1,11 +1,14 @@
 {
   "name": "PLANIGAMES",
   "logo": "",
+  "favicon": "",
   "tagline": "Indie Game Studio",
   "founded": "2024",
   "heroLine1": "Wir bauen Welten,",
   "heroLine2": "die verzaubern.",
   "intro": "PLANIGAMES ist ein unabhängiges Studio für eigensinnige Spiele. Gerade zaubern wir an Wobbly Wizards — chaotisch, charmant und voller Magie.",
+  "heroBackground": "",
+  "heroVideo": "",
   "aboutTitle": "Klein. Unabhängig. Besessen von guten Ideen.",
   "aboutBody": "Wir sind ein junges Indie-Studio mit einer simplen Mission: Spiele machen, die wir selbst spielen wollen würden. Keine Komitees, keine Trends von der Stange — nur eigensinnige Welten mit Charakter, handgemachter Liebe zum Detail und einem Humor, der hängen bleibt.\n\nVon der ersten Skizze bis zum letzten Partikeleffekt entsteht alles in-house. Das hält uns ehrlich — und unsere Spiele eigen.",
   "pillars": [
