@@ -125,7 +125,20 @@ button{font:inherit;cursor:pointer}
 .invite-form input[type=email]{flex:1;min-width:220px;background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:.7rem .85rem;border-radius:10px}
 .invite-form select{background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:.7rem .85rem;border-radius:10px}
 .role-owner{color:var(--accent);font-weight:700}
+.role-editor{color:var(--muted);font-weight:600}
 .btn-danger.sm{padding:.35rem .8rem;font-size:.8rem}
+.roles-note{background:rgba(255,125,26,.07);border:1px solid rgba(255,125,26,.2);border-radius:12px;padding:.8rem 1rem;font-size:.86rem;color:#cdcdd4;margin-top:.4rem}
+.roles-note b{color:#fff}
+.member{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:1.1rem 1.2rem;margin-bottom:.9rem}
+.member-head{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.member-name{font-weight:700}
+.member-form{margin-top:.9rem;display:flex;flex-direction:column;gap:.7rem}
+.member-form .ml{font-size:.8rem;color:var(--muted);font-weight:600}
+.member-form select{align-self:flex-start;min-width:180px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:.5rem .7rem}
+.areas{display:flex;flex-wrap:wrap;gap:.5rem 1.1rem;align-items:center;padding:.7rem .9rem;border:1px dashed var(--line);border-radius:10px}
+.areas .ml{flex-basis:100%}
+.chk{display:inline-flex;align-items:center;gap:.4rem;font-size:.9rem;color:var(--ink);cursor:pointer}
+.member-actions{display:flex;gap:.6rem;align-items:center}
 .tb-user{color:var(--muted);font-size:.8rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* Abo-Tabelle */

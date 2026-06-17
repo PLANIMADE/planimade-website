@@ -47,11 +47,40 @@ function pg_user_check($email, $pw){
 }
 function pg_owner_count(){ return count(array_filter(pg_users_load(), fn($u) => ($u['role'] ?? '') === 'owner')); }
 
-function pg_login_user($u){ $_SESSION['pg_user'] = $u['email']; $_SESSION['pg_role'] = $u['role'] ?? 'editor'; }
+function pg_user_update($email, array $patch){
+  $users = pg_users_load();
+  foreach ($users as &$u) if (strcasecmp($u['email'] ?? '', $email) === 0) $u = array_merge($u, $patch);
+  unset($u);
+  pg_users_save($users);
+}
+function pg_login_user($u){ $_SESSION['pg_user'] = $u['email']; }
 function pg_logged_in(){ return !empty($_SESSION['pg_user']); }
 function pg_current_email(){ return $_SESSION['pg_user'] ?? ''; }
-function pg_current_role(){ return $_SESSION['pg_role'] ?? ''; }
+function pg_current_user(){ return pg_logged_in() ? pg_user_find(pg_current_email()) : null; }
+function pg_current_role(){ $u = pg_current_user(); return $u['role'] ?? ''; }
 function pg_is_owner(){ return pg_current_role() === 'owner'; }
+
+/* Bereiche, die ein Editor (optional eingeschränkt) bearbeiten darf */
+function pg_areas_map(){
+  return [
+    'studio'      => 'Studio & Startseite',
+    'games'       => 'Spiele',
+    'patchnotes'  => 'Devlog & Patch Notes',
+    'subscribers' => 'Newsletter-Abos',
+  ];
+}
+function pg_user_areas($u){
+  if (($u['role'] ?? '') === 'owner') return array_keys(pg_areas_map());
+  // Kein "areas"-Eintrag = voller Editor-Zugriff (Standard)
+  if (!isset($u['areas']) || !is_array($u['areas'])) return array_keys(pg_areas_map());
+  return array_values(array_intersect($u['areas'], array_keys(pg_areas_map())));
+}
+function pg_can($area){
+  $u = pg_current_user();
+  if (!$u) return false;
+  if (($u['role'] ?? '') === 'owner') return true;
+  return in_array($area, pg_user_areas($u), true);
+}
 
 /* ---------------- Einladungen ---------------- */
 function pg_invites_load(){ $i = pg_load_json(PG_INVITES_FILE); return is_array($i) ? $i : []; }
@@ -81,6 +110,31 @@ function pg_base_url(){
   $host = preg_replace('/[^a-z0-9.\-:]/i', '', $_SERVER['HTTP_HOST'] ?? 'localhost');
   $dir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/admin/index.php')), '/');
   return $scheme . '://' . $host . $dir;
+}
+
+/* Gebrandete HTML-Einladungsmail */
+function pg_send_invite_mail($to, $link, $roleLabel, $inviter = ''){
+  $host = preg_replace('/[^a-z0-9.\-]/i', '', $_SERVER['HTTP_HOST'] ?? 'planigames.de');
+  $html = pg_invite_html($link, $roleLabel, $inviter);
+  $headers = "From: PLANIGAMES <no-reply@{$host}>\r\nReply-To: no-reply@{$host}\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n";
+  return @mail($to, 'Einladung ins PLANIGAMES-Dashboard', $html, $headers);
+}
+
+function pg_invite_html($link, $roleLabel, $inviter = ''){
+  $L = pg_h($link);
+  $who = $inviter ? (' von ' . pg_h($inviter)) : '';
+  return '<!doctype html><html><body style="margin:0;background:#050505;font-family:Arial,Helvetica,sans-serif;color:#ececf0">'
+    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050505;padding:32px 16px"><tr><td align="center">'
+    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#111114;border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden">'
+    . '<tr><td style="padding:34px 34px 0"><div style="font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:15px">'
+    . '<span style="display:inline-block;width:12px;height:12px;background:linear-gradient(135deg,#e6a015,#ff7d1a);border-radius:2px;transform:rotate(45deg)"></span>&nbsp;&nbsp;PLANI<span style="color:#ff8a2b">GAMES</span></div></td></tr>'
+    . '<tr><td style="padding:22px 34px 0"><h1 style="margin:0;font-size:24px;color:#fff">Du bist eingeladen' . $who . ' 🎮</h1>'
+    . '<p style="color:#b6b6c0;line-height:1.6;margin:14px 0 0">Du wurdest eingeladen, am <b>PLANIGAMES</b>-Dashboard mitzuarbeiten – als <b>' . pg_h($roleLabel) . '</b>. '
+    . 'Klicke auf den Button, um dein Konto zu erstellen und ein Passwort zu vergeben.</p></td></tr>'
+    . '<tr><td style="padding:26px 34px 6px"><a href="' . $L . '" style="display:inline-block;background:linear-gradient(110deg,#ff7d1a,#ff9d4d);color:#1a0d00;text-decoration:none;font-weight:700;padding:14px 30px;border-radius:999px">Konto erstellen →</a></td></tr>'
+    . '<tr><td style="padding:8px 34px 0"><p style="color:#7b7b86;font-size:12px;line-height:1.6;margin:0">Funktioniert der Button nicht? Kopiere diesen Link:<br><span style="color:#ff8a2b;word-break:break-all">' . $L . '</span></p></td></tr>'
+    . '<tr><td style="padding:26px 34px 30px"><p style="color:#7b7b86;font-size:12px;margin:0;border-top:1px solid rgba(255,255,255,.08);padding-top:16px">Der Link ist 7 Tage gültig. Du kennst PLANIGAMES nicht? Dann ignoriere diese E-Mail einfach.</p></td></tr>'
+    . '</table></td></tr></table></body></html>';
 }
 
 /* ---------------- CSRF ---------------- */

@@ -8,6 +8,9 @@ require __DIR__ . '/lib.php';
 $SCHEMA = require __DIR__ . '/schema.php';
 pg_session_boot();
 
+// Falls der eingeloggte Zugang inzwischen entfernt wurde: ausloggen
+if (pg_logged_in() && !pg_current_user()) { $_SESSION = []; session_destroy(); }
+
 $action = $_GET['action'] ?? '';
 
 /* ---- Upload-Endpoint (nur eingeloggt) ---- */
@@ -127,6 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
   pg_csrf_check();
   $key = $_POST['collection'] ?? '';
   if (!isset($SCHEMA[$key])) { http_response_code(404); exit('Unbekannter Bereich.'); }
+  if (!pg_can($key)) { http_response_code(403); exit('Keine Berechtigung für diesen Bereich.'); }
   $data = pg_normalize_fields($SCHEMA[$key]['fields'], $_POST['d'] ?? []);
   $ok = pg_save_json($SCHEMA[$key]['file'], $data);
   header('Location: index.php?collection=' . urlencode($key) . ($ok ? '&saved=1' : '&error=1'));
@@ -135,6 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
 
 /* ---- Newsletter-Abos: CSV-Export ---- */
 if ($action === 'subscribers_csv') {
+  if (!pg_can('subscribers')) { http_response_code(403); exit('Keine Berechtigung.'); }
   $list = pg_load_json(PG_DATA_DIR . '/subscribers.json');
   header('Content-Type: text/csv; charset=utf-8');
   header('Content-Disposition: attachment; filename="newsletter-abos.csv"');
@@ -147,12 +152,14 @@ if ($action === 'subscribers_csv') {
 /* ---- Newsletter-Abos: leeren ---- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_subscribers'])) {
   pg_csrf_check();
+  if (!pg_can('subscribers')) { http_response_code(403); exit('Keine Berechtigung.'); }
   pg_save_json(PG_DATA_DIR . '/subscribers.json', []);
   header('Location: index.php?view=subscribers&cleared=1'); exit;
 }
 
 /* ---- Newsletter-Abos: Ansicht ---- */
 if (($_GET['view'] ?? '') === 'subscribers') {
+  if (!pg_can('subscribers')) { header('Location: index.php'); exit; }
   $list = pg_load_json(PG_DATA_DIR . '/subscribers.json');
   $list = array_reverse($list);
   pg_view_head('Newsletter-Abos');
@@ -195,12 +202,22 @@ if (($_GET['view'] ?? '') === 'users') {
       else {
         $token = pg_invite_create($email, $role);
         $inviteLink = pg_base_url() . '/index.php?action=register&token=' . $token;
-        $host = preg_replace('/[^a-z0-9.\-]/i', '', $_SERVER['HTTP_HOST'] ?? 'planigames.de');
-        $sent = @mail($email, 'Einladung ins PLANIGAMES-Dashboard',
-          "Hi!\n\nDu wurdest eingeladen, das PLANIGAMES-Dashboard mitzubearbeiten.\n"
-          . "Erstelle hier dein Konto (Link 7 Tage gültig):\n{$inviteLink}\n\nViele Grüße\nPLANIGAMES",
-          "From: no-reply@{$host}\r\nContent-Type: text/plain; charset=utf-8");
-        $flash = '<div class="flash ok">✓ Einladung erstellt' . ($sent ? ' und per E-Mail verschickt' : '') . '. Link unten zur Sicherheit zum Kopieren.</div>';
+        $sent = pg_send_invite_mail($email, $inviteLink, $role === 'owner' ? 'Owner' : 'Editor', pg_current_email());
+        $flash = '<div class="flash ok">✓ Einladung erstellt' . ($sent ? ' und per E-Mail verschickt' : ' (E-Mail konnte nicht versendet werden – Link unten kopieren)') . '.</div>';
+      }
+    } elseif (isset($_POST['updateuser'])) {
+      $email = $_POST['email'] ?? '';
+      $u = pg_user_find($email);
+      if ($u) {
+        $newRole = ($_POST['role'] ?? 'editor') === 'owner' ? 'owner' : 'editor';
+        // Letzten Owner nicht herabstufen
+        if (($u['role'] ?? '') === 'owner' && $newRole !== 'owner' && pg_owner_count() <= 1) {
+          $flash = '<div class="flash err">Der letzte Owner kann nicht herabgestuft werden.</div>';
+        } else {
+          $areas = $newRole === 'owner' ? [] : array_values(array_intersect((array)($_POST['areas'] ?? []), array_keys(pg_areas_map())));
+          pg_user_update($email, ['role' => $newRole, 'areas' => $areas]);
+          $flash = '<div class="flash ok">Berechtigungen aktualisiert.</div>';
+        }
       }
     } elseif (isset($_POST['revoke'])) {
       pg_invite_delete($_POST['token'] ?? ''); $flash = '<div class="flash ok">Einladung zurückgezogen.</div>';
@@ -220,22 +237,42 @@ if (($_GET['view'] ?? '') === 'users') {
   if ($inviteLink) echo '<div class="field"><label class="flabel">Einladungslink (kopieren &amp; senden)</label>'
      . '<input type="text" readonly onclick="this.select()" value="' . pg_h($inviteLink) . '"></div>';
 
+  // Rollen-Erklärung
+  echo '<div class="roles-note"><b>Owner</b> – darf alles: Inhalte bearbeiten <i>und</i> Mitglieder einladen/verwalten. '
+     . '<b>Editor</b> – darf Inhalte bearbeiten. Pro Editor legst du unten fest, <i>welche Bereiche</i> er bearbeiten darf.</div>';
+
   // Aktive Mitglieder
-  echo '<h2 class="sub-h">Mitglieder</h2><table class="subs"><thead><tr><th>Name</th><th>E-Mail</th><th>Rolle</th><th></th></tr></thead><tbody>';
+  echo '<h2 class="sub-h">Mitglieder</h2>';
   foreach (pg_users_load() as $u) {
     $isSelf = strcasecmp($u['email'], pg_current_email()) === 0;
-    echo '<tr><td>' . pg_h($u['name'] ?: '—') . ($isSelf ? ' <span class="muted">(du)</span>' : '') . '</td>'
-       . '<td>' . pg_h($u['email']) . '</td>'
-       . '<td>' . ($u['role'] === 'owner' ? '<span class="role-owner">Owner</span>' : 'Editor') . '</td><td>';
-    if (!$isSelf) {
-      echo '<form method="post" onsubmit="return confirm(\'Zugang wirklich entfernen?\')" style="margin:0">'
-         . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
-         . '<input type="hidden" name="email" value="' . pg_h($u['email']) . '">'
-         . '<button class="btn-danger sm" name="deluser" value="1">Entfernen</button></form>';
+    $isOwner = ($u['role'] ?? '') === 'owner';
+    $areas = pg_user_areas($u);
+    echo '<div class="member">';
+    echo '<div class="member-head"><div><div class="member-name">' . pg_h($u['name'] ?: '—')
+       . ($isSelf ? ' <span class="muted">(du)</span>' : '') . '</div>'
+       . '<div class="muted" style="font-size:.85rem">' . pg_h($u['email']) . '</div></div>'
+       . '<span class="' . ($isOwner ? 'role-owner' : 'role-editor') . '">' . ($isOwner ? 'Owner' : 'Editor') . '</span></div>';
+    if ($isSelf) {
+      echo '<p class="muted" style="font-size:.83rem;margin:.6rem 0 0">Dein eigenes Konto – Rolle hier nicht änderbar.</p>';
+    } else {
+      echo '<form method="post" class="member-form"><input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+         . '<input type="hidden" name="email" value="' . pg_h($u['email']) . '">';
+      echo '<label class="ml">Rolle</label>'
+         . '<select name="role" onchange="this.closest(\'form\').querySelector(\'[data-areas]\').style.display=this.value===\'owner\'?\'none\':\'\'">'
+         . '<option value="editor"' . ($isOwner ? '' : ' selected') . '>Editor</option>'
+         . '<option value="owner"' . ($isOwner ? ' selected' : '') . '>Owner</option></select>';
+      echo '<div data-areas class="areas"' . ($isOwner ? ' style="display:none"' : '') . '><span class="ml">Darf bearbeiten:</span>';
+      foreach (pg_areas_map() as $k => $lbl) {
+        echo '<label class="chk"><input type="checkbox" name="areas[]" value="' . pg_h($k) . '"'
+           . (in_array($k, $areas, true) ? ' checked' : '') . '> ' . pg_h($lbl) . '</label>';
+      }
+      echo '</div>';
+      echo '<div class="member-actions"><button class="btn-add" name="updateuser" value="1">Speichern</button>'
+         . '<button class="btn-danger sm" name="deluser" value="1" onclick="return confirm(\'Zugang wirklich entfernen?\')">Entfernen</button></div>';
+      echo '</form>';
     }
-    echo '</td></tr>';
+    echo '</div>';
   }
-  echo '</tbody></table>';
 
   // Einladen
   echo '<h2 class="sub-h">Neues Mitglied einladen</h2>';
@@ -266,6 +303,7 @@ if (($_GET['view'] ?? '') === 'users') {
 /* ---- Editor ---- */
 if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
   $key = $_GET['collection'];
+  if (!pg_can($key)) { header('Location: index.php'); exit; }
   $coll = $SCHEMA[$key];
   $data = pg_load_json($coll['file']);
   pg_view_head($coll['label']);
@@ -294,6 +332,7 @@ echo '<div class="dash">';
 echo '<h1>Hallo 👋 Was möchtest du bearbeiten?</h1>';
 echo '<div class="cards">';
 foreach ($SCHEMA as $key => $coll) {
+  if (!pg_can($key)) continue;
   $desc = [
     'studio' => 'Startseite, Über-uns, Team, Kontakt &amp; Footer.',
     'games' => 'Spiele anlegen und ihre Seiten mit Blöcken bauen.',
@@ -304,10 +343,12 @@ foreach ($SCHEMA as $key => $coll) {
      . '<span class="card-title">' . pg_h($coll['label']) . '</span>'
      . '<span class="card-desc">' . $desc . '</span></a>';
 }
-$subCount = count(pg_load_json(PG_DATA_DIR . '/subscribers.json'));
-echo '<a class="card" href="index.php?view=subscribers">'
-   . '<span class="card-ico">📬</span><span class="card-title">Newsletter-Abos</span>'
-   . '<span class="card-desc">' . $subCount . ' Anmeldung' . ($subCount === 1 ? '' : 'en') . ' · ansehen &amp; exportieren.</span></a>';
+if (pg_can('subscribers')) {
+  $subCount = count(pg_load_json(PG_DATA_DIR . '/subscribers.json'));
+  echo '<a class="card" href="index.php?view=subscribers">'
+     . '<span class="card-ico">📬</span><span class="card-title">Newsletter-Abos</span>'
+     . '<span class="card-desc">' . $subCount . ' Anmeldung' . ($subCount === 1 ? '' : 'en') . ' · ansehen &amp; exportieren.</span></a>';
+}
 if (pg_is_owner()) {
   echo '<a class="card" href="index.php?view=users">'
      . '<span class="card-ico">👥</span><span class="card-title">Team &amp; Zugänge</span>'
@@ -334,10 +375,11 @@ function pg_view_topbar($SCHEMA, $active){
   echo '<header class="topbar"><a class="tb-brand" href="index.php"><span class="diamond"></span> PLANI<span class="grad">GAMES</span></a>';
   echo '<nav class="tb-nav">';
   foreach ($SCHEMA as $key => $coll) {
+    if (!pg_can($key)) continue;
     $cls = $key === $active ? ' class="on"' : '';
     echo '<a' . $cls . ' href="index.php?collection=' . pg_h($key) . '">' . pg_h($coll['label']) . '</a>';
   }
-  echo '<a href="index.php?view=subscribers">Abos</a>';
+  if (pg_can('subscribers')) echo '<a href="index.php?view=subscribers">Abos</a>';
   if (pg_is_owner()) echo '<a href="index.php?view=users">Team</a>';
   echo '</nav>';
   echo '<span class="tb-right">';
