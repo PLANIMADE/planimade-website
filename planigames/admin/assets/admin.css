@@ -105,6 +105,14 @@ button{font:inherit;cursor:pointer}
 .addblock select{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:.4rem .7rem;font-size:.85rem}
 .list-items{display:flex;flex-direction:column;gap:.7rem;margin-top:.9rem}
 .list-items:empty{margin-top:0}
+.list-search{width:100%;margin-top:.7rem;background:var(--panel);border:1px solid var(--line);color:var(--ink);
+  padding:.55rem .8rem;border-radius:10px;font-size:.9rem;font-family:inherit}
+.list-search:focus{outline:none;border-color:var(--accent)}
+
+/* Ungelesen-Badge in der Nav */
+.tb-nav a .nbadge,.card .nbadge{display:inline-block;min-width:18px;height:18px;line-height:18px;text-align:center;
+  background:var(--accent);color:#1a0d00;border-radius:999px;font-size:.7rem;font-weight:800;padding:0 5px;margin-left:.35rem;vertical-align:middle}
+.card .nbadge{margin-left:.5rem}
 
 .item{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
 .item.block{border-left:3px solid var(--accent)}

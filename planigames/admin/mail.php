@@ -180,6 +180,9 @@ if ($tab === 'inbox') {
     } else {
       // Liste
       $list = pg_imap_list($mbox, 40);
+      // Ungelesen-Zähler für die Nav-Badge aktualisieren
+      $unseen = @imap_search($mbox, 'UNSEEN');
+      pg_mail_unread_store(is_array($unseen) ? count($unseen) : 0);
       imap_close($mbox);
       echo '<p class="muted" style="margin:.2rem 0 1rem">' . (int)$list['total'] . ' Nachricht' . ($list['total'] === 1 ? '' : 'en') . ' im Postfach · neueste zuerst</p>';
       if (!$list['items']) {

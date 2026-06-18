@@ -267,6 +267,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['delete_contact']) ||
 if (($_GET['view'] ?? '') === 'contacts') {
   if (!pg_can('contacts')) { header('Location: index.php'); exit; }
   $list = pg_load_json(PG_DATA_DIR . '/contacts.json');
+  // Beim Ansehen alle als gelesen markieren (für die Ungelesen-Badge)
+  $hadUnread = false;
+  foreach ($list as &$r) { if (empty($r['read'])) { $r['read'] = true; $hadUnread = true; } }
+  unset($r);
+  if ($hadUnread) pg_save_json(PG_DATA_DIR . '/contacts.json', $list);
   // Newest first, but keep original index for delete
   $indexed = [];
   foreach ($list as $i => $r) $indexed[] = [$i, $r];
@@ -610,13 +615,15 @@ echo '<a class="card" href="index.php?view=media">'
    . '<span class="card-desc">Bilder &amp; Videos hochladen, Pfade kopieren, aufräumen.</span></a>';
 if (pg_can('contacts')) {
   $cCount = count(pg_load_json(PG_DATA_DIR . '/contacts.json'));
+  $cUnread = pg_contacts_unread();
   echo '<a class="card" href="index.php?view=contacts">'
-     . '<span class="card-ico">✉️</span><span class="card-title">Kontakt-Anfragen</span>'
+     . '<span class="card-ico">✉️</span><span class="card-title">Kontakt-Anfragen' . ($cUnread ? '<span class="nbadge">' . $cUnread . '</span>' : '') . '</span>'
      . '<span class="card-desc">' . $cCount . ' Nachricht' . ($cCount === 1 ? '' : 'en') . ' über das Kontaktformular.</span></a>';
 }
 if (pg_can('mail')) {
+  $mUnread = pg_mail_unread_cached();
   echo '<a class="card" href="mail.php">'
-     . '<span class="card-ico">📮</span><span class="card-title">E-Mail-Postfach</span>'
+     . '<span class="card-ico">📮</span><span class="card-title">E-Mail-Postfach' . ($mUnread ? '<span class="nbadge">' . $mUnread . '</span>' : '') . '</span>'
      . '<span class="card-desc">Mails im PLANIGAMES-Design senden &amp; empfangen.</span></a>';
 }
 if (pg_is_owner()) {

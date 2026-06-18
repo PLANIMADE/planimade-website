@@ -86,6 +86,21 @@ function pg_can($area){
   return in_array($area, pg_user_areas($u), true);
 }
 
+/* ---------------- Ungelesen-Zähler (Badges) ---------------- */
+const PG_MAIL_UNREAD_FILE = __DIR__ . '/../data/mail_unread.json';
+function pg_contacts_unread(){
+  $n = 0;
+  foreach ((array) pg_load_json(PG_DATA_DIR . '/contacts.json') as $r) if (empty($r['read'])) $n++;
+  return $n;
+}
+function pg_mail_unread_cached(){
+  $c = pg_load_json(PG_MAIL_UNREAD_FILE);
+  return is_array($c) ? max(0, (int) ($c['count'] ?? 0)) : 0;
+}
+function pg_mail_unread_store($count){
+  pg_save_json(PG_MAIL_UNREAD_FILE, ['count' => max(0, (int) $count), 'time' => time()]);
+}
+
 /* ---------------- Backup (Export/Import aller Inhalte) ---------------- */
 // Alle sicherungswürdigen Dateien im data-Ordner (Inhalte + Einstellungen)
 function pg_backup_filenames(){
@@ -499,10 +514,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=11"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=12"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=11"></script></body></html>';
+  echo '<script src="assets/admin.js?v=12"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   echo '<header class="topbar"><a class="tb-brand" href="index.php"><span class="diamond"></span> PLANI<span class="grad">GAMES</span></a>';
@@ -514,8 +529,8 @@ function pg_view_topbar($SCHEMA, $active){
   }
   echo '<a' . ($active === 'media' ? ' class="on"' : '') . ' href="index.php?view=media">Medien</a>';
   if (pg_can('subscribers')) echo '<a href="index.php?view=subscribers">Abos</a>';
-  if (pg_can('contacts')) echo '<a href="index.php?view=contacts">Kontakt</a>';
-  if (pg_can('mail')) echo '<a' . ($active === 'mail' ? ' class="on"' : '') . ' href="mail.php">✉ Mails</a>';
+  if (pg_can('contacts')) { $cu = pg_contacts_unread(); echo '<a href="index.php?view=contacts">Kontakt' . ($cu ? '<span class="nbadge">' . $cu . '</span>' : '') . '</a>'; }
+  if (pg_can('mail')) { $mu = pg_mail_unread_cached(); echo '<a' . ($active === 'mail' ? ' class="on"' : '') . ' href="mail.php">✉ Mails' . ($mu ? '<span class="nbadge">' . $mu . '</span>' : '') . '</a>'; }
   if (pg_is_owner()) echo '<a href="index.php?view=users">Zugänge</a>';
   if (pg_is_owner()) echo '<a href="index.php?view=backup">Backup</a>';
   echo '</nav>';
@@ -770,7 +785,7 @@ function pg_render_list($f, $items, $name, $pathKey){
   // Vorlage (mit Token als Index) für neue Einträge
   $tpl = pg_render_list_item($f, $isSimple ? '' : [], $name . '[' . $token . ']', $pathKey, $token, $isSimple);
 
-  $h = '<div class="field listfield" data-list data-token="' . pg_h($token) . '">';
+  $h = '<div class="field listfield" data-list data-name="' . pg_h($name) . '" data-token="' . pg_h($token) . '">';
   $h .= '<div class="listhead"><label class="flabel">' . pg_h($f['label']) . '</label>'
       . '<button type="button" class="btn-add" data-add>+ ' . pg_h($f['label_singular'] ?? 'Eintrag') . '</button></div>';
   if (!empty($f['hint'])) $h .= '<p class="hint">' . pg_h($f['hint']) . '</p>';
@@ -793,6 +808,7 @@ function pg_render_list_item($f, $item, $prefix, $pathKey, $idx, $isSimple){
        . '<span class="item-tools">'
        . '<button type="button" data-up title="nach oben">↑</button>'
        . '<button type="button" data-down title="nach unten">↓</button>'
+       . '<button type="button" data-dup title="duplizieren">⧉</button>'
        . '<button type="button" data-del title="löschen">✕</button>'
        . '<button type="button" data-fold title="ein-/ausklappen">▾</button></span></div>'
        . '<div class="item-body">' . $inner . '</div></div>';
@@ -818,7 +834,7 @@ function pg_render_blocks($f, $items, $name, $pathKey){
   $opts = '';
   foreach ($f['types'] as $tname => $tdef) $opts .= '<option value="' . pg_h($tname) . '">' . pg_h($tdef['label']) . '</option>';
 
-  $h = '<div class="field blocksfield" data-blocks data-token="' . pg_h($token) . '">';
+  $h = '<div class="field blocksfield" data-blocks data-name="' . pg_h($name) . '" data-token="' . pg_h($token) . '">';
   $h .= '<div class="listhead"><label class="flabel">' . pg_h($f['label']) . '</label>'
       . '<span class="addblock"><select data-block-select>' . $opts . '</select>'
       . '<button type="button" class="btn-add" data-add-block>+ Block</button></span></div>';
@@ -838,6 +854,7 @@ function pg_render_block_item($f, $type, $item, $prefix, $pathKey, $idx){
        . '<span class="item-tools">'
        . '<button type="button" data-up title="nach oben">↑</button>'
        . '<button type="button" data-down title="nach unten">↓</button>'
+       . '<button type="button" data-dup title="duplizieren">⧉</button>'
        . '<button type="button" data-del title="löschen">✕</button>'
        . '<button type="button" data-fold title="ein-/ausklappen">▾</button></span></div>'
        . '<div class="item-body">' . $inner . '</div></div>';

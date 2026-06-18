@@ -56,8 +56,47 @@
     }
     if (t.closest("[data-up]")) { const p = item.previousElementSibling; if (p) item.parentNode.insertBefore(item, p); e.preventDefault(); return; }
     if (t.closest("[data-down]")) { const n = item.nextElementSibling; if (n) item.parentNode.insertBefore(n, item); e.preventDefault(); return; }
+    if (t.closest("[data-dup]")) { duplicateItem(item); e.preventDefault(); return; }
     if (t.closest("[data-fold]")) { item.classList.toggle("folded"); e.preventDefault(); return; }
   });
+
+  // ---- Eintrag/Block duplizieren (mit allen Werten, neuer Index) ----
+  function duplicateItem(item) {
+    const list = item.closest("[data-list], [data-blocks]");
+    if (!list) return;
+    const base = list.dataset.name;
+    if (!base) return;
+    // Aktuellen Namens-Index dieses Items ermitteln
+    let idx = null;
+    for (const el of item.querySelectorAll("[name]")) {
+      const n = el.getAttribute("name");
+      if (n.indexOf(base + "[") === 0) {
+        const m = n.slice(base.length).match(/^\[([^\]]+)\]/);
+        if (m) { idx = m[1]; break; }
+      }
+    }
+    if (idx === null) return;
+    const oldPrefix = base + "[" + idx + "]";
+    const newPrefix = base + "[n" + uid++ + "]";
+
+    const clone = item.cloneNode(true);
+    // Werte 1:1 übernehmen (cloneNode kopiert getippte Werte nicht zuverlässig)
+    const origFields = item.querySelectorAll("input, textarea, select");
+    const cloneFields = clone.querySelectorAll("input, textarea, select");
+    cloneFields.forEach((cf, i) => {
+      const of = origFields[i];
+      if (of) {
+        if (cf.type === "checkbox" || cf.type === "radio") cf.checked = of.checked;
+        else cf.value = of.value;
+      }
+      // Namens-Index neu setzen, damit nichts kollidiert
+      const nm = cf.getAttribute("name");
+      if (nm && nm.indexOf(oldPrefix) === 0) cf.setAttribute("name", newPrefix + nm.slice(oldPrefix.length));
+    });
+    clone.classList.remove("folded");
+    item.after(clone);
+    updateSummary(clone);
+  }
 
   // ---- Sortieren per Griff (⠿) — Pointer-basiert (Maus & Touch), zuverlässig
   //      auch wenn die Items Formularfelder enthalten (HTML5-DnD versagt da oft) ----
@@ -133,6 +172,28 @@
   // Startzustand: alle Einträge eingeklappt lassen? Nein – aufgeklappt, aber lange Listen klappen wir zu.
   document.querySelectorAll("[data-items]").forEach((box) => {
     if (box.children.length > 4) box.querySelectorAll(":scope > [data-item]").forEach((i) => i.classList.add("folded"));
+  });
+
+  // ---- Suche/Filter in langen Listen (ab 5 Einträgen) ----
+  document.querySelectorAll("[data-list], [data-blocks]").forEach((list) => {
+    const box = list.querySelector(":scope > [data-items]");
+    const head = list.querySelector(":scope > .listhead");
+    if (!box || !head || box.children.length < 5) return;
+    const search = document.createElement("input");
+    search.type = "search";
+    search.className = "list-search";
+    search.placeholder = "Suchen / filtern …";
+    head.after(search);
+    const apply = () => {
+      const q = search.value.trim().toLowerCase();
+      box.querySelectorAll(":scope > [data-item]").forEach((it) => {
+        if (!q) { it.style.display = ""; return; }
+        const sum = (it.querySelector(":scope > .item-bar [data-sum]")?.textContent || "");
+        const vals = Array.from(it.querySelectorAll("input, textarea, select")).map((f) => f.value || "").join(" ");
+        it.style.display = (sum + " " + vals).toLowerCase().includes(q) ? "" : "none";
+      });
+    };
+    search.addEventListener("input", apply);
   });
 
   // ---- Medien-Bibliothek: Pfad kopieren ----
