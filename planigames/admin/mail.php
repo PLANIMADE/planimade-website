@@ -15,6 +15,21 @@ $action = $_GET['action'] ?? '';
 $tab    = $_GET['tab'] ?? 'inbox';
 $flash  = '';
 
+/* ---- Live-Vorschau: rendert die echte Mail-HTML (Verfassen/Newsletter) ---- */
+if ($action === 'preview') {
+  header('Content-Type: text/html; charset=UTF-8');
+  header("Content-Security-Policy: default-src 'none'; img-src https: http: data:; style-src 'unsafe-inline'; font-src https: data:");
+  $mode = ($_POST['mode'] ?? $_GET['mode'] ?? 'compose');
+  $message = (string)($_POST['message'] ?? $_GET['message'] ?? '');
+  if (trim($message) === '') $message = $mode === 'newsletter'
+    ? "Hier steht dein Newsletter …\n\nSchreib links los – die Vorschau aktualisiert sich live."
+    : "Hier steht deine Nachricht …\n\nSchreib links los – die Vorschau aktualisiert sich live.";
+  echo $mode === 'newsletter'
+    ? pg_mail_build_newsletter($message, pg_unsub_link('beispiel@abonnent.de'))
+    : pg_mail_build_personal($message);
+  exit;
+}
+
 /* ---- Mail-Body für die IFrame-Vorschau (isoliert, kein Skript) ---- */
 if ($action === 'body') {
   $uid = (int)($_GET['uid'] ?? 0);
@@ -76,8 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_mail'])) {
   } elseif ($subject === '' || $message === '') {
     $flash = '<div class="flash err">Betreff und Nachricht dürfen nicht leer sein.</div>'; $tab = 'compose';
   } else {
-    $bodyHtml = '<div style="color:#d7d7df;line-height:1.7;font-size:15px;padding:6px 0">' . nl2br(pg_h($message)) . '</div>' . pg_mail_signature();
-    $html = pg_mail_shell($bodyHtml, mb_substr($message, 0, 90));
+    $html = pg_mail_build_personal($message);
     $ok = pg_send_mail($to, $subject, $html, pg_mail_from()[1]);
     if ($ok) {
       $how = pg_mail_configured_send() ? 'per SMTP' : 'über den Server (mail())';
@@ -104,11 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_newsletter'])) {
     @set_time_limit(120);
     $sent = 0; $fail = 0;
     foreach ($emails as $to) {
-      $unsub = pg_unsub_link($to);
-      $body = '<div style="color:#d7d7df;line-height:1.7;font-size:15px;padding:6px 0">' . nl2br(pg_h($message)) . '</div>'
-        . '<p style="color:#6f6f7a;font-size:12px;margin:22px 0 0">Du erhältst diese Mail, weil du den PLANIGAMES-Newsletter abonniert hast. '
-        . '<a href="' . pg_h($unsub) . '" style="color:#ff8a2b">Abmelden</a></p>';
-      $html = pg_mail_shell($body, mb_substr($message, 0, 90));
+      $html = pg_mail_build_newsletter($message, pg_unsub_link($to));
       if (pg_send_mail($to, $subject, $html)) $sent++; else $fail++;
       usleep(120000); // freundlich zum Mailserver
     }
@@ -199,14 +209,18 @@ if ($tab === 'compose') {
     ? 'Versand über deinen SMTP-Server. Die Mail wird im gebrandeten PLANIGAMES-Layout (mit deinem Logo) verschickt.'
     : 'Noch kein SMTP hinterlegt – es wird die Server-Funktion <code>mail()</code> genutzt. Für zuverlässige Zustellung empfiehlt sich SMTP unter <a href="mail.php?tab=settings">Einstellungen</a>.';
   echo '<div class="mailnote">' . $sendInfo . '</div>';
-  echo '<form method="post" class="fields" style="margin-top:1rem">';
+  echo '<div class="mailcompose" data-mail-compose data-mode="compose">';
+  echo '<form method="post" class="fields mc-form">';
   echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
   echo '<div class="field"><label class="flabel">An (E-Mail)</label><input type="text" name="to" value="' . $to . '" placeholder="empfaenger@beispiel.de" required></div>';
   echo '<div class="field"><label class="flabel">Betreff</label><input type="text" name="subject" value="' . $subject . '" required></div>';
-  echo '<div class="field"><label class="flabel">Nachricht</label><textarea name="message" rows="11" required placeholder="Deine Nachricht …"></textarea>'
+  echo '<div class="field"><label class="flabel">Nachricht</label><textarea name="message" rows="12" required placeholder="Deine Nachricht …" data-mail-input></textarea>'
      . '<p class="hint">Reiner Text – Zeilenumbrüche bleiben erhalten. Die Mail wird automatisch ins PLANIGAMES-Design eingebettet.</p></div>';
   echo '<div class="editor-foot"><button class="btn-primary" name="send_mail" value="1">Senden →</button></div>';
   echo '</form>';
+  echo '<div class="mc-preview"><div class="mc-preview-label">Live-Vorschau</div>'
+     . '<iframe class="mc-frame" data-mail-frame title="E-Mail-Vorschau"></iframe></div>';
+  echo '</div>';
 }
 
 /* ---------------- NEWSLETTER ---------------- */
@@ -215,15 +229,19 @@ if ($tab === 'newsletter') {
   $count = is_array($subs) ? count($subs) : 0;
   echo '<div class="mailnote">Sende eine gebrandete Nachricht an alle <b>' . $count . '</b> Newsletter-Abonnent' . ($count === 1 ? 'en' : 'en') . '. '
      . 'Jede Mail enthält automatisch einen Abmeldelink. ' . (pg_mail_configured_send() ? 'Versand per SMTP.' : 'Versand über die Server-Funktion mail() – für große Listen SMTP empfohlen.') . '</div>';
-  echo '<form method="post" class="fields" style="margin-top:1rem" onsubmit="return confirm(\'Newsletter jetzt an alle ' . $count . ' Abonnenten senden?\')">';
+  echo '<div class="mailcompose" data-mail-compose data-mode="newsletter">';
+  echo '<form method="post" class="fields mc-form" onsubmit="return confirm(\'Newsletter jetzt an alle ' . $count . ' Abonnenten senden?\')">';
   echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
   echo '<div class="field"><label class="flabel">Betreff</label><input type="text" name="subject" required></div>';
-  echo '<div class="field"><label class="flabel">Nachricht</label><textarea name="message" rows="11" required placeholder="Neuigkeiten, Devlogs, Release-Termine …"></textarea>'
+  echo '<div class="field"><label class="flabel">Nachricht</label><textarea name="message" rows="12" required placeholder="Neuigkeiten, Devlogs, Release-Termine …" data-mail-input></textarea>'
      . '<p class="hint">Reiner Text. Wird automatisch ins PLANIGAMES-Design (mit Logo &amp; Abmeldelink) eingebettet.</p></div>';
   echo '<div class="editor-foot">';
   echo '<a class="btn-add" href="index.php?view=subscribers">Abonnenten ansehen</a>';
   echo '<button class="btn-primary"' . ($count ? '' : ' disabled') . ' name="send_newsletter" value="1">An ' . $count . ' Abonnenten senden →</button></div>';
   echo '</form>';
+  echo '<div class="mc-preview"><div class="mc-preview-label">Live-Vorschau</div>'
+     . '<iframe class="mc-frame" data-mail-frame title="Newsletter-Vorschau"></iframe></div>';
+  echo '</div>';
 }
 
 /* ---------------- EINSTELLUNGEN ---------------- */

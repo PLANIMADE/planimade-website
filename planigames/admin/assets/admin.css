@@ -227,6 +227,14 @@ button{font:inherit;cursor:pointer}
 .mailgrid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
 .mailwrap h2.sub-h{border-top:1px solid var(--line);padding-top:1.2rem}
 
+/* Verfassen/Newsletter mit Live-Vorschau (zwei Spalten) */
+.mailcompose{display:grid;grid-template-columns:1fr 1fr;gap:1.6rem;align-items:start;margin-top:1rem}
+.mailcompose .mc-form{min-width:0}
+.mc-preview{position:sticky;top:5rem}
+.mc-preview-label{font-family:ui-monospace,monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.mc-frame{width:100%;height:560px;border:1px solid var(--line);border-radius:14px;background:#050505;display:block}
+@media(max-width:880px){.mailcompose{grid-template-columns:1fr}.mc-preview{position:static}.mc-frame{height:440px}}
+
 @media(max-width:560px){
   .editor-head{flex-direction:column;align-items:stretch}
   .item-sum{font-size:.82rem}

@@ -283,6 +283,20 @@ function pg_mail_signature(){
   $out .= '</div>';
   return $out;
 }
+
+/* Fertiges HTML für eine persönliche Mail (Verfassen/Antworten) inkl. Signatur. */
+function pg_mail_build_personal($message){
+  $body = '<div style="color:#d7d7df;line-height:1.7;font-size:15px;padding:6px 0">' . nl2br(pg_h($message)) . '</div>' . pg_mail_signature();
+  return pg_mail_shell($body, mb_substr($message, 0, 90));
+}
+/* Fertiges HTML für eine Newsletter-Mail inkl. Abmeldelink. */
+function pg_mail_build_newsletter($message, $unsubLink){
+  $body = '<div style="color:#d7d7df;line-height:1.7;font-size:15px;padding:6px 0">' . nl2br(pg_h($message)) . '</div>'
+    . '<p style="color:#6f6f7a;font-size:12px;margin:22px 0 0">Du erhältst diese Mail, weil du den PLANIGAMES-Newsletter abonniert hast. '
+    . '<a href="' . pg_h($unsubLink) . '" style="color:#ff8a2b">Abmelden</a></p>';
+  return pg_mail_shell($body, mb_substr($message, 0, 90));
+}
+
 function pg_mail_config_save(array $c){
   // Bestehende Passwörter behalten, wenn das Formular sie leer lässt
   $old = pg_mail_config();
@@ -476,10 +490,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=4"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=5"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=4"></script></body></html>';
+  echo '<script src="assets/admin.js?v=5"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   echo '<header class="topbar"><a class="tb-brand" href="index.php"><span class="diamond"></span> PLANI<span class="grad">GAMES</span></a>';

@@ -116,6 +116,31 @@
     ta.remove();
   }
 
+  // ---- Mail-Dashboard: Live-Vorschau ----
+  const compose = document.querySelector("[data-mail-compose]");
+  if (compose) {
+    const mode = compose.getAttribute("data-mode") || "compose";
+    const input = compose.querySelector("[data-mail-input]");
+    const frame = compose.querySelector("[data-mail-frame]");
+    let timer = null, busy = false, pending = false;
+    async function render() {
+      if (busy) { pending = true; return; }
+      busy = true;
+      const fd = new FormData();
+      fd.append("csrf", csrf());
+      fd.append("mode", mode);
+      fd.append("message", input ? input.value : "");
+      try {
+        const r = await fetch("mail.php?action=preview", { method: "POST", body: fd });
+        frame.srcdoc = await r.text();
+      } catch {}
+      busy = false;
+      if (pending) { pending = false; render(); }
+    }
+    if (input) input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(render, 350); });
+    render();
+  }
+
   // ---- Medien-Bibliothek: direkter Upload ----
   const libUp = document.getElementById("lib-upload");
   if (libUp) {
