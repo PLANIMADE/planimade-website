@@ -58,6 +58,33 @@ return [
         ]],
         ['name'=>'color','label'=>'Partikel-Farbe','widget'=>'color','default'=>'#ff7d1a','hint'=>'Standard: Orange. Für eine andere Stimmung anpassbar.'],
       ]],
+      ['name'=>'community','label'=>'Community-Banner (Discord)','widget'=>'object','hint'=>'Auffälliger Aufruf auf der Startseite, der zur Community führt.','fields'=>[
+        ['name'=>'enabled','label'=>'Banner anzeigen','widget'=>'boolean','default'=>true],
+        ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Komm in unsere Community'],
+        ['name'=>'text','label'=>'Text','widget'=>'text','default'=>'Sei beim Chaos dabei: Devlogs aus erster Hand, Playtests, Abstimmungen und ein Haufen wackeliger Magier warten auf dich.'],
+        ['name'=>'buttonLabel','label'=>'Button-Text','widget'=>'string','default'=>'Discord beitreten'],
+        ['name'=>'url','label'=>'Discord-Einladungslink','widget'=>'string','hint'=>'z. B. https://discord.gg/…'],
+      ]],
+      ['name'=>'presskit','label'=>'Press Kit','widget'=>'object','hint'=>'Eigene Seite (presse.html) für Presse & Creator. Logos, Fakten, Downloads.','fields'=>[
+        ['name'=>'enabled','label'=>'Press Kit aktiv','widget'=>'boolean','default'=>true],
+        ['name'=>'intro','label'=>'Einleitung','widget'=>'markdown','hint'=>'Kurzvorstellung für Presse & Content-Creator.'],
+        ['name'=>'contactEmail','label'=>'Presse-Kontakt (E-Mail)','widget'=>'string','hint'=>'Leer = Studio-Kontakt-E-Mail.'],
+        ['name'=>'facts','label'=>'Fakten (Fact Sheet)','widget'=>'list','summary'=>'label','fields'=>[
+          ['name'=>'label','label'=>'Bezeichnung','widget'=>'string','hint'=>'z. B. Studio, Standort, Release'],
+          ['name'=>'value','label'=>'Wert','widget'=>'string'],
+        ]],
+        ['name'=>'downloads','label'=>'Download-Pakete','widget'=>'list','summary'=>'label','fields'=>[
+          ['name'=>'label','label'=>'Titel','widget'=>'string','hint'=>'z. B. Logo-Paket, Screenshots'],
+          ['name'=>'note','label'=>'Beschreibung','widget'=>'string'],
+          ['name'=>'file','label'=>'Datei (ZIP/Bild)','widget'=>'file'],
+        ]],
+      ]],
+      ['name'=>'cookie','label'=>'Cookie-Hinweis','widget'=>'object','hint'=>'DSGVO-Banner. Blendet eingebettete YouTube-Trailer bis zur Zustimmung aus.','fields'=>[
+        ['name'=>'enabled','label'=>'Cookie-Banner anzeigen','widget'=>'boolean','default'=>true],
+        ['name'=>'message','label'=>'Hinweistext','widget'=>'text','default'=>'Wir nutzen nur, was die Seite zum Laufen braucht. Für eingebettete YouTube-Trailer brauchen wir deine Zustimmung – diese laden externe Inhalte von Google.'],
+        ['name'=>'acceptLabel','label'=>'Button „Akzeptieren"','widget'=>'string','default'=>'Alle akzeptieren'],
+        ['name'=>'declineLabel','label'=>'Button „Ablehnen"','widget'=>'string','default'=>'Nur Notwendige'],
+      ]],
       ['name'=>'footerNote','label'=>'Footer – Kurzbeschreibung','widget'=>'text'],
       ['name'=>'email','label'=>'Kontakt-E-Mail','widget'=>'string'],
       ['name'=>'socials','label'=>'Social Links','widget'=>'list','summary'=>'label','fields'=>[

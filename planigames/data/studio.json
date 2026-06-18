@@ -35,6 +35,31 @@
     "speed": "normal",
     "color": "#ff7d1a"
   },
+  "community": {
+    "enabled": true,
+    "heading": "Komm in unsere Community",
+    "text": "Sei beim Chaos dabei: Devlogs aus erster Hand, Playtests, Abstimmungen und ein Haufen wackeliger Magier warten auf dich.",
+    "buttonLabel": "Discord beitreten",
+    "url": "#"
+  },
+  "presskit": {
+    "enabled": true,
+    "intro": "**PLANIGAMES** ist ein unabhängiges Indie-Spielestudio. Hier findest du alles für deine Berichterstattung über uns und unsere Spiele – Logos, Fakten, Screenshots und Kontakt. Du darfst dieses Material frei in Artikeln, Videos und Streams verwenden.",
+    "contactEmail": "",
+    "facts": [
+      { "label": "Studio", "value": "PLANIGAMES" },
+      { "label": "Gegründet", "value": "2024" },
+      { "label": "Standort", "value": "Deutschland" },
+      { "label": "Aktuelles Spiel", "value": "Wobbly Wizards" }
+    ],
+    "downloads": []
+  },
+  "cookie": {
+    "enabled": true,
+    "message": "Wir nutzen nur, was die Seite zum Laufen braucht. Für eingebettete YouTube-Trailer brauchen wir deine Zustimmung – diese laden externe Inhalte von Google.",
+    "acceptLabel": "Alle akzeptieren",
+    "declineLabel": "Nur Notwendige"
+  },
   "footerNote": "Ein unabhängiges Indie-Spielestudio. Wir bauen Welten, die wackeln, zaubern und im Kopf bleiben.",
   "email": "hello.dominicmajewski@gmail.com",
   "socials": [

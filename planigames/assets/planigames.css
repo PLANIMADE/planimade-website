@@ -247,6 +247,33 @@ body.fx-glow #fx-layer { display: none; }
     .glow-1, .glow-2 { animation: none !important; }
 }
 
+/* ---------- Cookie-/Consent-Banner ---------- */
+#cookie-banner {
+    position: fixed; left: 50%; bottom: 1.2rem; transform: translateX(-50%) translateY(140%);
+    z-index: 80; width: min(680px, calc(100vw - 2rem));
+    background: rgba(14,14,17,0.96); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 18px;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.8);
+    padding: 1.1rem 1.3rem; display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap;
+    transition: transform .55s cubic-bezier(0.16,1,0.3,1);
+}
+#cookie-banner.in { transform: translateX(-50%) translateY(0); }
+#cookie-banner .cb-text { font-size: .9rem; color: #c7c7d1; line-height: 1.55; flex: 1; min-width: 240px; margin: 0; }
+#cookie-banner .cb-text a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+#cookie-banner .cb-actions { display: flex; gap: .6rem; align-items: center; }
+#cookie-banner button { font: inherit; cursor: pointer; border-radius: 999px; padding: .6rem 1.2rem; font-weight: 600; font-size: .85rem; border: 0; }
+#cookie-banner .cb-decline { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #d7d7df; }
+#cookie-banner .cb-decline:hover { border-color: rgba(255,255,255,0.45); }
+#cookie-banner .cb-accept { background: linear-gradient(110deg, var(--accent), var(--accent-3)); color: #1a0d00; }
+@media (max-width: 560px) { #cookie-banner { flex-direction: column; align-items: stretch; } #cookie-banner .cb-actions { justify-content: stretch; } #cookie-banner .cb-actions button { flex: 1; } }
+
+/* YouTube-Consent-Platzhalter (lädt erst nach Zustimmung) */
+.yt-consent { display: grid; place-items: center; background-size: cover; background-position: center; }
+.yt-consent::before { content: ""; position: absolute; inset: 0; background: rgba(5,5,7,0.78); }
+.yt-consent-inner { position: relative; text-align: center; padding: 1.5rem; max-width: 30rem; }
+.yt-consent-inner p { color: #d7d7df; font-size: .9rem; line-height: 1.5; margin: 0 0 1rem; }
+.yt-consent-btns { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; }
+
 /* Utility: feines Gitter */
 .grid-lines {
     background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),

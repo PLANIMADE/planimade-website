@@ -74,6 +74,10 @@
             nf_text: "Das gibt es hier leider nicht.", nf_home: "Zur Startseite",
              msg_no_games: "Noch keine Spiele angelegt.", msg_no_posts: "Noch keine Einträge.",
             nl_loading: "Lädt…", current_project_tag: "Aktuelles Projekt",
+            cookie_settings: "Cookie-Einstellungen", yt_consent: "Zum Abspielen lädt YouTube externe Inhalte von Google.",
+            yt_load: "Trailer laden", yt_load_always: "Immer laden",
+            presskit: "Press Kit", press_contact: "Presse-Kontakt", press_facts: "Fact Sheet",
+            press_downloads: "Downloads", press_games: "Unsere Spiele", download: "Herunterladen",
         },
         en: {
             nav_studio: "Studio", nav_games: "Games", nav_devlog: "Devlog", nav_contact: "Contact",
@@ -98,6 +102,10 @@
             nf_text: "Sorry, this doesn't exist.", nf_home: "Back to home",
             msg_no_games: "No games yet.", msg_no_posts: "No entries yet.",
             nl_loading: "Loading…", current_project_tag: "Current project",
+            cookie_settings: "Cookie settings", yt_consent: "Playing this loads external content from YouTube/Google.",
+            yt_load: "Load trailer", yt_load_always: "Always load",
+            presskit: "Press Kit", press_contact: "Press contact", press_facts: "Fact sheet",
+            press_downloads: "Downloads", press_games: "Our games", download: "Download",
         },
     };
     function detectLang() {
@@ -183,10 +191,66 @@
         layer.innerHTML = html;
     }
 
+    /* ---------- Cookie-/Consent-Banner ---------- */
+    function pgConsent() { try { return localStorage.getItem("pg_consent"); } catch { return null; } }
+    function setConsent(v) {
+        try { localStorage.setItem("pg_consent", v); } catch {}
+        const banner = $("#cookie-banner");
+        if (banner) banner.remove();
+        if (v === "all") { $$("[data-yt-embed]").forEach(loadYouTube); }   // Trailer nachladen
+    }
+    function loadYouTube(holder) {
+        const id = holder.getAttribute("data-yt-embed");
+        if (!id) return;
+        holder.innerHTML = `<iframe class="absolute inset-0 w-full h-full" src="https://www.youtube-nocookie.com/embed/${esc(id)}?autoplay=1" title="Trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    }
+    function initCookieBanner() {
+        const cfg = (DATA.studio && DATA.studio.cookie) || {};
+        if (cfg.enabled === false) return;
+        if (pgConsent()) return;                       // bereits entschieden
+        const msg = cfg.message || "Wir nutzen nur, was die Seite zum Laufen braucht. Für eingebettete YouTube-Trailer brauchen wir deine Zustimmung.";
+        const acc = cfg.acceptLabel || "Alle akzeptieren";
+        const dec = cfg.declineLabel || "Nur Notwendige";
+        const el = document.createElement("div");
+        el.id = "cookie-banner";
+        el.setAttribute("role", "dialog");
+        el.setAttribute("aria-label", "Cookie-Hinweis");
+        el.innerHTML = `
+            <p class="cb-text">${esc(msg)} <a href="rechtliches.html#datenschutz">${esc(t("foot_datenschutz"))}</a></p>
+            <div class="cb-actions">
+                <button class="cb-decline" data-consent="essential">${esc(dec)}</button>
+                <button class="cb-accept" data-consent="all">${esc(acc)}</button>
+            </div>`;
+        document.body.appendChild(el);
+        el.addEventListener("click", (e) => {
+            const b = e.target.closest("[data-consent]");
+            if (b) setConsent(b.dataset.consent);
+        });
+        requestAnimationFrame(() => el.classList.add("in"));
+    }
+    // Footer-Link „Cookie-Einstellungen" öffnet das Banner erneut
+    function reopenCookieBanner() {
+        try { localStorage.removeItem("pg_consent"); } catch {}
+        if (!$("#cookie-banner")) initCookieBanner();
+    }
+
     function initLangSwitch() {
         document.addEventListener("click", (e) => {
             const b = e.target.closest("[data-setlang]");
-            if (b) { e.preventDefault(); setLang(b.dataset.setlang); }
+            if (b) { e.preventDefault(); setLang(b.dataset.setlang); return; }
+            const link = e.target.closest("[data-cookie-open]");
+            if (link) { e.preventDefault(); reopenCookieBanner(); return; }
+            // Trailer-Platzhalter: nur diesen einen laden
+            const one = e.target.closest("[data-yt-load]");
+            if (one) {
+                e.preventDefault();
+                const holder = one.closest("[data-yt-embed]");
+                if (holder) loadYouTube(holder);
+                return;
+            }
+            // „Immer laden" innerhalb eines Trailers = Zustimmung für alle
+            const all = e.target.closest(".yt-consent [data-consent='all']");
+            if (all) { e.preventDefault(); setConsent("all"); }
         });
     }
 
@@ -441,6 +505,30 @@
                 observeReveals(dl);
             } else { $("#devlog-section")?.remove(); }
         }
+
+        renderCommunity(s);
+    }
+
+    // Discord-/Community-Banner (vor der Newsletter-Sektion einsetzen)
+    function renderCommunity(s) {
+        const c = s.community || {};
+        if (c.enabled === false || !c.url || c.url === "#") return;
+        const nl = $("[data-newsletter-section]");
+        const sec = document.createElement("section");
+        sec.className = "relative px-6 py-12 md:py-20";
+        sec.innerHTML = `
+            <div class="max-w-6xl mx-auto reveal relative overflow-hidden rounded-3xl border border-white/10 p-10 md:p-14 flex flex-col md:flex-row items-center gap-8 md:gap-12"
+                 style="background:radial-gradient(120% 140% at 0% 0%, color-mix(in srgb,var(--accent) 20%, transparent), transparent 60%)">
+                <div class="text-6xl md:text-7xl shrink-0">💬</div>
+                <div class="flex-1 text-center md:text-left">
+                    <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3">${esc(c.heading || "Komm in unsere Community")}</h2>
+                    <p class="text-zinc-300 text-lg max-w-2xl">${esc(c.text || "")}</p>
+                </div>
+                <a href="${esc(c.url)}" target="_blank" rel="noopener" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold whitespace-nowrap shrink-0">${esc(c.buttonLabel || "Discord beitreten")}</a>
+            </div>`;
+        if (nl && nl.parentNode) nl.parentNode.insertBefore(sec, nl);
+        else document.body.appendChild(sec);
+        observeReveals(sec);
     }
 
     function renderFeatured(g) {
@@ -651,7 +739,21 @@
         const url = b.youtube || b.url || "";
         const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/);
         if (yt) {
-            embed = `<iframe class="absolute inset-0 w-full h-full" src="https://www.youtube-nocookie.com/embed/${yt[1]}" title="Trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            const cookieOff = (DATA.studio && DATA.studio.cookie && DATA.studio.cookie.enabled !== false);
+            if (cookieOff && pgConsent() !== "all") {
+                // DSGVO: YouTube erst nach Zustimmung laden – solange ein Klick-Platzhalter
+                const poster = b.poster ? esc(b.poster) : `https://i.ytimg.com/vi/${yt[1]}/hqdefault.jpg`;
+                embed = `<div class="yt-consent absolute inset-0" data-yt-embed="${yt[1]}" style="background-image:url('${poster}')">
+                    <div class="yt-consent-inner">
+                        <p>${esc(t("yt_consent"))}</p>
+                        <div class="yt-consent-btns">
+                            <button class="btn-accent px-6 py-3 rounded-full font-semibold text-sm" data-yt-load>▶ ${esc(t("yt_load"))}</button>
+                            <button class="btn-ghost px-6 py-3 rounded-full font-semibold text-sm" data-consent="all">${esc(t("yt_load_always"))}</button>
+                        </div>
+                    </div></div>`;
+            } else {
+                embed = `<iframe class="absolute inset-0 w-full h-full" src="https://www.youtube-nocookie.com/embed/${yt[1]}" title="Trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            }
         } else if (b.file) {
             embed = `<video class="absolute inset-0 w-full h-full object-cover" controls ${b.poster ? `poster="${esc(b.poster)}"` : ""}><source src="${esc(b.file)}"></video>`;
         }
@@ -941,6 +1043,72 @@
         observeReveals(root);
     }
 
+    async function renderPressKit() {
+        await loadData("studio", "games");
+        const s = DATA.studio || {};
+        const p = s.presskit || {};
+        const games = (DATA.games && DATA.games.games) || [];
+        const root = $("[data-presskit]");
+        if (!root) return;
+        const contact = p.contactEmail || s.email || "";
+        document.title = `Press Kit — ${s.name || "PLANIGAMES"}`;
+
+        const facts = (p.facts || []).filter(f => f && (f.label || f.value)).map(f => `
+            <div class="flex justify-between gap-4 py-3 border-b border-white/8">
+                <span class="text-zinc-400">${esc(f.label || "")}</span>
+                <span class="text-white font-medium text-right">${esc(f.value || "")}</span>
+            </div>`).join("");
+
+        const downloads = (p.downloads || []).filter(d => d && d.file).map(d => `
+            <a href="${esc(d.file)}" download class="tilt-card group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5 hover:border-[color:var(--accent)] transition-colors">
+                <div class="card-glow"></div>
+                <span class="text-3xl shrink-0">📦</span>
+                <span class="flex-1 min-w-0">
+                    <span class="block font-semibold text-white">${esc(d.label || t("download"))}</span>
+                    ${d.note ? `<span class="block text-sm text-zinc-400">${esc(d.note)}</span>` : ""}
+                </span>
+                <span class="badge text-[color:var(--accent)] whitespace-nowrap">${t("download")} ↓</span>
+            </a>`).join("");
+
+        const gameCards = games.map(g => `
+            <div class="rounded-2xl border border-white/10 overflow-hidden bg-white/[0.02]">
+                <div class="aspect-[16/9] overflow-hidden">${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.title)}" class="w-full h-full object-cover">` : `<div class="w-full h-full grid-lines"></div>`}</div>
+                <div class="p-5">
+                    <div class="flex items-center gap-2 mb-2">${statusBadge(g.status)}</div>
+                    <h3 class="font-display text-xl font-bold text-white">${esc(g.title)}</h3>
+                    <p class="text-sm text-zinc-400 mt-1 line-clamp-3">${esc(g.tagline || "")}</p>
+                    <a href="game.php?slug=${esc(g.slug)}" class="inline-block mt-4 badge text-[color:var(--accent)]">${t("to_game")}</a>
+                </div>
+            </div>`).join("");
+
+        root.innerHTML = `
+            <section class="px-6 pt-36 pb-16">
+                <div class="max-w-5xl mx-auto">
+                    <div class="font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] mb-4 reveal">${t("presskit")}</div>
+                    <h1 class="font-display text-5xl md:text-7xl font-extrabold text-white mb-8 reveal">${esc(s.name || "PLANIGAMES")}</h1>
+                    <div class="prose-pg max-w-2xl reveal">${md(p.intro || "")}</div>
+                </div>
+            </section>
+            <section class="px-6 pb-20">
+                <div class="max-w-5xl mx-auto grid lg:grid-cols-2 gap-12">
+                    <div class="reveal">
+                        <h2 class="font-display text-2xl font-bold text-white mb-5">${t("press_facts")}</h2>
+                        <div>${facts || `<p class="text-zinc-500">—</p>`}</div>
+                        ${contact ? `<h2 class="font-display text-2xl font-bold text-white mt-10 mb-3">${t("press_contact")}</h2>
+                            <a href="mailto:${esc(contact)}" class="btn-accent magnetic inline-block px-7 py-3.5 rounded-full font-semibold text-sm">${esc(contact)}</a>` : ""}
+                    </div>
+                    <div class="reveal">
+                        <h2 class="font-display text-2xl font-bold text-white mb-5">${t("press_downloads")}</h2>
+                        <div class="flex flex-col gap-3">${downloads || `<p class="text-zinc-500">${LANG === "en" ? "No downloads yet." : "Noch keine Downloads hinterlegt."}</p>`}</div>
+                    </div>
+                </div>
+            </section>
+            ${games.length ? `<section class="px-6 pb-28"><div class="max-w-5xl mx-auto">
+                <h2 class="font-display text-3xl md:text-4xl font-extrabold text-white mb-8 reveal">${t("press_games")}</h2>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">${gameCards}</div></div></section>` : ""}`;
+        initTilt(root); observeReveals(root);
+    }
+
     function notFound(msg) {
         return `<div class="min-h-[60vh] grid place-items-center text-center px-6">
             <div><div class="text-6xl mb-6">🪄</div>
@@ -1050,6 +1218,7 @@
                                 <li><a href="games.html" class="hover:text-white">${t("foot_allgames")}</a></li>
                                 <li><a href="devlog.php" class="hover:text-white">${t("foot_devlog")}</a></li>
                                 <li><a href="index.html#studio" class="hover:text-white">${t("foot_about")}</a></li>
+                                <li data-foot-press hidden><a href="presse.html" class="hover:text-white">${t("presskit")}</a></li>
                             </ul>
                         </div>
                         <div>
@@ -1065,6 +1234,7 @@
                         <div class="flex items-center gap-5">
                             <a href="rechtliches.html?doc=impressum" class="hover:text-white">${t("foot_impressum")}</a>
                             <a href="rechtliches.html?doc=datenschutz" class="hover:text-white">${t("foot_datenschutz")}</a>
+                            <a href="#" data-cookie-open class="hover:text-white">${t("cookie_settings")}</a>
                             <a href="admin/" class="hover:text-white inline-flex items-center gap-1" title="Zum Dashboard">🔒 Admin</a>
                         </div>
                         <div class="font-mono uppercase tracking-widest">${t("foot_made")}</div>
@@ -1092,6 +1262,8 @@
         if (soc && Array.isArray(s.socials)) {
             soc.innerHTML = s.socials.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener" class="hover:text-white">${esc(x.label)}</a>`).join("");
         }
+        // Press-Kit-Link im Footer nur zeigen, wenn aktiviert
+        if (!s.presskit || s.presskit.enabled !== false) $$("[data-foot-press]").forEach(el => el.hidden = false);
         // Favicon (eigenes Feld, unabhängig vom Logo) – altes Icon ersetzen
         if (s.favicon) {
             $$("link[rel~='icon'], link[rel='apple-touch-icon']").forEach(l => l.remove());
@@ -1165,12 +1337,14 @@
             game: renderGame,
             devlog: renderDevlog,
             legal: renderLegal,
+            presskit: renderPressKit,
         }[page] || (() => {}))();
         // Studio-Daten für den Footer sicherstellen (auch ohne Home)
         if (!DATA.studio) await loadData("studio");
         fillStudioFooter();
         initNewsletter();
         injectOrgJsonLd();
+        initCookieBanner();
     }
 
     // Strukturierte Daten (Organization) für Seiten ohne serverseitiges JSON-LD
