@@ -60,6 +60,14 @@
     "acceptLabel": "Alle akzeptieren",
     "declineLabel": "Nur Notwendige"
   },
+  "contact": {
+    "enabled": true,
+    "heading": "Sag Hallo 👋",
+    "intro": "Fragen, Feedback, Presse oder einfach nur Hallo sagen? Schreib uns – wir melden uns so schnell wie möglich.",
+    "buttonLabel": "Nachricht senden",
+    "successMessage": "Danke für deine Nachricht! Wir melden uns bald. 🧡",
+    "notifyEmail": ""
+  },
   "footerNote": "Ein unabhängiges Indie-Spielestudio. Wir bauen Welten, die wackeln, zaubern und im Kopf bleiben.",
   "email": "hello.dominicmajewski@gmail.com",
   "socials": [

@@ -78,6 +78,9 @@
             yt_load: "Trailer laden", yt_load_always: "Immer laden",
             presskit: "Press Kit", press_contact: "Presse-Kontakt", press_facts: "Fact Sheet",
             press_downloads: "Downloads", press_games: "Unsere Spiele", download: "Herunterladen",
+            c_name: "Name", c_email: "E-Mail", c_subject: "Betreff", c_message: "Deine Nachricht",
+            c_name_ph: "Wie heißt du?", c_email_ph: "deine@mail.de", c_subject_ph: "Worum geht's?",
+            c_message_ph: "Schreib uns …", c_send: "Nachricht senden", c_or_mail: "Oder schreib direkt an",
         },
         en: {
             nav_studio: "Studio", nav_games: "Games", nav_devlog: "Devlog", nav_contact: "Contact",
@@ -106,6 +109,9 @@
             yt_load: "Load trailer", yt_load_always: "Always load",
             presskit: "Press Kit", press_contact: "Press contact", press_facts: "Fact sheet",
             press_downloads: "Downloads", press_games: "Our games", download: "Download",
+            c_name: "Name", c_email: "Email", c_subject: "Subject", c_message: "Your message",
+            c_name_ph: "What's your name?", c_email_ph: "your@mail.com", c_subject_ph: "What's it about?",
+            c_message_ph: "Write to us …", c_send: "Send message", c_or_mail: "Or email us directly at",
         },
     };
     function detectLang() {
@@ -418,11 +424,29 @@
             if (LANG === "en" && de) {
                 const en = await fetchJSON(map[n].replace(/\.json$/, ".en.json"));
                 DATA[n] = en ? mergeLang(de, en) : de;
+                applyShared(n, DATA[n], de);     // Nicht-Text-Einstellungen immer aus DE
             } else {
                 DATA[n] = de;
             }
         }));
         return DATA;
+    }
+
+    // Sprach-unabhängige Einstellungen (Farben, Partikel, Logos, Bilder, Links)
+    // immer aus der deutschen Basis übernehmen – sie gelten für beide Sprachen.
+    function applyShared(name, merged, de) {
+        if (!merged || !de) return;
+        if (name === "studio") {
+            ["background", "logo", "favicon", "heroBackground", "heroVideo"].forEach(k => {
+                if (de[k] !== undefined) merged[k] = de[k];
+            });
+        } else if (name === "games" && Array.isArray(merged.games) && Array.isArray(de.games)) {
+            const SHARED_GAME = ["accent", "accent2", "cover", "logo", "logoScale", "wishlistUrl", "status", "featured", "slug"];
+            merged.games.forEach((g, i) => {
+                const d = de.games[i]; if (!d) return;
+                SHARED_GAME.forEach(k => { if (d[k] !== undefined) g[k] = d[k]; });
+            });
+        }
     }
 
     /* =========================================================
@@ -630,9 +654,16 @@
         // Patch Notes dieses Spiels anhängen (falls Platzhalter vorhanden)
         const pnMount = $("[data-game-patchnotes]");
         if (pnMount) {
+            // Tolerant zuordnen: Slug ODER Titel (case-insensitive), auch via Tags
+            const gslug = (g.slug || "").toLowerCase(), gtitle = (g.title || "").toLowerCase();
+            const belongs = (p) => {
+                const v = (p.game || "").trim().toLowerCase();
+                if (v && (v === gslug || v === gtitle)) return true;
+                return (p.tags || []).some(tg => { const x = String(tg).toLowerCase(); return x === gslug || x === gtitle; });
+            };
             const posts = ((DATA.patchnotes && DATA.patchnotes.posts) || [])
-                .filter(p => p.game === g.slug)
-                .sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 4);
+                .filter(belongs)
+                .sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 3);
             if (posts.length) {
                 pnMount.innerHTML = posts.map(p => `
                     <a href="devlog.php?slug=${esc(p.slug)}" class="reveal group flex items-center gap-4 py-4 border-b border-white/8 hover:border-white/20">
@@ -1143,6 +1174,51 @@
         initTilt(root); observeReveals(root);
     }
 
+    async function renderContact() {
+        await loadData("studio");
+        const s = DATA.studio || {};
+        const c = s.contact || {};
+        const root = $("[data-contact]");
+        if (!root) return;
+        document.title = `${LANG === "en" ? "Contact" : "Kontakt"} — ${s.name || "PLANIGAMES"}`;
+        const email = s.email || "";
+        root.innerHTML = `
+            <section class="px-6 pt-36 pb-24">
+                <div class="max-w-2xl mx-auto">
+                    <div class="font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] mb-4 reveal">${t("nav_contact")}</div>
+                    <h1 class="font-display text-5xl md:text-7xl font-extrabold text-white mb-6 reveal">${esc(c.heading || "Sag Hallo 👋")}</h1>
+                    <p class="text-zinc-300 text-lg leading-relaxed mb-10 max-w-xl reveal">${esc(c.intro || "")}</p>
+                    <form action="contact.php" method="POST" data-contact-form class="reveal grid gap-4 relative overflow-hidden rounded-3xl border border-white/10 p-6 md:p-8"
+                          style="background:radial-gradient(120% 130% at 50% 0%, color-mix(in srgb,var(--accent) 12%, transparent), transparent 60%)">
+                        <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <label class="block">
+                                <span class="block text-sm text-zinc-400 mb-1.5">${t("c_name")}</span>
+                                <input type="text" name="name" required placeholder="${t("c_name_ph")}" class="w-full bg-black/30 border border-white/15 rounded-2xl px-5 py-3.5 text-white placeholder:text-zinc-600 focus:border-[color:var(--accent)] outline-none">
+                            </label>
+                            <label class="block">
+                                <span class="block text-sm text-zinc-400 mb-1.5">${t("c_email")}</span>
+                                <input type="email" name="email" required placeholder="${t("c_email_ph")}" class="w-full bg-black/30 border border-white/15 rounded-2xl px-5 py-3.5 text-white placeholder:text-zinc-600 focus:border-[color:var(--accent)] outline-none">
+                            </label>
+                        </div>
+                        <label class="block">
+                            <span class="block text-sm text-zinc-400 mb-1.5">${t("c_subject")}</span>
+                            <input type="text" name="subject" placeholder="${t("c_subject_ph")}" class="w-full bg-black/30 border border-white/15 rounded-2xl px-5 py-3.5 text-white placeholder:text-zinc-600 focus:border-[color:var(--accent)] outline-none">
+                        </label>
+                        <label class="block">
+                            <span class="block text-sm text-zinc-400 mb-1.5">${t("c_message")}</span>
+                            <textarea name="message" required rows="6" placeholder="${t("c_message_ph")}" class="w-full bg-black/30 border border-white/15 rounded-2xl px-5 py-3.5 text-white placeholder:text-zinc-600 focus:border-[color:var(--accent)] outline-none resize-y"></textarea>
+                        </label>
+                        <div class="flex items-center justify-between gap-4 flex-wrap mt-1">
+                            <button class="btn-accent magnetic px-8 py-4 rounded-full font-semibold">${esc(c.buttonLabel || t("c_send"))}</button>
+                            ${email ? `<span class="text-sm text-zinc-500">${t("c_or_mail")} <a href="mailto:${esc(email)}" class="text-[color:var(--accent)] hover:underline">${esc(email)}</a></span>` : ""}
+                        </div>
+                    </form>
+                </div>
+            </section>`;
+        observeReveals(root);
+    }
+
     function notFound(msg) {
         return `<div class="min-h-[60vh] grid place-items-center text-center px-6">
             <div><div class="text-6xl mb-6">🪄</div>
@@ -1163,7 +1239,7 @@
         ["index.html", "nav_studio"],
         ["games.html", "nav_games"],
         ["devlog.php", "nav_devlog"],
-        ["index.html#kontakt", "nav_contact"],
+        ["kontakt.html", "nav_contact"],
     ];
     function navLinks(extra = "") {
         const here = location.pathname.split("/").pop() || "index.html";
@@ -1215,17 +1291,17 @@
                         <span></span><span></span><span></span>
                     </button>
                 </div>
-                <div id="mobile-menu" class="mobile-menu md:hidden" aria-hidden="true">
-                    <nav class="mm-nav">
-                        ${mobileNavLinks()}
-                        <a href="rechtliches.html?doc=impressum" class="mm-sub" style="--i:5">${t("foot_impressum")}</a>
-                        <div class="mm-actions" style="--i:6">
-                            <a href="games.html" class="btn-accent magnetic px-7 py-3.5 rounded-full text-base font-semibold">${t("cta_discover")}</a>
-                            ${langSwitch()}
-                        </div>
-                    </nav>
-                </div>
-            </header>`;
+            </header>
+            <div id="mobile-menu" class="mobile-menu md:hidden" aria-hidden="true">
+                <nav class="mm-nav">
+                    ${mobileNavLinks()}
+                    <a href="rechtliches.html?doc=impressum" class="mm-sub" style="--i:5">${t("foot_impressum")}</a>
+                    <div class="mm-actions" style="--i:6">
+                        <a href="games.html" class="btn-accent magnetic px-7 py-3.5 rounded-full text-base font-semibold">${t("cta_discover")}</a>
+                        ${langSwitch()}
+                    </div>
+                </nav>
+            </div>`;
 
         const footerMount = $("[data-shell='footer']");
         if (footerMount) footerMount.outerHTML = `
@@ -1347,6 +1423,35 @@
         });
     }
 
+    function initContact() {
+        document.addEventListener("submit", async (e) => {
+            const form = e.target.closest("form[data-contact-form]");
+            if (!form) return;
+            e.preventDefault();
+            if (form.dataset.busy) return;
+            form.dataset.busy = "1";
+            const c = (DATA.studio && DATA.studio.contact) || {};
+            const btn = form.querySelector("button");
+            if (btn) btn.disabled = true;
+            try {
+                const r = await fetch(form.getAttribute("action") || "contact.php", { method: "POST", body: new FormData(form) });
+                const j = await r.json().catch(() => ({}));
+                if (r.ok && j.ok) {
+                    const msg = j.message || c.successMessage || "Danke für deine Nachricht! 🧡";
+                    form.innerHTML = `<div class="text-center py-8"><div class="text-5xl mb-4">🧡</div>
+                        <p class="text-[color:var(--accent)] font-semibold text-lg">${esc(msg)}</p></div>`;
+                } else {
+                    flashFormError(form, j.error || "Hat nicht geklappt. Bitte später erneut.");
+                    if (btn) btn.disabled = false;
+                }
+            } catch {
+                flashFormError(form, "Verbindung fehlgeschlagen. Bitte später erneut.");
+                if (btn) btn.disabled = false;
+            }
+            delete form.dataset.busy;
+        });
+    }
+
     function flashFormError(form, msg) {
         let n = form.querySelector("[data-nl-err]");
         if (!n) { n = document.createElement("div"); n.dataset.nlErr = "1"; n.className = "w-full text-center text-red-400 text-sm mt-2 basis-full"; form.appendChild(n); }
@@ -1373,11 +1478,13 @@
             devlog: renderDevlog,
             legal: renderLegal,
             presskit: renderPressKit,
+            contact: renderContact,
         }[page] || (() => {}))();
         // Studio-Daten für den Footer sicherstellen (auch ohne Home)
         if (!DATA.studio) await loadData("studio");
         fillStudioFooter();
         initNewsletter();
+        initContact();
         injectOrgJsonLd();
         initCookieBanner();
     }

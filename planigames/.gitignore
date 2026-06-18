@@ -3,6 +3,7 @@ data/auth.php
 data/users.json
 data/invites.json
 data/subscribers.json
+data/contacts.json
 data/mail.json
 data/secret.php
 data/*.tmp

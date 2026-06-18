@@ -11,6 +11,17 @@
  *          date, list (mit "fields" ODER "field"), blocks (mit "types").
  */
 
+// Spiele-Auswahl (Slug => Titel) dynamisch aus games.json, damit das
+// Zuordnen von Patchnotes per Dropdown funktioniert statt freiem Slug-Tippen.
+$pg_game_options = ['' => '— Allgemeine News (kein Spiel) —'];
+$pg_games_file = __DIR__ . '/../data/games.json';
+if (is_file($pg_games_file)) {
+  $pg_games = json_decode((string) file_get_contents($pg_games_file), true);
+  foreach (($pg_games['games'] ?? []) as $pg_g) {
+    if (!empty($pg_g['slug'])) $pg_game_options[$pg_g['slug']] = $pg_g['title'] ?? $pg_g['slug'];
+  }
+}
+
 return [
 
   // ================= STUDIO / STARTSEITE =================
@@ -84,6 +95,14 @@ return [
         ['name'=>'message','label'=>'Hinweistext','widget'=>'text','default'=>'Wir nutzen nur, was die Seite zum Laufen braucht. Für eingebettete YouTube-Trailer brauchen wir deine Zustimmung – diese laden externe Inhalte von Google.'],
         ['name'=>'acceptLabel','label'=>'Button „Akzeptieren"','widget'=>'string','default'=>'Alle akzeptieren'],
         ['name'=>'declineLabel','label'=>'Button „Ablehnen"','widget'=>'string','default'=>'Nur Notwendige'],
+      ]],
+      ['name'=>'contact','label'=>'Kontaktformular','widget'=>'object','hint'=>'Eigene Seite (kontakt.html). Nachrichten landen im Admin unter „Kontakt" und werden dir per E-Mail geschickt.','fields'=>[
+        ['name'=>'enabled','label'=>'Kontaktformular aktiv','widget'=>'boolean','default'=>true],
+        ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Sag Hallo 👋'],
+        ['name'=>'intro','label'=>'Einleitungstext','widget'=>'text','default'=>'Fragen, Feedback, Presse oder einfach nur Hallo sagen? Schreib uns – wir melden uns so schnell wie möglich.'],
+        ['name'=>'buttonLabel','label'=>'Button-Text','widget'=>'string','default'=>'Nachricht senden'],
+        ['name'=>'successMessage','label'=>'Danke-Nachricht','widget'=>'string','default'=>'Danke für deine Nachricht! Wir melden uns bald. 🧡'],
+        ['name'=>'notifyEmail','label'=>'Benachrichtigung an (E-Mail)','widget'=>'string','hint'=>'Wohin neue Anfragen geschickt werden. Leer = Studio-Kontakt-E-Mail.'],
       ]],
       ['name'=>'footerNote','label'=>'Footer – Kurzbeschreibung','widget'=>'text'],
       ['name'=>'email','label'=>'Kontakt-E-Mail','widget'=>'string'],
@@ -222,7 +241,7 @@ return [
         ['name'=>'title','label'=>'Titel','widget'=>'string'],
         ['name'=>'slug','label'=>'Slug (URL)','widget'=>'string','slug'=>true,'hint'=>'Leer = automatisch aus Titel.'],
         ['name'=>'date','label'=>'Datum','widget'=>'date'],
-        ['name'=>'game','label'=>'Spiel (Slug)','widget'=>'string','hint'=>'Slug des Spiels, z. B. wobbly-wizards. Leer = allgemeine News.'],
+        ['name'=>'game','label'=>'Spiel','widget'=>'select','options'=>$pg_game_options,'hint'=>'Ordnet den Beitrag einem Spiel zu – erscheint dann unten auf dessen Spielseite.'],
         ['name'=>'version','label'=>'Version','widget'=>'string','hint'=>'z. B. 0.3.0 – erscheint als Badge.'],
         ['name'=>'tags','label'=>'Tags','widget'=>'list','field'=>['name'=>'tag','label'=>'Tag','widget'=>'string']],
         ['name'=>'cover','label'=>'Titelbild','widget'=>'image','hint'=>'Querformat 16:9, ca. 1600×900 px.'],

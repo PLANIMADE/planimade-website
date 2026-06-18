@@ -248,6 +248,66 @@ if (($_GET['view'] ?? '') === 'subscribers') {
   exit;
 }
 
+/* ---- Kontakt-Anfragen: einzeln löschen / alle leeren ---- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['delete_contact']) || isset($_POST['clear_contacts']))) {
+  pg_csrf_check();
+  if (!pg_can('contacts')) { http_response_code(403); exit('Keine Berechtigung.'); }
+  $list = pg_load_json(PG_DATA_DIR . '/contacts.json');
+  if (isset($_POST['clear_contacts'])) {
+    $list = [];
+  } else {
+    $i = (int) ($_POST['idx'] ?? -1);
+    if (isset($list[$i])) array_splice($list, $i, 1);
+  }
+  pg_save_json(PG_DATA_DIR . '/contacts.json', array_values($list));
+  header('Location: index.php?view=contacts' . (isset($_POST['clear_contacts']) ? '&cleared=1' : '&deleted=1')); exit;
+}
+
+/* ---- Kontakt-Anfragen: Ansicht ---- */
+if (($_GET['view'] ?? '') === 'contacts') {
+  if (!pg_can('contacts')) { header('Location: index.php'); exit; }
+  $list = pg_load_json(PG_DATA_DIR . '/contacts.json');
+  // Newest first, but keep original index for delete
+  $indexed = [];
+  foreach ($list as $i => $r) $indexed[] = [$i, $r];
+  $indexed = array_reverse($indexed);
+  pg_view_head('Kontakt-Anfragen');
+  pg_view_topbar($SCHEMA, null);
+  echo '<div class="editor wide">';
+  if (isset($_GET['cleared'])) echo '<div class="flash ok">✓ Alle Anfragen gelöscht.</div>';
+  if (isset($_GET['deleted'])) echo '<div class="flash ok">✓ Anfrage gelöscht.</div>';
+  echo '<div class="editor-head"><div><h1>✉️ Kontakt-Anfragen</h1>'
+     . '<p class="muted">' . count($list) . ' Nachricht' . (count($list) === 1 ? '' : 'en') . ' über das Kontaktformular.</p></div></div>';
+  if (!$indexed) {
+    echo '<div class="mailnote">Noch keine Anfragen. Sie erscheinen hier, sobald jemand das Kontaktformular auf <code>kontakt.html</code> nutzt.</div>';
+  } else {
+    echo '<div class="contacts">';
+    foreach ($indexed as [$i, $r]) {
+      $subj = trim($r['subject'] ?? '');
+      echo '<div class="contact-card">';
+      echo '<div class="contact-head"><div><span class="contact-name">' . pg_h($r['name'] ?? '') . '</span> '
+         . '<a class="contact-mail" href="mailto:' . pg_h($r['email'] ?? '') . '">' . pg_h($r['email'] ?? '') . '</a></div>'
+         . '<span class="contact-date">' . pg_h(substr($r['date'] ?? '', 0, 16)) . '</span></div>';
+      if ($subj !== '') echo '<div class="contact-subj">' . pg_h($subj) . '</div>';
+      echo '<div class="contact-msg">' . nl2br(pg_h($r['message'] ?? '')) . '</div>';
+      echo '<div class="contact-actions">'
+         . '<a class="btn-add" href="mailto:' . pg_h($r['email'] ?? '') . '?subject=' . rawurlencode('Re: ' . ($subj ?: 'Deine Anfrage')) . '">↩︎ Antworten</a>'
+         . '<form method="post" onsubmit="return confirm(\'Diese Anfrage löschen?\')" style="margin:0">'
+         . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+         . '<input type="hidden" name="idx" value="' . $i . '">'
+         . '<button class="btn-danger sm" name="delete_contact" value="1">Löschen</button></form>'
+         . '</div></div>';
+    }
+    echo '</div>';
+    echo '<form method="post" class="clear-form" onsubmit="return confirm(\'Wirklich ALLE Anfragen löschen?\')">'
+       . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+       . '<button class="btn-danger" name="clear_contacts" value="1">Alle Anfragen löschen</button></form>';
+  }
+  echo '</div>';
+  pg_view_foot();
+  exit;
+}
+
 /* ---- Medien-Datei löschen ---- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_media'])) {
   pg_csrf_check();
@@ -548,9 +608,15 @@ if (pg_can('subscribers')) {
 echo '<a class="card" href="index.php?view=media">'
    . '<span class="card-ico">🖼️</span><span class="card-title">Medien-Bibliothek</span>'
    . '<span class="card-desc">Bilder &amp; Videos hochladen, Pfade kopieren, aufräumen.</span></a>';
+if (pg_can('contacts')) {
+  $cCount = count(pg_load_json(PG_DATA_DIR . '/contacts.json'));
+  echo '<a class="card" href="index.php?view=contacts">'
+     . '<span class="card-ico">✉️</span><span class="card-title">Kontakt-Anfragen</span>'
+     . '<span class="card-desc">' . $cCount . ' Nachricht' . ($cCount === 1 ? '' : 'en') . ' über das Kontaktformular.</span></a>';
+}
 if (pg_can('mail')) {
   echo '<a class="card" href="mail.php">'
-     . '<span class="card-ico">✉️</span><span class="card-title">E-Mail-Postfach</span>'
+     . '<span class="card-ico">📮</span><span class="card-title">E-Mail-Postfach</span>'
      . '<span class="card-desc">Mails im PLANIGAMES-Design senden &amp; empfangen.</span></a>';
 }
 if (pg_is_owner()) {
