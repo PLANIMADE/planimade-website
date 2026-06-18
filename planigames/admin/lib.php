@@ -321,6 +321,32 @@ function pg_mail_build_newsletter($message, $unsubLink){
   return pg_mail_shell($body, mb_substr($message, 0, 90));
 }
 
+/* Einen Devlog-Beitrag als gebrandeten Newsletter an alle Abonnenten senden.
+   Gibt die Anzahl zugestellter Mails zurück. */
+function pg_newsletter_send_post($post){
+  $subs = pg_load_json(PG_DATA_DIR . '/subscribers.json');
+  $emails = array_values(array_filter(array_map(fn($r) => trim($r['email'] ?? ''), is_array($subs) ? $subs : []),
+            fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL)));
+  if (!$emails) return 0;
+  $title   = trim($post['title'] ?? 'Neuer Beitrag');
+  $excerpt = trim($post['excerpt'] ?? '');
+  $url     = pg_site_url() . '/devlog.php?slug=' . rawurlencode($post['slug'] ?? '');
+  @set_time_limit(120);
+  $sent = 0;
+  foreach ($emails as $to) {
+    $unsub = pg_unsub_link($to);
+    $body = '<h1 style="margin:14px 0 0;font-size:24px;color:#fff">' . pg_h($title) . '</h1>'
+      . ($excerpt !== '' ? '<p style="color:#d7d7df;line-height:1.7;font-size:15px;margin:14px 0 0">' . pg_h($excerpt) . '</p>' : '')
+      . '<div style="padding:22px 0 4px">' . pg_mail_button('Zum Beitrag lesen →', $url) . '</div>'
+      . '<p style="color:#6f6f7a;font-size:12px;margin:18px 0 0">Du erhältst diese Mail, weil du den PLANIGAMES-Newsletter abonniert hast. '
+      . '<a href="' . pg_h($unsub) . '" style="color:#ff8a2b">Abmelden</a></p>';
+    $html = pg_mail_shell($body, $title);
+    if (pg_send_mail($to, $title, $html)) $sent++;
+    usleep(120000);
+  }
+  return $sent;
+}
+
 function pg_mail_config_save(array $c){
   // Bestehende Passwörter behalten, wenn das Formular sie leer lässt
   $old = pg_mail_config();

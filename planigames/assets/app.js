@@ -45,6 +45,14 @@
         } catch { return iso; }
     }
 
+    // Ist ein Devlog-Beitrag öffentlich sichtbar? (kein Entwurf, geplanter Termin erreicht)
+    function isPublished(p) {
+        if (!p) return false;
+        if (p.draft === true || p.draft === "true" || p.draft === 1 || p.draft === "1") return false;
+        if (p.publishAt) { const t = Date.parse(p.publishAt); if (!isNaN(t) && t > Date.now()) return false; }
+        return true;
+    }
+
     const qs = new URLSearchParams(location.search);
 
     /* =========================================================
@@ -457,7 +465,7 @@
         const s = DATA.studio || {};
         const games = (DATA.games && DATA.games.games) || [];
         const posts = ((DATA.patchnotes && DATA.patchnotes.posts) || [])
-            .slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+            .filter(isPublished).slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
         // Texte aus dem CMS einsetzen
         setText("[data-studio='name']", s.name);
@@ -685,7 +693,7 @@
                 return (p.tags || []).some(tg => { const x = String(tg).toLowerCase(); return x === gslug || x === gtitle; });
             };
             const posts = ((DATA.patchnotes && DATA.patchnotes.posts) || [])
-                .filter(belongs)
+                .filter(p => isPublished(p) && belongs(p))
                 .sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 3);
             if (posts.length) {
                 pnMount.innerHTML = posts.map(p => `
@@ -1034,7 +1042,7 @@
         await loadData("games", "patchnotes");
         const games = (DATA.games && DATA.games.games) || [];
         const posts = ((DATA.patchnotes && DATA.patchnotes.posts) || [])
-            .slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+            .filter(isPublished).slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
         const slug = qs.get("slug");
 
         if (slug) return renderDevlogSingle(posts.find(p => p.slug === slug), games);

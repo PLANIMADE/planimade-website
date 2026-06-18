@@ -133,8 +133,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
   if (!pg_can($key)) { http_response_code(403); exit('Keine Berechtigung für diesen Bereich.'); }
   $lang = ($_POST['lang'] ?? 'de') === 'en' ? 'en' : 'de';
   $data = pg_normalize_fields($SCHEMA[$key]['fields'], $_POST['d'] ?? []);
+
+  // Auto-Newsletter: veröffentlichte Patchnotes mit "notify" einmalig versenden (nur DE-Basis)
+  $sentCount = 0;
+  if ($key === 'patchnotes' && $lang === 'de' && isset($data['posts']) && is_array($data['posts'])) {
+    $old = pg_load_json($SCHEMA[$key]['file']);
+    $oldNotified = [];
+    foreach (($old['posts'] ?? []) as $op) if (!empty($op['slug'])) $oldNotified[$op['slug']] = $op['notified'] ?? '';
+    foreach ($data['posts'] as &$post) {
+      $slug = $post['slug'] ?? '';
+      $already = $oldNotified[$slug] ?? '';
+      $post['notified'] = $already;   // bisherigen Status erhalten (nicht im Schema -> sonst verloren)
+      $isPublic = empty($post['draft']) && (empty($post['publishAt']) || strtotime($post['publishAt']) <= time());
+      if (!empty($post['notify']) && $isPublic && $already === '') {
+        $n = pg_newsletter_send_post($post);
+        if ($n > 0) { $post['notified'] = date('c'); $sentCount += $n; }
+      }
+    }
+    unset($post);
+  }
+
   $ok = pg_save_json(pg_lang_file($SCHEMA[$key]['file'], $lang), $data);
-  header('Location: index.php?collection=' . urlencode($key) . '&lang=' . $lang . ($ok ? '&saved=1' : '&error=1'));
+  $extra = $sentCount > 0 ? '&sent=' . $sentCount : '';
+  header('Location: index.php?collection=' . urlencode($key) . '&lang=' . $lang . ($ok ? '&saved=1' : '&error=1') . $extra);
   exit;
 }
 
@@ -543,6 +564,7 @@ if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
   pg_view_head($coll['label']);
   pg_view_topbar($SCHEMA, $key);
   if (isset($_GET['saved']))      echo '<div class="flash ok">✓ Gespeichert (' . strtoupper($lang) . '). Änderungen sind live auf der Website.</div>';
+  if (isset($_GET['sent']))       echo '<div class="flash ok">📣 Newsletter verschickt: ' . (int)$_GET['sent'] . ' Abonnent' . ((int)$_GET['sent'] === 1 ? '' : 'en') . ' benachrichtigt.</div>';
   if (isset($_GET['translated'])) echo '<div class="flash ok">🌐 Automatisch übersetzt. Bitte gegenlesen und ggf. anpassen, dann speichern reicht – ist bereits gesichert.</div>';
   if (isset($_GET['error']))      echo '<div class="flash err">Konnte nicht speichern/übersetzen – Schreibrechte am Ordner data/ bzw. Internet-Zugriff prüfen.</div>';
 
