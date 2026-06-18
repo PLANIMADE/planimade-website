@@ -148,6 +148,8 @@ body.menu-open { overflow: hidden; }
 body.fx-off .glow-blob, body.fx-off #fx-layer { display: none; }
 /* "Nur Glow" blendet die Partikel aus, behält aber die Glow-Blobs */
 body.fx-glow #fx-layer { display: none; }
+/* "Nur Partikel" blendet die Glow-Blobs aus, behält aber die Partikel */
+body.fx-particles-only .glow-blob { display: none; }
 
 /* ---------- Header ---------- */
 #site-header { transition: all .5s cubic-bezier(0.16,1,0.3,1); }

@@ -48,7 +48,7 @@ return [
       ]],
       ['name'=>'background','label'=>'Hintergrund & Atmosphäre','widget'=>'object','hint'=>'Steuert die Animation im Seitenhintergrund.','fields'=>[
         ['name'=>'effect','label'=>'Effekt','widget'=>'select','default'=>'particles','options'=>[
-          'particles'=>'Partikel + Glow (Standard)','glow'=>'Nur Glow-Lichter','off'=>'Aus / minimal',
+          'particles'=>'Partikel + Glow (Standard)','particles_only'=>'Nur Partikel','glow'=>'Nur Glow-Lichter','off'=>'Aus / minimal',
         ]],
         ['name'=>'density','label'=>'Partikel-Menge','widget'=>'select','default'=>'med','options'=>[
           'low'=>'Wenig','med'=>'Mittel','high'=>'Viel',

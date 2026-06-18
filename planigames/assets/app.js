@@ -167,7 +167,8 @@
         const layer = $("#fx-layer");
         if (!layer) return;
         const cfg = (DATA.studio && DATA.studio.background) || {};
-        if ((cfg.effect || "particles") !== "particles") { layer.innerHTML = ""; return; }
+        const eff = cfg.effect || "particles";
+        if (eff !== "particles" && eff !== "particles_only") { layer.innerHTML = ""; return; }  // nur Glow / aus -> keine Partikel
 
         const color = (cfg.color || "#ff7d1a");
         // Anzahl je nach Dichte – an die Fensterbreite gekoppelt (Handy = weniger)
@@ -1359,7 +1360,8 @@
         document.documentElement.lang = LANG;
         await loadData("studio");   // früh laden (Hintergrund-Effekt braucht die Config)
         const fx = (DATA.studio && DATA.studio.background && DATA.studio.background.effect) || "particles";
-        document.body.classList.add("fx-" + (["particles", "glow", "off"].includes(fx) ? fx : "particles"));
+        const fxClass = { particles: "fx-particles", particles_only: "fx-particles-only", glow: "fx-glow", off: "fx-off" }[fx] || "fx-particles";
+        document.body.classList.add(fxClass);
         injectChrome();
         applyI18n();          // statische [data-i18n]-Texte übersetzen
         initShell();

@@ -109,7 +109,7 @@ button{font:inherit;cursor:pointer}
 .item{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
 .item.block{border-left:3px solid var(--accent)}
 .item-bar{display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;background:var(--panel2)}
-.grip{color:var(--muted);cursor:grab;user-select:none;padding:0 .15rem;font-size:1.05rem;line-height:1}
+.grip{color:var(--muted);cursor:grab;user-select:none;padding:0 .15rem;font-size:1.05rem;line-height:1;touch-action:none}
 .grip:hover{color:var(--ink)}
 .grip:active{cursor:grabbing}
 /* Drag & Drop-Zustände */
