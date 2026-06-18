@@ -59,6 +59,48 @@
     if (t.closest("[data-fold]")) { item.classList.toggle("folded"); e.preventDefault(); return; }
   });
 
+  // ---- Drag & Drop: Einträge/Blöcke per Griff (⠿) sortieren ----
+  let dragItem = null;
+  // Nur ziehbar machen, solange am Griff angefasst wird (sonst stören Textfelder)
+  document.addEventListener("mousedown", (e) => {
+    const grip = e.target.closest("[data-grip]");
+    if (!grip) return;
+    const item = grip.closest("[data-item]");
+    if (item) item.setAttribute("draggable", "true");
+  });
+  document.addEventListener("mouseup", () => {
+    if (dragItem) return;
+    document.querySelectorAll('[data-item][draggable="true"]').forEach((i) => i.removeAttribute("draggable"));
+  });
+  document.addEventListener("dragstart", (e) => {
+    const item = e.target.closest("[data-item]");
+    if (!item || item.getAttribute("draggable") !== "true") return;
+    dragItem = item;
+    item.classList.add("dragging");
+    document.body.classList.add("is-dragging");
+    e.dataTransfer.effectAllowed = "move";
+    try { e.dataTransfer.setData("text/plain", "drag"); } catch (err) {}
+  });
+  document.addEventListener("dragover", (e) => {
+    if (!dragItem) return;
+    const container = dragItem.parentNode; // [data-items]
+    if (!container) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    const over = e.target.closest("[data-item]");
+    // nur innerhalb desselben Containers sortieren (verschachtelte Listen bleiben getrennt)
+    if (!over || over === dragItem || over.parentNode !== container) return;
+    const rect = over.getBoundingClientRect();
+    const after = (e.clientY - rect.top) > rect.height / 2;
+    container.insertBefore(dragItem, after ? over.nextSibling : over);
+  });
+  document.addEventListener("drop", (e) => { if (dragItem) e.preventDefault(); });
+  document.addEventListener("dragend", () => {
+    if (dragItem) { dragItem.classList.remove("dragging"); dragItem.removeAttribute("draggable"); }
+    document.body.classList.remove("is-dragging");
+    dragItem = null;
+  });
+
   // ---- Summary live aktualisieren ----
   document.addEventListener("input", (e) => {
     const item = e.target.closest("[data-item]");
