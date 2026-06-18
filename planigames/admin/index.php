@@ -151,6 +151,52 @@ if ($action === 'translate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
   exit;
 }
 
+/* ---- Backup: Export (alle Inhalte als eine Datei) ---- */
+if ($action === 'backup_export') {
+  if (!pg_is_owner()) { http_response_code(403); exit('Keine Berechtigung.'); }
+  $bundle = ['_meta' => [
+    'app' => 'PLANIGAMES', 'type' => 'backup', 'version' => 1,
+    'created' => date('c'),
+    'host' => preg_replace('/[^a-z0-9.\-:]/i', '', $_SERVER['HTTP_HOST'] ?? ''),
+  ], 'files' => []];
+  foreach (pg_backup_filenames() as $f) {
+    $bundle['files'][$f] = file_get_contents(PG_DATA_DIR . '/' . $f);
+  }
+  $json = json_encode($bundle, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+  $fname = 'planigames-backup-' . date('Y-m-d-Hi') . '.json';
+  header('Content-Type: application/json; charset=utf-8');
+  header('Content-Disposition: attachment; filename="' . $fname . '"');
+  header('Content-Length: ' . strlen($json));
+  echo $json; exit;
+}
+
+/* ---- Backup: Import (Inhalte aus einer Backup-Datei wiederherstellen) ---- */
+if ($action === 'backup_import' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+  if (!pg_is_owner()) { http_response_code(403); exit('Keine Berechtigung.'); }
+  pg_csrf_check();
+  $msg = null;
+  if (empty($_FILES['backup']['tmp_name']) || !is_uploaded_file($_FILES['backup']['tmp_name'])) {
+    $msg = ['err', 'Keine Datei empfangen. Bitte eine Backup-Datei auswählen.'];
+  } else {
+    $data = json_decode((string) file_get_contents($_FILES['backup']['tmp_name']), true);
+    if (!is_array($data) || (($data['_meta']['app'] ?? '') !== 'PLANIGAMES') || !isset($data['files']) || !is_array($data['files'])) {
+      $msg = ['err', 'Das ist keine gültige PLANIGAMES-Backup-Datei.'];
+    } else {
+      $n = 0;
+      foreach ($data['files'] as $name => $content) {
+        $base = basename((string) $name);
+        if (!pg_backup_allowed($base) || !is_string($content)) continue;
+        if (@file_put_contents(PG_DATA_DIR . '/' . $base, $content) !== false) $n++;
+      }
+      $msg = $n > 0
+        ? ['ok', '✓ Backup eingespielt: ' . $n . ' Datei' . ($n === 1 ? '' : 'en') . ' wiederhergestellt.']
+        : ['err', 'Die Datei enthielt keine gültigen Inhalte.'];
+    }
+  }
+  $_SESSION['pg_backup_msg'] = $msg;
+  header('Location: index.php?view=backup'); exit;
+}
+
 /* ---- Newsletter-Abos: CSV-Export ---- */
 if ($action === 'subscribers_csv') {
   if (!pg_can('subscribers')) { http_response_code(403); exit('Keine Berechtigung.'); }
@@ -267,6 +313,40 @@ if (($_GET['view'] ?? '') === 'media') {
     echo '</div>';
   }
   echo '<div class="media-copied" id="media-copied">Pfad kopiert ✓</div>';
+  echo '</div>';
+  pg_view_foot();
+  exit;
+}
+
+/* ---- Backup & Wiederherstellung (nur Owner) ---- */
+if (($_GET['view'] ?? '') === 'backup') {
+  if (!pg_is_owner()) { header('Location: index.php'); exit; }
+  $files = pg_backup_filenames();
+  pg_view_head('Backup');
+  pg_view_topbar($SCHEMA, null);
+  echo '<div class="editor">';
+  if (!empty($_SESSION['pg_backup_msg'])) {
+    [$type, $text] = $_SESSION['pg_backup_msg']; unset($_SESSION['pg_backup_msg']);
+    echo '<div class="flash ' . ($type === 'ok' ? 'ok' : 'err') . '">' . pg_h($text) . '</div>';
+  }
+  echo '<div class="editor-head"><div><h1>💾 Backup &amp; Wiederherstellung</h1>'
+     . '<p class="muted">Sichere alle deine Inhalte &amp; Einstellungen als eine Datei – und spiele sie bei Bedarf wieder ein.</p></div>'
+     . '<a class="btn-primary" href="index.php?action=backup_export">📥 Backup exportieren</a></div>';
+  echo '<div class="mailnote">Die Backup-Datei enthält <b>' . count($files) . ' Datei' . (count($files) === 1 ? '' : 'en') . '</b>: '
+     . 'alle Inhalte (Studio, Spiele, Devlog, Team, Rechtliches), die Newsletter-Abos sowie deine Login- und Mail-Einstellungen.<br>'
+     . '<b>Tipp:</b> Lade vor jedem Hochladen zu All-Inkl einmal ein Backup herunter – dann bist du komplett abgesichert. '
+     . 'Bewahre die Datei sicher auf, sie enthält Zugangsdaten.</div>';
+  echo '<h2 class="sub-h" style="border-top:1px solid var(--line);padding-top:1.2rem;margin-top:1.6rem">Wiederherstellen</h2>';
+  echo '<p class="hint" style="margin:0 0 .8rem">Lädt eine zuvor exportierte Backup-Datei hoch und <b>überschreibt</b> die aktuellen Inhalte mit dem Stand aus der Datei.</p>';
+  echo '<form method="post" action="index.php?action=backup_import" enctype="multipart/form-data" '
+     . 'onsubmit="return confirm(\'Backup wirklich einspielen? Die aktuellen Inhalte werden mit dem Stand aus der Datei überschrieben.\')">';
+  echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
+  echo '<div class="media-upload"><label class="btn-up">Datei wählen'
+     . '<input type="file" name="backup" accept="application/json,.json" required '
+     . 'onchange="this.closest(\'form\').querySelector(\'[data-impname]\').textContent=(this.files[0]||{}).name||\'Keine Datei gewählt\'"></label>'
+     . '<span class="muted" data-impname>Keine Datei gewählt</span></div>';
+  echo '<div class="editor-foot"><button class="btn-danger" type="submit">📤 Backup einspielen</button></div>';
+  echo '</form>';
   echo '</div>';
   pg_view_foot();
   exit;
@@ -477,6 +557,9 @@ if (pg_is_owner()) {
   echo '<a class="card" href="index.php?view=users">'
      . '<span class="card-ico">🔑</span><span class="card-title">Zugänge &amp; Rollen</span>'
      . '<span class="card-desc">Login-Zugänge per E-Mail einladen &amp; Rechte vergeben.</span></a>';
+  echo '<a class="card" href="index.php?view=backup">'
+     . '<span class="card-ico">💾</span><span class="card-title">Backup &amp; Wiederherstellung</span>'
+     . '<span class="card-desc">Alle Inhalte als Datei sichern &amp; wieder einspielen.</span></a>';
 }
 echo '</div>';
 echo '<div class="dash-links"><a href="../index.html" target="_blank">↗ Website ansehen</a> '

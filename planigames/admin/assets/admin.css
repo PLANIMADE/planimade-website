@@ -16,7 +16,7 @@ a{color:inherit}
 
 /* ---- Buttons ---- */
 button{font:inherit;cursor:pointer}
-.btn-primary{background:linear-gradient(110deg,var(--accent),#ff9d4d);color:#1a0d00;border:0;
+.btn-primary{background:linear-gradient(110deg,var(--accent),#ff9d4d);color:#1a0d00;border:0;text-decoration:none;display:inline-block;
   padding:.7rem 1.4rem;border-radius:999px;font-weight:700;box-shadow:0 8px 30px -10px var(--accent)}
 .btn-primary:hover{filter:brightness(1.06)}
 .btn-add{background:rgba(255,125,26,.12);color:var(--accent);border:1px solid rgba(255,125,26,.35);

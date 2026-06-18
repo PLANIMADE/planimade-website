@@ -85,6 +85,25 @@ function pg_can($area){
   return in_array($area, pg_user_areas($u), true);
 }
 
+/* ---------------- Backup (Export/Import aller Inhalte) ---------------- */
+// Alle sicherungswürdigen Dateien im data-Ordner (Inhalte + Einstellungen)
+function pg_backup_filenames(){
+  $out = [];
+  if (is_dir(PG_DATA_DIR)) {
+    foreach (scandir(PG_DATA_DIR) as $f) {
+      if ($f === '.' || $f === '..') continue;
+      if (pg_backup_allowed($f) && is_file(PG_DATA_DIR . '/' . $f)) $out[] = $f;
+    }
+  }
+  sort($out);
+  return $out;
+}
+// Nur erlaubte Dateinamen sichern/wiederherstellen (kein Pfad-Traversal)
+function pg_backup_allowed($name){
+  if ($name !== basename($name)) return false;
+  return (bool) preg_match('/^[A-Za-z0-9_.\-]+\.json$/', $name) || $name === 'secret.php';
+}
+
 /* ---------------- Einladungen ---------------- */
 function pg_invites_load(){ $i = pg_load_json(PG_INVITES_FILE); return is_array($i) ? $i : []; }
 function pg_invites_save($i){ return pg_save_json(PG_INVITES_FILE, array_values($i)); }
@@ -479,10 +498,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=9"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=10"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=9"></script></body></html>';
+  echo '<script src="assets/admin.js?v=10"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   echo '<header class="topbar"><a class="tb-brand" href="index.php"><span class="diamond"></span> PLANI<span class="grad">GAMES</span></a>';
@@ -496,6 +515,7 @@ function pg_view_topbar($SCHEMA, $active){
   if (pg_can('subscribers')) echo '<a href="index.php?view=subscribers">Abos</a>';
   if (pg_can('mail')) echo '<a' . ($active === 'mail' ? ' class="on"' : '') . ' href="mail.php">✉ Mails</a>';
   if (pg_is_owner()) echo '<a href="index.php?view=users">Zugänge</a>';
+  if (pg_is_owner()) echo '<a href="index.php?view=backup">Backup</a>';
   echo '</nav>';
   echo '<span class="tb-right">';
   if (pg_logged_in()) echo '<span class="tb-user" title="' . pg_h(pg_current_email()) . '">' . pg_h(pg_current_email()) . '</span>';
