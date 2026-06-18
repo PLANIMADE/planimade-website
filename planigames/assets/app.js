@@ -644,7 +644,22 @@
         }
 
         initTilt(root); initMagnetic(); observeReveals(root);
-        initLightbox(); initFaq(root); initCountdowns(root); initCounters(root);
+        initLightbox(); initFaq(root); initCountdowns(root); initCounters(root); initRoadmapBars(root);
+    }
+
+    // Roadmap-Fortschrittsbalken auf die Zielbreite animieren, sobald sichtbar
+    function initRoadmapBars(root = document) {
+        const bars = $$(".roadmap-bar", root);
+        if (!bars.length) return;
+        if (!("IntersectionObserver" in window)) { bars.forEach(b => b.style.width = b.style.getPropertyValue("--target")); return; }
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach(en => {
+                if (!en.isIntersecting) return;
+                io.unobserve(en.target);
+                requestAnimationFrame(() => en.target.style.width = en.target.style.getPropertyValue("--target") || "0%");
+            });
+        }, { threshold: 0.4 });
+        bars.forEach(b => io.observe(b));
     }
 
     // Mapped jeden Block-Typ auf HTML. Neue Typen hier + in admin/schema.php ergänzen.
@@ -786,7 +801,8 @@
     }
 
     function blockRoadmap(b) {
-        const items = (b.items || []).map((m, i) => {
+        const all = b.items || [];
+        const items = all.map((m, i) => {
             const done = m.status === "done", active = m.status === "active";
             return `<div class="reveal relative pl-10 pb-10 last:pb-0" style="transition-delay:${i * 80}ms">
                 <div class="absolute left-0 top-1 w-5 h-5 rounded-full border-2 ${done ? "bg-[color:var(--accent)] border-[color:var(--accent)]" : active ? "border-[color:var(--accent)] bg-transparent animate-pulse" : "border-white/25 bg-transparent"}"></div>
@@ -796,8 +812,25 @@
                 ${m.text ? `<p class="text-sm text-zinc-400 mt-1 max-w-xl">${esc(m.text)}</p>` : ""}
             </div>`;
         }).join("");
+        // Live-Fortschritt: erledigte zählen voll, "in Arbeit" zur Hälfte
+        let progress = 0;
+        if (all.length) {
+            const score = all.reduce((s, m) => s + (m.status === "done" ? 1 : m.status === "active" ? 0.5 : 0), 0);
+            progress = Math.round((score / all.length) * 100);
+        }
+        const bar = all.length ? `
+            <div class="reveal max-w-2xl mb-10">
+                <div class="flex items-end justify-between mb-2">
+                    <span class="font-mono text-[11px] uppercase tracking-widest text-zinc-500">${LANG === "en" ? "Development progress" : "Entwicklungs-Fortschritt"}</span>
+                    <span class="font-display text-2xl font-extrabold text-gradient tabular-nums" data-count>${progress}%</span>
+                </div>
+                <div class="h-2.5 rounded-full bg-white/8 overflow-hidden">
+                    <div class="roadmap-bar h-full rounded-full" style="width:0%;--target:${progress}%;background:linear-gradient(90deg,var(--accent-2),var(--accent))"></div>
+                </div>
+            </div>` : "";
         return sec(`
-            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-12 reveal">${esc(b.heading)}</h2>` : ""}
+            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-8 reveal">${esc(b.heading)}</h2>` : ""}
+            ${bar}
             <div class="max-w-2xl">${items}</div>`, "py-20 md:py-28");
     }
 

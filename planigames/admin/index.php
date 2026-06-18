@@ -202,6 +202,76 @@ if (($_GET['view'] ?? '') === 'subscribers') {
   exit;
 }
 
+/* ---- Medien-Datei löschen ---- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_media'])) {
+  pg_csrf_check();
+  $name = basename($_POST['file'] ?? '');
+  $path = PG_MEDIA_DIR . '/' . $name;
+  // Geschützte Dateien (z. B. das OG-Bild) nicht löschbar
+  $protected = ['og.jpg'];
+  if ($name !== '' && !in_array($name, $protected, true) && is_file($path)) @unlink($path);
+  header('Location: index.php?view=media&deleted=1'); exit;
+}
+
+/* ---- Medien-Bibliothek (alle eingeloggten) ---- */
+if (($_GET['view'] ?? '') === 'media') {
+  if (!pg_logged_in()) { header('Location: index.php'); exit; }
+  $files = [];
+  if (is_dir(PG_MEDIA_DIR)) {
+    foreach (scandir(PG_MEDIA_DIR) as $f) {
+      if ($f === '.' || $f === '..' || $f[0] === '.') continue;
+      $p = PG_MEDIA_DIR . '/' . $f;
+      if (!is_file($p)) continue;
+      $ext = strtolower(pathinfo($f, PATHINFO_EXTENSION));
+      if (!in_array($ext, PG_UPLOAD_EXT, true)) continue;
+      $files[] = ['name' => $f, 'ext' => $ext, 'size' => filesize($p), 'time' => filemtime($p)];
+    }
+  }
+  usort($files, fn($a, $b) => $b['time'] <=> $a['time']);
+  $isImg = fn($e) => in_array($e, ['jpg','jpeg','png','webp','gif','svg','avif'], true);
+  $isVid = fn($e) => in_array($e, ['mp4','webm','ogg','mov'], true);
+  $fmtSize = function($b){ if ($b < 1024) return $b . ' B'; if ($b < 1048576) return round($b/1024) . ' KB'; return round($b/1048576, 1) . ' MB'; };
+
+  pg_view_head('Medien');
+  pg_view_topbar($SCHEMA, null);
+  echo '<div class="editor">';
+  if (isset($_GET['deleted'])) echo '<div class="flash ok">✓ Datei gelöscht.</div>';
+  echo '<div class="editor-head"><div><h1>🖼️ Medien-Bibliothek</h1>'
+     . '<p class="muted">' . count($files) . ' Datei' . (count($files) === 1 ? '' : 'en') . ' im Ordner <code>/media</code>. Pfad kopieren und in beliebige Bild-/Datei-Felder einsetzen.</p></div></div>';
+  echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
+  echo '<div class="media-upload"><label class="btn-up">📤 Datei hochladen<input type="file" id="lib-upload" accept="image/*,video/*" hidden></label>'
+     . '<span class="muted" id="lib-upload-status">JPG, PNG, WebP, SVG, GIF, MP4, WebM … bis ca. 30 MB.</span></div>';
+  if (!$files) {
+    echo '<p class="muted">Noch keine Dateien hochgeladen.</p>';
+  } else {
+    echo '<div class="media-grid">';
+    foreach ($files as $f) {
+      $url = '../media/' . rawurlencode($f['name']);
+      $path = '/media/' . $f['name'];
+      echo '<div class="media-tile">';
+      echo '<div class="media-thumb">';
+      if ($isImg($f['ext'])) echo '<img src="' . pg_h($url) . '" alt="" loading="lazy">';
+      elseif ($isVid($f['ext'])) echo '<video src="' . pg_h($url) . '" muted></video>';
+      else echo '<span class="ext">' . pg_h($f['ext']) . '</span>';
+      echo '</div>';
+      echo '<div class="media-meta"><span class="media-name">' . pg_h($f['name']) . '</span>'
+         . '<span class="media-size">' . $fmtSize($f['size']) . '</span>';
+      echo '<div class="media-row">';
+      echo '<button type="button" data-copy="' . pg_h($path) . '">Pfad kopieren</button>';
+      echo '<form method="post" onsubmit="return confirm(\'Diese Datei wirklich löschen? Sie könnte auf der Website verwendet werden.\')" style="flex:1;display:flex">'
+         . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+         . '<input type="hidden" name="file" value="' . pg_h($f['name']) . '">'
+         . '<button class="del" type="submit" name="delete_media" value="1" style="width:100%">Löschen</button></form>';
+      echo '</div></div></div>';
+    }
+    echo '</div>';
+  }
+  echo '<div class="media-copied" id="media-copied">Pfad kopiert ✓</div>';
+  echo '</div>';
+  pg_view_foot();
+  exit;
+}
+
 /* ---- Team & Zugänge (nur Owner) ---- */
 if (($_GET['view'] ?? '') === 'users') {
   if (!pg_is_owner()) { header('Location: index.php'); exit; }
@@ -351,10 +421,15 @@ if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
   echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
   echo '<input type="hidden" name="collection" value="' . pg_h($key) . '">';
   echo '<input type="hidden" name="lang" value="' . pg_h($lang) . '">';
+  $previewUrl = [
+    'studio' => '../index.html', 'team' => '../index.html#team-section',
+    'games' => '../games.html', 'patchnotes' => '../devlog.php', 'legal' => '../rechtliches.html',
+  ][$key] ?? '../index.html';
   echo '<div class="editor-head"><div><h1>' . pg_h($coll['icon']) . ' ' . pg_h($coll['label'])
      . ' <span class="lang-pill">' . strtoupper($lang) . '</span></h1>'
      . '<p class="muted">Änderungen werden direkt auf dem Server gespeichert.</p></div>'
-     . '<button class="btn-primary" type="submit" name="save" value="1">Speichern</button></div>';
+     . '<div class="editor-actions"><a class="btn-preview" href="' . pg_h($previewUrl) . '" target="_blank" rel="noopener">↗ Vorschau</a>'
+     . '<button class="btn-primary" type="submit" name="save" value="1">Speichern</button></div></div>';
   echo '<div class="fields">';
   echo pg_render_fields($coll['fields'], $data, 'd', $key);
   echo '</div>';
@@ -390,6 +465,9 @@ if (pg_can('subscribers')) {
      . '<span class="card-ico">📬</span><span class="card-title">Newsletter-Abos</span>'
      . '<span class="card-desc">' . $subCount . ' Anmeldung' . ($subCount === 1 ? '' : 'en') . ' · ansehen &amp; exportieren.</span></a>';
 }
+echo '<a class="card" href="index.php?view=media">'
+   . '<span class="card-ico">🖼️</span><span class="card-title">Medien-Bibliothek</span>'
+   . '<span class="card-desc">Bilder &amp; Videos hochladen, Pfade kopieren, aufräumen.</span></a>';
 if (pg_can('mail')) {
   echo '<a class="card" href="mail.php">'
      . '<span class="card-ico">✉️</span><span class="card-title">E-Mail-Postfach</span>'

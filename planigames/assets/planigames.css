@@ -247,6 +247,9 @@ body.fx-glow #fx-layer { display: none; }
     .glow-1, .glow-2 { animation: none !important; }
 }
 
+/* ---------- Roadmap-Fortschrittsbalken ---------- */
+.roadmap-bar { transition: width 1.2s cubic-bezier(0.16,1,0.3,1); box-shadow: 0 0 18px -2px color-mix(in srgb, var(--accent) 70%, transparent); }
+
 /* ---------- Cookie-/Consent-Banner ---------- */
 #cookie-banner {
     position: fixed; left: 50%; bottom: 1.2rem; transform: translateX(-50%) translateY(140%);

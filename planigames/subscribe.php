@@ -5,9 +5,36 @@
  * schickt optional eine Benachrichtigung an die Studio-Adresse.
  * Die Abonnentenliste ist per data/.htaccess vor dem Web geschützt.
  */
+$DATA = __DIR__ . '/data';
+
+/* ---- Abmeldung (GET, aus dem Newsletter-Footer-Link) ---- */
+if (($_GET['action'] ?? '') === 'unsubscribe') {
+  require __DIR__ . '/admin/lib.php';
+  $email = trim($_GET['e'] ?? '');
+  $token = $_GET['t'] ?? '';
+  header('Content-Type: text/html; charset=utf-8');
+  $valid = filter_var($email, FILTER_VALIDATE_EMAIL) && hash_equals(pg_unsub_token($email), (string)$token);
+  $msg = 'Dieser Abmeldelink ist ungültig oder abgelaufen.';
+  if ($valid) {
+    $file = $DATA . '/subscribers.json';
+    $list = is_file($file) ? (json_decode(file_get_contents($file), true) ?: []) : [];
+    $new = array_values(array_filter($list, fn($r) => strcasecmp($r['email'] ?? '', $email) !== 0));
+    @file_put_contents($file, json_encode($new, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    $msg = 'Du wurdest erfolgreich abgemeldet. Schade, dass du gehst! 🧡';
+  }
+  echo '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+     . '<title>Newsletter abmelden · PLANIGAMES</title><meta name="robots" content="noindex">'
+     . '<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#050505;color:#ececf0;'
+     . 'font-family:system-ui,Arial,sans-serif;text-align:center;padding:2rem}'
+     . '.c{max-width:430px}h1{font-size:1.4rem}a{display:inline-block;margin-top:1.5rem;color:#ff8a2b;text-decoration:none;'
+     . 'border:1px solid rgba(255,255,255,.2);padding:.7rem 1.4rem;border-radius:999px}</style></head><body><div class="c">'
+     . '<div style="font-size:2.4rem;margin-bottom:1rem">📭</div><h1>' . htmlspecialchars($msg, ENT_QUOTES) . '</h1>'
+     . '<a href="index.html">Zur Startseite</a></div></body></html>';
+  exit;
+}
+
 header('Content-Type: application/json; charset=utf-8');
 
-$DATA = __DIR__ . '/data';
 $studio = is_file($DATA . '/studio.json') ? json_decode(file_get_contents($DATA . '/studio.json'), true) : [];
 $cfg = $studio['newsletter'] ?? [];
 

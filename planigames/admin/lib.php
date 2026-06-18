@@ -112,6 +112,7 @@ function pg_base_url(){
   $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
   $host = preg_replace('/[^a-z0-9.\-:]/i', '', $_SERVER['HTTP_HOST'] ?? 'localhost');
   $dir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/admin/index.php')), '/');
+  if ($dir === '.' || $dir === '') $dir = '';            // kein dangling Host (z. B. CLI)
   return $scheme . '://' . $host . $dir;
 }
 // Absolute URL zum Seiten-Wurzelverzeichnis (eine Ebene über /admin)
@@ -180,6 +181,27 @@ function pg_invite_html($link, $roleLabel, $inviter = ''){
     . '<span style="color:#ff8a2b;word-break:break-all">' . $L . '</span></p>'
     . '<p style="color:#7b7b86;font-size:12px;line-height:1.6;margin:14px 0 0">Der Link ist 7 Tage gültig. Du kennst PLANIGAMES nicht? Dann ignoriere diese E-Mail einfach.</p>';
   return pg_mail_shell($body, 'Deine Einladung ins PLANIGAMES-Dashboard');
+}
+
+/* Persistentes App-Geheimnis (für Unsubscribe-Tokens etc.) – einmalig erzeugt. */
+function pg_app_secret(){
+  static $sec = null;
+  if ($sec !== null) return $sec;
+  $file = PG_DATA_DIR . '/secret.php';
+  if (is_file($file)) {
+    $val = include $file;
+    if (is_string($val) && strlen($val) >= 32) return $sec = $val;
+  }
+  $sec = bin2hex(random_bytes(32));
+  @file_put_contents($file, "<?php return '" . $sec . "';\n", LOCK_EX);
+  return $sec;
+}
+// Abmelde-Token für eine E-Mail (stabil pro Adresse)
+function pg_unsub_token($email){
+  return hash_hmac('sha256', strtolower(trim($email)), pg_app_secret());
+}
+function pg_unsub_link($email){
+  return pg_site_url() . '/subscribe.php?action=unsubscribe&e=' . rawurlencode($email) . '&t=' . pg_unsub_token($email);
 }
 
 /* =================================================================
@@ -396,10 +418,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=3"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=4"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=3"></script></body></html>';
+  echo '<script src="assets/admin.js?v=4"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   echo '<header class="topbar"><a class="tb-brand" href="index.php"><span class="diamond"></span> PLANI<span class="grad">GAMES</span></a>';
@@ -409,6 +431,7 @@ function pg_view_topbar($SCHEMA, $active){
     $cls = $key === $active ? ' class="on"' : '';
     echo '<a' . $cls . ' href="index.php?collection=' . pg_h($key) . '">' . pg_h($coll['label']) . '</a>';
   }
+  echo '<a' . ($active === 'media' ? ' class="on"' : '') . ' href="index.php?view=media">Medien</a>';
   if (pg_can('subscribers')) echo '<a href="index.php?view=subscribers">Abos</a>';
   if (pg_can('mail')) echo '<a' . ($active === 'mail' ? ' class="on"' : '') . ' href="mail.php">✉ Mails</a>';
   if (pg_is_owner()) echo '<a href="index.php?view=users">Zugänge</a>';

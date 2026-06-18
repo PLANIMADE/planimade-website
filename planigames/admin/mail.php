@@ -85,6 +85,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_mail'])) {
   }
 }
 
+/* ---- Newsletter an alle Abonnenten ---- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_newsletter'])) {
+  pg_csrf_check();
+  $subject = trim($_POST['subject'] ?? '');
+  $message = trim($_POST['message'] ?? '');
+  $subs = pg_load_json(PG_DATA_DIR . '/subscribers.json');
+  $emails = array_values(array_filter(array_map(fn($r) => trim($r['email'] ?? ''), is_array($subs) ? $subs : []),
+            fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL)));
+  if ($subject === '' || $message === '') {
+    $flash = '<div class="flash err">Betreff und Nachricht dürfen nicht leer sein.</div>';
+  } elseif (!$emails) {
+    $flash = '<div class="flash err">Noch keine Abonnenten vorhanden.</div>';
+  } else {
+    @set_time_limit(120);
+    $sent = 0; $fail = 0;
+    foreach ($emails as $to) {
+      $unsub = pg_unsub_link($to);
+      $body = '<div style="color:#d7d7df;line-height:1.7;font-size:15px;padding:6px 0">' . nl2br(pg_h($message)) . '</div>'
+        . '<p style="color:#6f6f7a;font-size:12px;margin:22px 0 0">Du erhältst diese Mail, weil du den PLANIGAMES-Newsletter abonniert hast. '
+        . '<a href="' . pg_h($unsub) . '" style="color:#ff8a2b">Abmelden</a></p>';
+      $html = pg_mail_shell($body, mb_substr($message, 0, 90));
+      if (pg_send_mail($to, $subject, $html)) $sent++; else $fail++;
+      usleep(120000); // freundlich zum Mailserver
+    }
+    $flash = '<div class="flash ' . ($fail ? 'err' : 'ok') . '">✓ Newsletter verschickt: ' . $sent . ' zugestellt'
+           . ($fail ? ', ' . $fail . ' fehlgeschlagen' : '') . '.</div>';
+  }
+  $tab = 'newsletter';
+}
+
 /* ====================== ANSICHT ====================== */
 pg_view_head('E-Mails');
 pg_view_topbar($SCHEMA, 'mail');
@@ -92,7 +122,7 @@ echo $flash;
 echo '<div class="editor mailwrap">';
 
 // Tab-Leiste
-$tabs = ['inbox'=>'📥 Posteingang', 'compose'=>'✍️ Verfassen', 'settings'=>'⚙️ Einstellungen'];
+$tabs = ['inbox'=>'📥 Posteingang', 'compose'=>'✍️ Verfassen', 'newsletter'=>'📣 Newsletter', 'settings'=>'⚙️ Einstellungen'];
 echo '<div class="mailtabs">';
 foreach ($tabs as $k => $lbl) {
   echo '<a href="mail.php?tab=' . $k . '"' . ($tab === $k ? ' class="on"' : '') . '>' . $lbl . '</a>';
@@ -173,6 +203,23 @@ if ($tab === 'compose') {
   echo '<div class="field"><label class="flabel">Nachricht</label><textarea name="message" rows="11" required placeholder="Deine Nachricht …"></textarea>'
      . '<p class="hint">Reiner Text – Zeilenumbrüche bleiben erhalten. Die Mail wird automatisch ins PLANIGAMES-Design eingebettet.</p></div>';
   echo '<div class="editor-foot"><button class="btn-primary" name="send_mail" value="1">Senden →</button></div>';
+  echo '</form>';
+}
+
+/* ---------------- NEWSLETTER ---------------- */
+if ($tab === 'newsletter') {
+  $subs = pg_load_json(PG_DATA_DIR . '/subscribers.json');
+  $count = is_array($subs) ? count($subs) : 0;
+  echo '<div class="mailnote">Sende eine gebrandete Nachricht an alle <b>' . $count . '</b> Newsletter-Abonnent' . ($count === 1 ? 'en' : 'en') . '. '
+     . 'Jede Mail enthält automatisch einen Abmeldelink. ' . (pg_mail_configured_send() ? 'Versand per SMTP.' : 'Versand über die Server-Funktion mail() – für große Listen SMTP empfohlen.') . '</div>';
+  echo '<form method="post" class="fields" style="margin-top:1rem" onsubmit="return confirm(\'Newsletter jetzt an alle ' . $count . ' Abonnenten senden?\')">';
+  echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
+  echo '<div class="field"><label class="flabel">Betreff</label><input type="text" name="subject" required></div>';
+  echo '<div class="field"><label class="flabel">Nachricht</label><textarea name="message" rows="11" required placeholder="Neuigkeiten, Devlogs, Release-Termine …"></textarea>'
+     . '<p class="hint">Reiner Text. Wird automatisch ins PLANIGAMES-Design (mit Logo &amp; Abmeldelink) eingebettet.</p></div>';
+  echo '<div class="editor-foot">';
+  echo '<a class="btn-add" href="index.php?view=subscribers">Abonnenten ansehen</a>';
+  echo '<button class="btn-primary"' . ($count ? '' : ' disabled') . ' name="send_newsletter" value="1">An ' . $count . ' Abonnenten senden →</button></div>';
   echo '</form>';
 }
 

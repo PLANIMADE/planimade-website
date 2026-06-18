@@ -95,4 +95,44 @@
   document.querySelectorAll("[data-items]").forEach((box) => {
     if (box.children.length > 4) box.querySelectorAll(":scope > [data-item]").forEach((i) => i.classList.add("folded"));
   });
+
+  // ---- Medien-Bibliothek: Pfad kopieren ----
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-copy]");
+    if (!btn) return;
+    const path = btn.getAttribute("data-copy");
+    const done = () => {
+      const t = document.getElementById("media-copied");
+      if (t) { t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1400); }
+    };
+    if (navigator.clipboard) navigator.clipboard.writeText(path).then(done).catch(() => fallbackCopy(path, done));
+    else fallbackCopy(path, done);
+  });
+  function fallbackCopy(text, cb) {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); cb(); } catch {}
+    ta.remove();
+  }
+
+  // ---- Medien-Bibliothek: direkter Upload ----
+  const libUp = document.getElementById("lib-upload");
+  if (libUp) {
+    libUp.addEventListener("change", async () => {
+      if (!libUp.files || !libUp.files[0]) return;
+      const status = document.getElementById("lib-upload-status");
+      const file = libUp.files[0];
+      status.textContent = "Lädt… (" + Math.round(file.size / 1024) + " KB)";
+      const fd = new FormData();
+      fd.append("csrf", csrf());
+      fd.append("file", file);
+      try {
+        const r = await fetch("index.php?action=upload", { method: "POST", body: fd });
+        const j = await r.json();
+        if (j.error) { status.innerHTML = '<span class="up-err">' + j.error + "</span>"; }
+        else { status.textContent = "✓ Hochgeladen — Seite wird aktualisiert…"; location.reload(); }
+      } catch { status.innerHTML = '<span class="up-err">Upload-Fehler</span>'; }
+    });
+  }
 })();
