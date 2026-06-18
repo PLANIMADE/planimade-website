@@ -3,4 +3,5 @@ data/auth.php
 data/users.json
 data/invites.json
 data/subscribers.json
+data/mail.json
 data/*.tmp

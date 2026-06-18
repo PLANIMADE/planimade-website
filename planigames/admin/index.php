@@ -390,6 +390,11 @@ if (pg_can('subscribers')) {
      . '<span class="card-ico">📬</span><span class="card-title">Newsletter-Abos</span>'
      . '<span class="card-desc">' . $subCount . ' Anmeldung' . ($subCount === 1 ? '' : 'en') . ' · ansehen &amp; exportieren.</span></a>';
 }
+if (pg_can('mail')) {
+  echo '<a class="card" href="mail.php">'
+     . '<span class="card-ico">✉️</span><span class="card-title">E-Mail-Postfach</span>'
+     . '<span class="card-desc">Mails im PLANIGAMES-Design senden &amp; empfangen.</span></a>';
+}
 if (pg_is_owner()) {
   echo '<a class="card" href="index.php?view=users">'
      . '<span class="card-ico">🔑</span><span class="card-title">Zugänge &amp; Rollen</span>'
@@ -402,29 +407,4 @@ echo '</div>';
 pg_view_foot();
 
 
-/* =================== VIEW-HELFER =================== */
-function pg_view_head($title){
-  echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
-     . '<meta name="viewport" content="width=device-width, initial-scale=1">'
-     . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=2"></head><body>';
-}
-function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=2"></script></body></html>';
-}
-function pg_view_topbar($SCHEMA, $active){
-  echo '<header class="topbar"><a class="tb-brand" href="index.php"><span class="diamond"></span> PLANI<span class="grad">GAMES</span></a>';
-  echo '<nav class="tb-nav">';
-  foreach ($SCHEMA as $key => $coll) {
-    if (!pg_can($key)) continue;
-    $cls = $key === $active ? ' class="on"' : '';
-    echo '<a' . $cls . ' href="index.php?collection=' . pg_h($key) . '">' . pg_h($coll['label']) . '</a>';
-  }
-  if (pg_can('subscribers')) echo '<a href="index.php?view=subscribers">Abos</a>';
-  if (pg_is_owner()) echo '<a href="index.php?view=users">Zugänge</a>';
-  echo '</nav>';
-  echo '<span class="tb-right">';
-  if (pg_logged_in()) echo '<span class="tb-user" title="' . pg_h(pg_current_email()) . '">' . pg_h(pg_current_email()) . '</span>';
-  echo '<a href="../index.html" target="_blank">↗ Seite</a><a href="index.php?action=logout">Abmelden</a></span>';
-  echo '</header>';
-}
+/* VIEW-HELFER liegen jetzt in lib.php (von index.php & mail.php gemeinsam genutzt). */

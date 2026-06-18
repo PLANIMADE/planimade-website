@@ -69,6 +69,7 @@ function pg_areas_map(){
     'patchnotes'  => 'Devlog & Patch Notes',
     'legal'       => 'Rechtliches',
     'subscribers' => 'Newsletter-Abos',
+    'mail'        => 'E-Mail-Postfach',
   ];
 }
 function pg_user_areas($u){
@@ -113,30 +114,309 @@ function pg_base_url(){
   $dir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/admin/index.php')), '/');
   return $scheme . '://' . $host . $dir;
 }
+// Absolute URL zum Seiten-Wurzelverzeichnis (eine Ebene über /admin)
+function pg_site_url(){
+  $base = pg_base_url();
+  // /admin abschneiden -> Seitenwurzel
+  return preg_replace('#/admin/?$#', '', $base) ?: $base;
+}
+
+/* ---------------- Gebrandete E-Mails ---------------- */
+// Liefert die absolute URL des hochgeladenen Studio-Logos – oder '' (dann Wortmarke)
+function pg_mail_logo_url(){
+  $s = pg_load_json(PG_DATA_DIR . '/studio.json');
+  $logo = trim((string)($s['logo'] ?? ''));
+  if ($logo === '') return '';
+  if (preg_match('#^https?://#i', $logo)) return $logo;
+  return pg_site_url() . '/' . ltrim($logo, '/');
+}
+// Kopfzeile der Mail: echtes Logo (falls hochgeladen), sonst die Wortmarke
+function pg_mail_logo_header(){
+  $logo = pg_mail_logo_url();
+  if ($logo !== '') {
+    return '<img src="' . pg_h($logo) . '" alt="PLANIGAMES" height="40" style="height:40px;width:auto;max-width:240px;display:block;border:0;outline:none">';
+  }
+  return '<div style="font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:15px;color:#fff">'
+    . '<span style="display:inline-block;width:12px;height:12px;background:linear-gradient(135deg,#e6a015,#ff7d1a);border-radius:2px;transform:rotate(45deg)"></span>'
+    . '&nbsp;&nbsp;PLANI<span style="color:#ff8a2b">GAMES</span></div>';
+}
+/* Gebrandeter Rahmen für alle E-Mails (dunkel, Orange-Akzent, mit Logo).
+   $body = fertiges HTML für den Inhaltsbereich. */
+function pg_mail_shell($body, $preview = ''){
+  $pre = $preview ? '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' . pg_h($preview) . '</div>' : '';
+  $year = date('Y');
+  return '<!doctype html><html><body style="margin:0;background:#050505;font-family:Arial,Helvetica,sans-serif;color:#ececf0">'
+    . $pre
+    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050505;padding:32px 16px"><tr><td align="center">'
+    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#111114;border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden">'
+    . '<tr><td style="height:4px;background:linear-gradient(110deg,#e6a015,#ff7d1a 70%,#ff9d4d)"></td></tr>'
+    . '<tr><td style="padding:30px 34px 0">' . pg_mail_logo_header() . '</td></tr>'
+    . '<tr><td style="padding:8px 34px 6px">' . $body . '</td></tr>'
+    . '<tr><td style="padding:18px 34px 30px"><p style="color:#6f6f7a;font-size:12px;margin:0;border-top:1px solid rgba(255,255,255,.08);padding-top:16px">'
+    . 'PLANIGAMES · Indie Game Studio · © ' . $year . '</p></td></tr>'
+    . '</table></td></tr></table></body></html>';
+}
+// Akzent-Button als Tabelle (mailclient-sicher)
+function pg_mail_button($label, $url){
+  return '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0"><tr><td style="border-radius:999px;background:linear-gradient(110deg,#ff7d1a,#ff9d4d)">'
+    . '<a href="' . pg_h($url) . '" style="display:inline-block;color:#1a0d00;text-decoration:none;font-weight:700;padding:14px 30px;border-radius:999px">' . pg_h($label) . '</a>'
+    . '</td></tr></table>';
+}
 
 /* Gebrandete HTML-Einladungsmail */
 function pg_send_invite_mail($to, $link, $roleLabel, $inviter = ''){
-  $host = preg_replace('/[^a-z0-9.\-]/i', '', $_SERVER['HTTP_HOST'] ?? 'planigames.de');
   $html = pg_invite_html($link, $roleLabel, $inviter);
-  $headers = "From: PLANIGAMES <no-reply@{$host}>\r\nReply-To: no-reply@{$host}\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n";
-  return @mail($to, 'Einladung ins PLANIGAMES-Dashboard', $html, $headers);
+  return pg_send_mail($to, 'Einladung ins PLANIGAMES-Dashboard', $html);
 }
 
 function pg_invite_html($link, $roleLabel, $inviter = ''){
   $L = pg_h($link);
   $who = $inviter ? (' von ' . pg_h($inviter)) : '';
-  return '<!doctype html><html><body style="margin:0;background:#050505;font-family:Arial,Helvetica,sans-serif;color:#ececf0">'
-    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050505;padding:32px 16px"><tr><td align="center">'
-    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#111114;border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden">'
-    . '<tr><td style="padding:34px 34px 0"><div style="font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:15px">'
-    . '<span style="display:inline-block;width:12px;height:12px;background:linear-gradient(135deg,#e6a015,#ff7d1a);border-radius:2px;transform:rotate(45deg)"></span>&nbsp;&nbsp;PLANI<span style="color:#ff8a2b">GAMES</span></div></td></tr>'
-    . '<tr><td style="padding:22px 34px 0"><h1 style="margin:0;font-size:24px;color:#fff">Du bist eingeladen' . $who . ' 🎮</h1>'
+  $body = '<h1 style="margin:14px 0 0;font-size:24px;color:#fff">Du bist eingeladen' . $who . ' 🎮</h1>'
     . '<p style="color:#b6b6c0;line-height:1.6;margin:14px 0 0">Du wurdest eingeladen, am <b>PLANIGAMES</b>-Dashboard mitzuarbeiten – als <b>' . pg_h($roleLabel) . '</b>. '
-    . 'Klicke auf den Button, um dein Konto zu erstellen und ein Passwort zu vergeben.</p></td></tr>'
-    . '<tr><td style="padding:26px 34px 6px"><a href="' . $L . '" style="display:inline-block;background:linear-gradient(110deg,#ff7d1a,#ff9d4d);color:#1a0d00;text-decoration:none;font-weight:700;padding:14px 30px;border-radius:999px">Konto erstellen →</a></td></tr>'
-    . '<tr><td style="padding:8px 34px 0"><p style="color:#7b7b86;font-size:12px;line-height:1.6;margin:0">Funktioniert der Button nicht? Kopiere diesen Link:<br><span style="color:#ff8a2b;word-break:break-all">' . $L . '</span></p></td></tr>'
-    . '<tr><td style="padding:26px 34px 30px"><p style="color:#7b7b86;font-size:12px;margin:0;border-top:1px solid rgba(255,255,255,.08);padding-top:16px">Der Link ist 7 Tage gültig. Du kennst PLANIGAMES nicht? Dann ignoriere diese E-Mail einfach.</p></td></tr>'
-    . '</table></td></tr></table></body></html>';
+    . 'Klicke auf den Button, um dein Konto zu erstellen und ein Passwort zu vergeben.</p>'
+    . '<div style="padding:22px 0 4px">' . pg_mail_button('Konto erstellen →', $link) . '</div>'
+    . '<p style="color:#7b7b86;font-size:12px;line-height:1.6;margin:6px 0 0">Funktioniert der Button nicht? Kopiere diesen Link:<br>'
+    . '<span style="color:#ff8a2b;word-break:break-all">' . $L . '</span></p>'
+    . '<p style="color:#7b7b86;font-size:12px;line-height:1.6;margin:14px 0 0">Der Link ist 7 Tage gültig. Du kennst PLANIGAMES nicht? Dann ignoriere diese E-Mail einfach.</p>';
+  return pg_mail_shell($body, 'Deine Einladung ins PLANIGAMES-Dashboard');
+}
+
+/* =================================================================
+   E-MAIL-ENGINE — Versand (SMTP/mail) & Empfang (IMAP)
+   Konfiguration liegt in data/mail.json (NICHT im Git, enthält Passwort).
+   ================================================================= */
+const PG_MAIL_FILE = __DIR__ . '/../data/mail.json';
+
+function pg_mail_config(){
+  $c = pg_load_json(PG_MAIL_FILE);
+  $c = is_array($c) ? $c : [];
+  return $c + [
+    'from_name'  => 'PLANIGAMES',
+    'from_email' => '',
+    // SMTP (Versand)
+    'smtp_host'  => '', 'smtp_port' => 587, 'smtp_secure' => 'tls',
+    'smtp_user'  => '', 'smtp_pass' => '',
+    // IMAP (Empfang)
+    'imap_host'  => '', 'imap_port' => 993, 'imap_secure' => 'ssl',
+    'imap_user'  => '', 'imap_pass' => '',
+    'signature'  => '',
+  ];
+}
+function pg_mail_config_save(array $c){
+  // Bestehende Passwörter behalten, wenn das Formular sie leer lässt
+  $old = pg_mail_config();
+  foreach (['smtp_pass','imap_pass'] as $k) {
+    if (($c[$k] ?? '') === '') $c[$k] = $old[$k] ?? '';
+  }
+  return pg_save_json(PG_MAIL_FILE, $c);
+}
+function pg_mail_configured_send(){ $c = pg_mail_config(); return $c['smtp_host'] !== '' && $c['smtp_user'] !== ''; }
+function pg_mail_configured_recv(){ $c = pg_mail_config(); return $c['imap_host'] !== '' && $c['imap_user'] !== ''; }
+
+// Absender bestimmen (From-Email aus Mail-Config, sonst Studio-Kontakt, sonst no-reply@host)
+function pg_mail_from(){
+  $c = pg_mail_config();
+  $email = trim($c['from_email'] ?: $c['smtp_user']);
+  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $s = pg_load_json(PG_DATA_DIR . '/studio.json');
+    $email = trim((string)($s['email'] ?? ''));
+  }
+  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $host = preg_replace('/[^a-z0-9.\-]/i', '', $_SERVER['HTTP_HOST'] ?? 'planigames.de');
+    $email = 'no-reply@' . $host;
+  }
+  return [trim($c['from_name']) ?: 'PLANIGAMES', $email];
+}
+
+/* Zentrale Versandfunktion: nutzt SMTP, wenn konfiguriert, sonst mail().
+   $html = vollständiges HTML (z. B. via pg_mail_shell). Gibt true/false zurück. */
+function pg_send_mail($to, $subject, $html, $replyTo = ''){
+  [$fromName, $fromEmail] = pg_mail_from();
+  if (pg_mail_configured_send()) {
+    return pg_smtp_send($to, $subject, $html, $fromName, $fromEmail, $replyTo);
+  }
+  // Fallback: PHP mail()
+  $fn = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
+  $headers = "From: {$fn} <{$fromEmail}>\r\n"
+    . ($replyTo ? "Reply-To: {$replyTo}\r\n" : "Reply-To: {$fromEmail}\r\n")
+    . "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n";
+  $subj = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+  return @mail($to, $subj, $html, $headers);
+}
+
+/* Minimaler SMTP-Client (fsockopen) – ohne Abhängigkeiten, für All-Inkl geeignet. */
+function pg_smtp_send($to, $subject, $html, $fromName, $fromEmail, $replyTo = ''){
+  $c = pg_mail_config();
+  $host = $c['smtp_host']; $port = (int)$c['smtp_port'] ?: 587;
+  $secure = $c['smtp_secure']; // 'ssl' | 'tls' | ''
+  $transport = $secure === 'ssl' ? 'ssl://' : '';
+  $errno = 0; $errstr = '';
+  $fp = @stream_socket_client($transport . $host . ':' . $port, $errno, $errstr, 20,
+        STREAM_CLIENT_CONNECT, stream_context_create(['ssl'=>['verify_peer'=>false,'verify_peer_name'=>false]]));
+  if (!$fp) { error_log("SMTP connect failed: $errstr ($errno)"); return false; }
+  stream_set_timeout($fp, 20);
+
+  $read = function() use ($fp){
+    $data = '';
+    while (($line = fgets($fp, 512)) !== false) {
+      $data .= $line;
+      if (isset($line[3]) && $line[3] === ' ') break;
+    }
+    return $data;
+  };
+  $cmd = function($c) use ($fp, $read){ fwrite($fp, $c . "\r\n"); return $read(); };
+  $code = fn($r) => (int)substr(trim($r), 0, 3);
+
+  $ok = true;
+  $read(); // Greeting
+  $ehlo = $cmd('EHLO ' . ($_SERVER['HTTP_HOST'] ?? 'planigames.de'));
+  if ($secure === 'tls') {
+    if ($code($cmd('STARTTLS')) !== 220) { fclose($fp); return false; }
+    if (!@stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT)) { fclose($fp); return false; }
+    $cmd('EHLO ' . ($_SERVER['HTTP_HOST'] ?? 'planigames.de'));
+  }
+  // AUTH LOGIN
+  if ($c['smtp_user'] !== '') {
+    if ($code($cmd('AUTH LOGIN')) !== 334) { fclose($fp); return false; }
+    if ($code($cmd(base64_encode($c['smtp_user']))) !== 334) { fclose($fp); return false; }
+    if ($code($cmd(base64_encode($c['smtp_pass']))) !== 235) { fclose($fp); return false; }
+  }
+  if ($code($cmd('MAIL FROM:<' . $fromEmail . '>')) !== 250) $ok = false;
+  if ($code($cmd('RCPT TO:<' . $to . '>')) >= 400) $ok = false;
+  if ($code($cmd('DATA')) !== 354) $ok = false;
+
+  $fn = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
+  $subj = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+  $date = date('r');
+  $msgid = '<' . bin2hex(random_bytes(12)) . '@' . preg_replace('/[^a-z0-9.\-]/i','',$_SERVER['HTTP_HOST'] ?? 'planigames.de') . '>';
+  $head = "Date: $date\r\nFrom: $fn <$fromEmail>\r\n"
+    . ($replyTo ? "Reply-To: $replyTo\r\n" : '')
+    . "To: <$to>\r\nSubject: $subj\r\nMessage-ID: $msgid\r\n"
+    . "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
+  $body = chunk_split(base64_encode($html));
+  // Punkt-Stuffing nicht nötig bei base64
+  $r = $cmd($head . $body . "\r\n.");
+  if ($code($r) !== 250) $ok = false;
+  $cmd('QUIT');
+  fclose($fp);
+  return $ok;
+}
+
+/* ---- IMAP-Empfang (PHP imap-Extension; auf All-Inkl verfügbar) ---- */
+function pg_imap_available(){ return function_exists('imap_open'); }
+function pg_imap_mailbox($folder = 'INBOX'){
+  $c = pg_mail_config();
+  $sec = $c['imap_secure'] === 'ssl' ? '/imap/ssl/novalidate-cert' : ($c['imap_secure'] === 'tls' ? '/imap/tls/novalidate-cert' : '/imap/notls');
+  return '{' . $c['imap_host'] . ':' . ((int)$c['imap_port'] ?: 993) . $sec . '}' . $folder;
+}
+function pg_imap_connect($folder = 'INBOX'){
+  if (!pg_imap_available() || !pg_mail_configured_recv()) return null;
+  $c = pg_mail_config();
+  $mbox = @imap_open(pg_imap_mailbox($folder), $c['imap_user'], $c['imap_pass'], 0, 1);
+  return $mbox ?: null;
+}
+// Liste der letzten $limit Mails als einfache Arrays
+function pg_imap_list($mbox, $limit = 30, $offset = 0){
+  $total = imap_num_msg($mbox);
+  if ($total < 1) return ['total'=>0, 'items'=>[]];
+  $end = $total - $offset;
+  $start = max(1, $end - $limit + 1);
+  $items = [];
+  for ($i = $end; $i >= $start; $i--) {
+    $o = imap_headerinfo($mbox, $i);
+    if (!$o) continue;
+    $from = isset($o->from[0]) ? $o->from[0] : null;
+    $items[] = [
+      'num'     => $i,
+      'uid'     => imap_uid($mbox, $i),
+      'subject' => pg_imap_decode($o->subject ?? '(kein Betreff)'),
+      'from'    => $from ? pg_imap_decode(($from->personal ?? '') ?: ($from->mailbox . '@' . $from->host)) : '',
+      'from_email' => $from ? ($from->mailbox . '@' . $from->host) : '',
+      'date'    => isset($o->udate) ? (int)$o->udate : 0,
+      'seen'    => isset($o->Unseen) ? trim($o->Unseen) === '' : true,
+    ];
+  }
+  return ['total'=>$total, 'items'=>$items];
+}
+function pg_imap_decode($s){
+  $s = (string)$s; $out = '';
+  foreach (imap_mime_header_decode($s) as $p) {
+    $cs = strtoupper($p->charset);
+    $out .= ($cs && $cs !== 'DEFAULT' && $cs !== 'UTF-8') ? @mb_convert_encoding($p->text, 'UTF-8', $cs) : $p->text;
+  }
+  return $out;
+}
+// Volltext einer Mail (bevorzugt HTML, sonst Text) anhand der UID
+function pg_imap_body($mbox, $uid){
+  $structure = imap_fetchstructure($mbox, $uid, FT_UID);
+  $html = pg_imap_part($mbox, $uid, $structure, 'HTML');
+  if ($html !== '') return ['html'=>true, 'body'=>$html];
+  $text = pg_imap_part($mbox, $uid, $structure, 'PLAIN');
+  return ['html'=>false, 'body'=>$text];
+}
+function pg_imap_part($mbox, $uid, $structure, $want, $prefix = ''){
+  $decode = function($data, $enc){
+    if ($enc == 3) return base64_decode($data);
+    if ($enc == 4) return quoted_printable_decode($data);
+    return $data;
+  };
+  $charset = function($part){
+    if (!empty($part->parameters)) foreach ($part->parameters as $p) if (strtoupper($p->attribute) === 'CHARSET') return $p->value;
+    if (!empty($part->dparameters)) foreach ($part->dparameters as $p) if (strtoupper($p->attribute) === 'CHARSET') return $p->value;
+    return 'UTF-8';
+  };
+  $subtype = strtoupper($structure->subtype ?? '');
+  if (empty($structure->parts)) {
+    if (($structure->type ?? 0) == 0 && $subtype === $want) {
+      $raw = imap_fetchbody($mbox, $uid, $prefix ?: '1', FT_UID);
+      $data = $decode($raw, $structure->encoding ?? 0);
+      $cs = strtoupper($charset($structure));
+      return ($cs && $cs !== 'UTF-8') ? @mb_convert_encoding($data, 'UTF-8', $cs) : $data;
+    }
+    return '';
+  }
+  foreach ($structure->parts as $i => $part) {
+    $no = $prefix === '' ? (string)($i + 1) : $prefix . '.' . ($i + 1);
+    if (!empty($part->parts)) {
+      $r = pg_imap_part($mbox, $uid, $part, $want, $no);
+      if ($r !== '') return $r;
+    } elseif (($part->type ?? 0) == 0 && strtoupper($part->subtype ?? '') === $want) {
+      $raw = imap_fetchbody($mbox, $uid, $no, FT_UID);
+      $data = $decode($raw, $part->encoding ?? 0);
+      $cs = strtoupper($charset($part));
+      return ($cs && $cs !== 'UTF-8') ? @mb_convert_encoding($data, 'UTF-8', $cs) : $data;
+    }
+  }
+  return '';
+}
+
+/* =================== VIEW-HELFER (von index.php & mail.php genutzt) =================== */
+function pg_view_head($title){
+  echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
+     . '<meta name="viewport" content="width=device-width, initial-scale=1">'
+     . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
+     . '<link rel="stylesheet" href="assets/admin.css?v=3"></head><body>';
+}
+function pg_view_foot(){
+  echo '<script src="assets/admin.js?v=3"></script></body></html>';
+}
+function pg_view_topbar($SCHEMA, $active){
+  echo '<header class="topbar"><a class="tb-brand" href="index.php"><span class="diamond"></span> PLANI<span class="grad">GAMES</span></a>';
+  echo '<nav class="tb-nav">';
+  foreach ($SCHEMA as $key => $coll) {
+    if (!pg_can($key)) continue;
+    $cls = $key === $active ? ' class="on"' : '';
+    echo '<a' . $cls . ' href="index.php?collection=' . pg_h($key) . '">' . pg_h($coll['label']) . '</a>';
+  }
+  if (pg_can('subscribers')) echo '<a href="index.php?view=subscribers">Abos</a>';
+  if (pg_can('mail')) echo '<a' . ($active === 'mail' ? ' class="on"' : '') . ' href="mail.php">✉ Mails</a>';
+  if (pg_is_owner()) echo '<a href="index.php?view=users">Zugänge</a>';
+  echo '</nav>';
+  echo '<span class="tb-right">';
+  if (pg_logged_in()) echo '<span class="tb-user" title="' . pg_h(pg_current_email()) . '">' . pg_h(pg_current_email()) . '</span>';
+  echo '<a href="../index.html" target="_blank">↗ Seite</a><a href="index.php?action=logout">Abmelden</a></span>';
+  echo '</header>';
 }
 
 /* ---------------- Mehrsprachigkeit ---------------- */

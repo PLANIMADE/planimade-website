@@ -38,10 +38,29 @@ body { overscroll-behavior-y: none; background: var(--bg); }
 /* Alte Filmkorn-Textur entfernt */
 .grain-overlay::after { content: none; display: none; }
 
-/* Schwebende Magie-/Glut-Partikel (Canvas, von app.js animiert) */
-#fx-canvas {
-    position: fixed; inset: 0; width: 100%; height: 100%;
-    pointer-events: none; z-index: 0;
+/* Schwebende Magie-/Glut-Partikel (reine CSS-Animation, von app.js bestückt).
+   Bewusst NICHT an prefers-reduced-motion gekoppelt – die Partikel sollen auf
+   Wunsch immer sichtbar steigen (zuverlässig in allen Browsern, kein Einfrieren). */
+#fx-layer {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none; overflow: hidden;
+}
+.fx-p {
+    position: absolute; bottom: -24px; border-radius: 50%;
+    background: radial-gradient(circle,
+        color-mix(in srgb, var(--fx-c, var(--accent)) 95%, #fff) 0%,
+        color-mix(in srgb, var(--fx-c, var(--accent)) 38%, transparent) 45%,
+        transparent 70%);
+    opacity: 0;
+    will-change: transform, opacity;
+    animation: pgRise var(--dur, 16s) linear infinite;
+    animation-delay: var(--delay, 0s);
+}
+@keyframes pgRise {
+    0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+    10%  { opacity: var(--o, 0.5); }
+    88%  { opacity: var(--o, 0.5); }
+    100% { transform: translate3d(var(--dx, 0px), calc(-100vh - 60px), 0); opacity: 0; }
 }
 
 /* ---------- Marken-Typo-Helfer ---------- */
@@ -126,7 +145,9 @@ body.menu-open { overflow: hidden; }
 /* ---------- Ambient Glow-Blobs (statisch – performant, auch auf Safari) ---------- */
 .glow-blob { position: fixed; border-radius: 9999px; filter: blur(110px); pointer-events: none; z-index: 0; }
 /* Effekt-Stufen (im Admin wählbar): "Aus / minimal" blendet alles bis auf die Vignette aus */
-body.fx-off .glow-blob, body.fx-off #fx-canvas { display: none; }
+body.fx-off .glow-blob, body.fx-off #fx-layer { display: none; }
+/* "Nur Glow" blendet die Partikel aus, behält aber die Glow-Blobs */
+body.fx-glow #fx-layer { display: none; }
 
 /* ---------- Header ---------- */
 #site-header { transition: all .5s cubic-bezier(0.16,1,0.3,1); }

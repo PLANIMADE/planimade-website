@@ -150,88 +150,37 @@
         initBackgroundFX();
     }
 
-    function hexToRgb(hex) {
-        const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
-        if (!m) return { r: 255, g: 150, b: 60 };
-        const n = parseInt(m[1], 16);
-        return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
-    }
-
-    /* Schwebende Magie-/Glut-Partikel im Hintergrund (Canvas, im Admin konfigurierbar) */
+    /* Schwebende Magie-/Glut-Partikel im Hintergrund.
+       Reine CSS-Animation: jeder Partikel ist ein <span>, das per @keyframes
+       aufsteigt. Das läuft zuverlässig in jedem Browser und kann – anders als
+       die alte Canvas-Lösung – nicht durch "Bewegung reduzieren" einfrieren.
+       Dichte / Tempo / Farbe bleiben im Admin konfigurierbar. */
     function initBackgroundFX() {
-        const canvas = $("#fx-canvas");
-        if (!canvas) return;
+        const layer = $("#fx-layer");
+        if (!layer) return;
         const cfg = (DATA.studio && DATA.studio.background) || {};
-        if ((cfg.effect || "particles") !== "particles") return;  // nur Glow / aus -> keine Partikel
+        if ((cfg.effect || "particles") !== "particles") { layer.innerHTML = ""; return; }
 
-        const ctx = canvas.getContext("2d");
-        const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-        const AREA = { low: 55000, med: 34000, high: 21000 }[cfg.density] || 34000;   // kleiner = mehr
-        const SP = { calm: 0.55, normal: 1, lively: 1.8 }[cfg.speed] || 1;
-        const col = hexToRgb(cfg.color || "#ff7d1a");
-        let w = 0, h = 0, dpr = 1, particles = [], raf = 0;
+        const color = (cfg.color || "#ff7d1a");
+        // Anzahl je nach Dichte – an die Fensterbreite gekoppelt (Handy = weniger)
+        const base = { low: 16, med: 30, high: 50 }[cfg.density] || 30;
+        const count = Math.max(10, Math.round(base * Math.min(1.4, Math.max(0.5, window.innerWidth / 1280))));
+        // Tempo: Dauer einer Aufstiegsrunde in Sekunden (calm = langsam)
+        const span = { calm: [22, 38], normal: [14, 26], lively: [8, 16] }[cfg.speed] || [14, 26];
 
-        // Weiches Glüh-Sprite einmal in der gewählten Farbe vorrendern
-        const sprite = document.createElement("canvas");
-        (() => {
-            const r = 32; sprite.width = sprite.height = r * 2;
-            const g = sprite.getContext("2d");
-            const grd = g.createRadialGradient(r, r, 0, r, r, r);
-            grd.addColorStop(0, `rgba(${Math.min(255, col.r + 40)},${Math.min(255, col.g + 40)},${Math.min(255, col.b + 50)},0.95)`);
-            grd.addColorStop(0.4, `rgba(${col.r},${col.g},${col.b},0.40)`);
-            grd.addColorStop(1, `rgba(${col.r},${col.g},${col.b},0)`);
-            g.fillStyle = grd; g.beginPath(); g.arc(r, r, r, 0, Math.PI * 2); g.fill();
-        })();
-
-        function spawn(initial) {
-            const size = 1.4 + Math.random() * 4;
-            const x = Math.random() * w;
-            return {
-                baseX: x, x,
-                y: initial ? Math.random() * h : h + 30,
-                r: size,
-                vy: -(0.04 + Math.random() * 0.16) * (size / 2) * SP,  // langsam aufsteigend
-                ampl: 8 + Math.random() * 26,
-                phase: Math.random() * Math.PI * 2,
-                freq: (0.00012 + Math.random() * 0.00028) * SP,
-                a: 0.12 + Math.random() * 0.30,
-                tw: (0.4 + Math.random() * 1.4) * SP,
-            };
+        const rnd = (a, b) => a + Math.random() * (b - a);
+        let html = "";
+        for (let i = 0; i < count; i++) {
+            const size = rnd(3, 9);                     // px
+            const left = rnd(0, 100);                   // %
+            const dur = rnd(span[0], span[1]);          // s
+            const delay = -rnd(0, dur);                 // sofort über den Schirm verteilt
+            const drift = rnd(-60, 60);                 // px seitliche Drift
+            const op = rnd(0.25, 0.7).toFixed(2);
+            html += `<span class="fx-p" style="left:${left.toFixed(2)}%;width:${size.toFixed(1)}px;height:${size.toFixed(1)}px;`
+                  + `--fx-c:${color};--dur:${dur.toFixed(1)}s;--delay:${delay.toFixed(1)}s;--dx:${drift.toFixed(0)}px;--o:${op}"></span>`;
         }
-        function resize() {
-            dpr = Math.min(window.devicePixelRatio || 1, 1.5);   // Cap für gute Performance (auch Safari)
-            // Fallback auf Fenstergröße, falls das fixe Canvas (je nach Browser) 0 meldet
-            w = canvas.clientWidth || window.innerWidth;
-            h = canvas.clientHeight || window.innerHeight;
-            canvas.width = Math.max(1, Math.round(w * dpr)); canvas.height = Math.max(1, Math.round(h * dpr));
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            const count = Math.round(Math.min(95, Math.max(20, (w * h) / AREA)));
-            particles = Array.from({ length: count }, () => spawn(true));
-        }
-        function draw(t) {
-            ctx.clearRect(0, 0, w, h);
-            ctx.globalCompositeOperation = "lighter";
-            for (const p of particles) {
-                p.y += p.vy;
-                p.x = p.baseX + Math.sin(t * p.freq + p.phase) * p.ampl;
-                const alpha = p.a * (0.55 + 0.45 * Math.sin(t * 0.001 * p.tw + p.phase));
-                ctx.globalAlpha = alpha < 0 ? 0 : alpha;
-                const d = p.r * 6;
-                ctx.drawImage(sprite, p.x - d / 2, p.y - d / 2, d, d);
-                if (p.y < -40) Object.assign(p, spawn(false));
-            }
-            ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
-        }
-        function loop(t) { draw(t); raf = requestAnimationFrame(loop); }
-
-        addEventListener("resize", () => { cancelAnimationFrame(raf); resize(); if (!reduce) raf = requestAnimationFrame(loop); }, { passive: true });
-        resize();
-        if (reduce) { draw(0); return; }            // statisch zeichnen
-        raf = requestAnimationFrame(loop);
-        document.addEventListener("visibilitychange", () => {
-            cancelAnimationFrame(raf);
-            if (!document.hidden) raf = requestAnimationFrame(loop);
-        });
+        layer.innerHTML = html;
     }
 
     function initLangSwitch() {
@@ -363,7 +312,10 @@
     function initMarquee() {
         const halves = $$(".marquee-half");
         if (!halves.length) return;
-        const phrases = ["Original Worlds", "Handcrafted Magic", "Indie & Proud", "Wobbly Wizards"];
+        // Im Admin editierbar: studio.marquee (eine Phrase pro Zeile)
+        const raw = (DATA.studio && DATA.studio.marquee) || "";
+        let phrases = String(raw).split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        if (!phrases.length) phrases = ["Original Worlds", "Handcrafted Magic", "Indie & Proud", "Wobbly Wizards"];
         const group = phrases.map(p => `<span>${esc(p)}</span><span class="text-[color:var(--accent)]">✦</span>`).join("");
         const reps = Math.max(3, Math.ceil((window.innerWidth * 1.3) / 420));
         const html = group.repeat(reps);
@@ -1039,7 +991,7 @@
                 <div id="cursor-ring"></div><div id="cursor-dot"></div>
                 <div class="glow-blob glow-1" style="top:-12%;left:-12%;width:55vw;height:55vw;background:color-mix(in srgb,var(--accent) 13%,transparent)"></div>
                 <div class="glow-blob glow-2" style="bottom:-12%;right:-12%;width:50vw;height:50vw;background:color-mix(in srgb,var(--accent-2) 11%,transparent)"></div>
-                <canvas id="fx-canvas"></canvas>`);
+                <div id="fx-layer"></div>`);
         }
 
         const headerMount = $("[data-shell='header']");
