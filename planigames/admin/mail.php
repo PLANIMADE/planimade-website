@@ -53,6 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
     'imap_secure'=> in_array($_POST['imap_secure'] ?? 'ssl', ['ssl','tls',''], true) ? $_POST['imap_secure'] : 'ssl',
     'imap_user'  => trim($_POST['imap_user'] ?? ''),
     'imap_pass'  => (string)($_POST['imap_pass'] ?? ''),
+    'sig_enabled'=> !empty($_POST['sig_enabled']),
+    'sig_name'   => trim($_POST['sig_name'] ?? ''),
+    'sig_role'   => trim($_POST['sig_role'] ?? ''),
+    'sig_phone'  => trim($_POST['sig_phone'] ?? ''),
     'signature'  => trim($_POST['signature'] ?? ''),
   ];
   $ok = pg_mail_config_save($c);
@@ -71,9 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_mail'])) {
   } elseif ($subject === '' || $message === '') {
     $flash = '<div class="flash err">Betreff und Nachricht dürfen nicht leer sein.</div>'; $tab = 'compose';
   } else {
-    $cfg = pg_mail_config();
-    $sig = $cfg['signature'] !== '' ? '<div style="margin-top:22px;color:#9a9aa6;font-size:13px;line-height:1.6">' . nl2br(pg_h($cfg['signature'])) . '</div>' : '';
-    $bodyHtml = '<div style="color:#d7d7df;line-height:1.7;font-size:15px;padding:6px 0">' . nl2br(pg_h($message)) . '</div>' . $sig;
+    $bodyHtml = '<div style="color:#d7d7df;line-height:1.7;font-size:15px;padding:6px 0">' . nl2br(pg_h($message)) . '</div>' . pg_mail_signature();
     $html = pg_mail_shell($bodyHtml, mb_substr($message, 0, 90));
     $ok = pg_send_mail($to, $subject, $html, pg_mail_from()[1]);
     if ($ok) {
@@ -261,8 +263,18 @@ if ($tab === 'settings') {
     echo '<div class="field"><label class="flabel">Passwort</label><input type="password" name="imap_pass" value="" placeholder="' . ($c['imap_pass']?'•••••• (gespeichert – leer lassen zum Behalten)':'Postfach-Passwort') . '" autocomplete="new-password"></div>';
 
     echo '<h2 class="sub-h">Signatur</h2>';
-    echo '<div class="field"><textarea name="signature" rows="3" placeholder="— Dein PLANIGAMES-Team">' . $v('signature') . '</textarea>'
-       . '<p class="hint">Wird unter jede gesendete Nachricht gesetzt.</p></div>';
+    echo '<p class="hint" style="margin-bottom:.6rem">Erscheint als gebrandeter Block unter deinen persönlichen Mails (Verfassen &amp; Antworten). '
+       . 'E-Mail, Website &amp; Social-Links werden automatisch aus den Studio-Einstellungen ergänzt.</p>';
+    $sigOn = ($c['sig_enabled'] ?? true) ? ' checked' : '';
+    echo '<div class="field"><input type="hidden" name="sig_enabled" value="0">'
+       . '<label class="switch"><input type="checkbox" name="sig_enabled" value="1"' . $sigOn . '><span>Signatur anhängen</span></label></div>';
+    echo '<div class="mailgrid">';
+    echo '<div class="field"><label class="flabel">Name</label><input type="text" name="sig_name" value="' . $v('sig_name') . '" placeholder="Dominic Majewski"></div>';
+    echo '<div class="field"><label class="flabel">Rolle / Titel</label><input type="text" name="sig_role" value="' . $v('sig_role') . '" placeholder="Founder · PLANIGAMES"></div>';
+    echo '</div>';
+    echo '<div class="field"><label class="flabel">Telefon (optional)</label><input type="text" name="sig_phone" value="' . $v('sig_phone') . '" placeholder="+49 …"></div>';
+    echo '<div class="field"><label class="flabel">Schlusszeile (optional)</label><input type="text" name="signature" value="' . $v('signature') . '" placeholder="Bis bald im Chaos,">'
+       . '<p class="hint">Kurze Grußzeile über deinem Namen, z. B. „Beste Grüße" oder „Bis bald im Chaos".</p></div>';
 
     echo '<div class="editor-foot"><button class="btn-primary" name="save_settings" value="1">Einstellungen speichern</button></div>';
     echo '</form>';

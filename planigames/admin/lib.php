@@ -222,8 +222,51 @@ function pg_mail_config(){
     // IMAP (Empfang)
     'imap_host'  => '', 'imap_port' => 993, 'imap_secure' => 'ssl',
     'imap_user'  => '', 'imap_pass' => '',
-    'signature'  => '',
+    // Signatur (gebrandeter Block unter Einzelmails)
+    'sig_enabled' => true,
+    'sig_name'    => '',
+    'sig_role'    => '',
+    'sig_phone'   => '',
+    'signature'   => '',   // optionale Schlusszeile (z. B. "Bis bald im Chaos")
   ];
+}
+
+/* Gebrandete E-Mail-Signatur aus der Mail-Config + Studio-Kontaktdaten.
+   Erscheint unter persönlichen Mails (Verfassen / Antworten), nicht im Newsletter. */
+function pg_mail_signature(){
+  $c = pg_mail_config();
+  if (($c['sig_enabled'] ?? true) === false) return '';
+  $s = pg_load_json(PG_DATA_DIR . '/studio.json');
+  $name    = trim((string)($c['sig_name'] ?? ''));
+  $role    = trim((string)($c['sig_role'] ?? ''));
+  $phone   = trim((string)($c['sig_phone'] ?? ''));
+  $closing = trim((string)($c['signature'] ?? ''));
+  $email   = trim((string)($s['email'] ?? ''));
+  $siteUrl = pg_site_url();
+  $siteTxt = preg_replace('#^https?://#', '', $siteUrl);
+  $socials = array_filter(is_array($s['socials'] ?? null) ? $s['socials'] : [],
+             fn($x) => !empty($x['url']) && $x['url'] !== '#' && !empty($x['label']));
+
+  if ($name === '' && $role === '' && $closing === '' && $email === '') return '';
+
+  $out = '<div style="margin-top:28px">';
+  if ($closing !== '') $out .= '<div style="color:#c7c7d1;font-size:14px;line-height:1.6;margin-bottom:16px">' . nl2br(pg_h($closing)) . '</div>';
+  $out .= '<div style="width:42px;height:2px;background:linear-gradient(110deg,#e6a015,#ff7d1a);margin:0 0 14px"></div>';
+  if ($name !== '') $out .= '<div style="color:#ffffff;font-weight:700;font-size:15px">' . pg_h($name) . '</div>';
+  if ($role !== '') $out .= '<div style="color:#9a9aa6;font-size:13px;margin-top:2px">' . pg_h($role) . '</div>';
+
+  $contact = [];
+  if ($email)   $contact[] = '<a href="mailto:' . pg_h($email) . '" style="color:#ff8a2b;text-decoration:none">' . pg_h($email) . '</a>';
+  if ($siteTxt) $contact[] = '<a href="' . pg_h($siteUrl) . '" style="color:#ff8a2b;text-decoration:none">' . pg_h($siteTxt) . '</a>';
+  if ($phone)   $contact[] = '<span style="color:#9a9aa6">' . pg_h($phone) . '</span>';
+  if ($contact) $out .= '<div style="font-size:13px;margin-top:11px">' . implode(' &nbsp;·&nbsp; ', $contact) . '</div>';
+
+  $soc = [];
+  foreach ($socials as $x) $soc[] = '<a href="' . pg_h($x['url']) . '" style="color:#9a9aa6;text-decoration:none">' . pg_h($x['label']) . '</a>';
+  if ($soc) $out .= '<div style="font-size:12px;margin-top:9px;color:#6f6f7a">' . implode(' &nbsp;&nbsp; ', $soc) . '</div>';
+
+  $out .= '</div>';
+  return $out;
 }
 function pg_mail_config_save(array $c){
   // Bestehende Passwörter behalten, wenn das Formular sie leer lässt
