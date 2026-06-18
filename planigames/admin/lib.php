@@ -149,7 +149,7 @@ function pg_mail_shell($body, $preview = ''){
   return '<!doctype html><html><body style="margin:0;background:#050505;font-family:Arial,Helvetica,sans-serif;color:#ececf0">'
     . $pre
     . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050505;padding:32px 16px"><tr><td align="center">'
-    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#111114;border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden">'
+    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#111114;border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden">'
     . '<tr><td style="height:4px;background:linear-gradient(110deg,#e6a015,#ff7d1a 70%,#ff9d4d)"></td></tr>'
     . '<tr><td style="padding:30px 34px 0">' . pg_mail_logo_header() . '</td></tr>'
     . '<tr><td style="padding:8px 34px 6px">' . $body . '</td></tr>'
@@ -490,10 +490,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=5"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=6"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=5"></script></body></html>';
+  echo '<script src="assets/admin.js?v=6"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   echo '<header class="topbar"><a class="tb-brand" href="index.php"><span class="diamond"></span> PLANI<span class="grad">GAMES</span></a>';
