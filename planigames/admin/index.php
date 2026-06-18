@@ -178,7 +178,7 @@ if (($_GET['view'] ?? '') === 'subscribers') {
   $list = array_reverse($list);
   pg_view_head('Newsletter-Abos');
   pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor">';
+  echo '<div class="editor wide">';
   if (isset($_GET['cleared'])) echo '<div class="flash ok">✓ Liste geleert.</div>';
   echo '<div class="editor-head"><div><h1>📬 Newsletter-Abos</h1>'
      . '<p class="muted">' . count($list) . ' Anmeldung' . (count($list) === 1 ? '' : 'en') . '. Werden bei jeder Anmeldung auf der Website ergänzt.</p></div>';
@@ -234,7 +234,7 @@ if (($_GET['view'] ?? '') === 'media') {
 
   pg_view_head('Medien');
   pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor">';
+  echo '<div class="editor wide">';
   if (isset($_GET['deleted'])) echo '<div class="flash ok">✓ Datei gelöscht.</div>';
   echo '<div class="editor-head"><div><h1>🖼️ Medien-Bibliothek</h1>'
      . '<p class="muted">' . count($files) . ' Datei' . (count($files) === 1 ? '' : 'en') . ' im Ordner <code>/media</code>. Pfad kopieren und in beliebige Bild-/Datei-Felder einsetzen.</p></div></div>';
