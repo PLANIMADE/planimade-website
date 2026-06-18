@@ -469,6 +469,7 @@
         setText("[data-studio='aboutTitle']", s.aboutTitle);
 
         initMarquee();
+        renderHeroCountdown(s);
 
         // Hero-Hintergrund (Bild/Video) – optional aus den Studio-Einstellungen
         const heroBg = $("[data-hero-bg]");
@@ -532,6 +533,28 @@
         }
 
         renderCommunity(s);
+    }
+
+    // Release-Countdown im Hero (im Admin konfigurierbar)
+    function renderHeroCountdown(s) {
+        const mount = $("[data-hero-countdown]");
+        if (!mount) return;
+        const c = s.heroCountdown || {};
+        const ts = c.date ? Date.parse(c.date) : NaN;
+        if (c.enabled === false || isNaN(ts) || ts <= Date.now()) { mount.innerHTML = ""; return; }
+        const units = [["d", "Tage", "Days"], ["h", "Std", "Hrs"], ["m", "Min", "Min"], ["s", "Sek", "Sec"]];
+        const cells = units.map(([k, de, en]) => `
+            <div class="text-center">
+                <div class="cd-num font-display text-3xl md:text-5xl font-extrabold text-gradient tabular-nums" data-cd="${k}">--</div>
+                <div class="font-mono text-[9px] uppercase tracking-widest text-zinc-500 mt-1">${LANG === "en" ? en : de}</div>
+            </div>`).join("");
+        mount.className = "reveal mt-12 inline-flex flex-col gap-3";
+        mount.innerHTML = `
+            ${c.label ? `<span class="font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)]">${esc(c.label)}</span>` : ""}
+            <div class="cd-grid grid grid-cols-4 gap-4 md:gap-6" data-countdown="${ts}">${cells}</div>
+            <div class="cd-done hidden text-2xl font-bold text-[color:var(--accent)]" data-done="${esc(c.doneText || "")}"></div>`;
+        initCountdowns(mount);
+        observeReveals(mount);
     }
 
     // Discord-/Community-Banner (vor der Newsletter-Sektion einsetzen)
@@ -968,7 +991,7 @@
                 let diff = Math.floor((ts - Date.now()) / 1000);
                 if (diff <= 0) {
                     grid.style.display = "none";
-                    if (done) { done.classList.remove("hidden"); done.textContent = LANG === "en" ? "Out now! 🎉" : "Jetzt verfügbar! 🎉"; }
+                    if (done) { done.classList.remove("hidden"); done.textContent = done.dataset.done || (LANG === "en" ? "Out now! 🎉" : "Jetzt verfügbar! 🎉"); }
                     return false;
                 }
                 const d = Math.floor(diff / 86400); diff -= d * 86400;

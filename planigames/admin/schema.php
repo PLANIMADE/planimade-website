@@ -39,6 +39,12 @@ return [
       ['name'=>'heroLine2','label'=>'Hero – Zeile 2 (farbig)','widget'=>'string','hint'=>'Zweite Zeile, wird im Gold/Orange-Verlauf dargestellt.'],
       ['name'=>'intro','label'=>'Hero – Einleitungstext','widget'=>'text'],
       ['name'=>'marquee','label'=>'Laufband-Phrasen','widget'=>'text','hint'=>'Das durchlaufende Band unter dem Hero. Eine Phrase pro Zeile. Leer = Standard. Beispiel:'."\n".'Original Worlds'."\n".'Handcrafted Magic'."\n".'Indie & Proud'],
+      ['name'=>'heroCountdown','label'=>'Release-Countdown (Hero)','widget'=>'object','hint'=>'Zeigt einen Live-Countdown im Hero – z. B. bis Demo oder Release.','fields'=>[
+        ['name'=>'enabled','label'=>'Countdown anzeigen','widget'=>'boolean','default'=>false],
+        ['name'=>'label','label'=>'Beschriftung','widget'=>'string','default'=>'Bis zum Release','hint'=>'z. B. „Bis zur Demo" oder „Release in".'],
+        ['name'=>'date','label'=>'Zieldatum & Uhrzeit','widget'=>'datetime','hint'=>'Wann läuft der Countdown ab?'],
+        ['name'=>'doneText','label'=>'Text nach Ablauf','widget'=>'string','default'=>'Jetzt verfügbar! 🎉'],
+      ]],
       ['name'=>'heroBackground','label'=>'Hero – Hintergrundbild (optional)','widget'=>'image','hint'=>'Querformat, ca. 2000×1200 px. Liegt hinter der Startseiten-Überschrift.'],
       ['name'=>'heroVideo','label'=>'Hero – Hintergrund-Video (optional, mp4)','widget'=>'file','hint'=>'Läuft automatisch, stumm, als Loop. Überschreibt das Bild.'],
       ['name'=>'aboutTitle','label'=>'Über uns – Überschrift','widget'=>'string'],
