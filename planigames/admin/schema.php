@@ -129,6 +129,7 @@ return [
         ['name'=>'name','label'=>'Name','widget'=>'string'],
         ['name'=>'role','label'=>'Rolle','widget'=>'string','hint'=>'z. B. Founder · Code & Design'],
         ['name'=>'photo','label'=>'Foto','widget'=>'image','hint'=>'Quadratisch, ca. 400×400 px (JPG/PNG). Ohne Foto wird das Emoji gezeigt.'],
+        ['name'=>'photoAlt','label'=>'Foto – Alt-Text','widget'=>'string','hint'=>'Bildbeschreibung für SEO & Screenreader. Leer = Name.'],
         ['name'=>'emoji','label'=>'Emoji (falls kein Foto)','widget'=>'string','default'=>'🧙'],
       ]],
     ],
@@ -151,6 +152,7 @@ return [
         ['name'=>'accent2','label'=>'Zweitfarbe','widget'=>'color','default'=>'#e6a015','hint'=>'Zweite HEX-Farbe für Verläufe.'],
         ['name'=>'featured','label'=>'Hervorgehoben (Startseite)','widget'=>'boolean'],
         ['name'=>'cover','label'=>'Cover-Bild','widget'=>'image','hint'=>'Querformat 16:10, ca. 1600×1000 px (JPG/WebP). Für Karten & Startseite.'],
+        ['name'=>'coverAlt','label'=>'Cover – Alt-Text','widget'=>'string','hint'=>'Bildbeschreibung für SEO & Screenreader. Leer = Spieltitel.'],
         ['name'=>'logo','label'=>'Logo (transparent)','widget'=>'image','hint'=>'Transparentes PNG, ca. 800×400 px – wird im Hero statt des Titels gezeigt.'],
         ['name'=>'logoScale','label'=>'Logo-Größe (%)','widget'=>'number','default'=>100,'hint'=>'100 = Standard. Wirkt auf Hero & Startseiten-Card. z. B. 60 (kleiner) oder 160 (größer).'],
         ['name'=>'wishlistUrl','label'=>'Wishlist / Store-Link','widget'=>'string','hint'=>'z. B. Steam-Seite.'],
@@ -178,7 +180,10 @@ return [
           ]],
           'gallery'=>['label'=>'Bildergalerie','fields'=>[
             ['name'=>'heading','label'=>'Überschrift','widget'=>'string'],
-            ['name'=>'images','label'=>'Bilder','widget'=>'list','hint'=>'Screenshots im Querformat 16:9, ca. 1920×1080 px.','field'=>['name'=>'image','label'=>'Bild','widget'=>'image']],
+            ['name'=>'images','label'=>'Bilder','widget'=>'list','summary'=>'alt','hint'=>'Screenshots im Querformat 16:9, ca. 1920×1080 px.','fields'=>[
+              ['name'=>'image','label'=>'Bild','widget'=>'image'],
+              ['name'=>'alt','label'=>'Alt-Text (Bildbeschreibung)','widget'=>'string','hint'=>'Kurze Beschreibung für SEO & Screenreader, z. B. „Zwei Magier kämpfen in einem Lava-Dungeon".'],
+            ]],
           ]],
           'trailer'=>['label'=>'Trailer / Video','fields'=>[
             ['name'=>'heading','label'=>'Überschrift','widget'=>'string'],
@@ -254,6 +259,7 @@ return [
         ['name'=>'version','label'=>'Version','widget'=>'string','hint'=>'z. B. 0.3.0 – erscheint als Badge.'],
         ['name'=>'tags','label'=>'Tags','widget'=>'list','field'=>['name'=>'tag','label'=>'Tag','widget'=>'string']],
         ['name'=>'cover','label'=>'Titelbild','widget'=>'image','hint'=>'Querformat 16:9, ca. 1600×900 px.'],
+        ['name'=>'coverAlt','label'=>'Titelbild – Alt-Text','widget'=>'string','hint'=>'Bildbeschreibung für SEO & Screenreader. Leer = Titel.'],
         ['name'=>'excerpt','label'=>'Kurzfassung','widget'=>'text','hint'=>'Teaser für die Übersicht.'],
         ['name'=>'body','label'=>'Inhalt','widget'=>'markdown'],
       ]],
