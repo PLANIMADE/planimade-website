@@ -54,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
     'imap_user'  => trim($_POST['imap_user'] ?? ''),
     'imap_pass'  => (string)($_POST['imap_pass'] ?? ''),
     'sig_enabled'=> !empty($_POST['sig_enabled']),
+    'sig_logo'   => !empty($_POST['sig_logo']),
     'sig_name'   => trim($_POST['sig_name'] ?? ''),
     'sig_role'   => trim($_POST['sig_role'] ?? ''),
     'sig_phone'  => trim($_POST['sig_phone'] ?? ''),
@@ -266,8 +267,12 @@ if ($tab === 'settings') {
     echo '<p class="hint" style="margin-bottom:.6rem">Erscheint als gebrandeter Block unter deinen persönlichen Mails (Verfassen &amp; Antworten). '
        . 'E-Mail, Website &amp; Social-Links werden automatisch aus den Studio-Einstellungen ergänzt.</p>';
     $sigOn = ($c['sig_enabled'] ?? true) ? ' checked' : '';
+    $logoOn = ($c['sig_logo'] ?? true) ? ' checked' : '';
     echo '<div class="field"><input type="hidden" name="sig_enabled" value="0">'
        . '<label class="switch"><input type="checkbox" name="sig_enabled" value="1"' . $sigOn . '><span>Signatur anhängen</span></label></div>';
+    echo '<div class="field"><input type="hidden" name="sig_logo" value="0">'
+       . '<label class="switch"><input type="checkbox" name="sig_logo" value="1"' . $logoOn . '><span>Logo in der Signatur anzeigen</span></label>'
+       . '<p class="hint">Zeigt dein hochgeladenes Studio-Logo links neben Name &amp; Rolle.</p></div>';
     echo '<div class="mailgrid">';
     echo '<div class="field"><label class="flabel">Name</label><input type="text" name="sig_name" value="' . $v('sig_name') . '" placeholder="Dominic Majewski"></div>';
     echo '<div class="field"><label class="flabel">Rolle / Titel</label><input type="text" name="sig_role" value="' . $v('sig_role') . '" placeholder="Founder · PLANIGAMES"></div>';

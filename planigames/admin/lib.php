@@ -224,6 +224,7 @@ function pg_mail_config(){
     'imap_user'  => '', 'imap_pass' => '',
     // Signatur (gebrandeter Block unter Einzelmails)
     'sig_enabled' => true,
+    'sig_logo'    => true,
     'sig_name'    => '',
     'sig_role'    => '',
     'sig_phone'   => '',
@@ -249,22 +250,36 @@ function pg_mail_signature(){
 
   if ($name === '' && $role === '' && $closing === '' && $email === '') return '';
 
-  $out = '<div style="margin-top:28px">';
-  if ($closing !== '') $out .= '<div style="color:#c7c7d1;font-size:14px;line-height:1.6;margin-bottom:16px">' . nl2br(pg_h($closing)) . '</div>';
-  $out .= '<div style="width:42px;height:2px;background:linear-gradient(110deg,#e6a015,#ff7d1a);margin:0 0 14px"></div>';
-  if ($name !== '') $out .= '<div style="color:#ffffff;font-weight:700;font-size:15px">' . pg_h($name) . '</div>';
-  if ($role !== '') $out .= '<div style="color:#9a9aa6;font-size:13px;margin-top:2px">' . pg_h($role) . '</div>';
+  // Textspalte der Signatur (Name, Rolle, Kontakt, Socials)
+  $lines = '';
+  if ($name !== '') $lines .= '<div style="color:#ffffff;font-weight:700;font-size:15px">' . pg_h($name) . '</div>';
+  if ($role !== '') $lines .= '<div style="color:#9a9aa6;font-size:13px;margin-top:2px">' . pg_h($role) . '</div>';
 
   $contact = [];
   if ($email)   $contact[] = '<a href="mailto:' . pg_h($email) . '" style="color:#ff8a2b;text-decoration:none">' . pg_h($email) . '</a>';
   if ($siteTxt) $contact[] = '<a href="' . pg_h($siteUrl) . '" style="color:#ff8a2b;text-decoration:none">' . pg_h($siteTxt) . '</a>';
   if ($phone)   $contact[] = '<span style="color:#9a9aa6">' . pg_h($phone) . '</span>';
-  if ($contact) $out .= '<div style="font-size:13px;margin-top:11px">' . implode(' &nbsp;·&nbsp; ', $contact) . '</div>';
+  if ($contact) $lines .= '<div style="font-size:13px;margin-top:11px">' . implode(' &nbsp;·&nbsp; ', $contact) . '</div>';
 
   $soc = [];
   foreach ($socials as $x) $soc[] = '<a href="' . pg_h($x['url']) . '" style="color:#9a9aa6;text-decoration:none">' . pg_h($x['label']) . '</a>';
-  if ($soc) $out .= '<div style="font-size:12px;margin-top:9px;color:#6f6f7a">' . implode(' &nbsp;&nbsp; ', $soc) . '</div>';
+  if ($soc) $lines .= '<div style="font-size:12px;margin-top:9px;color:#6f6f7a">' . implode(' &nbsp;&nbsp; ', $soc) . '</div>';
 
+  // Logo links neben dem Text (optional, falls hochgeladen)
+  $logo = pg_mail_logo_url();
+  $showLogo = ($c['sig_logo'] ?? true) && $logo !== '';
+
+  $out = '<div style="margin-top:28px">';
+  if ($closing !== '') $out .= '<div style="color:#c7c7d1;font-size:14px;line-height:1.6;margin-bottom:16px">' . nl2br(pg_h($closing)) . '</div>';
+  $out .= '<div style="width:42px;height:2px;background:linear-gradient(110deg,#e6a015,#ff7d1a);margin:0 0 16px"></div>';
+  if ($showLogo) {
+    $out .= '<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>'
+      . '<td valign="top" style="padding:2px 18px 0 0;border-right:1px solid rgba(255,255,255,.12)">'
+      . '<img src="' . pg_h($logo) . '" alt="PLANIGAMES" height="46" style="height:46px;width:auto;max-width:150px;display:block;border:0;outline:none">'
+      . '</td><td valign="top" style="padding-left:18px">' . $lines . '</td></tr></table>';
+  } else {
+    $out .= $lines;
+  }
   $out .= '</div>';
   return $out;
 }
