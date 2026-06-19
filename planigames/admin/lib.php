@@ -540,14 +540,21 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=12"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=13"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=12"></script></body></html>';
+  echo '<script src="assets/admin.js?v=13"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
-  echo '<header class="topbar"><a class="tb-brand" href="index.php"><span class="diamond"></span> PLANI<span class="grad">GAMES</span></a>';
-  echo '<nav class="tb-nav">';
+  $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
+  $logo = trim((string) ($studio['logo'] ?? ''));
+  $brand = $logo !== ''
+    ? '<img src="' . pg_h($logo) . '" alt="PLANIGAMES" class="tb-logo">'
+    : '<span class="diamond"></span> PLANI<span class="grad">GAMES</span>';
+  echo '<header class="topbar">';
+  echo '<a class="tb-brand" href="index.php">' . $brand . '</a>';
+  echo '<button type="button" class="tb-burger" id="tb-burger" aria-label="Menü" aria-expanded="false"><span></span><span></span><span></span></button>';
+  echo '<nav class="tb-nav" id="tb-nav">';
   foreach ($SCHEMA as $key => $coll) {
     if (!pg_can($key)) continue;
     $cls = $key === $active ? ' class="on"' : '';
@@ -559,6 +566,9 @@ function pg_view_topbar($SCHEMA, $active){
   if (pg_can('mail')) { $mu = pg_mail_unread_cached(); echo '<a' . ($active === 'mail' ? ' class="on"' : '') . ' href="mail.php">✉ Mails' . ($mu ? '<span class="nbadge">' . $mu . '</span>' : '') . '</a>'; }
   if (pg_is_owner()) echo '<a href="index.php?view=users">Zugänge</a>';
   if (pg_is_owner()) echo '<a href="index.php?view=backup">Backup</a>';
+  echo '<span class="tb-mobile-extra">';
+  if (pg_logged_in()) echo '<span class="tb-user">' . pg_h(pg_current_email()) . '</span>';
+  echo '<a href="../index.html" target="_blank">↗ Seite ansehen</a><a href="index.php?action=logout">Abmelden</a></span>';
   echo '</nav>';
   echo '<span class="tb-right">';
   if (pg_logged_in()) echo '<span class="tb-user" title="' . pg_h(pg_current_email()) . '">' . pg_h(pg_current_email()) . '</span>';

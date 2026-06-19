@@ -196,6 +196,16 @@
     search.addEventListener("input", apply);
   });
 
+  // ---- Admin-Topbar: Mobile-Burger ----
+  const tbBurger = document.getElementById("tb-burger");
+  if (tbBurger) {
+    const topbar = tbBurger.closest(".topbar");
+    tbBurger.addEventListener("click", () => {
+      const open = topbar.classList.toggle("nav-open");
+      tbBurger.setAttribute("aria-expanded", String(open));
+    });
+  }
+
   // ---- Medien-Bibliothek: Pfad kopieren ----
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-copy]");

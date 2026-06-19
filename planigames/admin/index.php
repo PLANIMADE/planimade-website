@@ -316,8 +316,14 @@ if (($_GET['view'] ?? '') === 'contacts') {
          . '<span class="contact-date">' . pg_h(substr($r['date'] ?? '', 0, 16)) . '</span></div>';
       if ($subj !== '') echo '<div class="contact-subj">' . pg_h($subj) . '</div>';
       echo '<div class="contact-msg">' . nl2br(pg_h($r['message'] ?? '')) . '</div>';
+      $replySubj = rawurlencode('Re: ' . ($subj ?: 'Deine Anfrage'));
+      $quote = "\n\n\n— Deine Nachricht vom " . substr($r['date'] ?? '', 0, 10) . " —\n"
+             . preg_replace('/^/m', '> ', (string) ($r['message'] ?? ''));
+      $replyHref = pg_can('mail')
+        ? 'mail.php?tab=compose&to=' . rawurlencode($r['email'] ?? '') . '&subject=' . $replySubj . '&body=' . rawurlencode($quote)
+        : 'mailto:' . pg_h($r['email'] ?? '') . '?subject=' . $replySubj;
       echo '<div class="contact-actions">'
-         . '<a class="btn-add" href="mailto:' . pg_h($r['email'] ?? '') . '?subject=' . rawurlencode('Re: ' . ($subj ?: 'Deine Anfrage')) . '">↩︎ Antworten</a>'
+         . '<a class="btn-add" href="' . pg_h($replyHref) . '">↩︎ Antworten</a>'
          . '<form method="post" onsubmit="return confirm(\'Diese Anfrage löschen?\')" style="margin:0">'
          . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
          . '<input type="hidden" name="idx" value="' . $i . '">'

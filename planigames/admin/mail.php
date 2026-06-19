@@ -207,6 +207,7 @@ if ($tab === 'inbox') {
 if ($tab === 'compose') {
   $to = pg_h($_GET['to'] ?? '');
   $subject = pg_h($_GET['subject'] ?? '');
+  $prefill = pg_h($_GET['body'] ?? '');
   $sendInfo = pg_mail_configured_send()
     ? 'Versand über deinen SMTP-Server. Die Mail wird im gebrandeten PLANIGAMES-Layout (mit deinem Logo) verschickt.'
     : 'Noch kein SMTP hinterlegt – es wird die Server-Funktion <code>mail()</code> genutzt. Für zuverlässige Zustellung empfiehlt sich SMTP unter <a href="mail.php?tab=settings">Einstellungen</a>.';
@@ -216,7 +217,7 @@ if ($tab === 'compose') {
   echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
   echo '<div class="field"><label class="flabel">An (E-Mail)</label><input type="text" name="to" value="' . $to . '" placeholder="empfaenger@beispiel.de" required></div>';
   echo '<div class="field"><label class="flabel">Betreff</label><input type="text" name="subject" value="' . $subject . '" required></div>';
-  echo '<div class="field"><label class="flabel">Nachricht</label><textarea name="message" rows="12" required placeholder="Deine Nachricht …" data-mail-input></textarea>'
+  echo '<div class="field"><label class="flabel">Nachricht</label><textarea name="message" rows="12" required placeholder="Deine Nachricht …" data-mail-input>' . $prefill . '</textarea>'
      . '<p class="hint">Reiner Text – Zeilenumbrüche bleiben erhalten. Die Mail wird automatisch ins PLANIGAMES-Design eingebettet.</p></div>';
   echo '<div class="editor-foot"><button class="btn-primary" name="send_mail" value="1">Senden →</button></div>';
   echo '</form>';
