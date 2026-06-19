@@ -199,6 +199,7 @@ button{font:inherit;cursor:pointer}
 .btn-up:hover{border-color:var(--accent)}
 .media-status{flex-basis:100%;font-size:.8rem;color:var(--muted)}
 .media-prev{color:var(--accent);text-decoration:none;word-break:break-all}
+.opt-note{color:#86e0a3;font-size:.78rem}
 .up-err{color:#ff8585}
 
 /* ---- Listen & Blöcke ---- */

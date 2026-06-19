@@ -143,6 +143,18 @@
     if (item) updateSummary(item);
   });
 
+  // Größenangabe & Optimierungs-Hinweis
+  function fmtKB(b) {
+    if (b >= 1048576) return (b / 1048576).toFixed(1).replace(".", ",") + " MB";
+    return Math.max(1, Math.round(b / 1024)) + " KB";
+  }
+  function optNote(j) {
+    if (!j || !j.optimized) return "";
+    const o = j.optimized;
+    const saved = o.before > 0 ? Math.round((1 - o.after / o.before) * 100) : 0;
+    return ' <span class="opt-note">· optimiert ' + fmtKB(o.before) + " → " + fmtKB(o.after) + (saved > 0 ? " (−" + saved + "%)" : "") + "</span>";
+  }
+
   // ---- Datei-Upload ----
   document.addEventListener("change", async (e) => {
     const fileInput = e.target.closest("[data-media-file]");
@@ -161,7 +173,7 @@
       if (j.error) { status.innerHTML = '<span class="up-err">' + j.error + "</span>"; }
       else {
         textInput.value = j.path;
-        status.innerHTML = '<a href="' + j.path + '" target="_blank" class="media-prev">' + j.path + "</a>";
+        status.innerHTML = '<a href="' + j.path + '" target="_blank" class="media-prev">' + j.path + "</a>" + optNote(j);
       }
     } catch (err) {
       status.innerHTML = '<span class="up-err">Upload-Fehler</span>';
@@ -310,7 +322,7 @@
         const r = await fetch("index.php?action=upload", { method: "POST", body: fd });
         const j = await r.json();
         if (j.error) { status.innerHTML = '<span class="up-err">' + j.error + "</span>"; }
-        else { status.textContent = "✓ Hochgeladen — Seite wird aktualisiert…"; location.reload(); }
+        else { status.innerHTML = "✓ Hochgeladen" + optNote(j) + " — Seite wird aktualisiert…"; setTimeout(() => location.reload(), j.optimized ? 1100 : 200); }
       } catch { status.innerHTML = '<span class="up-err">Upload-Fehler</span>'; }
     });
   }

@@ -684,10 +684,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=21"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=22"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=21"></script></body></html>';
+  echo '<script src="assets/admin.js?v=22"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -915,7 +915,66 @@ function pg_handle_upload(){
   if (!move_uploaded_file($f['tmp_name'], PG_MEDIA_DIR . '/' . $name)) {
     echo json_encode(['error' => 'Konnte Datei nicht speichern (Schreibrechte am Ordner media/ prüfen).']); return;
   }
-  echo json_encode(['path' => '/media/' . $name]);
+  $resp = ['path' => '/media/' . $name];
+  $opt = pg_optimize_image(PG_MEDIA_DIR . '/' . $name, $ext);
+  if ($opt) $resp['optimized'] = $opt;
+  echo json_encode($resp);
+}
+
+/* Bild beim Upload verkleinern/komprimieren (nur wenn GD verfügbar).
+   - skaliert auf max. 2000 px lange Kante herunter
+   - korrigiert EXIF-Drehung (JPEG)
+   - re-encodet mit moderater Qualität; behält Transparenz bei PNG/WebP
+   Gibt ['before'=>Bytes,'after'=>Bytes] zurück, sonst null (unverändert). */
+function pg_optimize_image($path, $ext){
+  if (!function_exists('imagecreatetruecolor')) return null;
+  $ext = strtolower($ext);
+  $maxEdge = 2000; $quality = 82;
+  $before = (int) @filesize($path);
+  switch ($ext) {
+    case 'jpg': case 'jpeg': $img = function_exists('imagecreatefromjpeg') ? @imagecreatefromjpeg($path) : null; break;
+    case 'png':  $img = function_exists('imagecreatefrompng')  ? @imagecreatefrompng($path)  : null; break;
+    case 'webp': $img = function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : null; break;
+    default: return null; // svg/gif/avif/Videos unangetastet lassen
+  }
+  if (!$img) return null;
+  $w = imagesx($img); $h = imagesy($img);
+  if ($w < 1 || $h < 1) { imagedestroy($img); return null; }
+  // EXIF-Orientierung (nur JPEG)
+  $orient = 0;
+  if (($ext === 'jpg' || $ext === 'jpeg') && function_exists('exif_read_data')) {
+    $ex = @exif_read_data($path);
+    $orient = (int) ($ex['Orientation'] ?? 0);
+  }
+  $scale = min(1, $maxEdge / $w, $maxEdge / $h);
+  $needResize = $scale < 1;
+  $needRotate = in_array($orient, [3, 6, 8], true);
+  $isJpeg = ($ext === 'jpg' || $ext === 'jpeg');
+  // Nichts zu tun und Datei nicht übermäßig groß → Original behalten
+  if (!$needResize && !$needRotate && !($isJpeg && $before > 600 * 1024)) { imagedestroy($img); return null; }
+  $nw = $needResize ? max(1, (int) round($w * $scale)) : $w;
+  $nh = $needResize ? max(1, (int) round($h * $scale)) : $h;
+  $dst = imagecreatetruecolor($nw, $nh);
+  if ($ext === 'png' || $ext === 'webp') {
+    imagealphablending($dst, false); imagesavealpha($dst, true);
+    imagefilledrectangle($dst, 0, 0, $nw, $nh, imagecolorallocatealpha($dst, 0, 0, 0, 127));
+  }
+  imagecopyresampled($dst, $img, 0, 0, 0, 0, $nw, $nh, $w, $h);
+  imagedestroy($img);
+  if ($needRotate && function_exists('imagerotate')) {
+    $deg = $orient === 3 ? 180 : ($orient === 6 ? -90 : 90);
+    $rot = @imagerotate($dst, $deg, 0);
+    if ($rot) { imagedestroy($dst); $dst = $rot; }
+  }
+  $tmp = $path . '.opt';
+  $ok = $ext === 'png' ? @imagepng($dst, $tmp, 6) : ($ext === 'webp' ? @imagewebp($dst, $tmp, $quality) : @imagejpeg($dst, $tmp, $quality));
+  imagedestroy($dst);
+  if ($ok && is_file($tmp)) {
+    $after = (int) filesize($tmp);
+    if ($needResize || $needRotate || ($after > 0 && $after < $before)) { @rename($tmp, $path); return ['before' => $before, 'after' => $after]; }
+    @unlink($tmp);
+  }
+  return null;
 }
 
 /* =====================================================================
