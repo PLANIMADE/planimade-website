@@ -251,6 +251,16 @@ body.fx-particles-only .glow-blob { display: none; }
     .glow-1, .glow-2 { animation: none !important; }
 }
 
+/* ---------- Teilen-Buttons (Devlog) ---------- */
+.share-btn {
+    display: inline-grid; place-items: center; width: 42px; height: 42px;
+    border-radius: 9999px; border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.03); color: #fff; font-size: 1.05rem;
+    text-decoration: none; cursor: pointer; transition: border-color .2s, background .2s, transform .2s;
+}
+.share-btn:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); transform: translateY(-2px); }
+.share-btn.copied { border-color: var(--accent); color: var(--accent); }
+
 /* ---------- Roadmap-Fortschrittsbalken ---------- */
 .roadmap-bar { transition: width 1.2s cubic-bezier(0.16,1,0.3,1); box-shadow: 0 0 18px -2px color-mix(in srgb, var(--accent) 70%, transparent); }
 

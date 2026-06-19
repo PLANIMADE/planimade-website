@@ -45,6 +45,25 @@
         } catch { return iso; }
     }
 
+    // Lesezeit aus dem Text schätzen (~200 Wörter/Min)
+    function readingTime(text) {
+        const words = String(text || "").trim().split(/\s+/).filter(Boolean).length;
+        return Math.max(1, Math.round(words / 200));
+    }
+    // Teilen-Leiste (X, Bluesky, Reddit, Link kopieren)
+    function shareBar(title) {
+        const url = location.href;
+        const u = encodeURIComponent(url), tt = encodeURIComponent(title);
+        const ico = (label, href, svg) => `<a href="${href}" target="_blank" rel="noopener" aria-label="${label}" title="${label}" class="share-btn">${svg}</a>`;
+        return `<div class="flex items-center gap-3 flex-wrap mt-14 pt-8 border-t border-white/10">
+            <span class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 mr-1">${t("share")}</span>
+            ${ico("X / Twitter", `https://twitter.com/intent/tweet?text=${tt}&url=${u}`, "𝕏")}
+            ${ico("Bluesky", `https://bsky.app/intent/compose?text=${tt}%20${u}`, "🦋")}
+            ${ico("Reddit", `https://www.reddit.com/submit?url=${u}&title=${tt}`, "👽")}
+            <button type="button" class="share-btn" data-share-copy aria-label="${t("copy_link")}" title="${t("copy_link")}">🔗</button>
+        </div>`;
+    }
+
     // Ist ein Devlog-Beitrag öffentlich sichtbar? (kein Entwurf, geplanter Termin erreicht)
     function isPublished(p) {
         if (!p) return false;
@@ -89,6 +108,7 @@
             c_name: "Name", c_email: "E-Mail", c_subject: "Betreff", c_message: "Deine Nachricht",
             c_name_ph: "Wie heißt du?", c_email_ph: "deine@mail.de", c_subject_ph: "Worum geht's?",
             c_message_ph: "Schreib uns …", c_send: "Nachricht senden", c_or_mail: "Oder schreib direkt an",
+            read_time: "Min Lesezeit", share: "Teilen", link_copied: "Link kopiert ✓", copy_link: "Link kopieren",
         },
         en: {
             nav_studio: "Studio", nav_games: "Games", nav_devlog: "Devlog", nav_contact: "Contact",
@@ -120,6 +140,7 @@
             c_name: "Name", c_email: "Email", c_subject: "Subject", c_message: "Your message",
             c_name_ph: "What's your name?", c_email_ph: "your@mail.com", c_subject_ph: "What's it about?",
             c_message_ph: "Write to us …", c_send: "Send message", c_or_mail: "Or email us directly at",
+            read_time: "min read", share: "Share", link_copied: "Link copied ✓", copy_link: "Copy link",
         },
     };
     function detectLang() {
@@ -1101,6 +1122,7 @@
                 <a href="devlog.php" class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 hover:text-white">${t("back_all")}</a>
                 <div class="flex items-center gap-2 flex-wrap mt-8 mb-5">
                     <span class="font-mono text-xs text-zinc-500">${esc(fmtDate(p.date))}</span>
+                    <span class="font-mono text-xs text-zinc-600">· ${readingTime(p.body)} ${t("read_time")}</span>
                     ${g ? `<a href="game.php?slug=${esc(g.slug)}" class="badge px-2 py-0.5 rounded border border-white/10 text-zinc-300 hover:border-white/40">${esc(g.title)}</a>` : ""}
                     ${p.version ? `<span class="badge text-[color:var(--accent)]">v${esc(p.version)}</span>` : ""}
                     ${(p.tags || []).map(t => `<span class="badge text-zinc-600">#${esc(t)}</span>`).join("")}
@@ -1108,10 +1130,12 @@
                 <h1 class="font-display text-4xl md:text-6xl font-extrabold text-white leading-[1.05] mb-8">${esc(p.title)}</h1>
                 ${p.cover ? `<img src="${esc(p.cover)}" alt="${esc(p.coverAlt || p.title || "")}" class="w-full rounded-2xl border border-white/10 mb-10">` : ""}
                 <div class="prose-pg">${md(p.body || "")}</div>
-                ${g && g.wishlistUrl ? `<div class="mt-14 pt-10 border-t border-white/10 text-center">
+                ${shareBar(p.title)}
+                ${g && g.wishlistUrl ? `<div class="mt-12 pt-8 border-t border-white/10 text-center">
                     <a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic inline-block px-9 py-4 rounded-full font-semibold">${esc(g.title)} auf Steam wishlisten</a></div>` : ""}
             </div>`;
         initMagnetic();
+        initShareCopy();
     }
 
     /* =========================================================
@@ -1480,6 +1504,23 @@
                 if (btn) btn.disabled = false;
             }
             delete form.dataset.busy;
+        });
+    }
+
+    let _shareBound = false;
+    function initShareCopy() {
+        if (_shareBound) return; _shareBound = true;
+        document.addEventListener("click", (e) => {
+            const btn = e.target.closest("[data-share-copy]");
+            if (!btn) return;
+            const done = () => {
+                const old = btn.textContent;
+                btn.textContent = "✓";
+                btn.classList.add("copied");
+                setTimeout(() => { btn.textContent = old; btn.classList.remove("copied"); }, 1400);
+            };
+            if (navigator.clipboard) navigator.clipboard.writeText(location.href).then(done).catch(done);
+            else done();
         });
     }
 
