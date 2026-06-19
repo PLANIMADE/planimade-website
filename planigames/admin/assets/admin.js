@@ -270,4 +270,41 @@
       } catch { status.innerHTML = '<span class="up-err">Upload-Fehler</span>'; }
     });
   }
+
+  // ---- Tastatur-Shortcuts ----
+  function primarySaveButton() {
+    return document.querySelector('#editor button[name="save"], button[name="save"], form .btn-primary[type="submit"], form button.btn-primary');
+  }
+  document.addEventListener("keydown", (e) => {
+    // Strg/Cmd + S = Speichern
+    if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
+      const btn = primarySaveButton();
+      if (btn) { e.preventDefault(); btn.click(); }
+      return;
+    }
+    // ? = Hilfe-Overlay (nur außerhalb von Eingabefeldern)
+    const inField = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || ""));
+    if (e.key === "?" && !inField) { e.preventDefault(); toggleShortcutHelp(); return; }
+    if (e.key === "Escape") {
+      const help = document.getElementById("kbd-help");
+      if (help) { help.remove(); return; }
+      const tb = document.querySelector(".topbar.nav-open");
+      if (tb) tb.classList.remove("nav-open");
+    }
+  });
+  function toggleShortcutHelp() {
+    const ex = document.getElementById("kbd-help");
+    if (ex) { ex.remove(); return; }
+    const d = document.createElement("div");
+    d.id = "kbd-help";
+    d.innerHTML = `<div class="kbd-box">
+      <h3>Tastatur-Shortcuts</h3>
+      <div class="kbd-row"><span><kbd>Strg</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd></span><span>Speichern</span></div>
+      <div class="kbd-row"><span><kbd>?</kbd></span><span>Diese Hilfe</span></div>
+      <div class="kbd-row"><span><kbd>Esc</kbd></span><span>Schließen / Menü zu</span></div>
+      <button class="btn-add" data-kbd-close>Schließen</button>
+    </div>`;
+    d.addEventListener("click", (e) => { if (e.target === d || e.target.closest("[data-kbd-close]")) d.remove(); });
+    document.body.appendChild(d);
+  }
 })();
