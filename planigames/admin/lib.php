@@ -101,6 +101,43 @@ function pg_mail_unread_store($count){
   pg_save_json(PG_MAIL_UNREAD_FILE, ['count' => max(0, (int) $count), 'time' => time()]);
 }
 
+/* ---------------- Login-Schutz (Brute-Force-Bremse) ---------------- */
+const PG_LOGIN_FILE = __DIR__ . '/../data/login_attempts.json';
+const PG_LOGIN_MAX  = 6;      // erlaubte Fehlversuche
+const PG_LOGIN_WIN  = 900;    // Zeitfenster / Sperre in Sekunden (15 Min)
+function pg_client_ip(){ return (string) ($_SERVER['REMOTE_ADDR'] ?? ''); }
+function pg_ip_hash(){ return substr(hash_hmac('sha256', pg_client_ip(), pg_app_secret()), 0, 16); }
+// Gibt verbleibende Sperrzeit in Sekunden zurück (0 = erlaubt)
+function pg_login_locked(){
+  $all = pg_load_json(PG_LOGIN_FILE); $now = time(); $ipk = pg_ip_hash();
+  $fails = array_filter((array) ($all[$ipk] ?? []), fn($t) => $t > $now - PG_LOGIN_WIN);
+  if (count($fails) >= PG_LOGIN_MAX) return PG_LOGIN_WIN - ($now - min($fails));
+  return 0;
+}
+function pg_login_record_fail(){
+  $all = pg_load_json(PG_LOGIN_FILE); if (!is_array($all)) $all = [];
+  $now = time(); $ipk = pg_ip_hash();
+  $all[$ipk][] = $now;
+  foreach ($all as $k => $ts) {                       // Alteinträge aufräumen
+    $all[$k] = array_values(array_filter((array) $ts, fn($t) => $t > $now - 3600));
+    if (!$all[$k]) unset($all[$k]);
+  }
+  pg_save_json(PG_LOGIN_FILE, $all);
+}
+function pg_login_clear(){
+  $all = pg_load_json(PG_LOGIN_FILE); $ipk = pg_ip_hash();
+  if (is_array($all) && isset($all[$ipk])) { unset($all[$ipk]); pg_save_json(PG_LOGIN_FILE, $all); }
+}
+
+/* ---------------- Aktivitätsprotokoll ---------------- */
+const PG_ACTIVITY_FILE = __DIR__ . '/../data/activity.json';
+function pg_log_activity($action, $detail = ''){
+  $log = pg_load_json(PG_ACTIVITY_FILE); if (!is_array($log)) $log = [];
+  $log[] = ['time' => date('c'), 'user' => pg_current_email() ?: '—', 'action' => $action, 'detail' => (string) $detail, 'ip' => pg_ip_hash()];
+  if (count($log) > 300) $log = array_slice($log, -300);
+  pg_save_json(PG_ACTIVITY_FILE, $log);
+}
+
 /* ---------------- Backup (Export/Import aller Inhalte) ---------------- */
 // Alle sicherungswürdigen Dateien im data-Ordner (Inhalte + Einstellungen)
 function pg_backup_filenames(){
@@ -540,10 +577,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=13"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=14"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=13"></script></body></html>';
+  echo '<script src="assets/admin.js?v=14"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -565,6 +602,7 @@ function pg_view_topbar($SCHEMA, $active){
   if (pg_can('contacts')) { $cu = pg_contacts_unread(); echo '<a href="index.php?view=contacts">Kontakt' . ($cu ? '<span class="nbadge">' . $cu . '</span>' : '') . '</a>'; }
   if (pg_can('mail')) { $mu = pg_mail_unread_cached(); echo '<a' . ($active === 'mail' ? ' class="on"' : '') . ' href="mail.php">✉ Mails' . ($mu ? '<span class="nbadge">' . $mu . '</span>' : '') . '</a>'; }
   if (pg_is_owner()) echo '<a href="index.php?view=users">Zugänge</a>';
+  if (pg_is_owner()) echo '<a href="index.php?view=activity">Protokoll</a>';
   if (pg_is_owner()) echo '<a href="index.php?view=backup">Backup</a>';
   echo '<span class="tb-mobile-extra">';
   if (pg_logged_in()) echo '<span class="tb-user">' . pg_h(pg_current_email()) . '</span>';

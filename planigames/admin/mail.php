@@ -94,6 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_mail'])) {
     $ok = pg_send_mail($to, $subject, $html, pg_mail_from()[1]);
     if ($ok) {
       $how = pg_mail_configured_send() ? 'per SMTP' : 'über den Server (mail())';
+      pg_log_activity('E-Mail gesendet', $to);
       $flash = '<div class="flash ok">✓ Nachricht an ' . pg_h($to) . ' gesendet (' . $how . ').</div>'; $tab = 'compose';
     } else {
       $flash = '<div class="flash err">Versand fehlgeschlagen. Bitte SMTP-Einstellungen prüfen.</div>'; $tab = 'compose';
@@ -121,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_newsletter'])) {
       if (pg_send_mail($to, $subject, $html)) $sent++; else $fail++;
       usleep(120000); // freundlich zum Mailserver
     }
+    pg_log_activity('Newsletter verschickt', $sent . ' Abonnenten');
     $flash = '<div class="flash ' . ($fail ? 'err' : 'ok') . '">✓ Newsletter verschickt: ' . $sent . ' zugestellt'
            . ($fail ? ', ' . $fail . ' fehlgeschlagen' : '') . '.</div>';
   }

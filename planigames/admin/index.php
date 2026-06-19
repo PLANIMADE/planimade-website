@@ -22,7 +22,7 @@ if ($action === 'upload') {
 }
 
 /* ---- Logout ---- */
-if ($action === 'logout') { $_SESSION = []; session_destroy(); header('Location: index.php'); exit; }
+if ($action === 'logout') { if (pg_logged_in()) pg_log_activity('Abgemeldet'); $_SESSION = []; session_destroy(); header('Location: index.php'); exit; }
 
 /* ---- Registrierung per Einladungs-Link ---- */
 if ($action === 'register') {
@@ -107,10 +107,20 @@ if (!pg_logged_in()) {
   $err = '';
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     pg_csrf_check();
-    $u = pg_user_check(trim($_POST['email'] ?? ''), $_POST['pw'] ?? '');
-    if ($u) { session_regenerate_id(true); pg_login_user($u); header('Location: index.php'); exit; }
-    $err = 'E-Mail oder Passwort falsch.';
-    usleep(400000);
+    $lock = pg_login_locked();
+    if ($lock > 0) {
+      $err = 'Zu viele Fehlversuche. Bitte in ' . ceil($lock / 60) . ' Minute(n) erneut versuchen.';
+    } else {
+      $u = pg_user_check(trim($_POST['email'] ?? ''), $_POST['pw'] ?? '');
+      if ($u) {
+        pg_login_clear(); session_regenerate_id(true); pg_login_user($u);
+        pg_log_activity('login', $u['email'] ?? '');
+        header('Location: index.php'); exit;
+      }
+      pg_login_record_fail();
+      $err = 'E-Mail oder Passwort falsch.';
+      usleep(400000);
+    }
   }
   pg_view_head('Login');
   echo '<div class="auth"><div class="auth-card">';
@@ -154,6 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
   }
 
   $ok = pg_save_json(pg_lang_file($SCHEMA[$key]['file'], $lang), $data);
+  if ($ok) pg_log_activity('Gespeichert', $SCHEMA[$key]['label'] . ' (' . strtoupper($lang) . ')' . ($sentCount ? ' · Newsletter an ' . $sentCount : ''));
   $extra = $sentCount > 0 ? '&sent=' . $sentCount : '';
   header('Location: index.php?collection=' . urlencode($key) . '&lang=' . $lang . ($ok ? '&saved=1' : '&error=1') . $extra);
   exit;
@@ -209,6 +220,7 @@ if ($action === 'backup_import' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!pg_backup_allowed($base) || !is_string($content)) continue;
         if (@file_put_contents(PG_DATA_DIR . '/' . $base, $content) !== false) $n++;
       }
+      if ($n > 0) pg_log_activity('Backup eingespielt', $n . ' Dateien');
       $msg = $n > 0
         ? ['ok', '✓ Backup eingespielt: ' . $n . ' Datei' . ($n === 1 ? '' : 'en') . ' wiederhergestellt.']
         : ['err', 'Die Datei enthielt keine gültigen Inhalte.'];
@@ -444,6 +456,39 @@ if (($_GET['view'] ?? '') === 'backup') {
   exit;
 }
 
+/* ---- Aktivitätsprotokoll (nur Owner) ---- */
+if (($_GET['view'] ?? '') === 'activity') {
+  if (!pg_is_owner()) { header('Location: index.php'); exit; }
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_activity'])) {
+    pg_csrf_check(); pg_save_json(PG_ACTIVITY_FILE, []); header('Location: index.php?view=activity&cleared=1'); exit;
+  }
+  $log = array_reverse(pg_load_json(PG_ACTIVITY_FILE));
+  pg_view_head('Protokoll');
+  pg_view_topbar($SCHEMA, null);
+  echo '<div class="editor wide">';
+  if (isset($_GET['cleared'])) echo '<div class="flash ok">✓ Protokoll geleert.</div>';
+  echo '<div class="editor-head"><div><h1>📋 Aktivitätsprotokoll</h1>'
+     . '<p class="muted">Die letzten Aktionen im Dashboard (max. 300). IP-Adressen werden anonymisiert gespeichert.</p></div></div>';
+  if (!$log) {
+    echo '<div class="mailnote">Noch keine Aktivitäten aufgezeichnet.</div>';
+  } else {
+    echo '<table class="subs"><thead><tr><th>Zeitpunkt</th><th>Benutzer</th><th>Aktion</th><th>Details</th></tr></thead><tbody>';
+    foreach ($log as $e) {
+      echo '<tr><td>' . pg_h(str_replace('T', ' ', substr($e['time'] ?? '', 0, 16))) . '</td>'
+         . '<td>' . pg_h($e['user'] ?? '') . '</td>'
+         . '<td>' . pg_h($e['action'] ?? '') . '</td>'
+         . '<td>' . pg_h($e['detail'] ?? '') . '</td></tr>';
+    }
+    echo '</tbody></table>';
+    echo '<form method="post" class="clear-form" onsubmit="return confirm(\'Protokoll wirklich leeren?\')">'
+       . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+       . '<button class="btn-danger" name="clear_activity" value="1">Protokoll leeren</button></form>';
+  }
+  echo '</div>';
+  pg_view_foot();
+  exit;
+}
+
 /* ---- Team & Zugänge (nur Owner) ---- */
 if (($_GET['view'] ?? '') === 'users') {
   if (!pg_is_owner()) { header('Location: index.php'); exit; }
@@ -459,6 +504,7 @@ if (($_GET['view'] ?? '') === 'users') {
         $token = pg_invite_create($email, $role);
         $inviteLink = pg_base_url() . '/index.php?action=register&token=' . $token;
         $sent = pg_send_invite_mail($email, $inviteLink, $role === 'owner' ? 'Owner' : 'Editor', pg_current_email());
+        pg_log_activity('Einladung erstellt', $email . ' (' . $role . ')');
         $flash = '<div class="flash ok">✓ Einladung erstellt' . ($sent ? ' und per E-Mail verschickt' : ' (E-Mail konnte nicht versendet werden – Link unten kopieren)') . '.</div>';
       }
     } elseif (isset($_POST['updateuser'])) {
@@ -472,6 +518,7 @@ if (($_GET['view'] ?? '') === 'users') {
         } else {
           $areas = $newRole === 'owner' ? [] : array_values(array_intersect((array)($_POST['areas'] ?? []), array_keys(pg_areas_map())));
           pg_user_update($email, ['role' => $newRole, 'areas' => $areas]);
+          pg_log_activity('Zugang geändert', $email . ' → ' . $newRole);
           $flash = '<div class="flash ok">Berechtigungen aktualisiert.</div>';
         }
       }
@@ -481,7 +528,7 @@ if (($_GET['view'] ?? '') === 'users') {
       $email = $_POST['email'] ?? '';
       if (strcasecmp($email, pg_current_email()) === 0) $flash = '<div class="flash err">Du kannst dich nicht selbst entfernen.</div>';
       elseif (($u = pg_user_find($email)) && ($u['role'] ?? '') === 'owner' && pg_owner_count() <= 1) $flash = '<div class="flash err">Der letzte Owner kann nicht entfernt werden.</div>';
-      else { pg_user_delete($email); $flash = '<div class="flash ok">Zugang entfernt.</div>'; }
+      else { pg_user_delete($email); pg_log_activity('Zugang entfernt', $email); $flash = '<div class="flash ok">Zugang entfernt.</div>'; }
     }
   }
   pg_view_head('Zugänge');
@@ -661,6 +708,9 @@ if (pg_is_owner()) {
   echo '<a class="card" href="index.php?view=backup">'
      . '<span class="card-ico">💾</span><span class="card-title">Backup &amp; Wiederherstellung</span>'
      . '<span class="card-desc">Alle Inhalte als Datei sichern &amp; wieder einspielen.</span></a>';
+  echo '<a class="card" href="index.php?view=activity">'
+     . '<span class="card-ico">📋</span><span class="card-title">Aktivitätsprotokoll</span>'
+     . '<span class="card-desc">Wer hat wann was im Dashboard gemacht?</span></a>';
 }
 echo '</div>';
 echo '<div class="dash-links"><a href="../index.html" target="_blank">↗ Website ansehen</a> '

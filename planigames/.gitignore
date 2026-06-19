@@ -6,5 +6,7 @@ data/subscribers.json
 data/contacts.json
 data/mail.json
 data/mail_unread.json
+data/login_attempts.json
+data/activity.json
 data/secret.php
 data/*.tmp
