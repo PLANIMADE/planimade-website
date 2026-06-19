@@ -58,6 +58,15 @@ button{font:inherit;cursor:pointer}
 .tb-menu a{white-space:nowrap;padding:.55rem .7rem;border-radius:8px;font-size:.88rem}
 .tb-right{display:flex;gap:.9rem;font-size:.85rem}
 .tb-right a{color:var(--muted);text-decoration:none}.tb-right a:hover{color:var(--ink)}
+/* Direkter E-Mail-Postfach-Knopf (immer sichtbar) */
+.tb-mailicon{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  width:40px;height:40px;border:1px solid var(--line);background:var(--panel);border-radius:10px;
+  text-decoration:none;font-size:1.1rem;line-height:1}
+.tb-mailicon:hover{border-color:var(--accent)}
+.tb-mailicon.on{border-color:var(--accent);background:rgba(255,125,26,.12)}
+.tb-mailicon .nbadge{position:absolute;top:-7px;right:-7px;margin:0}
+/* Reihenfolge in der Kopfzeile: Marke · (Mail · Burger mobil) · Navi · Mail · rechts */
+.tb-brand{order:0}.tb-burger{order:5}.tb-nav{order:2}.tb-mailicon{order:4}.tb-right{order:6}
 .tb-burger{display:none;width:40px;height:40px;border:1px solid var(--line);background:var(--panel);border-radius:10px;
   flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;margin-left:auto}
 .tb-burger span{display:block;width:20px;height:2px;background:var(--ink);border-radius:2px;transition:.3s}
@@ -67,7 +76,8 @@ button{font:inherit;cursor:pointer}
 .tb-mobile-extra{display:none}
 @media(max-width:860px){
   .topbar{flex-wrap:nowrap;gap:.8rem}
-  .tb-burger{display:flex}
+  .tb-burger{display:flex;margin-left:.2rem}
+  .tb-mailicon{margin-left:auto}
   .tb-right{display:none}
   .tb-nav{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:.15rem;
     background:rgba(12,12,14,.98);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:.6rem .9rem 1rem;box-shadow:0 20px 40px rgba(0,0,0,.5)}
@@ -115,6 +125,11 @@ button{font:inherit;cursor:pointer}
 
 /* ---- Felder ---- */
 .fields{display:flex;flex-direction:column;gap:1.3rem}
+/* Abschnitts-Überschrift im Editor */
+.field-group{display:flex;flex-direction:column;gap:.15rem;margin:1.4rem 0 -.2rem;
+  font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--accent)}
+.field-group:first-child{margin-top:0}
+.field-group .fg-hint{font-size:.78rem;font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted)}
 .field{display:flex;flex-direction:column;gap:.4rem}
 .flabel{font-weight:600;font-size:.92rem}
 .hint{color:var(--muted);font-size:.8rem;margin:.1rem 0 0}
@@ -224,9 +239,16 @@ body.is-dragging .item-body{pointer-events:none}
   padding:.5rem 1rem;border-radius:999px;font-weight:600;font-size:.85rem}
 .btn-danger:hover{background:rgba(255,80,80,.12)}
 
-/* Objekt-Gruppe (z. B. Newsletter-Einstellungen) */
-.objectfield{border:1px solid var(--line);border-radius:14px;padding:1rem;background:rgba(255,255,255,.015)}
-.object-body{display:flex;flex-direction:column;gap:1.1rem;margin-top:.8rem}
+/* Objekt-Gruppe (z. B. Newsletter-Einstellungen) – einklappbare Sektion */
+.objectfield{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.015);overflow:hidden}
+.obj-head{display:flex;align-items:center;gap:.6rem;width:100%;background:transparent;border:0;cursor:pointer;
+  color:var(--ink);font:inherit;text-align:left;padding:.95rem 1.1rem}
+.obj-head:hover{background:rgba(255,255,255,.03)}
+.obj-title{flex:1;font-weight:700;font-size:.98rem}
+.obj-caret{color:var(--muted);font-size:.8rem;transition:transform .2s}
+.objectfield.folded .obj-caret{transform:rotate(-90deg)}
+.object-body{display:flex;flex-direction:column;gap:1.1rem;padding:0 1.1rem 1.1rem}
+.objectfield.folded>.object-body{display:none}
 
 /* verschachtelte Listen etwas absetzen */
 .item-body .listfield,.item-body .blocksfield{background:rgba(255,255,255,.025)}

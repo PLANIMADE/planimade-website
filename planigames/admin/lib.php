@@ -637,10 +637,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=17"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=18"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=17"></script></body></html>';
+  echo '<script src="assets/admin.js?v=18"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -650,6 +650,13 @@ function pg_view_topbar($SCHEMA, $active){
     : '<span class="diamond"></span> PLANI<span class="grad">GAMES</span>';
   echo '<header class="topbar">';
   echo '<a class="tb-brand" href="index.php">' . $brand . '</a>';
+  // Direkter E-Mail-Postfach-Knopf (immer sichtbar, auch mobil)
+  if (pg_can('mail')) {
+    $mu = pg_mail_unread_cached();
+    echo '<a class="tb-mailicon' . ($active === 'mail' ? ' on' : '') . '" href="mail.php" '
+       . 'title="E-Mail-Postfach" aria-label="E-Mail-Postfach">📮'
+       . ($mu ? '<span class="nbadge">' . $mu . '</span>' : '') . '</a>';
+  }
   echo '<button type="button" class="tb-burger" id="tb-burger" aria-label="Menü" aria-expanded="false"><span></span><span></span><span></span></button>';
   echo '<nav class="tb-nav" id="tb-nav">';
 
@@ -660,12 +667,11 @@ function pg_view_topbar($SCHEMA, $active){
     echo '<a' . $cls . ' href="index.php?collection=' . pg_h($key) . '">' . pg_h($coll['label']) . '</a>';
   }
 
-  // Gruppe „Community" – Abos, Kontakt, Mails (mit zusammengefassten Badges)
+  // Gruppe „Community" – Abos & Kontakt (Mails haben eigenes Icon oben)
   $community = [];
   if (pg_can('subscribers')) $community[] = ['index.php?view=subscribers', '📬 Newsletter-Abos', 0];
   if (pg_can('contacts'))    $community[] = ['index.php?view=contacts', '✉️ Kontakt-Anfragen', pg_contacts_unread()];
-  if (pg_can('mail'))        $community[] = ['mail.php', '📮 E-Mail-Postfach', pg_mail_unread_cached()];
-  pg_nav_group('Community', $community, $active === 'mail');
+  pg_nav_group('Community', $community, false);
 
   // Gruppe „System" – Medien, Statistik, Papierkorb + Owner-Werkzeuge
   $system = [];
@@ -783,6 +789,7 @@ function pg_chunk_text($text, $max = 480){
 function pg_translate_data($fields, $data){
   $out = is_array($data) ? $data : [];
   foreach ($fields as $f) {
+    if (($f['widget'] ?? '') === 'heading') continue;
     if (!array_key_exists($f['name'], $out)) continue;
     $out[$f['name']] = pg_translate_value($f, $out[$f['name']]);
   }
@@ -871,6 +878,12 @@ function pg_handle_upload(){
 function pg_render_fields($fields, $values, $prefix, $pathKey){
   $out = '';
   foreach ($fields as $f) {
+    // Abschnitts-Überschrift (rein optisch, kein Datenfeld)
+    if (($f['widget'] ?? '') === 'heading') {
+      $hh = !empty($f['hint']) ? '<span class="fg-hint">' . pg_h($f['hint']) . '</span>' : '';
+      $out .= '<h3 class="field-group">' . pg_h($f['label']) . $hh . '</h3>';
+      continue;
+    }
     $val = $values[$f['name']] ?? ($f['default'] ?? null);
     $out .= pg_render_field($f, $val, $prefix . '[' . $f['name'] . ']', $pathKey . '.' . $f['name']);
   }
@@ -887,8 +900,12 @@ function pg_render_field($f, $val, $name, $pathKey){
   if ($w === 'blocks') return pg_render_blocks($f, is_array($val) ? $val : [], $name, $pathKey);
   if ($w === 'object') {
     $inner = pg_render_fields($f['fields'], is_array($val) ? $val : [], $name, $pathKey);
-    return '<div class="field objectfield"><label class="flabel">' . $label . '</label>'
-         . $hint . '<div class="object-body">' . $inner . '</div></div>';
+    // Einklappbare Sektion (standardmäßig zugeklappt) → bessere Übersicht
+    return '<div class="field objectfield folded" data-objfold>'
+         . '<button type="button" class="obj-head" data-objtoggle aria-expanded="false">'
+         . '<span class="obj-title">' . $label . '</span>'
+         . '<span class="obj-caret" aria-hidden="true">▾</span></button>'
+         . '<div class="object-body">' . $hint . $inner . '</div></div>';
   }
 
   $field = '';
@@ -1037,6 +1054,7 @@ function pg_normalize_fields($fields, $raw){
   $raw = is_array($raw) ? $raw : [];
   $out = [];
   foreach ($fields as $f) {
+    if (($f['widget'] ?? '') === 'heading') continue; // keine Daten
     $out[$f['name']] = pg_normalize_field($f, $raw[$f['name']] ?? null, $raw);
   }
   return $out;

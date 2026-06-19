@@ -206,6 +206,16 @@
     });
   }
 
+  // ---- Editor: einklappbare Objekt-Sektionen ----
+  document.addEventListener("click", (e) => {
+    const head = e.target.closest("[data-objtoggle]");
+    if (!head) return;
+    const box = head.closest("[data-objfold]");
+    if (!box) return;
+    const folded = box.classList.toggle("folded");
+    head.setAttribute("aria-expanded", String(!folded));
+  });
+
   // ---- Admin-Topbar: aufklappbare Gruppen (Community / System) ----
   document.addEventListener("click", (e) => {
     const btn = e.target.closest(".tb-group-btn");
