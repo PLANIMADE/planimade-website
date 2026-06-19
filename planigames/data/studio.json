@@ -57,7 +57,9 @@
     "buttonLabel": "Auf die Warteliste",
     "placeholder": "deine@mail.de",
     "successMessage": "Danke! Du bist dabei. 🧡",
-    "notifyEmail": ""
+    "notifyEmail": "",
+    "doubleOptIn": true,
+    "welcomeMessage": ""
   },
   "background": {
     "effect": "particles",

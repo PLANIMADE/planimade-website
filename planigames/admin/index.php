@@ -254,21 +254,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_subscribers']))
 if (($_GET['view'] ?? '') === 'subscribers') {
   if (!pg_can('subscribers')) { header('Location: index.php'); exit; }
   $list = pg_load_json(PG_DATA_DIR . '/subscribers.json');
+  $confirmedN = count(pg_confirmed_emails($list));
+  $pendingN = count($list) - $confirmedN;
   $list = array_reverse($list);
   pg_view_head('Newsletter-Abos');
   pg_view_topbar($SCHEMA, null);
   echo '<div class="editor wide">';
   if (isset($_GET['cleared'])) echo '<div class="flash ok">✓ Liste geleert.</div>';
   echo '<div class="editor-head"><div><h1>📬 Newsletter-Abos</h1>'
-     . '<p class="muted">' . count($list) . ' Anmeldung' . (count($list) === 1 ? '' : 'en') . '. Werden bei jeder Anmeldung auf der Website ergänzt.</p></div>';
+     . '<p class="muted">' . count($list) . ' Anmeldung' . (count($list) === 1 ? '' : 'en') . ' · <b>' . $confirmedN . '</b> bestätigt'
+     . ($pendingN > 0 ? ' · ' . $pendingN . ' ausstehend' : '') . '. Nur Bestätigte erhalten den Newsletter.</p></div>';
   if ($list) echo '<a class="btn-primary" href="index.php?action=subscribers_csv">CSV exportieren</a>';
   echo '</div>';
   if (!$list) {
     echo '<p class="muted">Noch keine Anmeldungen.</p>';
   } else {
-    echo '<table class="subs"><thead><tr><th>E-Mail</th><th>Datum</th><th>Quelle</th></tr></thead><tbody>';
+    echo '<table class="subs"><thead><tr><th>E-Mail</th><th>Status</th><th>Datum</th><th>Quelle</th></tr></thead><tbody>';
     foreach ($list as $r) {
-      echo '<tr><td>' . pg_h($r['email'] ?? '') . '</td><td>'
+      $isConf = !array_key_exists('confirmed', $r) || !empty($r['confirmed']);
+      $status = $isConf ? '<span style="color:#9ff0b5">✓ bestätigt</span>' : '<span style="color:#ffb37a">⏳ ausstehend</span>';
+      echo '<tr><td>' . pg_h($r['email'] ?? '') . '</td><td>' . $status . '</td><td>'
          . pg_h(substr($r['date'] ?? '', 0, 10)) . '</td><td>' . pg_h($r['source'] ?? '') . '</td></tr>';
     }
     echo '</tbody></table>';

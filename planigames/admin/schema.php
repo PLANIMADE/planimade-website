@@ -62,6 +62,8 @@ return [
         ['name'=>'placeholder','label'=>'Platzhalter im Eingabefeld','widget'=>'string','default'=>'deine@mail.de'],
         ['name'=>'successMessage','label'=>'Danke-Nachricht','widget'=>'string','default'=>'Danke! Du bist dabei. 🧡'],
         ['name'=>'notifyEmail','label'=>'Benachrichtigung an (E-Mail)','widget'=>'string','hint'=>'Bei jeder Anmeldung eine Mail hierhin. Leer = an die Kontakt-E-Mail.'],
+        ['name'=>'doubleOptIn','label'=>'Double-Opt-In (Bestätigungslink)','widget'=>'boolean','default'=>true,'hint'=>'Empfohlen (DSGVO): Neue Abonnenten müssen ihre Anmeldung per E-Mail-Link bestätigen.'],
+        ['name'=>'welcomeMessage','label'=>'Willkommens-Nachricht','widget'=>'text','hint'=>'Wird nach der Bestätigung per Mail verschickt. Leer = Standardtext.'],
       ]],
       ['name'=>'background','label'=>'Hintergrund & Atmosphäre','widget'=>'object','hint'=>'Steuert die Animation im Seitenhintergrund.','fields'=>[
         ['name'=>'effect','label'=>'Effekt','widget'=>'select','default'=>'particles','options'=>[

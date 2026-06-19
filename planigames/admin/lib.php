@@ -275,6 +275,32 @@ function pg_unsub_token($email){
 function pg_unsub_link($email){
   return pg_site_url() . '/subscribe.php?action=unsubscribe&e=' . rawurlencode($email) . '&t=' . pg_unsub_token($email);
 }
+// Bestätigungs-Token (Double-Opt-In)
+function pg_confirm_token($email){
+  return hash_hmac('sha256', strtolower(trim($email)) . '|confirm', pg_app_secret());
+}
+function pg_confirm_link($email){
+  return pg_site_url() . '/subscribe.php?action=confirm&e=' . rawurlencode($email) . '&t=' . pg_confirm_token($email);
+}
+// Bestätigungs-Mail (Double-Opt-In) an einen neuen Abonnenten
+function pg_send_confirm_mail($email){
+  $body = '<h1 style="margin:14px 0 0;font-size:24px;color:#fff">Fast geschafft! ✨</h1>'
+    . '<p style="color:#d7d7df;line-height:1.7;margin:14px 0 0">Bitte bestätige deine Anmeldung zum <b>PLANIGAMES</b>-Newsletter mit einem Klick:</p>'
+    . '<div style="padding:22px 0 4px">' . pg_mail_button('Anmeldung bestätigen →', pg_confirm_link($email)) . '</div>'
+    . '<p style="color:#7b7b86;font-size:12px;line-height:1.6;margin:8px 0 0">Du hast das nicht angefordert? Dann ignoriere diese Mail einfach – ohne Bestätigung passiert nichts.</p>';
+  return pg_send_mail($email, 'Bitte bestätige deine Newsletter-Anmeldung', pg_mail_shell($body, 'Bestätige deine Newsletter-Anmeldung'));
+}
+// Willkommens-Mail nach erfolgreicher Bestätigung
+function pg_send_welcome_mail($email){
+  $s = pg_load_json(PG_DATA_DIR . '/studio.json');
+  $nl = $s['newsletter'] ?? [];
+  $msg = trim((string) ($nl['welcomeMessage'] ?? '')) ?: "Willkommen an Bord! 🧡\n\nDu bist jetzt dabei und erfährst als Erste*r von Demos, Release-Terminen und großen Updates. Bis bald im Chaos!";
+  $body = '<h1 style="margin:14px 0 0;font-size:24px;color:#fff">Willkommen bei PLANIGAMES! 🎮</h1>'
+    . '<div style="color:#d7d7df;line-height:1.7;font-size:15px;margin:14px 0 0">' . nl2br(pg_h($msg)) . '</div>'
+    . '<p style="color:#6f6f7a;font-size:12px;margin:22px 0 0">Du bekommst diese Mail, weil du den PLANIGAMES-Newsletter bestätigt hast. '
+    . '<a href="' . pg_h(pg_unsub_link($email)) . '" style="color:#ff8a2b">Abmelden</a></p>';
+  return pg_send_mail($email, 'Willkommen beim PLANIGAMES-Newsletter 🧡', pg_mail_shell($body, 'Willkommen!'));
+}
 
 /* =================================================================
    E-MAIL-ENGINE — Versand (SMTP/mail) & Empfang (IMAP)
@@ -358,12 +384,21 @@ function pg_mail_build_newsletter($message, $unsubLink){
   return pg_mail_shell($body, mb_substr($message, 0, 90));
 }
 
+/* Bestätigte Abonnenten-E-Mails (Legacy ohne Flag gelten als bestätigt). */
+function pg_confirmed_emails($subs){
+  $out = [];
+  foreach ((array) $subs as $r) {
+    $e = trim($r['email'] ?? '');
+    $confirmed = !array_key_exists('confirmed', (array) $r) || !empty($r['confirmed']);
+    if ($confirmed && filter_var($e, FILTER_VALIDATE_EMAIL)) $out[] = $e;
+  }
+  return array_values(array_unique($out));
+}
+
 /* Einen Devlog-Beitrag als gebrandeten Newsletter an alle Abonnenten senden.
    Gibt die Anzahl zugestellter Mails zurück. */
 function pg_newsletter_send_post($post){
-  $subs = pg_load_json(PG_DATA_DIR . '/subscribers.json');
-  $emails = array_values(array_filter(array_map(fn($r) => trim($r['email'] ?? ''), is_array($subs) ? $subs : []),
-            fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL)));
+  $emails = pg_confirmed_emails(pg_load_json(PG_DATA_DIR . '/subscribers.json'));
   if (!$emails) return 0;
   $title   = trim($post['title'] ?? 'Neuer Beitrag');
   $excerpt = trim($post['excerpt'] ?? '');

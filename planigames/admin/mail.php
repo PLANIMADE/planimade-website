@@ -107,9 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_newsletter'])) {
   pg_csrf_check();
   $subject = trim($_POST['subject'] ?? '');
   $message = trim($_POST['message'] ?? '');
-  $subs = pg_load_json(PG_DATA_DIR . '/subscribers.json');
-  $emails = array_values(array_filter(array_map(fn($r) => trim($r['email'] ?? ''), is_array($subs) ? $subs : []),
-            fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL)));
+  $emails = pg_confirmed_emails(pg_load_json(PG_DATA_DIR . '/subscribers.json'));
   if ($subject === '' || $message === '') {
     $flash = '<div class="flash err">Betreff und Nachricht dürfen nicht leer sein.</div>';
   } elseif (!$emails) {
