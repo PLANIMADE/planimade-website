@@ -6,10 +6,28 @@ ErrorDocument 404 /404.html
 # Verzeichnislisting aus
 Options -Indexes
 
-# sitemap.xml auf die dynamische sitemap.php leiten
+# sitemap.xml auf die dynamische sitemap.php leiten + saubere URLs ohne .html
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
+  # --- Saubere URLs: /games statt /games.html ---
+  # 1) Extensionslose Anfrage intern auf die echte .html-/.php-Datei mappen
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME}\.html -f
+  RewriteRule ^(.+?)/?$ $1.html [L]
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME}\.php -f
+  RewriteRule ^(.+?)/?$ $1.php [L]
+
+  # 2) Sichtbares ".html" aus der Adresszeile entfernen (301, Query bleibt)
+  RewriteCond %{THE_REQUEST} \s/+([^.\s?]+)\.html[\s?] [NC]
+  RewriteRule ^ /%1 [R=301,L,NE]
+  # 3) "index" ganz entfernen -> /
+  RewriteCond %{THE_REQUEST} \s/+index(\.html)?[\s?/] [NC]
+  RewriteRule ^index(\.html)?/?$ / [R=301,L]
 </IfModule>
 
 # Kompression (schnellere Ladezeiten), falls vom Server unterstützt
