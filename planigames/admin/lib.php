@@ -8,7 +8,7 @@ const PG_DATA_DIR    = __DIR__ . '/../data';
 const PG_MEDIA_DIR   = __DIR__ . '/../media';
 const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
 const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
-const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov'];
+const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip'];
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -1114,7 +1114,7 @@ function pg_render_field($f, $val, $name, $pathKey){
       break;
     case 'image':
     case 'file':
-      $accept = $w === 'image' ? 'image/*' : 'image/*,video/*';
+      $accept = $w === 'image' ? 'image/*' : 'image/*,video/*,.zip,application/zip';
       $prev = $val ? '<a href="' . pg_h($val) . '" target="_blank" class="media-prev">' . pg_h($val) . '</a>' : '';
       $field = '<div class="media" data-media>'
              . '<input type="text" name="' . pg_h($name) . '" value="' . pg_h($val) . '" placeholder="/media/… oder URL" data-media-input>'

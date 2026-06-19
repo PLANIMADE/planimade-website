@@ -245,6 +245,22 @@ return [
             ['name'=>'label','label'=>'Button-Text','widget'=>'string','default'=>'Jetzt wishlisten'],
             ['name'=>'url','label'=>'Button-Link','widget'=>'string'],
           ]],
+          'download'=>['label'=>'Demo & Downloads','fields'=>[
+            ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Jetzt spielen'],
+            ['name'=>'text','label'=>'Beschreibung','widget'=>'text'],
+            ['name'=>'embedUrl','label'=>'Spielbare Web-Demo (Einbettungs-URL)','widget'=>'string','hint'=>'z. B. itch.io-Embed oder Link zu einem HTML5-Build. Wird als spielbares Fenster eingebettet (lädt erst nach Zustimmung).'],
+            ['name'=>'embedHeight','label'=>'Höhe des Demo-Fensters (px)','widget'=>'number','default'=>540],
+            ['name'=>'builds','label'=>'Download-Pakete','widget'=>'list','summary'=>'label','label_singular'=>'Download','fields'=>[
+              ['name'=>'label','label'=>'Titel','widget'=>'string','hint'=>'z. B. Windows (64-bit)'],
+              ['name'=>'platform','label'=>'Plattform','widget'=>'select','default'=>'windows','options'=>[
+                'windows'=>'🪟 Windows','mac'=>'🍎 macOS','linux'=>'🐧 Linux','android'=>'🤖 Android','web'=>'🌐 Web','other'=>'📦 Sonstiges',
+              ]],
+              ['name'=>'version','label'=>'Version','widget'=>'string','hint'=>'z. B. v0.3.1'],
+              ['name'=>'size','label'=>'Dateigröße','widget'=>'string','hint'=>'z. B. 240 MB'],
+              ['name'=>'file','label'=>'Datei (ZIP/Build)','widget'=>'file','hint'=>'Direkt hochladen – oder unten einen externen Link angeben.'],
+              ['name'=>'url','label'=>'Externer Link','widget'=>'string','hint'=>'z. B. Steam/itch.io. Überschreibt die Datei.'],
+            ]],
+          ]],
           'spacer'=>['label'=>'Abstand / Leerraum','fields'=>[
             ['name'=>'size','label'=>'Höhe (px)','widget'=>'number','default'=>48],
           ]],

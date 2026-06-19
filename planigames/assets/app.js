@@ -335,7 +335,20 @@
             // „Immer laden" innerhalb eines Trailers = Zustimmung für alle
             const all = e.target.closest(".yt-consent [data-consent='all']");
             if (all) { e.preventDefault(); saveConsent({ externalMedia: true }); }
+            // Spielbare Web-Demo erst nach Klick laden (DSGVO)
+            const dl = e.target.closest("[data-embed-load]");
+            if (dl) {
+                e.preventDefault();
+                const holder = dl.closest("[data-embed-holder]");
+                if (holder) loadEmbed(holder);
+            }
         });
+    }
+
+    function loadEmbed(holder) {
+        const src = holder.getAttribute("data-embed-src");
+        if (!src) return;
+        holder.innerHTML = `<iframe class="absolute inset-0 w-full h-full" src="${esc(src)}" title="Web-Demo" allow="autoplay; fullscreen; gamepad; clipboard-write" allowfullscreen></iframe>`;
     }
 
     function initCursor() {
@@ -809,6 +822,7 @@
             case "faq": return blockFaq(b);
             case "countdown": return blockCountdown(b);
             case "cta": return blockCTA(b, g);
+            case "download": return blockDownload(b, g);
             case "spacer": return `<div style="height:${Math.max(0, +b.size || 48)}px"></div>`;
             default: return "";
         }
@@ -1009,6 +1023,55 @@
                 ${b.text ? `<p class="text-zinc-300 text-lg max-w-2xl mx-auto mb-9">${esc(b.text)}</p>` : ""}
                 <a href="${esc(href)}" target="_blank" rel="noopener" class="btn-accent magnetic inline-block px-10 py-4 rounded-full font-semibold text-lg">${esc(b.label || "Jetzt wishlisten")}</a>
             </div>`, "py-20 md:py-28");
+    }
+
+    function blockDownload(b, g) {
+        const PLAT = {
+            windows: { ic: "🪟", label: "Windows" }, mac: { ic: "🍎", label: "macOS" },
+            linux: { ic: "🐧", label: "Linux" }, android: { ic: "🤖", label: "Android" },
+            web: { ic: "🌐", label: "Web" }, other: { ic: "📦", label: "Download" },
+        };
+        const builds = (b.builds || []).filter(x => (x.url || x.file));
+        const cards = builds.map((d, i) => {
+            const href = d.url || d.file || "#";
+            const p = PLAT[d.platform] || PLAT.other;
+            const ext = !d.url; // eigene Datei -> Download-Attribut
+            const meta = [d.version, d.size].filter(Boolean).join(" · ");
+            return `<a href="${esc(href)}" ${d.url ? 'target="_blank" rel="noopener"' : "download"}
+                class="reveal group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.025] hover:border-[color:var(--accent)] px-5 py-4 transition" style="transition-delay:${i * 60}ms">
+                <span class="text-3xl">${p.ic}</span>
+                <span class="flex-1 min-w-0">
+                    <span class="block font-semibold text-white truncate">${esc(d.label || p.label)}</span>
+                    ${meta ? `<span class="block font-mono text-[11px] uppercase tracking-widest text-zinc-500 mt-0.5">${esc(meta)}</span>` : ""}
+                </span>
+                <span class="shrink-0 text-zinc-400 group-hover:text-[color:var(--accent)] text-xl">↓</span>
+            </a>`;
+        }).join("");
+
+        // Optional: spielbare Web-Demo (eingebettet, erst nach Zustimmung)
+        let demo = "";
+        if (b.embedUrl) {
+            const h = Math.min(900, Math.max(200, +b.embedHeight || 540));
+            const cookieOff = (DATA.studio && DATA.studio.cookie && DATA.studio.cookie.enabled !== false);
+            const inner = (!cookieOff || pgConsentExternal())
+                ? `<iframe class="absolute inset-0 w-full h-full" src="${esc(b.embedUrl)}" title="Web-Demo" allow="autoplay; fullscreen; gamepad; clipboard-write" allowfullscreen></iframe>`
+                : `<div class="yt-consent absolute inset-0" data-embed-holder data-embed-src="${esc(b.embedUrl)}">
+                       <div class="yt-consent-inner">
+                           <p>${esc(t("yt_consent"))}</p>
+                           <div class="yt-consent-btns">
+                               <button class="btn-accent px-6 py-3 rounded-full font-semibold text-sm" data-embed-load>▶ ${LANG === "en" ? "Play demo" : "Demo starten"}</button>
+                               <button class="btn-ghost px-6 py-3 rounded-full font-semibold text-sm" data-consent="all">${esc(t("yt_load_always"))}</button>
+                           </div>
+                       </div>
+                   </div>`;
+            demo = `<div class="reveal relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl mb-10" style="height:${h}px;box-shadow:0 30px 90px -30px color-mix(in srgb,var(--accent) 60%,transparent)">${inner}</div>`;
+        }
+        if (!demo && !cards) return "";
+        return sec(`
+            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-4 reveal">${esc(b.heading)}</h2>` : ""}
+            ${b.text ? `<p class="text-zinc-300 text-lg max-w-2xl mb-10 reveal">${esc(b.text)}</p>` : ""}
+            ${demo}
+            ${cards ? `<div class="grid sm:grid-cols-2 gap-4">${cards}</div>` : ""}`, "py-20 md:py-28");
     }
 
     /* ---------- Interaktive Block-Helfer ---------- */
