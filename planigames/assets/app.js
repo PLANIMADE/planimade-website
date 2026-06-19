@@ -45,6 +45,37 @@
         } catch { return iso; }
     }
 
+    // Emoji-Reaktionen (flat-file, ohne Login)
+    const REACT_EMOJI = ["👍", "🔥", "💜", "😂", "🎉"];
+    function reactionsBar() {
+        return `<div class="react-bar" data-react>
+            <span class="react-label">${LANG === "en" ? "Liked it?" : "Gefällt dir?"}</span>
+            ${REACT_EMOJI.map(em => `<button type="button" class="react-btn" data-emoji="${em}"><span class="re-emo">${em}</span><span class="re-count" data-count-for="${em}">0</span></button>`).join("")}
+        </div>`;
+    }
+    async function initReactions(slug) {
+        const bar = $("[data-react]");
+        if (!bar || !slug) return;
+        const key = "pg_react_" + slug;
+        let mine = null; try { mine = localStorage.getItem(key) || null; } catch {}
+        const setCounts = (c) => REACT_EMOJI.forEach(em => { const el = bar.querySelector(`[data-count-for="${em}"]`); if (el) el.textContent = (c && c[em]) || 0; });
+        const markMine = () => bar.querySelectorAll(".react-btn").forEach(b => b.classList.toggle("mine", b.dataset.emoji === mine));
+        try { const r = await fetch("reactions.php?slug=" + encodeURIComponent(slug)); setCounts(await r.json()); } catch {}
+        markMine();
+        bar.addEventListener("click", async (e) => {
+            const btn = e.target.closest(".react-btn"); if (!btn) return;
+            const em = btn.dataset.emoji; let add = "", remove = "";
+            if (mine === em) { remove = em; mine = null; }
+            else { add = em; if (mine) remove = mine; mine = em; }
+            try { localStorage.setItem(key, mine || ""); } catch {}
+            markMine();
+            // optimistisches Feedback
+            btn.classList.add("pop"); setTimeout(() => btn.classList.remove("pop"), 300);
+            const fd = new FormData(); fd.append("slug", slug); fd.append("add", add); fd.append("remove", remove);
+            try { const r = await fetch("reactions.php", { method: "POST", body: fd }); setCounts(await r.json()); } catch {}
+        });
+    }
+
     // Lesezeit aus dem Text schätzen (~200 Wörter/Min)
     function readingTime(text) {
         const words = String(text || "").trim().split(/\s+/).filter(Boolean).length;
@@ -1147,12 +1178,14 @@
                 <h1 class="font-display text-4xl md:text-6xl font-extrabold text-white leading-[1.05] mb-8">${esc(p.title)}</h1>
                 ${p.cover ? `<img src="${esc(p.cover)}" alt="${esc(p.coverAlt || p.title || "")}" class="w-full rounded-2xl border border-white/10 mb-10">` : ""}
                 <div class="prose-pg">${md(p.body || "")}</div>
+                ${reactionsBar()}
                 ${shareBar(p.title)}
                 ${g && g.wishlistUrl ? `<div class="mt-12 pt-8 border-t border-white/10 text-center">
                     <a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic inline-block px-9 py-4 rounded-full font-semibold">${esc(g.title)} auf Steam wishlisten</a></div>` : ""}
             </div>`;
         initMagnetic();
         initShareCopy();
+        initReactions(p.slug);
     }
 
     /* =========================================================
