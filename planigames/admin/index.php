@@ -782,6 +782,65 @@ pg_view_topbar($SCHEMA, null);
 echo '<div class="dash">';
 echo '<h1>Hallo 👋 Was möchtest du bearbeiten?</h1>';
 
+/* ── Überblick: Postfach-Vorschau + Statistik ── */
+$ov = '';
+// Postfach-Vorschau (letzte Kontakt-Anfragen)
+if (pg_can('contacts')) {
+  $clist = pg_load_json(PG_DATA_DIR . '/contacts.json');
+  $latest = array_slice(array_reverse($clist), 0, 4);
+  $cUnread = pg_contacts_unread();
+  $mUnread = pg_can('mail') ? pg_mail_unread_cached() : 0;
+  $head = '<div class="dp-head"><span class="dp-title">📮 Postfach</span>'
+        . ($cUnread ? '<span class="nbadge">' . $cUnread . '</span>' : '')
+        . '<a class="dp-more" href="index.php?view=contacts">Alle Anfragen →</a></div>';
+  $body = '';
+  if (!$latest) {
+    $body = '<div class="dp-empty">Noch keine Nachrichten. Anfragen über das Kontaktformular erscheinen hier.</div>';
+  } else {
+    foreach ($latest as $r) {
+      $unread = empty($r['read']);
+      $snip = trim(preg_replace('/\s+/', ' ', (string) ($r['message'] ?? '')));
+      if (mb_strlen($snip) > 90) $snip = mb_substr($snip, 0, 90) . '…';
+      $body .= '<a class="dp-item' . ($unread ? ' unread' : '') . '" href="index.php?view=contacts">'
+             . '<span class="dp-row"><span class="dp-name">' . ($unread ? '<span class="dp-dot"></span>' : '') . pg_h($r['name'] ?? 'Unbekannt') . '</span>'
+             . '<span class="dp-date">' . pg_h(substr($r['date'] ?? '', 0, 10)) . '</span></span>'
+             . '<span class="dp-snip">' . pg_h($snip) . '</span></a>';
+    }
+  }
+  if (pg_can('mail')) {
+    $body .= '<a class="dp-foot" href="mail.php">📬 E-Mail-Postfach öffnen'
+           . ($mUnread ? ' <span class="nbadge">' . $mUnread . '</span>' : '') . '</a>';
+  }
+  $ov .= '<section class="dash-panel">' . $head . $body . '</section>';
+}
+// Statistik-Vorschau
+$st = pg_load_json(PG_DATA_DIR . '/stats.json');
+$days = $st['days'] ?? [];
+ksort($days);
+$today = $days[date('Y-m-d')] ?? 0;
+$last7 = array_sum(array_slice($days, -7, null, true));
+$spark = array_slice($days, -14, null, true);
+$sparkMax = $spark ? max($spark) : 1;
+$sh = '<div class="dp-head"><span class="dp-title">📊 Statistik</span>'
+    . '<a class="dp-more" href="index.php?view=stats">Details →</a></div>';
+$sb = '<div class="dp-stats">'
+    . '<div class="dp-stat"><span class="dp-num">' . (int) $today . '</span><span class="dp-lbl">Heute</span></div>'
+    . '<div class="dp-stat"><span class="dp-num">' . (int) $last7 . '</span><span class="dp-lbl">7 Tage</span></div>'
+    . '<div class="dp-stat"><span class="dp-num">' . (int) ($st['total'] ?? 0) . '</span><span class="dp-lbl">Gesamt</span></div>'
+    . '</div>';
+if ($spark) {
+  $sb .= '<div class="dp-spark" title="Aufrufe der letzten 14 Tage">';
+  foreach ($spark as $d => $n) {
+    $hgt = max(6, round($n / $sparkMax * 100));
+    $sb .= '<span class="dp-bar" title="' . pg_h($d) . ': ' . (int) $n . '" style="height:' . $hgt . '%"></span>';
+  }
+  $sb .= '</div>';
+} else {
+  $sb .= '<div class="dp-empty">Noch keine Aufrufe erfasst.</div>';
+}
+$ov .= '<section class="dash-panel">' . $sh . $sb . '</section>';
+echo '<div class="dash-grid">' . $ov . '</div>';
+
 // kleine Helfer-Funktion: eine Karte ausgeben
 $card = function ($href, $ico, $title, $desc, $badge = 0) {
   return '<a class="card" href="' . pg_h($href) . '">'

@@ -112,6 +112,32 @@ button{font:inherit;cursor:pointer}
 .dash-links{margin-top:2rem;display:flex;gap:1.2rem;font-size:.9rem}
 .dash-links a{color:var(--muted)}
 
+/* ---- Dashboard-Überblick (Postfach + Statistik) ---- */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin:0 0 .5rem}
+.dash-panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1.1rem 1.2rem;display:flex;flex-direction:column}
+.dp-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.9rem}
+.dp-title{font-weight:700;font-size:1rem}
+.dp-more{margin-left:auto;font-size:.82rem;color:var(--muted);text-decoration:none}
+.dp-more:hover{color:var(--accent)}
+.dp-item{display:block;text-decoration:none;color:var(--ink);padding:.55rem .65rem;border-radius:10px;border:1px solid transparent}
+.dp-item+.dp-item{margin-top:.15rem}
+.dp-item:hover{background:var(--panel2);border-color:var(--line)}
+.dp-item.unread{background:rgba(255,125,26,.06)}
+.dp-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.dp-name{font-weight:600;font-size:.9rem;display:inline-flex;align-items:center;gap:.4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dp-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:0 0 auto}
+.dp-date{font-size:.76rem;color:var(--muted);flex:0 0 auto}
+.dp-snip{display:block;font-size:.82rem;color:var(--muted);margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dp-empty{font-size:.85rem;color:var(--muted);padding:.6rem .2rem}
+.dp-foot{display:inline-flex;align-items:center;gap:.4rem;margin-top:.7rem;font-size:.85rem;color:var(--muted);text-decoration:none}
+.dp-foot:hover{color:var(--accent)}
+.dp-stats{display:flex;gap:.6rem;margin-bottom:1rem}
+.dp-stat{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:.7rem;text-align:center}
+.dp-num{display:block;font-size:1.5rem;font-weight:800;line-height:1.1}
+.dp-lbl{display:block;font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.2rem}
+.dp-spark{display:flex;align-items:flex-end;gap:4px;height:54px;margin-top:auto}
+.dp-bar{flex:1;background:linear-gradient(180deg,var(--accent),rgba(255,125,26,.35));border-radius:3px 3px 0 0;min-height:6px}
+
 /* ---- Editor ---- */
 .editor{max-width:880px;margin:0 auto;padding:1.5rem 1.2rem 5rem}
 /* Grid-/Tabellen-lastige Ansichten (Medien, Abos) dürfen breiter sein */
