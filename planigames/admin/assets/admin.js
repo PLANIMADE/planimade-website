@@ -327,6 +327,82 @@
     });
   }
 
+  // ---- Planungs-Board: Drag & Drop zwischen Spalten ----
+  const board = document.querySelector("[data-board]");
+  if (board) {
+    let drag = null, ph = null, startX = 0, startY = 0, moved = false, origStyle = "", offX = 0, offY = 0, w = 0;
+    function afterElement(container, y) {
+      const els = [...container.querySelectorAll(".kb-card:not(.kb-dragging)")];
+      let best = null, bestOff = -Infinity;
+      for (const child of els) {
+        const box = child.getBoundingClientRect();
+        const off = y - box.top - box.height / 2;
+        if (off < 0 && off > bestOff) { bestOff = off; best = child; }
+      }
+      return best;
+    }
+    board.addEventListener("pointerdown", (e) => {
+      const grip = e.target.closest("[data-kb-grip]");
+      if (!grip) return;
+      const card = grip.closest(".kb-card");
+      if (!card) return;
+      e.preventDefault();
+      drag = card; moved = false; startX = e.clientX; startY = e.clientY;
+      origStyle = card.getAttribute("style") || "";
+      const r = card.getBoundingClientRect();
+      offX = e.clientX - r.left; offY = e.clientY - r.top; w = r.width;
+      try { grip.setPointerCapture(e.pointerId); } catch {}
+    });
+    board.addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      if (!moved) {
+        if (Math.abs(e.clientX - startX) < 4 && Math.abs(e.clientY - startY) < 4) return;
+        moved = true;
+        ph = document.createElement("div");
+        ph.className = "kb-ph";
+        ph.style.height = drag.offsetHeight + "px";
+        drag.parentNode.insertBefore(ph, drag);
+        drag.classList.add("kb-dragging");
+        drag.style.cssText = origStyle + ";position:fixed;width:" + w + "px;z-index:999;pointer-events:none;margin:0";
+        document.body.classList.add("is-dragging");
+      }
+      drag.style.left = (e.clientX - offX) + "px";
+      drag.style.top = (e.clientY - offY) + "px";
+      drag.style.visibility = "hidden";
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      drag.style.visibility = "";
+      const cards = el && el.closest("[data-kb-cards]");
+      if (cards) {
+        const after = afterElement(cards, e.clientY);
+        if (after == null) cards.appendChild(ph); else cards.insertBefore(ph, after);
+      }
+    });
+    function endDrag() {
+      if (!drag) return;
+      if (moved && ph) {
+        ph.parentNode.insertBefore(drag, ph);
+        ph.remove();
+        drag.classList.remove("kb-dragging");
+        if (origStyle) drag.setAttribute("style", origStyle); else drag.removeAttribute("style");
+        document.body.classList.remove("is-dragging");
+        boardSave();
+      }
+      drag = null; ph = null; moved = false;
+    }
+    board.addEventListener("pointerup", endDrag);
+    board.addEventListener("pointercancel", endDrag);
+    function boardSave() {
+      const order = [...board.querySelectorAll("[data-col-id]")].map((c) => ({
+        col: c.getAttribute("data-col-id"),
+        cards: [...c.querySelectorAll(".kb-card")].map((k) => k.getAttribute("data-card-id")),
+      }));
+      const fd = new URLSearchParams();
+      fd.append("csrf", csrf());
+      fd.append("order", JSON.stringify(order));
+      fetch("index.php?action=board_save", { method: "POST", body: fd }).catch(() => {});
+    }
+  }
+
   // ---- Tastatur-Shortcuts ----
   function primarySaveButton() {
     return document.querySelector('#editor button[name="save"], button[name="save"], form .btn-primary[type="submit"], form button.btn-primary');

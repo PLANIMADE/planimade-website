@@ -21,6 +21,31 @@ if ($action === 'upload') {
   exit;
 }
 
+/* ---- Board: Reihenfolge per Drag&Drop speichern (AJAX) ---- */
+if ($action === 'board_save') {
+  header('Content-Type: application/json');
+  if (!pg_logged_in()) { http_response_code(403); exit('{"error":"Nicht eingeloggt"}'); }
+  pg_csrf_check();
+  $order = json_decode($_POST['order'] ?? '[]', true);
+  if (!is_array($order)) { echo '{"error":"ungültig"}'; exit; }
+  $board = pg_board_load();
+  // Karten nach ID auffindbar machen
+  $byId = [];
+  foreach ($board['columns'] as $c) foreach (($c['cards'] ?? []) as $card) if (!empty($card['id'])) $byId[$card['id']] = $card;
+  $titles = [];
+  foreach ($board['columns'] as $c) $titles[$c['id']] = $c['title'] ?? '';
+  $newCols = [];
+  foreach ($order as $col) {
+    $cid = $col['col'] ?? '';
+    if (!isset($titles[$cid])) continue;
+    $cards = [];
+    foreach (($col['cards'] ?? []) as $cardId) if (isset($byId[$cardId])) { $cards[] = $byId[$cardId]; unset($byId[$cardId]); }
+    $newCols[] = ['id' => $cid, 'title' => $titles[$cid], 'cards' => $cards];
+  }
+  if ($newCols) { $board['columns'] = $newCols; pg_board_save($board); }
+  echo '{"ok":true}'; exit;
+}
+
 /* ---- Logout ---- */
 if ($action === 'logout') { if (pg_logged_in()) pg_log_activity('Abgemeldet'); $_SESSION = []; session_destroy(); header('Location: index.php'); exit; }
 
@@ -390,6 +415,111 @@ if (($_GET['view'] ?? '') === 'templates') {
   echo '</div>';
   echo '<div class="editor-foot"><button class="btn-primary" name="save_templates" value="1">Speichern</button></div>';
   echo '</form>';
+  pg_view_foot();
+  exit;
+}
+
+/* ---- Planungs-Board (Kanban) ---- */
+$pg_board_posts = ['board_add_card', 'board_edit_card', 'board_del_card', 'board_add_col', 'board_rename_col', 'board_del_col'];
+if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_keys($_POST))) {
+  if (!pg_logged_in()) { header('Location: index.php'); exit; }
+  $board = pg_board_load();
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    pg_csrf_check();
+    $colId = $_POST['col'] ?? '';
+    $cardId = $_POST['card'] ?? '';
+    // Spalten-Index finden
+    $ci = -1;
+    foreach ($board['columns'] as $k => $c) if ($c['id'] === $colId) $ci = $k;
+    if (isset($_POST['board_add_card']) && $ci >= 0) {
+      $title = trim((string) ($_POST['title'] ?? ''));
+      if ($title !== '') {
+        $board['columns'][$ci]['cards'][] = ['id' => pg_board_id('card'), 'title' => $title, 'text' => '', 'color' => '', 'due' => '', 'created' => date('c')];
+        pg_board_save($board);
+      }
+    } elseif (isset($_POST['board_edit_card'])) {
+      foreach ($board['columns'] as &$c) foreach ($c['cards'] as &$card) {
+        if (($card['id'] ?? '') === $cardId) {
+          $card['title'] = trim((string) ($_POST['title'] ?? $card['title']));
+          $card['text']  = trim((string) ($_POST['text'] ?? ''));
+          $col = (string) ($_POST['color'] ?? '');
+          $card['color'] = array_key_exists($col, pg_board_colors()) ? $col : '';
+          $card['due']   = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($_POST['due'] ?? '')) ? $_POST['due'] : '';
+        }
+      }
+      unset($c, $card);
+      pg_board_save($board);
+    } elseif (isset($_POST['board_del_card'])) {
+      foreach ($board['columns'] as &$c) $c['cards'] = array_values(array_filter($c['cards'], fn($x) => ($x['id'] ?? '') !== $cardId));
+      unset($c);
+      pg_board_save($board);
+    } elseif (isset($_POST['board_add_col'])) {
+      $title = trim((string) ($_POST['title'] ?? '')) ?: 'Neue Spalte';
+      $board['columns'][] = ['id' => pg_board_id('col'), 'title' => $title, 'cards' => []];
+      pg_board_save($board);
+    } elseif (isset($_POST['board_rename_col']) && $ci >= 0) {
+      $title = trim((string) ($_POST['title'] ?? ''));
+      if ($title !== '') { $board['columns'][$ci]['title'] = $title; pg_board_save($board); }
+    } elseif (isset($_POST['board_del_col']) && $ci >= 0) {
+      array_splice($board['columns'], $ci, 1);
+      pg_board_save($board);
+    }
+    header('Location: index.php?view=board'); exit;
+  }
+
+  pg_view_head('Planungs-Board');
+  pg_view_topbar($SCHEMA, null);
+  $csrf = pg_h(pg_csrf());
+  $colors = pg_board_colors();
+  echo '<div class="board-wrap">';
+  echo '<div class="editor-head" style="max-width:none;margin:1.2rem 1.2rem .4rem"><div><h1>🗂️ Planungs-Board</h1>'
+     . '<p class="muted">Ideen &amp; Aufgaben planen – Karten per Anfasser zwischen Spalten ziehen.</p></div></div>';
+  echo '<div class="board" data-board>';
+  foreach ($board['columns'] as $c) {
+    $cid = pg_h($c['id']);
+    echo '<div class="kb-col" data-col-id="' . $cid . '">';
+    echo '<div class="kb-col-head"><details class="kb-coledit"><summary>' . pg_h($c['title']) . ' <span class="kb-count">' . count($c['cards']) . '</span></summary>'
+       . '<div class="kb-coledit-body">'
+       . '<form method="post" class="kb-inline"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="col" value="' . $cid . '">'
+       . '<input type="text" name="title" value="' . pg_h($c['title']) . '" required><button class="btn-add" name="board_rename_col" value="1">Umbenennen</button></form>'
+       . '<form method="post" onsubmit="return confirm(\'Spalte samt Karten löschen?\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="col" value="' . $cid . '">'
+       . '<button class="btn-danger sm" name="board_del_col" value="1">Spalte löschen</button></form>'
+       . '</div></details></div>';
+    echo '<div class="kb-cards" data-kb-cards>';
+    foreach ($c['cards'] as $card) {
+      $cc = $card['color'] ?? '';
+      $style = $cc !== '' ? ' style="--cc:' . pg_h($cc) . '"' : '';
+      echo '<div class="kb-card' . ($cc !== '' ? ' has-color' : '') . '" data-card-id="' . pg_h($card['id']) . '"' . $style . '>';
+      echo '<div class="kb-card-top"><span class="kb-grip" data-kb-grip title="Ziehen">⠿</span>'
+         . '<details class="kb-cardedit"><summary title="Bearbeiten">✎</summary>'
+         . '<form method="post" class="kb-cardform"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="card" value="' . pg_h($card['id']) . '">'
+         . '<label class="ml">Titel</label><input type="text" name="title" value="' . pg_h($card['title'] ?? '') . '" required>'
+         . '<label class="ml">Notiz</label><textarea name="text" rows="3">' . pg_h($card['text'] ?? '') . '</textarea>'
+         . '<label class="ml">Farbe</label><select name="color">';
+      foreach ($colors as $val => $lbl) echo '<option value="' . pg_h($val) . '"' . ($val === $cc ? ' selected' : '') . '>' . pg_h($lbl) . '</option>';
+      echo '</select>'
+         . '<label class="ml">Fällig am</label><input type="date" name="due" value="' . pg_h($card['due'] ?? '') . '">'
+         . '<div class="kb-cardform-foot"><button class="btn-primary" name="board_edit_card" value="1">Speichern</button>'
+         . '<button class="btn-danger sm" name="board_del_card" value="1" onclick="return confirm(\'Karte löschen?\')">Löschen</button></div>'
+         . '</form></details></div>';
+      echo '<div class="kb-card-title">' . pg_h($card['title'] ?? '') . '</div>';
+      if (trim((string) ($card['text'] ?? '')) !== '') echo '<div class="kb-card-text">' . nl2br(pg_h($card['text'])) . '</div>';
+      if (!empty($card['due'])) {
+        $overdue = strtotime($card['due']) < strtotime(date('Y-m-d'));
+        echo '<div class="kb-card-meta"><span class="kb-due' . ($overdue ? ' over' : '') . '">📅 ' . pg_h($card['due']) . '</span></div>';
+      }
+      echo '</div>';
+    }
+    echo '</div>'; // kb-cards
+    echo '<form method="post" class="kb-add"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="col" value="' . $cid . '">'
+       . '<input type="text" name="title" placeholder="+ Karte hinzufügen" autocomplete="off"><button class="btn-add" name="board_add_card" value="1">+</button></form>';
+    echo '</div>'; // kb-col
+  }
+  // Spalte hinzufügen
+  echo '<div class="kb-col kb-col-new"><form method="post" class="kb-addcol"><input type="hidden" name="csrf" value="' . $csrf . '">'
+     . '<input type="text" name="title" placeholder="Neue Spalte …" required><button class="btn-add" name="board_add_col" value="1">+ Spalte</button></form></div>';
+  echo '</div>'; // board
+  echo '</div>'; // board-wrap
   pg_view_foot();
   exit;
 }
@@ -1199,6 +1329,7 @@ if ($community !== '') {
 
 /* ── Abschnitt 3: System & Verwaltung ── */
 $system = '';
+$system .= $card('index.php?view=board', '🗂️', 'Planungs-Board', 'Ideen &amp; Aufgaben planen (Kanban).');
 $system .= $card('index.php?view=stats', '📊', 'Statistik', 'Datenschutzfreundliche Seitenaufrufe ansehen.');
 $system .= $card('index.php?view=trash', '🗑️', 'Papierkorb',
   'Gelöschte Spiele &amp; Beiträge wiederherstellen.', count(pg_trash_load()));

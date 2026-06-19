@@ -109,6 +109,29 @@ function pg_templates_load(){
 }
 function pg_templates_save($list){ return pg_save_json(PG_TEMPLATES_FILE, array_values($list)); }
 
+/* ---------------- Planungs-Board (Kanban) ---------------- */
+const PG_BOARD_FILE = __DIR__ . '/../data/board.json';
+function pg_board_default(){
+  // feste IDs, damit Spalten auch ohne gespeicherte Datei zwischen Requests übereinstimmen
+  return ['columns' => [
+    ['id' => 'col_ideen',    'title' => '💡 Ideen',     'cards' => []],
+    ['id' => 'col_geplant',  'title' => '📋 Geplant',   'cards' => []],
+    ['id' => 'col_arbeit',   'title' => '🔨 In Arbeit', 'cards' => []],
+    ['id' => 'col_erledigt', 'title' => '✅ Erledigt',  'cards' => []],
+  ]];
+}
+function pg_board_load(){
+  $b = pg_load_json(PG_BOARD_FILE);
+  if (!is_array($b) || empty($b['columns']) || !is_array($b['columns'])) return pg_board_default();
+  return $b;
+}
+function pg_board_save($b){ return pg_save_json(PG_BOARD_FILE, $b); }
+function pg_board_id($prefix){ return $prefix . '_' . bin2hex(random_bytes(4)); }
+function pg_board_colors(){
+  return ['' => 'Keine', '#ff7d1a' => 'Orange', '#5bc0eb' => 'Blau', '#5fd07f' => 'Grün',
+          '#c678dd' => 'Lila', '#e06c75' => 'Rot', '#e6c07b' => 'Gelb'];
+}
+
 /* ---------------- Globale Suche ---------------- */
 // Rekursiv alle Text-/Zahlenwerte durchsuchen; Treffer mit Pfad + Ausschnitt sammeln
 function pg_search_walk($node, $q, $path, &$out){
@@ -744,10 +767,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=23"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=24"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=23"></script></body></html>';
+  echo '<script src="assets/admin.js?v=24"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -782,6 +805,7 @@ function pg_view_topbar($SCHEMA, $active){
 
   // Gruppe „System" – Medien, Statistik, Papierkorb + Owner-Werkzeuge
   $system = [];
+  $system[] = ['index.php?view=board', '🗂️ Planungs-Board', 0];
   $system[] = ['index.php?view=search', '🔎 Suche', 0];
   $system[] = ['index.php?view=media', '🖼️ Medien-Bibliothek', 0];
   $system[] = ['index.php?view=stats', '📊 Statistik', 0];
