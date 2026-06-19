@@ -637,10 +637,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=16"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=17"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=16"></script></body></html>';
+  echo '<script src="assets/admin.js?v=17"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -652,21 +652,33 @@ function pg_view_topbar($SCHEMA, $active){
   echo '<a class="tb-brand" href="index.php">' . $brand . '</a>';
   echo '<button type="button" class="tb-burger" id="tb-burger" aria-label="Menü" aria-expanded="false"><span></span><span></span><span></span></button>';
   echo '<nav class="tb-nav" id="tb-nav">';
+
+  // Inhalte (Content-Sammlungen) – direkte Links
   foreach ($SCHEMA as $key => $coll) {
     if (!pg_can($key)) continue;
     $cls = $key === $active ? ' class="on"' : '';
     echo '<a' . $cls . ' href="index.php?collection=' . pg_h($key) . '">' . pg_h($coll['label']) . '</a>';
   }
-  echo '<a' . ($active === 'media' ? ' class="on"' : '') . ' href="index.php?view=media">Medien</a>';
-  echo '<a href="index.php?view=stats">Statistik</a>';
-  $tn = count(pg_trash_load());
-  echo '<a href="index.php?view=trash">🗑️' . ($tn ? '<span class="nbadge">' . $tn . '</span>' : '') . '</a>';
-  if (pg_can('subscribers')) echo '<a href="index.php?view=subscribers">Abos</a>';
-  if (pg_can('contacts')) { $cu = pg_contacts_unread(); echo '<a href="index.php?view=contacts">Kontakt' . ($cu ? '<span class="nbadge">' . $cu . '</span>' : '') . '</a>'; }
-  if (pg_can('mail')) { $mu = pg_mail_unread_cached(); echo '<a' . ($active === 'mail' ? ' class="on"' : '') . ' href="mail.php">✉ Mails' . ($mu ? '<span class="nbadge">' . $mu . '</span>' : '') . '</a>'; }
-  if (pg_is_owner()) echo '<a href="index.php?view=users">Zugänge</a>';
-  if (pg_is_owner()) echo '<a href="index.php?view=activity">Protokoll</a>';
-  if (pg_is_owner()) echo '<a href="index.php?view=backup">Backup</a>';
+
+  // Gruppe „Community" – Abos, Kontakt, Mails (mit zusammengefassten Badges)
+  $community = [];
+  if (pg_can('subscribers')) $community[] = ['index.php?view=subscribers', '📬 Newsletter-Abos', 0];
+  if (pg_can('contacts'))    $community[] = ['index.php?view=contacts', '✉️ Kontakt-Anfragen', pg_contacts_unread()];
+  if (pg_can('mail'))        $community[] = ['mail.php', '📮 E-Mail-Postfach', pg_mail_unread_cached()];
+  pg_nav_group('Community', $community, $active === 'mail');
+
+  // Gruppe „System" – Medien, Statistik, Papierkorb + Owner-Werkzeuge
+  $system = [];
+  $system[] = ['index.php?view=media', '🖼️ Medien-Bibliothek', 0];
+  $system[] = ['index.php?view=stats', '📊 Statistik', 0];
+  $system[] = ['index.php?view=trash', '🗑️ Papierkorb', count(pg_trash_load())];
+  if (pg_is_owner()) {
+    $system[] = ['index.php?view=users', '🔑 Zugänge & Rollen', 0];
+    $system[] = ['index.php?view=activity', '📋 Protokoll', 0];
+    $system[] = ['index.php?view=backup', '💾 Backup', 0];
+  }
+  pg_nav_group('System', $system, $active === 'media');
+
   echo '<span class="tb-mobile-extra">';
   if (pg_logged_in()) echo '<span class="tb-user">' . pg_h(pg_current_email()) . '</span>';
   echo '<a href="../index.html" target="_blank">↗ Seite ansehen</a><a href="index.php?action=logout">Abmelden</a></span>';
@@ -675,6 +687,26 @@ function pg_view_topbar($SCHEMA, $active){
   if (pg_logged_in()) echo '<span class="tb-user" title="' . pg_h(pg_current_email()) . '">' . pg_h(pg_current_email()) . '</span>';
   echo '<a href="../index.html" target="_blank">↗ Seite</a><a href="index.php?action=logout">Abmelden</a></span>';
   echo '</header>';
+}
+
+/* Aufklappbare Navi-Gruppe (Desktop: Dropdown, Mobil: aufgeklappte Liste im Burger-Menü).
+   $items = [ [href, 'Emoji Beschriftung', ungelesen-Anzahl], … ] */
+function pg_nav_group($label, $items, $active = false){
+  if (!$items) return;
+  $sum = 0;
+  foreach ($items as $it) $sum += (int) ($it[2] ?? 0);
+  echo '<div class="tb-group' . ($active ? ' on' : '') . '" data-tb-group>';
+  echo '<button type="button" class="tb-group-btn" aria-expanded="false">'
+     . pg_h($label)
+     . ($sum ? '<span class="nbadge">' . $sum . '</span>' : '')
+     . '<span class="tb-caret" aria-hidden="true">▾</span></button>';
+  echo '<div class="tb-menu">';
+  foreach ($items as $it) {
+    $href = $it[0]; $text = $it[1]; $badge = (int) ($it[2] ?? 0);
+    echo '<a href="' . pg_h($href) . '">' . $text
+       . ($badge ? '<span class="nbadge">' . $badge . '</span>' : '') . '</a>';
+  }
+  echo '</div></div>';
 }
 
 /* ---------------- Mehrsprachigkeit ---------------- */

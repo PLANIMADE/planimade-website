@@ -781,7 +781,17 @@ pg_view_head('Dashboard');
 pg_view_topbar($SCHEMA, null);
 echo '<div class="dash">';
 echo '<h1>Hallo 👋 Was möchtest du bearbeiten?</h1>';
-echo '<div class="cards">';
+
+// kleine Helfer-Funktion: eine Karte ausgeben
+$card = function ($href, $ico, $title, $desc, $badge = 0) {
+  return '<a class="card" href="' . pg_h($href) . '">'
+       . '<span class="card-ico">' . $ico . '</span>'
+       . '<span class="card-title">' . $title . ($badge ? '<span class="nbadge">' . $badge . '</span>' : '') . '</span>'
+       . '<span class="card-desc">' . $desc . '</span></a>';
+};
+
+/* ── Abschnitt 1: Inhalte ── */
+$inhalte = '';
 foreach ($SCHEMA as $key => $coll) {
   if (!pg_can($key)) continue;
   $desc = [
@@ -791,49 +801,48 @@ foreach ($SCHEMA as $key => $coll) {
     'patchnotes' => 'Devlog-Einträge, Ankündigungen &amp; Patch Notes.',
     'legal' => 'Impressum &amp; Datenschutzerklärung bearbeiten.',
   ][$key] ?? '';
-  echo '<a class="card" href="index.php?collection=' . pg_h($key) . '">'
-     . '<span class="card-ico">' . pg_h($coll['icon']) . '</span>'
-     . '<span class="card-title">' . pg_h($coll['label']) . '</span>'
-     . '<span class="card-desc">' . $desc . '</span></a>';
+  $inhalte .= $card('index.php?collection=' . $key, pg_h($coll['icon']), pg_h($coll['label']), $desc);
 }
+$inhalte .= $card('index.php?view=media', '🖼️', 'Medien-Bibliothek', 'Bilder &amp; Videos hochladen, Pfade kopieren, aufräumen.');
+if ($inhalte !== '') {
+  echo '<h2 class="dash-section">📝 Inhalte</h2><div class="cards">' . $inhalte . '</div>';
+}
+
+/* ── Abschnitt 2: Community & Kontakt ── */
+$community = '';
 if (pg_can('subscribers')) {
   $subCount = count(pg_load_json(PG_DATA_DIR . '/subscribers.json'));
-  echo '<a class="card" href="index.php?view=subscribers">'
-     . '<span class="card-ico">📬</span><span class="card-title">Newsletter-Abos</span>'
-     . '<span class="card-desc">' . $subCount . ' Anmeldung' . ($subCount === 1 ? '' : 'en') . ' · ansehen &amp; exportieren.</span></a>';
+  $community .= $card('index.php?view=subscribers', '📬', 'Newsletter-Abos',
+    $subCount . ' Anmeldung' . ($subCount === 1 ? '' : 'en') . ' · ansehen &amp; exportieren.');
 }
-echo '<a class="card" href="index.php?view=media">'
-   . '<span class="card-ico">🖼️</span><span class="card-title">Medien-Bibliothek</span>'
-   . '<span class="card-desc">Bilder &amp; Videos hochladen, Pfade kopieren, aufräumen.</span></a>';
 if (pg_can('contacts')) {
   $cCount = count(pg_load_json(PG_DATA_DIR . '/contacts.json'));
-  $cUnread = pg_contacts_unread();
-  echo '<a class="card" href="index.php?view=contacts">'
-     . '<span class="card-ico">✉️</span><span class="card-title">Kontakt-Anfragen' . ($cUnread ? '<span class="nbadge">' . $cUnread . '</span>' : '') . '</span>'
-     . '<span class="card-desc">' . $cCount . ' Nachricht' . ($cCount === 1 ? '' : 'en') . ' über das Kontaktformular.</span></a>';
+  $community .= $card('index.php?view=contacts', '✉️', 'Kontakt-Anfragen',
+    $cCount . ' Nachricht' . ($cCount === 1 ? '' : 'en') . ' über das Kontaktformular.', pg_contacts_unread());
 }
 if (pg_can('mail')) {
-  $mUnread = pg_mail_unread_cached();
-  echo '<a class="card" href="mail.php">'
-     . '<span class="card-ico">📮</span><span class="card-title">E-Mail-Postfach' . ($mUnread ? '<span class="nbadge">' . $mUnread . '</span>' : '') . '</span>'
-     . '<span class="card-desc">Mails im PLANIGAMES-Design senden &amp; empfangen.</span></a>';
+  $community .= $card('mail.php', '📮', 'E-Mail-Postfach',
+    'Mails im PLANIGAMES-Design senden &amp; empfangen.', pg_mail_unread_cached());
 }
+if ($community !== '') {
+  echo '<h2 class="dash-section">📣 Community &amp; Kontakt</h2><div class="cards">' . $community . '</div>';
+}
+
+/* ── Abschnitt 3: System & Verwaltung ── */
+$system = '';
+$system .= $card('index.php?view=stats', '📊', 'Statistik', 'Datenschutzfreundliche Seitenaufrufe ansehen.');
+$system .= $card('index.php?view=trash', '🗑️', 'Papierkorb',
+  'Gelöschte Spiele &amp; Beiträge wiederherstellen.', count(pg_trash_load()));
 if (pg_is_owner()) {
-  echo '<a class="card" href="index.php?view=users">'
-     . '<span class="card-ico">🔑</span><span class="card-title">Zugänge &amp; Rollen</span>'
-     . '<span class="card-desc">Login-Zugänge per E-Mail einladen &amp; Rechte vergeben.</span></a>';
-  echo '<a class="card" href="index.php?view=backup">'
-     . '<span class="card-ico">💾</span><span class="card-title">Backup &amp; Wiederherstellung</span>'
-     . '<span class="card-desc">Alle Inhalte als Datei sichern &amp; wieder einspielen.</span></a>';
-  echo '<a class="card" href="index.php?view=activity">'
-     . '<span class="card-ico">📋</span><span class="card-title">Aktivitätsprotokoll</span>'
-     . '<span class="card-desc">Wer hat wann was im Dashboard gemacht?</span></a>';
+  $system .= $card('index.php?view=users', '🔑', 'Zugänge &amp; Rollen',
+    'Login-Zugänge per E-Mail einladen &amp; Rechte vergeben.');
+  $system .= $card('index.php?view=backup', '💾', 'Backup &amp; Wiederherstellung',
+    'Alle Inhalte als Datei sichern &amp; wieder einspielen.');
+  $system .= $card('index.php?view=activity', '📋', 'Aktivitätsprotokoll',
+    'Wer hat wann was im Dashboard gemacht?');
 }
-$trashN = count(pg_trash_load());
-echo '<a class="card" href="index.php?view=trash">'
-   . '<span class="card-ico">🗑️</span><span class="card-title">Papierkorb' . ($trashN ? '<span class="nbadge">' . $trashN . '</span>' : '') . '</span>'
-   . '<span class="card-desc">Gelöschte Spiele &amp; Beiträge wiederherstellen.</span></a>';
-echo '</div>';
+echo '<h2 class="dash-section">⚙️ System &amp; Verwaltung</h2><div class="cards">' . $system . '</div>';
+
 echo '<div class="dash-links"><a href="../index.html" target="_blank">↗ Website ansehen</a> '
    . '<a href="index.php?action=logout">Abmelden</a></div>';
 echo '</div>';

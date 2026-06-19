@@ -43,6 +43,19 @@ button{font:inherit;cursor:pointer}
 .tb-nav a{text-decoration:none;color:var(--muted);padding:.4rem .8rem;border-radius:999px;font-size:.88rem}
 .tb-nav a:hover{color:var(--ink);background:var(--panel)}
 .tb-nav a.on{color:#1a0d00;background:var(--accent);font-weight:600}
+/* Aufklappbare Navi-Gruppen (Community / System) */
+.tb-group{position:relative}
+.tb-group-btn{display:inline-flex;align-items:center;gap:.35rem;color:var(--muted);background:none;border:0;cursor:pointer;
+  font:inherit;font-size:.88rem;padding:.4rem .8rem;border-radius:999px}
+.tb-group-btn:hover{color:var(--ink);background:var(--panel)}
+.tb-group.on>.tb-group-btn{color:#1a0d00;background:var(--accent);font-weight:600}
+.tb-caret{font-size:.7rem;transition:transform .2s;opacity:.8}
+.tb-group.open>.tb-group-btn .tb-caret{transform:rotate(180deg)}
+.tb-menu{position:absolute;top:calc(100% + .4rem);left:0;min-width:210px;display:none;flex-direction:column;gap:.1rem;
+  background:rgba(16,16,18,.98);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:12px;
+  padding:.35rem;box-shadow:0 20px 44px rgba(0,0,0,.55);z-index:30}
+.tb-group:hover>.tb-menu,.tb-group.open>.tb-menu{display:flex}
+.tb-menu a{white-space:nowrap;padding:.55rem .7rem;border-radius:8px;font-size:.88rem}
 .tb-right{display:flex;gap:.9rem;font-size:.85rem}
 .tb-right a{color:var(--muted);text-decoration:none}.tb-right a:hover{color:var(--ink)}
 .tb-burger{display:none;width:40px;height:40px;border:1px solid var(--line);background:var(--panel);border-radius:10px;
@@ -63,11 +76,22 @@ button{font:inherit;cursor:pointer}
   .tb-mobile-extra{display:flex;flex-direction:column;gap:.2rem;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--line)}
   .tb-mobile-extra .tb-user{color:var(--muted);font-size:.82rem;padding:.4rem .8rem}
   .tb-mobile-extra a{color:var(--muted);text-decoration:none;padding:.6rem .8rem;font-size:.92rem}
+  /* Im Burger-Menü Gruppen dauerhaft aufgeklappt zeigen (kein Dropdown) */
+  .tb-group{margin-top:.4rem}
+  .tb-group-btn{width:100%;justify-content:flex-start;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--muted);padding:.5rem .8rem .2rem;pointer-events:none}
+  .tb-group.on>.tb-group-btn{background:none;color:var(--muted);font-weight:600}
+  .tb-caret{display:none}
+  .tb-menu{position:static;display:flex;min-width:0;background:none;border:0;box-shadow:none;backdrop-filter:none;padding:0}
+  .tb-menu a{padding:.7rem .8rem;font-size:.95rem;border-radius:8px}
 }
 
 /* ---- Dashboard ---- */
 .dash{max-width:1040px;margin:0 auto;padding:2.5rem 1.2rem}
 .dash h1{font-size:1.7rem;margin:0 0 1.5rem}
+.dash-section{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
+  margin:2.2rem 0 .9rem;padding-bottom:.5rem;border-bottom:1px solid var(--line)}
+.dash-section:first-of-type{margin-top:.5rem}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
 .card{display:flex;flex-direction:column;gap:.4rem;text-decoration:none;background:var(--panel);
   border:1px solid var(--line);border-radius:16px;padding:1.5rem;transition:.2s}
@@ -130,7 +154,7 @@ button{font:inherit;cursor:pointer}
 .list-search:focus{outline:none;border-color:var(--accent)}
 
 /* Ungelesen-Badge in der Nav */
-.tb-nav a .nbadge,.card .nbadge{display:inline-block;min-width:18px;height:18px;line-height:18px;text-align:center;
+.tb-nav a .nbadge,.tb-group-btn .nbadge,.tb-menu a .nbadge,.card .nbadge{display:inline-block;min-width:18px;height:18px;line-height:18px;text-align:center;
   background:var(--accent);color:#1a0d00;border-radius:999px;font-size:.7rem;font-weight:800;padding:0 5px;margin-left:.35rem;vertical-align:middle}
 .card .nbadge{margin-left:.5rem}
 

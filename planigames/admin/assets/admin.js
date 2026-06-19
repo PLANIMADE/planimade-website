@@ -206,6 +206,20 @@
     });
   }
 
+  // ---- Admin-Topbar: aufklappbare Gruppen (Community / System) ----
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".tb-group-btn");
+    const group = btn ? btn.closest("[data-tb-group]") : null;
+    // andere offene Gruppen schließen
+    document.querySelectorAll("[data-tb-group].open").forEach((g) => {
+      if (g !== group) { g.classList.remove("open"); const b = g.querySelector(".tb-group-btn"); if (b) b.setAttribute("aria-expanded", "false"); }
+    });
+    if (group) {
+      const open = group.classList.toggle("open");
+      btn.setAttribute("aria-expanded", String(open));
+    }
+  });
+
   // ---- Medien-Bibliothek: Pfad kopieren ----
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-copy]");
@@ -288,6 +302,8 @@
     if (e.key === "Escape") {
       const help = document.getElementById("kbd-help");
       if (help) { help.remove(); return; }
+      const grp = document.querySelector("[data-tb-group].open");
+      if (grp) { grp.classList.remove("open"); return; }
       const tb = document.querySelector(".topbar.nav-open");
       if (tb) tb.classList.remove("nav-open");
     }
