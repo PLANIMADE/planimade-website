@@ -403,6 +403,44 @@
     }
   }
 
+  // ---- Board: Checklisten-Punkt umschalten (AJAX) ----
+  document.addEventListener("click", async (e) => {
+    const item = e.target.closest("[data-chk-card]");
+    if (!item) return;
+    e.preventDefault();
+    const card = item.getAttribute("data-chk-card"), i = item.getAttribute("data-chk-i");
+    const fd = new URLSearchParams();
+    fd.append("csrf", csrf()); fd.append("card", card); fd.append("i", i);
+    try {
+      const r = await fetch("index.php?action=board_toggle", { method: "POST", body: fd });
+      const j = await r.json();
+      if (!j.ok) return;
+      const on = item.classList.toggle("done");
+      item.querySelector(".kb-chk-box").textContent = on ? "✓" : "";
+      const cardEl = item.closest(".kb-card");
+      const bar = cardEl.querySelector(".kb-chk-bar span");
+      const cnt = cardEl.querySelector(".kb-chk-count");
+      if (bar) bar.style.width = (j.total ? Math.round(j.done / j.total * 100) : 0) + "%";
+      if (cnt) cnt.textContent = j.done + "/" + j.total;
+    } catch {}
+  });
+
+  // ---- Board: Label-Filter ----
+  const kbFilter = document.querySelector("[data-kb-filter]");
+  if (kbFilter) {
+    kbFilter.addEventListener("click", (e) => {
+      const tag = e.target.closest("[data-label]");
+      if (!tag) return;
+      kbFilter.querySelectorAll(".kb-filter-tag").forEach((t) => t.classList.remove("on"));
+      tag.classList.add("on");
+      const want = tag.getAttribute("data-label");
+      document.querySelectorAll(".board .kb-card").forEach((c) => {
+        const labels = (c.getAttribute("data-labels") || "").split("|").filter(Boolean);
+        c.style.display = (!want || labels.includes(want)) ? "" : "none";
+      });
+    });
+  }
+
   // ---- Tastatur-Shortcuts ----
   function primarySaveButton() {
     return document.querySelector('#editor button[name="save"], button[name="save"], form .btn-primary[type="submit"], form button.btn-primary');
