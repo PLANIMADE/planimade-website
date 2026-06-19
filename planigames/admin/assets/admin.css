@@ -112,6 +112,25 @@ button{font:inherit;cursor:pointer}
 .dash-links{margin-top:2rem;display:flex;gap:1.2rem;font-size:.9rem}
 .dash-links a{color:var(--muted)}
 
+/* ---- Globale Suche ---- */
+.searchbar{display:flex;align-items:center;gap:.5rem;margin:0 0 1.4rem}
+.searchbar input[type=search]{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);color:var(--ink);
+  padding:.75rem 1rem;border-radius:12px;font-size:.95rem;font-family:inherit}
+.searchbar input[type=search]:focus{outline:none;border-color:var(--accent)}
+.searchbar .sb-ico{font-size:1.1rem;opacity:.7}
+.dash-search{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:.5rem .7rem;margin-bottom:1.3rem}
+.dash-search input[type=search]{background:transparent;border:0;padding:.5rem .4rem}
+.dash-search input[type=search]:focus{border:0}
+.searchres{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.6rem}
+.sr-item{display:flex;gap:.7rem;align-items:flex-start;text-decoration:none;color:var(--ink);
+  padding:.6rem .7rem;border-radius:10px;border:1px solid transparent}
+.sr-item:hover{background:var(--panel2);border-color:var(--line)}
+.sr-ico{font-size:1.1rem;flex:0 0 auto;line-height:1.4}
+.sr-body{min-width:0}
+.sr-label{display:block;font-weight:600;font-size:.85rem;color:var(--muted)}
+.sr-snip{display:block;font-size:.92rem;margin-top:.1rem;overflow:hidden;text-overflow:ellipsis}
+.sr-snip mark{background:rgba(255,125,26,.3);color:#ffd9b8;border-radius:3px;padding:0 .1rem}
+
 /* ---- Dashboard-Überblick (Postfach + Statistik) ---- */
 .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin:0 0 .5rem}
 .dash-panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1.1rem 1.2rem;display:flex;flex-direction:column}

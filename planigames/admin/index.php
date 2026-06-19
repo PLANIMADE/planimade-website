@@ -358,6 +358,82 @@ if (($_GET['view'] ?? '') === 'templates') {
   exit;
 }
 
+/* ---- Globale Suche ---- */
+if (($_GET['view'] ?? '') === 'search') {
+  if (!pg_logged_in()) { header('Location: index.php'); exit; }
+  $q = trim((string) ($_GET['q'] ?? ''));
+  pg_view_head('Suche');
+  pg_view_topbar($SCHEMA, null);
+  echo '<div class="editor wide">';
+  echo '<div class="editor-head"><div><h1>🔎 Suche</h1>'
+     . '<p class="muted">Durchsucht alle Inhalte, Kontakt-Anfragen, Vorlagen &amp; Medien.</p></div></div>';
+  echo '<form method="get" class="searchbar"><input type="hidden" name="view" value="search">'
+     . '<input type="search" name="q" value="' . pg_h($q) . '" placeholder="Suchbegriff … (mind. 2 Zeichen)" autofocus>'
+     . '<button class="btn-primary" type="submit">Suchen</button></form>';
+  if ($q !== '' && mb_strlen($q) >= 2) {
+    $groups = [];
+    // 1) Inhalts-Sammlungen
+    foreach ($SCHEMA as $key => $coll) {
+      if (!pg_can($key)) continue;
+      $matches = [];
+      pg_search_walk(pg_load_json($coll['file']), $q, [], $matches);
+      foreach ($matches as $m) {
+        $groups[$coll['label']][] = ['icon' => $coll['icon'], 'href' => 'index.php?collection=' . pg_h($key),
+          'label' => pg_search_pathlabel($m['path']), 'snip' => $m['snip']];
+      }
+    }
+    // 2) Kontakt-Anfragen
+    if (pg_can('contacts')) {
+      foreach (pg_load_json(PG_DATA_DIR . '/contacts.json') as $r) {
+        $hay = trim(($r['name'] ?? '') . ' ' . ($r['email'] ?? '') . ' ' . ($r['subject'] ?? '') . ' ' . ($r['message'] ?? ''));
+        if ($hay !== '' && mb_stripos($hay, $q) !== false) {
+          $groups['Kontakt-Anfragen'][] = ['icon' => '✉️', 'href' => 'index.php?view=contacts',
+            'label' => $r['name'] ?? 'Anfrage', 'snip' => pg_search_snippet($hay, $q)];
+        }
+      }
+    }
+    // 3) Schnellantwort-Vorlagen
+    if (pg_can('mail') || pg_can('contacts')) {
+      foreach (pg_templates_load() as $t) {
+        $hay = trim(($t['title'] ?? '') . ' ' . ($t['body'] ?? ''));
+        if ($hay !== '' && mb_stripos($hay, $q) !== false) {
+          $groups['Schnellantworten'][] = ['icon' => '⚡', 'href' => 'index.php?view=templates',
+            'label' => $t['title'] ?? 'Vorlage', 'snip' => pg_search_snippet($hay, $q)];
+        }
+      }
+    }
+    // 4) Medien-Dateinamen
+    if (is_dir(PG_MEDIA_DIR)) {
+      foreach (scandir(PG_MEDIA_DIR) as $f) {
+        if ($f[0] === '.' || is_dir(PG_MEDIA_DIR . '/' . $f)) continue;
+        if (mb_stripos($f, $q) !== false) {
+          $groups['Medien'][] = ['icon' => '🖼️', 'href' => 'index.php?view=media', 'label' => $f, 'snip' => '/media/' . $f];
+        }
+      }
+    }
+    $total = array_sum(array_map('count', $groups));
+    echo '<p class="muted" style="margin:.2rem 0 1rem">' . $total . ' Treffer für „<b>' . pg_h($q) . '</b>".</p>';
+    if (!$total) {
+      echo '<div class="mailnote">Nichts gefunden. Tipp: anderer Begriff oder kürzer suchen.</div>';
+    } else {
+      foreach ($groups as $area => $hits) {
+        echo '<h2 class="sub-h">' . pg_h($area) . ' <span class="muted" style="font-weight:400">(' . count($hits) . ')</span></h2>';
+        echo '<div class="searchres">';
+        foreach (array_slice($hits, 0, 30) as $h) {
+          echo '<a class="sr-item" href="' . pg_h($h['href']) . '">'
+             . '<span class="sr-ico">' . pg_h($h['icon']) . '</span>'
+             . '<span class="sr-body"><span class="sr-label">' . pg_h($h['label']) . '</span>'
+             . '<span class="sr-snip">' . pg_search_highlight($h['snip'], $q) . '</span></span></a>';
+        }
+        echo '</div>';
+      }
+    }
+  }
+  echo '</div>';
+  pg_view_foot();
+  exit;
+}
+
 /* ---- Kontakt-Anfragen: Ansicht ---- */
 if (($_GET['view'] ?? '') === 'contacts') {
   if (!pg_can('contacts')) { header('Location: index.php'); exit; }
@@ -864,6 +940,12 @@ pg_view_head('Dashboard');
 pg_view_topbar($SCHEMA, null);
 echo '<div class="dash">';
 echo '<h1>Hallo 👋 Was möchtest du bearbeiten?</h1>';
+
+// Globale Suche
+echo '<form method="get" class="searchbar dash-search"><input type="hidden" name="view" value="search">'
+   . '<span class="sb-ico">🔎</span>'
+   . '<input type="search" name="q" placeholder="Alle Inhalte durchsuchen … (Spiele, Devlog, Anfragen, Medien)">'
+   . '<button class="btn-primary" type="submit">Suchen</button></form>';
 
 /* ── Überblick: Postfach-Vorschau + Statistik ── */
 $ov = '';

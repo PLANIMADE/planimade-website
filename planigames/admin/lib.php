@@ -109,6 +109,36 @@ function pg_templates_load(){
 }
 function pg_templates_save($list){ return pg_save_json(PG_TEMPLATES_FILE, array_values($list)); }
 
+/* ---------------- Globale Suche ---------------- */
+// Rekursiv alle Text-/Zahlenwerte durchsuchen; Treffer mit Pfad + Ausschnitt sammeln
+function pg_search_walk($node, $q, $path, &$out){
+  if (is_array($node)) {
+    foreach ($node as $k => $v) { if (count($out) > 200) return; pg_search_walk($v, $q, array_merge($path, [$k]), $out); }
+  } elseif (is_string($node) || is_numeric($node)) {
+    $s = (string) $node;
+    if ($s !== '' && mb_stripos($s, $q) !== false) $out[] = ['path' => $path, 'snip' => pg_search_snippet($s, $q)];
+  }
+}
+function pg_search_snippet($s, $q){
+  $s = trim(preg_replace('/\s+/', ' ', $s));
+  $pos = mb_stripos($s, $q);
+  if ($pos === false) return mb_substr($s, 0, 90);
+  $start = max(0, $pos - 32);
+  $snip = ($start > 0 ? '…' : '') . mb_substr($s, $start, 90);
+  if (mb_strlen($s) > $start + 90) $snip .= '…';
+  return $snip;
+}
+// Lesbarer Pfad: Zahlen-Indizes als „#n", String-Schlüssel mit › getrennt
+function pg_search_pathlabel($path){
+  $parts = [];
+  foreach ($path as $p) $parts[] = (is_int($p) || ctype_digit((string) $p)) ? '#' . ((int) $p + 1) : (string) $p;
+  return implode(' › ', $parts);
+}
+// Treffer-Ausschnitt mit hervorgehobenem Suchbegriff (HTML-sicher)
+function pg_search_highlight($snip, $q){
+  return preg_replace('/(' . preg_quote($q, '/') . ')/iu', '<mark>$1</mark>', pg_h($snip));
+}
+
 /* ---------------- Kontakt-Status (offen / beantwortet / erledigt) ---------------- */
 function pg_contact_statuses(){
   return ['offen' => 'Offen', 'beantwortet' => 'Beantwortet', 'erledigt' => 'Erledigt'];
@@ -654,10 +684,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=20"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=21"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=20"></script></body></html>';
+  echo '<script src="assets/admin.js?v=21"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -692,6 +722,7 @@ function pg_view_topbar($SCHEMA, $active){
 
   // Gruppe „System" – Medien, Statistik, Papierkorb + Owner-Werkzeuge
   $system = [];
+  $system[] = ['index.php?view=search', '🔎 Suche', 0];
   $system[] = ['index.php?view=media', '🖼️ Medien-Bibliothek', 0];
   $system[] = ['index.php?view=stats', '📊 Statistik', 0];
   if (pg_can('mail') || pg_can('contacts')) $system[] = ['index.php?view=templates', '⚡ Schnellantworten', 0];
