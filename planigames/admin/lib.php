@@ -138,6 +138,31 @@ function pg_log_activity($action, $detail = ''){
   pg_save_json(PG_ACTIVITY_FILE, $log);
 }
 
+/* ---------------- Papierkorb (gelöschte Einträge) ---------------- */
+const PG_TRASH_FILE = __DIR__ . '/../data/trash.json';
+// Welche Collection hat eine slug-basierte Liste, die in den Papierkorb wandert?
+function pg_trash_field($collection){
+  return ['games' => 'games', 'patchnotes' => 'posts'][$collection] ?? null;
+}
+function pg_trash_load(){ $t = pg_load_json(PG_TRASH_FILE); return is_array($t) ? $t : []; }
+function pg_trash_add($collection, $field, $item){
+  $t = pg_trash_load();
+  $title = $item['title'] ?? ($item['name'] ?? ($item['slug'] ?? '(ohne Titel)'));
+  $t[] = ['collection' => $collection, 'field' => $field, 'title' => $title, 'slug' => $item['slug'] ?? '',
+          'deletedAt' => date('c'), 'by' => pg_current_email() ?: '—', 'item' => $item];
+  if (count($t) > 60) $t = array_slice($t, -60);
+  pg_save_json(PG_TRASH_FILE, $t);
+}
+// Diff beim Speichern: aus dem alten Stand entfernte slug-Einträge sichern.
+function pg_trash_capture($collection, $field, $oldData, $newData){
+  $newSlugs = [];
+  foreach (($newData[$field] ?? []) as $it) if (!empty($it['slug'])) $newSlugs[$it['slug']] = true;
+  foreach (($oldData[$field] ?? []) as $it) {
+    $sl = $it['slug'] ?? '';
+    if ($sl !== '' && empty($newSlugs[$sl])) pg_trash_add($collection, $field, $it);
+  }
+}
+
 /* ---------------- Backup (Export/Import aller Inhalte) ---------------- */
 // Alle sicherungswürdigen Dateien im data-Ordner (Inhalte + Einstellungen)
 function pg_backup_filenames(){
@@ -634,6 +659,8 @@ function pg_view_topbar($SCHEMA, $active){
   }
   echo '<a' . ($active === 'media' ? ' class="on"' : '') . ' href="index.php?view=media">Medien</a>';
   echo '<a href="index.php?view=stats">Statistik</a>';
+  $tn = count(pg_trash_load());
+  echo '<a href="index.php?view=trash">🗑️' . ($tn ? '<span class="nbadge">' . $tn . '</span>' : '') . '</a>';
   if (pg_can('subscribers')) echo '<a href="index.php?view=subscribers">Abos</a>';
   if (pg_can('contacts')) { $cu = pg_contacts_unread(); echo '<a href="index.php?view=contacts">Kontakt' . ($cu ? '<span class="nbadge">' . $cu . '</span>' : '') . '</a>'; }
   if (pg_can('mail')) { $mu = pg_mail_unread_cached(); echo '<a' . ($active === 'mail' ? ' class="on"' : '') . ' href="mail.php">✉ Mails' . ($mu ? '<span class="nbadge">' . $mu . '</span>' : '') . '</a>'; }

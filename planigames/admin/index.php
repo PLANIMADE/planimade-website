@@ -163,6 +163,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
     unset($post);
   }
 
+  // Papierkorb: entfernte Einträge (nur DE-Basis) vor dem Überschreiben sichern
+  $trashField = pg_trash_field($key);
+  if ($trashField && $lang === 'de') {
+    pg_trash_capture($key, $trashField, pg_load_json($SCHEMA[$key]['file']), $data);
+  }
+
   $ok = pg_save_json(pg_lang_file($SCHEMA[$key]['file'], $lang), $data);
   if ($ok) pg_log_activity('Gespeichert', $SCHEMA[$key]['label'] . ' (' . strtoupper($lang) . ')' . ($sentCount ? ' · Newsletter an ' . $sentCount : ''));
   $extra = $sentCount > 0 ? '&sent=' . $sentCount : '';
@@ -494,6 +500,72 @@ if (($_GET['view'] ?? '') === 'activity') {
   exit;
 }
 
+/* ---- Papierkorb (gelöschte Einträge) ---- */
+if (($_GET['view'] ?? '') === 'trash') {
+  if (!pg_logged_in()) { header('Location: index.php'); exit; }
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    pg_csrf_check();
+    $t = pg_trash_load();
+    if (isset($_POST['empty_trash'])) {
+      pg_save_json(PG_TRASH_FILE, []); header('Location: index.php?view=trash&emptied=1'); exit;
+    }
+    $i = (int) ($_POST['idx'] ?? -1);
+    if (isset($t[$i])) {
+      $entry = $t[$i];
+      if (isset($_POST['restore'])) {
+        $coll = $entry['collection']; $field = $entry['field'];
+        if (isset($SCHEMA[$coll]) && pg_can($coll)) {
+          $cur = pg_load_json($SCHEMA[$coll]['file']);
+          if (!isset($cur[$field]) || !is_array($cur[$field])) $cur[$field] = [];
+          $cur[$field][] = $entry['item'];
+          pg_save_json($SCHEMA[$coll]['file'], $cur);
+          pg_log_activity('Wiederhergestellt', $entry['title'] . ' (' . $coll . ')');
+        }
+      }
+      array_splice($t, $i, 1);
+      pg_save_json(PG_TRASH_FILE, $t);
+      header('Location: index.php?view=trash&' . (isset($_POST['restore']) ? 'restored=1' : 'deleted=1')); exit;
+    }
+    header('Location: index.php?view=trash'); exit;
+  }
+  $trash = pg_trash_load();
+  $indexed = [];
+  foreach ($trash as $i => $e) $indexed[] = [$i, $e];
+  $indexed = array_reverse($indexed);
+  pg_view_head('Papierkorb');
+  pg_view_topbar($SCHEMA, null);
+  echo '<div class="editor wide">';
+  if (isset($_GET['restored'])) echo '<div class="flash ok">✓ Eintrag wiederhergestellt.</div>';
+  if (isset($_GET['deleted'])) echo '<div class="flash ok">✓ Endgültig gelöscht.</div>';
+  if (isset($_GET['emptied'])) echo '<div class="flash ok">✓ Papierkorb geleert.</div>';
+  echo '<div class="editor-head"><div><h1>🗑️ Papierkorb</h1>'
+     . '<p class="muted">Gelöschte Spiele &amp; Devlog-Beiträge der letzten Zeit – wiederherstellbar. Wiederherstellung fügt den Eintrag (deutsche Fassung) wieder hinzu.</p></div></div>';
+  if (!$indexed) {
+    echo '<div class="mailnote">Der Papierkorb ist leer. Hier landen gelöschte Spiele und Devlog-Beiträge automatisch.</div>';
+  } else {
+    echo '<table class="subs"><thead><tr><th>Eintrag</th><th>Bereich</th><th>Gelöscht</th><th></th></tr></thead><tbody>';
+    foreach ($indexed as [$i, $e]) {
+      $collLabel = $SCHEMA[$e['collection']]['label'] ?? $e['collection'];
+      echo '<tr><td><b>' . pg_h($e['title']) . '</b></td><td>' . pg_h($collLabel) . '</td>'
+         . '<td>' . pg_h(str_replace('T', ' ', substr($e['deletedAt'] ?? '', 0, 16))) . '</td><td style="white-space:nowrap">'
+         . '<form method="post" style="display:inline">'
+         . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '"><input type="hidden" name="idx" value="' . $i . '">'
+         . '<button class="btn-add" name="restore" value="1">↩︎ Wiederherstellen</button></form> '
+         . '<form method="post" style="display:inline" onsubmit="return confirm(\'Endgültig löschen? Das kann nicht rückgängig gemacht werden.\')">'
+         . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '"><input type="hidden" name="idx" value="' . $i . '">'
+         . '<button class="btn-danger sm" name="delete_perm" value="1">Löschen</button></form>'
+         . '</td></tr>';
+    }
+    echo '</tbody></table>';
+    echo '<form method="post" class="clear-form" onsubmit="return confirm(\'Papierkorb komplett leeren? Alle Einträge gehen endgültig verloren.\')">'
+       . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+       . '<button class="btn-danger" name="empty_trash" value="1">Papierkorb leeren</button></form>';
+  }
+  echo '</div>';
+  pg_view_foot();
+  exit;
+}
+
 /* ---- Statistik (datenschutzfreundlich) ---- */
 if (($_GET['view'] ?? '') === 'stats') {
   if (!pg_logged_in()) { header('Location: index.php'); exit; }
@@ -757,6 +829,10 @@ if (pg_is_owner()) {
      . '<span class="card-ico">📋</span><span class="card-title">Aktivitätsprotokoll</span>'
      . '<span class="card-desc">Wer hat wann was im Dashboard gemacht?</span></a>';
 }
+$trashN = count(pg_trash_load());
+echo '<a class="card" href="index.php?view=trash">'
+   . '<span class="card-ico">🗑️</span><span class="card-title">Papierkorb' . ($trashN ? '<span class="nbadge">' . $trashN . '</span>' : '') . '</span>'
+   . '<span class="card-desc">Gelöschte Spiele &amp; Beiträge wiederherstellen.</span></a>';
 echo '</div>';
 echo '<div class="dash-links"><a href="../index.html" target="_blank">↗ Website ansehen</a> '
    . '<a href="index.php?action=logout">Abmelden</a></div>';
