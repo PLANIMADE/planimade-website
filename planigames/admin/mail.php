@@ -217,6 +217,15 @@ if ($tab === 'compose') {
   echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
   echo '<div class="field"><label class="flabel">An (E-Mail)</label><input type="text" name="to" value="' . $to . '" placeholder="empfaenger@beispiel.de" required></div>';
   echo '<div class="field"><label class="flabel">Betreff</label><input type="text" name="subject" value="' . $subject . '" required></div>';
+  $tpls = pg_templates_load();
+  if ($tpls) {
+    echo '<div class="field mc-tpl"><label class="flabel">⚡ Schnellantwort-Vorlage</label>'
+       . '<div class="mc-tpl-row"><select data-tpl-select><option value="">– Vorlage wählen –</option>';
+    foreach ($tpls as $ti => $t) echo '<option value="' . $ti . '">' . pg_h($t['title'] ?: ('Vorlage ' . ($ti + 1))) . '</option>';
+    echo '</select><button type="button" class="btn-add" data-tpl-insert>Einfügen</button>'
+       . '<a class="mc-tpl-edit" href="index.php?view=templates">Vorlagen verwalten →</a></div>'
+       . '<script type="application/json" data-tpl-data>' . json_encode(array_map(fn($t) => (string) ($t['body'] ?? ''), $tpls), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) . '</script></div>';
+  }
   echo '<div class="field"><label class="flabel">Nachricht</label><textarea name="message" rows="12" required placeholder="Deine Nachricht …" data-mail-input>' . $prefill . '</textarea>'
      . '<p class="hint">Reiner Text – Zeilenumbrüche bleiben erhalten. Die Mail wird automatisch ins PLANIGAMES-Design eingebettet.</p></div>';
   echo '<div class="editor-foot"><button class="btn-primary" name="send_mail" value="1">Senden →</button></div>';

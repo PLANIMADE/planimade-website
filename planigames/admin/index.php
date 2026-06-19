@@ -307,6 +307,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['delete_contact']) ||
   header('Location: index.php?view=contacts' . (isset($_POST['clear_contacts']) ? '&cleared=1' : '&deleted=1')); exit;
 }
 
+/* ---- Kontakt-Anfrage: Status setzen (offen / beantwortet / erledigt) ---- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_contact_status'])) {
+  pg_csrf_check();
+  if (!pg_can('contacts')) { http_response_code(403); exit('Keine Berechtigung.'); }
+  $list = pg_load_json(PG_DATA_DIR . '/contacts.json');
+  $i = (int) ($_POST['idx'] ?? -1);
+  $st = (string) ($_POST['status'] ?? '');
+  if (isset($list[$i]) && array_key_exists($st, pg_contact_statuses())) {
+    $list[$i]['status'] = $st;
+    pg_save_json(PG_DATA_DIR . '/contacts.json', $list);
+  }
+  $fl = trim((string) ($_POST['filter'] ?? ''));
+  header('Location: index.php?view=contacts' . ($fl !== '' ? '&filter=' . urlencode($fl) : '') . '#c' . $i); exit;
+}
+
+/* ---- Schnellantwort-Vorlagen: speichern ---- */
+$pg_tpl_field = ['name'=>'templates','label'=>'Schnellantwort-Vorlagen','widget'=>'list','summary'=>'title','label_singular'=>'Vorlage',
+  'hint'=>'Textbausteine für wiederkehrende Antworten. Im E-Mail-Postfach unter „Verfassen" einfügbar.','fields'=>[
+    ['name'=>'title','label'=>'Titel','widget'=>'string','hint'=>'Kurzname, z. B. „Danke für Feedback".'],
+    ['name'=>'body','label'=>'Text','widget'=>'text'],
+  ]];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_templates'])) {
+  pg_csrf_check();
+  if (!(pg_can('mail') || pg_can('contacts'))) { http_response_code(403); exit('Keine Berechtigung.'); }
+  $norm = pg_normalize_field($pg_tpl_field, $_POST['d']['templates'] ?? []);
+  $norm = array_values(array_filter($norm, fn($t) => trim(($t['title'] ?? '') . ($t['body'] ?? '')) !== ''));
+  pg_templates_save($norm);
+  header('Location: index.php?view=templates&saved=1'); exit;
+}
+
+/* ---- Schnellantwort-Vorlagen: Ansicht ---- */
+if (($_GET['view'] ?? '') === 'templates') {
+  if (!(pg_can('mail') || pg_can('contacts'))) { header('Location: index.php'); exit; }
+  $tpls = pg_templates_load();
+  pg_view_head('Schnellantwort-Vorlagen');
+  pg_view_topbar($SCHEMA, null);
+  echo '<form method="post" class="editor" id="editor">';
+  echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
+  if (isset($_GET['saved'])) echo '<div class="flash ok">✓ Vorlagen gespeichert.</div>';
+  echo '<div class="editor-head"><div><h1>⚡ Schnellantwort-Vorlagen</h1>'
+     . '<p class="muted">Textbausteine für wiederkehrende Antworten – beim Verfassen einer Mail per Klick einfügbar.</p></div>'
+     . '<div class="editor-actions"><button class="btn-primary" name="save_templates" value="1">Speichern</button></div></div>';
+  echo '<div class="fields">';
+  echo pg_render_fields([$pg_tpl_field], ['templates' => $tpls], 'd', 'templates');
+  echo '</div>';
+  echo '<div class="editor-foot"><button class="btn-primary" name="save_templates" value="1">Speichern</button></div>';
+  echo '</form>';
+  pg_view_foot();
+  exit;
+}
+
 /* ---- Kontakt-Anfragen: Ansicht ---- */
 if (($_GET['view'] ?? '') === 'contacts') {
   if (!pg_can('contacts')) { header('Location: index.php'); exit; }
@@ -316,9 +367,17 @@ if (($_GET['view'] ?? '') === 'contacts') {
   foreach ($list as &$r) { if (empty($r['read'])) { $r['read'] = true; $hadUnread = true; } }
   unset($r);
   if ($hadUnread) pg_save_json(PG_DATA_DIR . '/contacts.json', $list);
+  // Status-Filter
+  $statuses = pg_contact_statuses();
+  $filter = (string) ($_GET['filter'] ?? '');
+  if (!array_key_exists($filter, $statuses)) $filter = '';
+  // Zählung je Status
+  $counts = ['' => count($list)];
+  foreach ($statuses as $k => $_) $counts[$k] = 0;
+  foreach ($list as $r) $counts[pg_contact_status($r)]++;
   // Newest first, but keep original index for delete
   $indexed = [];
-  foreach ($list as $i => $r) $indexed[] = [$i, $r];
+  foreach ($list as $i => $r) { if ($filter === '' || pg_contact_status($r) === $filter) $indexed[] = [$i, $r]; }
   $indexed = array_reverse($indexed);
   pg_view_head('Kontakt-Anfragen');
   pg_view_topbar($SCHEMA, null);
@@ -327,16 +386,30 @@ if (($_GET['view'] ?? '') === 'contacts') {
   if (isset($_GET['deleted'])) echo '<div class="flash ok">✓ Anfrage gelöscht.</div>';
   echo '<div class="editor-head"><div><h1>✉️ Kontakt-Anfragen</h1>'
      . '<p class="muted">' . count($list) . ' Nachricht' . (count($list) === 1 ? '' : 'en') . ' über das Kontaktformular.</p></div></div>';
+  // Filter-Leiste
+  if ($list) {
+    echo '<div class="cfilter">';
+    $tabs = ['' => 'Alle'] + $statuses;
+    foreach ($tabs as $k => $lbl) {
+      $on = $k === $filter ? ' on' : '';
+      $href = 'index.php?view=contacts' . ($k !== '' ? '&filter=' . urlencode($k) : '');
+      echo '<a class="cfilter-tab' . $on . ($k !== '' ? ' st-' . $k : '') . '" href="' . pg_h($href) . '">'
+         . pg_h($lbl) . ' <span class="cfilter-n">' . (int) ($counts[$k] ?? 0) . '</span></a>';
+    }
+    echo '</div>';
+  }
   if (!$indexed) {
-    echo '<div class="mailnote">Noch keine Anfragen. Sie erscheinen hier, sobald jemand das Kontaktformular auf <code>kontakt.html</code> nutzt.</div>';
+    echo '<div class="mailnote">' . ($list ? 'Keine Anfragen mit diesem Status.' : 'Noch keine Anfragen. Sie erscheinen hier, sobald jemand das Kontaktformular auf <code>kontakt.html</code> nutzt.') . '</div>';
   } else {
     echo '<div class="contacts">';
     foreach ($indexed as [$i, $r]) {
       $subj = trim($r['subject'] ?? '');
-      echo '<div class="contact-card">';
+      $cst = pg_contact_status($r);
+      echo '<div class="contact-card st-' . $cst . '" id="c' . $i . '">';
       echo '<div class="contact-head"><div><span class="contact-name">' . pg_h($r['name'] ?? '') . '</span> '
          . '<a class="contact-mail" href="mailto:' . pg_h($r['email'] ?? '') . '">' . pg_h($r['email'] ?? '') . '</a></div>'
-         . '<span class="contact-date">' . pg_h(substr($r['date'] ?? '', 0, 16)) . '</span></div>';
+         . '<div class="contact-headr"><span class="cstatus st-' . $cst . '">' . pg_h($statuses[$cst]) . '</span>'
+         . '<span class="contact-date">' . pg_h(substr($r['date'] ?? '', 0, 16)) . '</span></div></div>';
       if ($subj !== '') echo '<div class="contact-subj">' . pg_h($subj) . '</div>';
       echo '<div class="contact-msg">' . nl2br(pg_h($r['message'] ?? '')) . '</div>';
       $replySubj = rawurlencode('Re: ' . ($subj ?: 'Deine Anfrage'));
@@ -346,8 +419,18 @@ if (($_GET['view'] ?? '') === 'contacts') {
         ? 'mail.php?tab=compose&to=' . rawurlencode($r['email'] ?? '') . '&subject=' . $replySubj . '&body=' . rawurlencode($quote)
         : 'mailto:' . pg_h($r['email'] ?? '') . '?subject=' . $replySubj;
       echo '<div class="contact-actions">'
-         . '<a class="btn-add" href="' . pg_h($replyHref) . '">↩︎ Antworten</a>'
-         . '<form method="post" onsubmit="return confirm(\'Diese Anfrage löschen?\')" style="margin:0">'
+         . '<a class="btn-add" href="' . pg_h($replyHref) . '">↩︎ Antworten</a>';
+      // Status-Umschalter
+      echo '<span class="cstatus-set">';
+      foreach ($statuses as $k => $lbl) {
+        if ($k === $cst) continue;
+        echo '<form method="post" style="margin:0"><input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+           . '<input type="hidden" name="idx" value="' . $i . '"><input type="hidden" name="status" value="' . pg_h($k) . '">'
+           . '<input type="hidden" name="filter" value="' . pg_h($filter) . '">'
+           . '<button class="btn-status st-' . $k . '" name="set_contact_status" value="1">→ ' . pg_h($lbl) . '</button></form>';
+      }
+      echo '</span>';
+      echo '<form method="post" onsubmit="return confirm(\'Diese Anfrage löschen?\')" style="margin:0">'
          . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
          . '<input type="hidden" name="idx" value="' . $i . '">'
          . '<button class="btn-danger sm" name="delete_contact" value="1">Löschen</button></form>'
@@ -882,6 +965,11 @@ if (pg_can('contacts')) {
 if (pg_can('mail')) {
   $community .= $card('mail.php', '📮', 'E-Mail-Postfach',
     'Mails im PLANIGAMES-Design senden &amp; empfangen.', pg_mail_unread_cached());
+}
+if (pg_can('mail') || pg_can('contacts')) {
+  $tplCount = count(pg_templates_load());
+  $community .= $card('index.php?view=templates', '⚡', 'Schnellantworten',
+    $tplCount . ' Vorlage' . ($tplCount === 1 ? '' : 'n') . ' für wiederkehrende Antworten.');
 }
 if ($community !== '') {
   echo '<h2 class="dash-section">📣 Community &amp; Kontakt</h2><div class="cards">' . $community . '</div>';

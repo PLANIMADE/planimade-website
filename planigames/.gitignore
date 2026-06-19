@@ -11,5 +11,7 @@ data/activity.json
 data/stats.json
 data/reactions.json
 data/trash.json
+data/templates.json
+data/board.json
 data/secret.php
 data/*.tmp

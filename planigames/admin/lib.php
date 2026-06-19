@@ -101,6 +101,23 @@ function pg_mail_unread_store($count){
   pg_save_json(PG_MAIL_UNREAD_FILE, ['count' => max(0, (int) $count), 'time' => time()]);
 }
 
+/* ---------------- Schnellantwort-Vorlagen (Textbausteine) ---------------- */
+const PG_TEMPLATES_FILE = __DIR__ . '/../data/templates.json';
+function pg_templates_load(){
+  $t = pg_load_json(PG_TEMPLATES_FILE);
+  return is_array($t) ? array_values(array_filter($t, fn($x) => is_array($x))) : [];
+}
+function pg_templates_save($list){ return pg_save_json(PG_TEMPLATES_FILE, array_values($list)); }
+
+/* ---------------- Kontakt-Status (offen / beantwortet / erledigt) ---------------- */
+function pg_contact_statuses(){
+  return ['offen' => 'Offen', 'beantwortet' => 'Beantwortet', 'erledigt' => 'Erledigt'];
+}
+function pg_contact_status($r){
+  $s = $r['status'] ?? '';
+  return array_key_exists($s, pg_contact_statuses()) ? $s : 'offen';
+}
+
 /* ---------------- Login-Schutz (Brute-Force-Bremse) ---------------- */
 const PG_LOGIN_FILE = __DIR__ . '/../data/login_attempts.json';
 const PG_LOGIN_MAX  = 6;      // erlaubte Fehlversuche
@@ -637,10 +654,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=19"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=20"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=19"></script></body></html>';
+  echo '<script src="assets/admin.js?v=20"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -677,6 +694,7 @@ function pg_view_topbar($SCHEMA, $active){
   $system = [];
   $system[] = ['index.php?view=media', '🖼️ Medien-Bibliothek', 0];
   $system[] = ['index.php?view=stats', '📊 Statistik', 0];
+  if (pg_can('mail') || pg_can('contacts')) $system[] = ['index.php?view=templates', '⚡ Schnellantworten', 0];
   $system[] = ['index.php?view=trash', '🗑️ Papierkorb', count(pg_trash_load())];
   if (pg_is_owner()) {
     $system[] = ['index.php?view=users', '🔑 Zugänge & Rollen', 0];

@@ -273,6 +273,26 @@
     }
     if (input) input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(render, 350); });
     render();
+
+    // Schnellantwort-Vorlage einfügen
+    const tplBtn = compose.querySelector("[data-tpl-insert]");
+    const tplSel = compose.querySelector("[data-tpl-select]");
+    const tplData = compose.querySelector("[data-tpl-data]");
+    if (tplBtn && tplSel && tplData && input) {
+      let bodies = [];
+      try { bodies = JSON.parse(tplData.textContent || "[]"); } catch {}
+      tplBtn.addEventListener("click", () => {
+        const i = tplSel.value;
+        if (i === "" || !bodies[i]) return;
+        const ins = bodies[i];
+        const pos = input.selectionStart ?? input.value.length;
+        const before = input.value.slice(0, pos);
+        const sep = before === "" || before.endsWith("\n") ? "" : "\n";
+        input.value = before + sep + ins + input.value.slice(pos);
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.focus();
+      });
+    }
   }
 
   // ---- Medien-Bibliothek: direkter Upload ----
