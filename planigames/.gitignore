@@ -8,5 +8,6 @@ data/mail.json
 data/mail_unread.json
 data/login_attempts.json
 data/activity.json
+data/stats.json
 data/secret.php
 data/*.tmp

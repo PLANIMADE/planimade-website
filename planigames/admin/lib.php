@@ -612,10 +612,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=14"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=15"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=14"></script></body></html>';
+  echo '<script src="assets/admin.js?v=15"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -633,6 +633,7 @@ function pg_view_topbar($SCHEMA, $active){
     echo '<a' . $cls . ' href="index.php?collection=' . pg_h($key) . '">' . pg_h($coll['label']) . '</a>';
   }
   echo '<a' . ($active === 'media' ? ' class="on"' : '') . ' href="index.php?view=media">Medien</a>';
+  echo '<a href="index.php?view=stats">Statistik</a>';
   if (pg_can('subscribers')) echo '<a href="index.php?view=subscribers">Abos</a>';
   if (pg_can('contacts')) { $cu = pg_contacts_unread(); echo '<a href="index.php?view=contacts">Kontakt' . ($cu ? '<span class="nbadge">' . $cu . '</span>' : '') . '</a>'; }
   if (pg_can('mail')) { $mu = pg_mail_unread_cached(); echo '<a' . ($active === 'mail' ? ' class="on"' : '') . ' href="mail.php">✉ Mails' . ($mu ? '<span class="nbadge">' . $mu . '</span>' : '') . '</a>'; }

@@ -1559,6 +1559,19 @@
         initContact();
         injectOrgJsonLd();
         initCookieBanner();
+        trackView();
+    }
+
+    // Datenschutzfreundliche Statistik: nur aggregierter Seitenaufruf (kein Cookie, keine IP)
+    function trackView() {
+        try {
+            const page = document.body.dataset.page || "page";
+            const slug = qs.get("slug");
+            const label = (slug ? page + ":" + slug : page).slice(0, 60);
+            const data = new FormData(); data.append("p", label);
+            if (navigator.sendBeacon) navigator.sendBeacon("stats.php", data);
+            else fetch("stats.php", { method: "POST", body: data, keepalive: true });
+        } catch (e) {}
     }
 
     // Strukturierte Daten (Organization) für Seiten ohne serverseitiges JSON-LD

@@ -494,6 +494,46 @@ if (($_GET['view'] ?? '') === 'activity') {
   exit;
 }
 
+/* ---- Statistik (datenschutzfreundlich) ---- */
+if (($_GET['view'] ?? '') === 'stats') {
+  if (!pg_logged_in()) { header('Location: index.php'); exit; }
+  $s = pg_load_json(PG_DATA_DIR . '/stats.json');
+  $days = $s['days'] ?? [];
+  $pages = $s['pages'] ?? [];
+  ksort($days);
+  $today = $days[date('Y-m-d')] ?? 0;
+  $last14 = array_slice($days, -14, null, true);
+  $maxDay = $last14 ? max($last14) : 1;
+  arsort($pages);
+  pg_view_head('Statistik');
+  pg_view_topbar($SCHEMA, null);
+  echo '<div class="editor wide">';
+  echo '<div class="editor-head"><div><h1>📊 Statistik</h1>'
+     . '<p class="muted">Aggregierte Seitenaufrufe – ganz ohne Cookies, ohne IP-Speicherung, ohne externe Dienste.</p></div></div>';
+  echo '<div class="stat-cards">';
+  echo '<div class="stat-card"><span class="stat-num">' . (int) ($s['total'] ?? 0) . '</span><span class="stat-lbl">Aufrufe gesamt</span></div>';
+  echo '<div class="stat-card"><span class="stat-num">' . (int) $today . '</span><span class="stat-lbl">Heute</span></div>';
+  echo '<div class="stat-card"><span class="stat-num">' . array_sum($last14) . '</span><span class="stat-lbl">Letzte 14 Tage</span></div>';
+  echo '</div>';
+  if (!$days) {
+    echo '<div class="mailnote" style="margin-top:1.2rem">Noch keine Daten. Sobald die Website besucht wird, erscheinen hier die Aufrufe.</div>';
+  } else {
+    echo '<h2 class="sub-h" style="margin-top:1.6rem">Letzte 14 Tage</h2><div class="stat-bars">';
+    foreach ($last14 as $d => $n) {
+      $h = max(4, round($n / $maxDay * 100));
+      echo '<div class="stat-bar" title="' . pg_h($d) . ': ' . (int) $n . '"><span class="sb-fill" style="height:' . $h . '%"></span>'
+         . '<span class="sb-val">' . (int) $n . '</span><span class="sb-day">' . pg_h(substr($d, 5)) . '</span></div>';
+    }
+    echo '</div>';
+    echo '<h2 class="sub-h" style="margin-top:1.6rem">Beliebteste Seiten</h2><table class="subs"><thead><tr><th>Seite</th><th>Aufrufe</th></tr></thead><tbody>';
+    $i = 0; foreach ($pages as $p => $n) { if ($i++ >= 15) break; echo '<tr><td>' . pg_h($p) . '</td><td>' . (int) $n . '</td></tr>'; }
+    echo '</tbody></table>';
+  }
+  echo '</div>';
+  pg_view_foot();
+  exit;
+}
+
 /* ---- Team & Zugänge (nur Owner) ---- */
 if (($_GET['view'] ?? '') === 'users') {
   if (!pg_is_owner()) { header('Location: index.php'); exit; }
