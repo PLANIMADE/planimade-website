@@ -176,6 +176,66 @@ function pg_login_clear(){
   if (is_array($all) && isset($all[$ipk])) { unset($all[$ipk]); pg_save_json(PG_LOGIN_FILE, $all); }
 }
 
+/* ---------------- 2-Faktor-Authentifizierung (TOTP, RFC 6238) ---------------- */
+const PG_B32_ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+function pg_base32_encode($data){
+  $out = ''; $bits = 0; $val = 0;
+  for ($i = 0, $n = strlen($data); $i < $n; $i++) {
+    $val = ($val << 8) | ord($data[$i]); $bits += 8;
+    while ($bits >= 5) { $out .= PG_B32_ALPHA[($val >> ($bits - 5)) & 31]; $bits -= 5; }
+  }
+  if ($bits > 0) $out .= PG_B32_ALPHA[($val << (5 - $bits)) & 31];
+  return $out;
+}
+function pg_base32_decode($b32){
+  $b32 = strtoupper(preg_replace('/[^A-Z2-7]/', '', (string) $b32));
+  $out = ''; $bits = 0; $val = 0;
+  for ($i = 0, $n = strlen($b32); $i < $n; $i++) {
+    $val = ($val << 5) | strpos(PG_B32_ALPHA, $b32[$i]); $bits += 5;
+    if ($bits >= 8) { $out .= chr(($val >> ($bits - 8)) & 255); $bits -= 8; }
+  }
+  return $out;
+}
+function pg_totp_secret(){ return pg_base32_encode(random_bytes(20)); }
+function pg_totp_code($secret, $slice = null){
+  if ($slice === null) $slice = (int) floor(time() / 30);
+  $key = pg_base32_decode($secret);
+  $bin = "\0\0\0\0" . pack('N', $slice);            // 8-Byte Big-Endian Counter
+  $hash = hash_hmac('sha1', $bin, $key, true);
+  $off = ord($hash[19]) & 0xf;
+  $num = ((ord($hash[$off]) & 0x7f) << 24) | ((ord($hash[$off + 1]) & 0xff) << 16)
+       | ((ord($hash[$off + 2]) & 0xff) << 8) | (ord($hash[$off + 3]) & 0xff);
+  return str_pad((string) ($num % 1000000), 6, '0', STR_PAD_LEFT);
+}
+function pg_totp_verify($secret, $code, $window = 1){
+  $code = preg_replace('/\D/', '', (string) $code);
+  if (strlen($code) !== 6 || $secret === '') return false;
+  $slice = (int) floor(time() / 30);
+  for ($i = -$window; $i <= $window; $i++) if (hash_equals(pg_totp_code($secret, $slice + $i), $code)) return true;
+  return false;
+}
+function pg_otpauth_uri($secret, $account, $issuer = 'PLANIGAMES'){
+  return 'otpauth://totp/' . rawurlencode($issuer . ':' . $account)
+       . '?secret=' . $secret . '&issuer=' . rawurlencode($issuer) . '&algorithm=SHA1&digits=6&period=30';
+}
+// Einmal-Wiederherstellungscodes (Klartext zum Anzeigen; gespeichert wird der Hash)
+function pg_backup_codes_gen($n = 8){
+  $c = []; for ($i = 0; $i < $n; $i++) $c[] = sprintf('%04d-%04d', random_int(0, 9999), random_int(0, 9999));
+  return $c;
+}
+function pg_backup_codes_hash($codes){ return array_map(fn($c) => password_hash(preg_replace('/\D/', '', $c), PASSWORD_DEFAULT), $codes); }
+// Prüft Backup-Code gegen Hash-Liste; bei Treffer wird er aus $user entfernt (verbraucht)
+function pg_backup_code_consume(&$user, $input){
+  $input = preg_replace('/\D/', '', (string) $input);
+  if (strlen($input) < 6) return false;
+  $hashes = (array) ($user['totp_backup'] ?? []);
+  foreach ($hashes as $i => $h) {
+    if (is_string($h) && password_verify($input, $h)) { unset($hashes[$i]); $user['totp_backup'] = array_values($hashes); return true; }
+  }
+  return false;
+}
+function pg_user_has_2fa($u){ return !empty($u['totp_enabled']) && !empty($u['totp']); }
+
 /* ---------------- Aktivitätsprotokoll ---------------- */
 const PG_ACTIVITY_FILE = __DIR__ . '/../data/activity.json';
 function pg_log_activity($action, $detail = ''){
@@ -684,10 +744,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=22"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=23"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=22"></script></body></html>';
+  echo '<script src="assets/admin.js?v=23"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -727,6 +787,7 @@ function pg_view_topbar($SCHEMA, $active){
   $system[] = ['index.php?view=stats', '📊 Statistik', 0];
   if (pg_can('mail') || pg_can('contacts')) $system[] = ['index.php?view=templates', '⚡ Schnellantworten', 0];
   $system[] = ['index.php?view=trash', '🗑️ Papierkorb', count(pg_trash_load())];
+  $system[] = ['index.php?view=account', '🔒 Konto & 2FA', 0];
   if (pg_is_owner()) {
     $system[] = ['index.php?view=users', '🔑 Zugänge & Rollen', 0];
     $system[] = ['index.php?view=activity', '📋 Protokoll', 0];

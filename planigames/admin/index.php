@@ -102,36 +102,72 @@ if (!pg_users_exist()) {
   echo '</div></div>'; pg_view_foot(); exit;
 }
 
-/* ---- Login ---- */
+/* ---- Login (mit optionalem 2-Faktor-Schritt) ---- */
 if (!pg_logged_in()) {
+  if (isset($_GET['cancel'])) { unset($_SESSION['pg_2fa']); header('Location: index.php'); exit; }
   $err = '';
+  // 2FA-Wartezustand abgelaufen? (5 Minuten)
+  if (!empty($_SESSION['pg_2fa']) && ($_SESSION['pg_2fa']['time'] ?? 0) < time() - 300) unset($_SESSION['pg_2fa']);
+  $stage = !empty($_SESSION['pg_2fa']['email']) ? '2fa' : 'login';
+
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     pg_csrf_check();
     $lock = pg_login_locked();
     if ($lock > 0) {
       $err = 'Zu viele Fehlversuche. Bitte in ' . ceil($lock / 60) . ' Minute(n) erneut versuchen.';
+    } elseif (isset($_POST['twofa'])) {
+      // Zweiter Schritt: TOTP- oder Backup-Code prüfen
+      $pend = $_SESSION['pg_2fa'] ?? null;
+      $u = $pend ? pg_user_find($pend['email']) : null;
+      if (!$u || !pg_user_has_2fa($u)) { unset($_SESSION['pg_2fa']); $stage = 'login'; $err = 'Sitzung abgelaufen. Bitte erneut anmelden.'; }
+      else {
+        $code = (string) ($_POST['code'] ?? '');
+        $okCode = pg_totp_verify($u['totp'], $code);
+        $okBackup = false;
+        if (!$okCode) { $okBackup = pg_backup_code_consume($u, $code); if ($okBackup) pg_user_update($u['email'], ['totp_backup' => $u['totp_backup']]); }
+        if ($okCode || $okBackup) {
+          pg_login_clear(); unset($_SESSION['pg_2fa']); session_regenerate_id(true); pg_login_user($u);
+          pg_log_activity('login', ($u['email'] ?? '') . ($okBackup ? ' · Backup-Code' : ' · 2FA'));
+          header('Location: index.php'); exit;
+        }
+        pg_login_record_fail(); $stage = '2fa'; $err = 'Code ungültig. Bitte erneut versuchen.'; usleep(400000);
+      }
     } else {
+      // Erster Schritt: E-Mail + Passwort
       $u = pg_user_check(trim($_POST['email'] ?? ''), $_POST['pw'] ?? '');
-      if ($u) {
+      if ($u && pg_user_has_2fa($u)) {
+        $_SESSION['pg_2fa'] = ['email' => $u['email'], 'time' => time()]; $stage = '2fa';
+      } elseif ($u) {
         pg_login_clear(); session_regenerate_id(true); pg_login_user($u);
         pg_log_activity('login', $u['email'] ?? '');
         header('Location: index.php'); exit;
+      } else {
+        pg_login_record_fail(); $err = 'E-Mail oder Passwort falsch.'; usleep(400000);
       }
-      pg_login_record_fail();
-      $err = 'E-Mail oder Passwort falsch.';
-      usleep(400000);
     }
   }
+
   pg_view_head('Login');
   echo '<div class="auth"><div class="auth-card">';
   echo '<div class="brand"><span class="diamond"></span> PLANI<span class="grad">GAMES</span> · Admin</div>';
-  echo '<h1>Anmelden</h1>';
-  if ($err) echo '<p class="err">' . pg_h($err) . '</p>';
-  echo '<form method="post"><input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
-  echo '<input type="email" name="email" placeholder="E-Mail-Adresse" required autofocus>';
-  echo '<input type="password" name="pw" placeholder="Passwort" required>';
-  echo '<button class="btn-primary" type="submit">Einloggen</button></form>';
-  echo '<p class="muted" style="margin-top:1rem;font-size:.85rem">Per Einladung hier? Nutze den Link aus deiner E-Mail.</p>';
+  if ($stage === '2fa') {
+    echo '<h1>Bestätigung</h1>';
+    echo '<p class="muted" style="margin:-.4rem 0 1rem;font-size:.88rem">Gib den 6-stelligen Code aus deiner Authenticator-App ein.</p>';
+    if ($err) echo '<p class="err">' . pg_h($err) . '</p>';
+    echo '<form method="post"><input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '"><input type="hidden" name="twofa" value="1">';
+    echo '<input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 \-]*" maxlength="9" placeholder="123 456" required autofocus class="otp-input">';
+    echo '<button class="btn-primary" type="submit">Anmelden</button></form>';
+    echo '<p class="muted" style="margin-top:1rem;font-size:.82rem">Kein Zugriff auf die App? Gib einen deiner <b>Wiederherstellungscodes</b> ein.</p>';
+    echo '<p style="margin-top:.6rem"><a class="muted" style="font-size:.82rem" href="index.php?cancel=1">← Andere Anmeldung</a></p>';
+  } else {
+    echo '<h1>Anmelden</h1>';
+    if ($err) echo '<p class="err">' . pg_h($err) . '</p>';
+    echo '<form method="post"><input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
+    echo '<input type="email" name="email" placeholder="E-Mail-Adresse" required autofocus>';
+    echo '<input type="password" name="pw" placeholder="Passwort" required>';
+    echo '<button class="btn-primary" type="submit">Einloggen</button></form>';
+    echo '<p class="muted" style="margin-top:1rem;font-size:.85rem">Per Einladung hier? Nutze den Link aus deiner E-Mail.</p>';
+  }
   echo '</div></div>'; pg_view_foot(); exit;
 }
 
@@ -354,6 +390,110 @@ if (($_GET['view'] ?? '') === 'templates') {
   echo '</div>';
   echo '<div class="editor-foot"><button class="btn-primary" name="save_templates" value="1">Speichern</button></div>';
   echo '</form>';
+  pg_view_foot();
+  exit;
+}
+
+/* ---- Konto & 2-Faktor-Authentifizierung ---- */
+if (($_GET['view'] ?? '') === 'account' || isset($_POST['start_2fa']) || isset($_POST['confirm_2fa'])
+    || isset($_POST['disable_2fa']) || isset($_POST['regen_backup'])) {
+  if (!pg_logged_in()) { header('Location: index.php'); exit; }
+  $me = pg_current_user();
+  $flash = '';
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    pg_csrf_check();
+    if (isset($_POST['start_2fa']) && !pg_user_has_2fa($me)) {
+      $_SESSION['pg_totp_setup'] = pg_totp_secret();
+      header('Location: index.php?view=account#twofa'); exit;
+    } elseif (isset($_POST['cancel_setup'])) {
+      unset($_SESSION['pg_totp_setup']);
+      header('Location: index.php?view=account#twofa'); exit;
+    } elseif (isset($_POST['confirm_2fa']) && !empty($_SESSION['pg_totp_setup'])) {
+      $sec = $_SESSION['pg_totp_setup'];
+      if (pg_totp_verify($sec, $_POST['code'] ?? '')) {
+        $codes = pg_backup_codes_gen(8);
+        pg_user_update($me['email'], ['totp' => $sec, 'totp_enabled' => true, 'totp_backup' => pg_backup_codes_hash($codes)]);
+        unset($_SESSION['pg_totp_setup']);
+        $_SESSION['pg_backup_show'] = $codes;
+        pg_log_activity('2FA aktiviert');
+        header('Location: index.php?view=account&enabled=1#twofa'); exit;
+      }
+      $flash = '<div class="flash err">Code stimmt nicht. Stimmt die Uhrzeit auf dem Gerät? Bitte erneut versuchen.</div>';
+    } elseif (isset($_POST['disable_2fa']) && pg_user_has_2fa($me)) {
+      if (pg_totp_verify($me['totp'], $_POST['code'] ?? '') || pg_backup_code_consume($me, $_POST['code'] ?? '')) {
+        pg_user_update($me['email'], ['totp' => '', 'totp_enabled' => false, 'totp_backup' => []]);
+        pg_log_activity('2FA deaktiviert');
+        header('Location: index.php?view=account&disabled=1#twofa'); exit;
+      }
+      $flash = '<div class="flash err">Code stimmt nicht – 2FA bleibt aktiv.</div>';
+    } elseif (isset($_POST['regen_backup']) && pg_user_has_2fa($me)) {
+      if (pg_totp_verify($me['totp'], $_POST['code'] ?? '')) {
+        $codes = pg_backup_codes_gen(8);
+        pg_user_update($me['email'], ['totp_backup' => pg_backup_codes_hash($codes)]);
+        $_SESSION['pg_backup_show'] = $codes;
+        pg_log_activity('2FA Backup-Codes erneuert');
+        header('Location: index.php?view=account#twofa'); exit;
+      }
+      $flash = '<div class="flash err">Code stimmt nicht.</div>';
+    }
+  }
+  $me = pg_current_user(); // nach evtl. Änderung neu laden
+  $backupShow = $_SESSION['pg_backup_show'] ?? null; unset($_SESSION['pg_backup_show']);
+  pg_view_head('Konto');
+  pg_view_topbar($SCHEMA, null);
+  echo '<div class="editor">';
+  if (isset($_GET['enabled']))  echo '<div class="flash ok">✓ Zwei-Faktor-Authentifizierung aktiviert.</div>';
+  if (isset($_GET['disabled'])) echo '<div class="flash ok">✓ Zwei-Faktor-Authentifizierung deaktiviert.</div>';
+  echo $flash;
+  echo '<div class="editor-head"><div><h1>🔒 Konto &amp; Sicherheit</h1>'
+     . '<p class="muted">' . pg_h($me['email'] ?? '') . ' · ' . pg_h(ucfirst($me['role'] ?? '')) . '</p></div></div>';
+  echo '<div class="fields"><div id="twofa" class="objectfield" style="padding:1.3rem 1.4rem">';
+  echo '<h2 class="sub-h" style="margin-top:0">Zwei-Faktor-Authentifizierung (2FA)</h2>';
+  $csrf = pg_h(pg_csrf());
+
+  // Frisch erzeugte Backup-Codes (nur einmal anzeigen)
+  if ($backupShow) {
+    echo '<div class="bk-codes"><p><b>🔑 Deine Wiederherstellungscodes</b> – jetzt sicher speichern! '
+       . 'Jeder Code funktioniert einmal, falls du keinen Zugriff auf die App hast.</p><div class="bk-grid">';
+    foreach ($backupShow as $c) echo '<code>' . pg_h($c) . '</code>';
+    echo '</div></div>';
+  }
+
+  if (pg_user_has_2fa($me)) {
+    $remain = count($me['totp_backup'] ?? []);
+    echo '<p>Status: <span class="cstatus st-erledigt">✓ Aktiv</span></p>';
+    echo '<p class="muted">Beim Login wird zusätzlich ein 6-stelliger Code aus deiner App verlangt. '
+       . 'Verbleibende Wiederherstellungscodes: <b>' . $remain . '</b>.</p>';
+    echo '<div class="acc-actions">';
+    echo '<form method="post" class="codeform"><input type="hidden" name="csrf" value="' . $csrf . '">'
+       . '<input type="text" name="code" inputmode="numeric" placeholder="App-Code" class="otp-input sm" required>'
+       . '<button class="btn-add" name="regen_backup" value="1">Backup-Codes neu erzeugen</button></form>';
+    echo '<form method="post" class="codeform" onsubmit="return confirm(\'2FA wirklich deaktivieren?\')"><input type="hidden" name="csrf" value="' . $csrf . '">'
+       . '<input type="text" name="code" inputmode="numeric" placeholder="App- oder Backup-Code" class="otp-input sm" required>'
+       . '<button class="btn-danger sm" name="disable_2fa" value="1">2FA deaktivieren</button></form>';
+    echo '</div>';
+  } elseif (!empty($_SESSION['pg_totp_setup'])) {
+    $sec = $_SESSION['pg_totp_setup'];
+    $uri = pg_otpauth_uri($sec, $me['email'] ?? 'admin');
+    echo '<ol class="setup-steps">';
+    echo '<li>Öffne deine Authenticator-App (Google Authenticator, Authy, 1Password …) und scanne den QR-Code:';
+    echo '<div class="qr-box" data-otpauth="' . pg_h($uri) . '"><div class="qr-loading">QR wird geladen …</div></div>';
+    echo '<p class="muted" style="font-size:.82rem">Kein Scanner? Schlüssel manuell eingeben:<br><code class="totp-key">' . pg_h(trim(chunk_split($sec, 4, ' '))) . '</code></p></li>';
+    echo '<li>Gib zur Bestätigung den aktuell angezeigten 6-stelligen Code ein:';
+    echo '<form method="post" class="codeform" style="margin-top:.6rem"><input type="hidden" name="csrf" value="' . $csrf . '">'
+       . '<input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="123 456" class="otp-input sm" required autofocus>'
+       . '<button class="btn-primary" name="confirm_2fa" value="1">Aktivieren</button>'
+       . '<button class="btn-add" name="cancel_setup" value="1" formnovalidate>Abbrechen</button></form></li>';
+    echo '</ol>';
+    echo '<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>';
+    echo '<script>(function(){var b=document.querySelector(".qr-box");if(!b||!window.QRCode)return;b.innerHTML="";new QRCode(b,{text:b.getAttribute("data-otpauth"),width:180,height:180,colorDark:"#0a0a0b",colorLight:"#ffffff"});})();</script>';
+  } else {
+    echo '<p class="muted">Schütze deinen Zugang zusätzlich mit einer Authenticator-App. Nach dem Passwort wird dann ein '
+       . 'einmaliger 6-stelliger Code abgefragt.</p>';
+    echo '<form method="post"><input type="hidden" name="csrf" value="' . $csrf . '">'
+       . '<button class="btn-primary" name="start_2fa" value="1">2FA einrichten</button></form>';
+  }
+  echo '</div></div></div>';
   pg_view_foot();
   exit;
 }

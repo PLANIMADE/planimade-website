@@ -285,6 +285,21 @@ body.is-dragging .item-body{pointer-events:none}
   padding:.5rem 1rem;border-radius:999px;font-weight:600;font-size:.85rem}
 .btn-danger:hover{background:rgba(255,80,80,.12)}
 
+/* ---- Konto & 2FA ---- */
+.otp-input{letter-spacing:.3em;font-size:1.2rem;text-align:center;font-family:ui-monospace,Menlo,Consolas,monospace}
+.otp-input.sm{font-size:1rem;letter-spacing:.15em;text-align:left;max-width:200px}
+.setup-steps{margin:.4rem 0 0;padding-left:1.2rem;display:flex;flex-direction:column;gap:1.2rem;line-height:1.6}
+.setup-steps li{padding-left:.3rem}
+.qr-box{background:#fff;width:180px;height:180px;border-radius:12px;padding:0;margin:.7rem 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.qr-box img,.qr-box canvas{display:block}
+.qr-loading{color:#0a0a0b;font-size:.8rem}
+.totp-key{display:inline-block;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:.4rem .7rem;font-size:1rem;letter-spacing:.1em;margin-top:.3rem}
+.codeform{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:0}
+.acc-actions{display:flex;flex-direction:column;gap:.8rem;margin-top:1rem}
+.bk-codes{background:rgba(255,125,26,.07);border:1px solid rgba(255,125,26,.25);border-radius:12px;padding:1rem 1.1rem;margin-bottom:1.2rem}
+.bk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.5rem;margin-top:.7rem}
+.bk-grid code{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.5rem;text-align:center;font-size:1rem;letter-spacing:.08em}
+
 /* Objekt-Gruppe (z. B. Newsletter-Einstellungen) – einklappbare Sektion */
 .objectfield{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.015);overflow:hidden}
 .obj-head{display:flex;align-items:center;gap:.6rem;width:100%;background:transparent;border:0;cursor:pointer;
