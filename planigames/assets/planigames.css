@@ -284,6 +284,15 @@ body.menu-open #cookie-banner { display: none; }
 #cookie-banner .cb-decline { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #d7d7df; }
 #cookie-banner .cb-decline:hover { border-color: rgba(255,255,255,0.45); }
 #cookie-banner .cb-accept { background: linear-gradient(110deg, var(--accent), var(--accent-3)); color: #1a0d00; }
+#cookie-banner .cb-settings-toggle { background: transparent; border: 0; color: #9a9aa6; text-decoration: underline; text-underline-offset: 2px; padding: .6rem .4rem; }
+#cookie-banner .cb-settings-toggle:hover { color: #d7d7df; }
+#cookie-banner .cb-settings { flex-basis: 100%; display: flex; flex-direction: column; gap: .7rem; margin: .2rem 0 .4rem; padding-top: .6rem; border-top: 1px solid rgba(255,255,255,0.08); }
+#cookie-banner .cb-cat { display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; }
+#cookie-banner .cb-cat > span { display: flex; flex-direction: column; }
+#cookie-banner .cb-cat b { color: #fff; font-size: .9rem; }
+#cookie-banner .cb-cat .cb-sub { color: #8a8a93; font-size: .78rem; line-height: 1.4; }
+#cookie-banner .cb-cat input { width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
+#cookie-banner .cb-save { align-self: flex-start; margin-top: .2rem; }
 @media (max-width: 560px) { #cookie-banner { flex-direction: column; align-items: stretch; } #cookie-banner .cb-actions { justify-content: stretch; } #cookie-banner .cb-actions button { flex: 1; } }
 
 /* YouTube-Consent-Platzhalter (lädt erst nach Zustimmung) */

@@ -228,47 +228,64 @@
     }
 
     /* ---------- Cookie-/Consent-Banner ---------- */
-    function pgConsent() { try { return localStorage.getItem("pg_consent"); } catch { return null; } }
-    function setConsent(v) {
-        try { localStorage.setItem("pg_consent", v); } catch {}
+    // Consent V2: kategorienbasiert. Speicherung als JSON-Objekt
+    // (abwärtskompatibel zu den alten Werten "all"/"essential").
+    function pgConsentGet() {
+        let raw = null; try { raw = localStorage.getItem("pg_consent"); } catch {}
+        if (!raw) return null;                         // noch nicht entschieden
+        if (raw === "all") return { externalMedia: true };
+        if (raw === "essential") return { externalMedia: false };
+        try { return JSON.parse(raw); } catch { return { externalMedia: false }; }
+    }
+    function pgConsentExternal() { const c = pgConsentGet(); return !!(c && c.externalMedia); }
+    function saveConsent(consent) {
+        try { localStorage.setItem("pg_consent", JSON.stringify(consent)); } catch {}
         const banner = $("#cookie-banner");
         if (banner) banner.remove();
-        if (v === "all") { $$("[data-yt-embed]").forEach(loadYouTube); }   // Trailer nachladen
+        if (consent.externalMedia) $$("[data-yt-embed]").forEach(loadYouTube);
     }
     function loadYouTube(holder) {
         const id = holder.getAttribute("data-yt-embed");
         if (!id) return;
         holder.innerHTML = `<iframe class="absolute inset-0 w-full h-full" src="https://www.youtube-nocookie.com/embed/${esc(id)}?autoplay=1" title="Trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
     }
-    function initCookieBanner() {
+    function initCookieBanner(openSettings) {
         const cfg = (DATA.studio && DATA.studio.cookie) || {};
         if (cfg.enabled === false) return;
-        if (pgConsent()) return;                       // bereits entschieden
+        if (!openSettings && pgConsentGet()) return;   // bereits entschieden
+        const cur = pgConsentGet() || {};
         const msg = cfg.message || "Wir nutzen nur, was die Seite zum Laufen braucht. Für eingebettete YouTube-Trailer brauchen wir deine Zustimmung.";
         const acc = cfg.acceptLabel || "Alle akzeptieren";
         const dec = cfg.declineLabel || "Nur Notwendige";
+        $("#cookie-banner")?.remove();
         const el = document.createElement("div");
         el.id = "cookie-banner";
         el.setAttribute("role", "dialog");
         el.setAttribute("aria-label", "Cookie-Hinweis");
         el.innerHTML = `
-            <p class="cb-text">${esc(msg)} <a href="rechtliches.html#datenschutz">${esc(t("foot_datenschutz"))}</a></p>
+            <p class="cb-text">${esc(msg)} <a href="rechtliches.html?doc=datenschutz">${esc(t("foot_datenschutz"))}</a></p>
+            <div class="cb-settings"${openSettings ? "" : " hidden"}>
+                <label class="cb-cat"><span><b>${LANG === "en" ? "Necessary" : "Notwendig"}</b><span class="cb-sub">${LANG === "en" ? "Always on – required for the site to work." : "Immer aktiv – für den Betrieb der Seite."}</span></span><input type="checkbox" checked disabled></label>
+                <label class="cb-cat"><span><b>${LANG === "en" ? "External media" : "Externe Medien"}</b><span class="cb-sub">${LANG === "en" ? "YouTube trailers (loads content from Google)." : "YouTube-Trailer (lädt Inhalte von Google)."}</span></span><input type="checkbox" data-cat="externalMedia"${cur.externalMedia ? " checked" : ""}></label>
+                <button class="cb-accept cb-save" data-consent="save">${LANG === "en" ? "Save selection" : "Auswahl speichern"}</button>
+            </div>
             <div class="cb-actions">
+                <button class="cb-settings-toggle" data-cb-settings>${esc(t("cookie_settings"))}</button>
                 <button class="cb-decline" data-consent="essential">${esc(dec)}</button>
                 <button class="cb-accept" data-consent="all">${esc(acc)}</button>
             </div>`;
         document.body.appendChild(el);
         el.addEventListener("click", (e) => {
+            if (e.target.closest("[data-cb-settings]")) { e.preventDefault(); el.querySelector(".cb-settings").hidden = !el.querySelector(".cb-settings").hidden; return; }
             const b = e.target.closest("[data-consent]");
-            if (b) setConsent(b.dataset.consent);
+            if (!b) return;
+            if (b.dataset.consent === "save") saveConsent({ externalMedia: !!el.querySelector('[data-cat="externalMedia"]')?.checked });
+            else saveConsent({ externalMedia: b.dataset.consent === "all" });
         });
         requestAnimationFrame(() => el.classList.add("in"));
     }
-    // Footer-Link „Cookie-Einstellungen" öffnet das Banner erneut
-    function reopenCookieBanner() {
-        try { localStorage.removeItem("pg_consent"); } catch {}
-        if (!$("#cookie-banner")) initCookieBanner();
-    }
+    // Footer-Link „Cookie-Einstellungen" öffnet das Banner mit offenen Einstellungen
+    function reopenCookieBanner() { initCookieBanner(true); }
 
     function initLangSwitch() {
         document.addEventListener("click", (e) => {
@@ -286,7 +303,7 @@
             }
             // „Immer laden" innerhalb eines Trailers = Zustimmung für alle
             const all = e.target.closest(".yt-consent [data-consent='all']");
-            if (all) { e.preventDefault(); setConsent("all"); }
+            if (all) { e.preventDefault(); saveConsent({ externalMedia: true }); }
         });
     }
 
@@ -839,7 +856,7 @@
         const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/);
         if (yt) {
             const cookieOff = (DATA.studio && DATA.studio.cookie && DATA.studio.cookie.enabled !== false);
-            if (cookieOff && pgConsent() !== "all") {
+            if (cookieOff && !pgConsentExternal()) {
                 // DSGVO: YouTube erst nach Zustimmung laden – solange ein Klick-Platzhalter
                 const poster = b.poster ? esc(b.poster) : `https://i.ytimg.com/vi/${yt[1]}/hqdefault.jpg`;
                 embed = `<div class="yt-consent absolute inset-0" data-yt-embed="${yt[1]}" style="background-image:url('${poster}')">
