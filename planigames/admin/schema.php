@@ -93,11 +93,22 @@ return [
         ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Was sollen wir als Nächstes bauen?'],
         ['name'=>'intro','label'=>'Einleitung','widget'=>'text','default'=>'Reich deine Idee ein oder stimme für bestehende ab – die beliebtesten landen auf unserem Plan.'],
       ]],
-      ['name'=>'mascot','label'=>'Maskottchen','widget'=>'object','hint'=>'Kleiner animierter Begleiter unten in der Ecke (klickbar). Komplett ein-/ausschaltbar.','fields'=>[
+      ['name'=>'mascot','label'=>'Maskottchen','widget'=>'object','hint'=>'Kleiner animierter Begleiter unten in der Ecke (klickbar). Komplett ein-/ausschaltbar. Alle Effekte funktionieren mit Emoji und mit eigenem PNG.','fields'=>[
         ['name'=>'enabled','label'=>'Maskottchen anzeigen','widget'=>'boolean','default'=>false],
         ['name'=>'emoji','label'=>'Emoji','widget'=>'string','default'=>'🧙','hint'=>'Wird genutzt, wenn kein Bild gesetzt ist.'],
         ['name'=>'image','label'=>'Bild (optional)','widget'=>'image','hint'=>'Transparentes PNG, ca. 200×200 px. Überschreibt das Emoji.'],
-        ['name'=>'message','label'=>'Sprechblase (optional)','widget'=>'string','hint'=>'z. B. „Psst… wishliste Wobbly Wizards!"'],
+        ['name'=>'message','label'=>'Sprechblase (Standard)','widget'=>'string','hint'=>'Wird gezeigt, wenn keine wechselnden Sprüche gesetzt sind. z. B. „Psst… wishliste Wobbly Wizards!"'],
+        ['name'=>'messages','label'=>'Wechselnde Sprüche','widget'=>'list','summary'=>'text','label_singular'=>'Spruch','hint'=>'Erscheinen abwechselnd beim Drüberfahren. Überschreibt den Standard-Spruch.','fields'=>[
+          ['name'=>'text','label'=>'Spruch','widget'=>'string'],
+        ]],
+        ['name'=>'context','label'=>'Seiten-spezifische Sprüche','widget'=>'list','summary'=>'page','label_singular'=>'Regel','hint'=>'Eigene Sprüche je nach Seite – übersteuern dort die wechselnden Sprüche.','fields'=>[
+          ['name'=>'page','label'=>'Seite','widget'=>'select','options'=>['home'=>'Startseite','games'=>'Spiele-Übersicht','game'=>'Spiel-Detailseite','devlog'=>'Devlog','contact'=>'Kontakt','presskit'=>'Presskit']],
+          ['name'=>'text','label'=>'Spruch','widget'=>'string'],
+        ]],
+        ['name'=>'follow','label'=>'Blick folgt der Maus','widget'=>'boolean','default'=>true,'hint'=>'Maskottchen neigt sich leicht zum Mauszeiger – wirkt lebendig (Emoji & PNG).'],
+        ['name'=>'idle','label'=>'Einschlafen bei Inaktivität','widget'=>'boolean','default'=>true,'hint'=>'Döst nach ~22 s ein (💤) und wacht beim Scrollen/Bewegen wieder auf.'],
+        ['name'=>'draggable','label'=>'Verschiebbar','widget'=>'boolean','default'=>true,'hint'=>'Besucher können das Maskottchen ziehen; die Position wird im Browser gemerkt.'],
+        ['name'=>'closable','label'=>'Schließen erlauben','widget'=>'boolean','default'=>true,'hint'=>'Zeigt beim Drüberfahren ein ✕, mit dem Besucher es ausblenden können.'],
       ]],
       ['name'=>'tipjar','label'=>'Unterstützen-Button (Ko-fi / Tip-Jar)','widget'=>'object','hint'=>'Schwebender Button unten rechts, der zu deiner Support-Seite führt.','fields'=>[
         ['name'=>'enabled','label'=>'Button anzeigen','widget'=>'boolean','default'=>false],

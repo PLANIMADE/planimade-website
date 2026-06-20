@@ -1987,15 +1987,127 @@
     function initMascot() {
         const m = (DATA.studio && DATA.studio.mascot) || {};
         if (!m.enabled) return;
+        // Vom Besucher dauerhaft geschlossen?
+        if (m.closable !== false) { try { if (localStorage.getItem("pg_mascot_closed") === "1") return; } catch {} }
+        const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
         const el = document.createElement("div");
         el.className = "pg-mascot";
-        const inner = m.image ? `<img src="${esc(m.image)}" alt="">` : `<span class="pg-mascot-emoji">${esc(m.emoji || "🧙")}</span>`;
-        el.innerHTML = `${m.message ? `<div class="pg-mascot-bubble">${esc(m.message)}</div>` : ""}<button type="button" class="pg-mascot-btn" aria-label="Maskottchen">${inner}</button>`;
+        const face = m.image ? `<img src="${esc(m.image)}" alt="">` : `<span class="pg-mascot-emoji">${esc(m.emoji || "🧙")}</span>`;
+        el.innerHTML =
+            `<div class="pg-mascot-bubble" aria-hidden="true"></div>` +
+            `<button type="button" class="pg-mascot-btn" aria-label="Maskottchen"><span class="pg-mascot-face">${face}</span><span class="pg-mascot-zzz" aria-hidden="true">💤</span></button>` +
+            (m.closable !== false ? `<button type="button" class="pg-mascot-close" aria-label="${LANG === "en" ? "Hide mascot" : "Maskottchen ausblenden"}">✕</button>` : "");
         document.body.appendChild(el);
-        el.querySelector(".pg-mascot-btn").addEventListener("click", () => {
-            el.classList.add("wave");
-            confetti({ count: 45, x: innerWidth - 80, y: innerHeight - 120 });
+
+        const btn = el.querySelector(".pg-mascot-btn");
+        const faceEl = el.querySelector(".pg-mascot-face");
+        const bubble = el.querySelector(".pg-mascot-bubble");
+
+        // ---- 1) + 4) Sprüche-Pool (seiten-spezifisch übersteuert wechselnde) ----
+        const page = (document.body.dataset.page || "");
+        let pool = [];
+        const ctx = (m.context || []).filter(c => c && c.page === page && c.text);
+        if (ctx.length) pool = ctx.map(c => c.text);
+        else if (Array.isArray(m.messages) && m.messages.length) pool = m.messages.map(x => (x && x.text) || "").filter(Boolean);
+        else if (m.message) pool = [m.message];
+        let pIdx = Math.floor(Math.random() * Math.max(pool.length, 1));
+        function showBubble() {
+            if (!pool.length) return;
+            bubble.textContent = pool[pIdx % pool.length];
+            pIdx++;
+            el.classList.add("talking");
+        }
+        function hideBubble() { el.classList.remove("talking"); }
+        el.addEventListener("mouseenter", () => { wake(); showBubble(); });
+        el.addEventListener("mouseleave", hideBubble);
+
+        // ---- 6) Position wiederherstellen / Drag & Drop ----
+        if (m.draggable !== false) {
+            try {
+                const saved = JSON.parse(localStorage.getItem("pg_mascot_pos") || "null");
+                if (saved && typeof saved.x === "number") placeAt(saved.x, saved.y);
+            } catch {}
+        }
+        function placeAt(x, y) {
+            const r = el.getBoundingClientRect();
+            x = Math.max(4, Math.min(innerWidth - r.width - 4, x));
+            y = Math.max(4, Math.min(innerHeight - r.height - 4, y));
+            el.style.left = x + "px"; el.style.top = y + "px";
+            el.style.right = "auto"; el.style.bottom = "auto";
+        }
+        let dragging = false, moved = false, sx = 0, sy = 0, ox = 0, oy = 0;
+        btn.addEventListener("pointerdown", (e) => {
+            if (m.draggable === false) return;
+            const r = el.getBoundingClientRect();
+            dragging = true; moved = false; sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top;
+            btn.setPointerCapture(e.pointerId); el.classList.add("dragging");
+        });
+        btn.addEventListener("pointermove", (e) => {
+            if (!dragging) return;
+            const dx = e.clientX - sx, dy = e.clientY - sy;
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved = true;
+            if (moved) placeAt(ox + dx, oy + dy);
+        });
+        btn.addEventListener("pointerup", (e) => {
+            if (!dragging) return;
+            dragging = false; el.classList.remove("dragging");
+            try { btn.releasePointerCapture(e.pointerId); } catch {}
+            if (moved) { const r = el.getBoundingClientRect(); try { localStorage.setItem("pg_mascot_pos", JSON.stringify({ x: r.left, y: r.top })); } catch {} }
+        });
+
+        // ---- 5) Klick = winken + Konfetti, mehrfach = Geheim-Animation + Badge ----
+        let pets = 0, petTimer = null;
+        btn.addEventListener("click", () => {
+            if (moved) { moved = false; return; }   // war ein Drag, kein Klick
+            wake();
+            el.classList.remove("wave"); void el.offsetWidth; el.classList.add("wave");
+            confetti({ count: 40, x: el.getBoundingClientRect().left + 40, y: el.getBoundingClientRect().top + 40 });
             setTimeout(() => el.classList.remove("wave"), 800);
+            pets++;
+            clearTimeout(petTimer); petTimer = setTimeout(() => { pets = 0; }, 1500);
+            if (pets >= 5) {
+                pets = 0;
+                el.classList.remove("spin"); void el.offsetWidth; el.classList.add("spin");
+                confetti({ count: 90, x: el.getBoundingClientRect().left + 40, y: el.getBoundingClientRect().top + 40 });
+                setTimeout(() => el.classList.remove("spin"), 900);
+                pgBadge("friend");
+            }
+        });
+
+        // ---- 2) Blick folgt der Maus (Neigung – funktioniert mit Emoji & PNG) ----
+        if (m.follow !== false && !reduce && matchMedia("(pointer: fine)").matches) {
+            addEventListener("pointermove", (e) => {
+                if (dragging) return;
+                const r = el.getBoundingClientRect();
+                const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+                const ang = Math.atan2(e.clientY - cy, e.clientX - cx);
+                const tilt = Math.max(-14, Math.min(14, (e.clientX - cx) / 22));
+                const lift = e.clientY < cy ? Math.max(-4, (e.clientY - cy) / 60) : 0;
+                faceEl.style.transform = `rotate(${tilt}deg) translateY(${lift}px)`;
+            }, { passive: true });
+        }
+
+        // ---- 3) Einschlafen bei Inaktivität ----
+        let idleTimer = null;
+        function wake() {
+            el.classList.remove("sleeping");
+            if (m.idle === false || reduce) return;
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => el.classList.add("sleeping"), 22000);
+        }
+        if (m.idle !== false && !reduce) {
+            ["scroll", "pointermove", "keydown", "touchstart"].forEach(ev => addEventListener(ev, wake, { passive: true }));
+            wake();
+        }
+
+        // ---- 8) Schließen ----
+        const closeBtn = el.querySelector(".pg-mascot-close");
+        if (closeBtn) closeBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            el.classList.add("leaving");
+            try { localStorage.setItem("pg_mascot_closed", "1"); } catch {}
+            setTimeout(() => el.remove(), 350);
         });
     }
 
@@ -2026,6 +2138,7 @@
         { id: "voter", emoji: "🗳️", title: { de: "Wählerisch", en: "Voter" }, desc: { de: "Für eine Idee abgestimmt", en: "Upvoted an idea" } },
         { id: "explorer", emoji: "🧭", title: { de: "Entdecker*in", en: "Explorer" }, desc: { de: "5 Seiten erkundet", en: "Explored 5 pages" } },
         { id: "wizard", emoji: "🧙", title: { de: "Zauberer*in", en: "Wizard" }, desc: { de: "Den Geheim-Code gefunden", en: "Found the secret code" } },
+        { id: "friend", emoji: "🤝", title: { de: "Maskottchen-Freund*in", en: "Mascot friend" }, desc: { de: "Das Maskottchen oft gestreichelt", en: "Petted the mascot a lot" } },
     ];
     const badgeT = (o) => (o && (o[LANG] || o.de)) || "";
     function badgesEarned() { try { return JSON.parse(localStorage.getItem("pg_badges") || "{}"); } catch { return {}; } }
