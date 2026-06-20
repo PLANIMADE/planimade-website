@@ -1321,7 +1321,7 @@
         const en = LANG === "en";
         return `
         <section class="mt-16 pt-10 border-t border-white/10" data-comments>
-            <h2 class="font-display text-2xl md:text-3xl font-extrabold text-white mb-6">${en ? "Comments" : "Kommentare"}</h2>
+            <h2 class="font-display text-2xl md:text-3xl font-extrabold text-white mb-6">${en ? "Comments" : "Kommentare"}<span data-comments-count class="ml-3 align-middle text-base font-mono font-medium text-zinc-500"></span></h2>
             <div data-comments-list class="flex flex-col gap-4 mb-8"></div>
             <form data-comments-form class="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
                 <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
@@ -1345,11 +1345,13 @@
         const list = wrap.querySelector("[data-comments-list]");
         const form = wrap.querySelector("[data-comments-form]");
         const msg = wrap.querySelector("[data-comments-msg]");
+        const countEl = wrap.querySelector("[data-comments-count]");
         // bereits freigegebene Kommentare laden
         try {
             const r = await fetch(`comments.php?slug=${encodeURIComponent(slug)}`);
             const j = await r.json();
             const cs = (j && j.comments) || [];
+            if (countEl) countEl.textContent = cs.length ? `(${cs.length})` : "";
             list.innerHTML = cs.length
                 ? cs.map(c => `<div class="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
                         <div class="flex items-center gap-2 mb-2">
