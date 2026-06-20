@@ -96,6 +96,7 @@ return [
       ['name'=>'mascot','label'=>'Maskottchen','widget'=>'object','hint'=>'Kleiner animierter Begleiter unten in der Ecke (klickbar). Komplett ein-/ausschaltbar. Alle Effekte funktionieren mit Emoji und mit eigenem PNG.','fields'=>[
         ['name'=>'enabled','label'=>'Maskottchen anzeigen','widget'=>'boolean','default'=>false],
         ['name'=>'emoji','label'=>'Emoji','widget'=>'string','default'=>'🧙','hint'=>'Wird genutzt, wenn kein Bild gesetzt ist.'],
+        ['name'=>'size','label'=>'Größe (px)','widget'=>'number','default'=>96,'hint'=>'Breite des Maskottchens in Pixeln (Standard 96, größer = auffälliger).'],
         ['name'=>'image','label'=>'Bild (optional)','widget'=>'image','hint'=>'Transparentes PNG, ca. 200×200 px. Überschreibt das Emoji.'],
         ['name'=>'eyes','label'=>'Wackelaugen (Overlay)','widget'=>'object','hint'=>'Legt bewegliche Augen über dein PNG, die dem Mauszeiger folgen. Nutze „🪄 Augen platzieren", um sie genau auf dein Bild zu setzen.','fields'=>[
           ['name'=>'enabled','label'=>'Augen anzeigen','widget'=>'boolean','default'=>false],

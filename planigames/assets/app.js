@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "30";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "31";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
@@ -647,8 +647,9 @@
             } else { $("#devlog-section")?.remove(); }
         }
 
-        renderCommunity(s);
+        // Reihenfolge: Vorschlagsbox ZUERST einsetzen → landet über dem Discord-/Community-Banner
         renderSuggestions(s);
+        renderCommunity(s);
     }
 
     // Vorschlagsbox (Community-Ideen mit Upvotes) – vor der Newsletter-Sektion
@@ -2007,6 +2008,7 @@
         const el = document.createElement("div");
         el.className = "pg-mascot";
         const num = (v, d) => { v = +v; return isFinite(v) ? v : d; };
+        el.style.setProperty("--ms", Math.max(48, Math.min(220, num(m.size, 96))) + "px");
         const face = m.image ? `<img src="${esc(m.image)}" alt="">` : `<span class="pg-mascot-emoji">${esc(m.emoji || "🧙")}</span>`;
         // Wackelaugen-Overlay (über Bild/Emoji), folgen dem Cursor
         const ey = m.eyes || {};
