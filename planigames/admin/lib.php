@@ -360,13 +360,23 @@ function pg_totp_code($secret, $slice = null){
        | ((ord($hash[$off + 2]) & 0xff) << 8) | (ord($hash[$off + 3]) & 0xff);
   return str_pad((string) ($num % 1000000), 6, '0', STR_PAD_LEFT);
 }
-function pg_totp_verify($secret, $code, $window = 4){
-  // window=4 → ±2 Minuten Toleranz, fängt typische Server-Uhr-Abweichungen ab
+function pg_totp_verify($secret, $code, $window = 4, $skew = 0){
+  // window=4 → ±2 Minuten Toleranz; $skew = gespeicherte Uhr-Abweichung (in 30s-Schritten)
   $code = preg_replace('/\D/', '', (string) $code);
   if (strlen($code) !== 6 || $secret === '') return false;
-  $slice = (int) floor(time() / 30);
+  $slice = (int) floor(time() / 30) + (int) $skew;
   for ($i = -$window; $i <= $window; $i++) if (hash_equals(pg_totp_code($secret, $slice + $i), $code)) return true;
   return false;
+}
+/* Findet die Uhr-Abweichung (in 30s-Schritten) zwischen Server und App.
+   Großes Fenster (~±10 Min) für die Erst-Einrichtung, damit 2FA auch bei
+   falsch gehender Server- oder Handy-Uhr eingerichtet werden kann. */
+function pg_totp_find_skew($secret, $code, $window = 20){
+  $code = preg_replace('/\D/', '', (string) $code);
+  if (strlen($code) !== 6 || $secret === '') return null;
+  $slice = (int) floor(time() / 30);
+  for ($i = -$window; $i <= $window; $i++) if (hash_equals(pg_totp_code($secret, $slice + $i), $code)) return $i;
+  return null;
 }
 function pg_otpauth_uri($secret, $account, $issuer = 'PLANIGAMES'){
   // Label mit LITERALEM Doppelpunkt (issuer:account) – maximal kompatibel.

@@ -206,7 +206,7 @@ if (!pg_logged_in()) {
       if (!$u || !pg_user_has_2fa($u)) { unset($_SESSION['pg_2fa']); $stage = 'login'; $err = 'Sitzung abgelaufen. Bitte erneut anmelden.'; }
       else {
         $code = (string) ($_POST['code'] ?? '');
-        $okCode = pg_totp_verify($u['totp'], $code);
+        $okCode = pg_totp_verify($u['totp'], $code, 4, $u['totp_skew'] ?? 0);
         $okBackup = false;
         if (!$okCode) { $okBackup = pg_backup_code_consume($u, $code); if ($okBackup) pg_user_update($u['email'], ['totp_backup' => $u['totp_backup']]); }
         if ($okCode || $okBackup) {
@@ -1095,24 +1095,26 @@ if (($_GET['view'] ?? '') === 'account' || isset($_POST['start_2fa']) || isset($
       header('Location: index.php?view=account#twofa'); exit;
     } elseif (isset($_POST['confirm_2fa']) && !empty($_SESSION['pg_totp_setup'])) {
       $sec = $_SESSION['pg_totp_setup'];
-      if (pg_totp_verify($sec, $_POST['code'] ?? '')) {
+      // Großes Fenster bei der Einrichtung + Uhr-Abweichung dauerhaft merken
+      $skew = pg_totp_find_skew($sec, $_POST['code'] ?? '', 20);
+      if ($skew !== null) {
         $codes = pg_backup_codes_gen(8);
-        pg_user_update($me['email'], ['totp' => $sec, 'totp_enabled' => true, 'totp_backup' => pg_backup_codes_hash($codes)]);
+        pg_user_update($me['email'], ['totp' => $sec, 'totp_enabled' => true, 'totp_skew' => $skew, 'totp_backup' => pg_backup_codes_hash($codes)]);
         unset($_SESSION['pg_totp_setup']);
         $_SESSION['pg_backup_show'] = $codes;
-        pg_log_activity('2FA aktiviert');
+        pg_log_activity('2FA aktiviert' . ($skew !== 0 ? ' (Uhr-Abweichung ' . ($skew * 30) . 's ausgeglichen)' : ''));
         header('Location: index.php?view=account&enabled=1#twofa'); exit;
       }
-      $flash = '<div class="flash err">Code stimmt nicht. Stimmt die Uhrzeit auf dem Gerät? Bitte erneut versuchen.</div>';
+      $flash = '<div class="flash err">Code stimmt nicht. Tipp: Gib den Code ein, <b>solange er in der App angezeigt wird</b> (er wechselt alle 30 s). Prüfe außerdem unten „Code wird nicht akzeptiert?".</div>';
     } elseif (isset($_POST['disable_2fa']) && pg_user_has_2fa($me)) {
-      if (pg_totp_verify($me['totp'], $_POST['code'] ?? '') || pg_backup_code_consume($me, $_POST['code'] ?? '')) {
-        pg_user_update($me['email'], ['totp' => '', 'totp_enabled' => false, 'totp_backup' => []]);
+      if (pg_totp_verify($me['totp'], $_POST['code'] ?? '', 4, $me['totp_skew'] ?? 0) || pg_backup_code_consume($me, $_POST['code'] ?? '')) {
+        pg_user_update($me['email'], ['totp' => '', 'totp_enabled' => false, 'totp_skew' => 0, 'totp_backup' => []]);
         pg_log_activity('2FA deaktiviert');
         header('Location: index.php?view=account&disabled=1#twofa'); exit;
       }
       $flash = '<div class="flash err">Code stimmt nicht – 2FA bleibt aktiv.</div>';
     } elseif (isset($_POST['regen_backup']) && pg_user_has_2fa($me)) {
-      if (pg_totp_verify($me['totp'], $_POST['code'] ?? '')) {
+      if (pg_totp_verify($me['totp'], $_POST['code'] ?? '', 4, $me['totp_skew'] ?? 0)) {
         $codes = pg_backup_codes_gen(8);
         pg_user_update($me['email'], ['totp_backup' => pg_backup_codes_hash($codes)]);
         $_SESSION['pg_backup_show'] = $codes;
