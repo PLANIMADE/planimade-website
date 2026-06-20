@@ -228,10 +228,12 @@
     head.setAttribute("aria-expanded", String(!folded));
   });
 
-  // ---- Admin-Topbar: aufklappbare Gruppen (Community / System) ----
+  // ---- Admin-Topbar: aufklappbare Gruppen (Community / System / Glocke) ----
   document.addEventListener("click", (e) => {
     const btn = e.target.closest(".tb-group-btn");
     const group = btn ? btn.closest("[data-tb-group]") : null;
+    // Klick im offenen Panel (kein Button) → offen lassen
+    if (!btn && e.target.closest("[data-tb-group]")) return;
     // andere offene Gruppen schließen
     document.querySelectorAll("[data-tb-group].open").forEach((g) => {
       if (g !== group) { g.classList.remove("open"); const b = g.querySelector(".tb-group-btn"); if (b) b.setAttribute("aria-expanded", "false"); }
@@ -402,6 +404,21 @@
       fetch("index.php?action=board_save", { method: "POST", body: fd }).catch(() => {});
     }
   }
+
+  // ---- Board: Karten-Editor-Modal schließen (✕, Backdrop, Esc) ----
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("[data-kb-close]")) {
+      const ed = e.target.closest(".kb-cardedit");
+      if (ed) ed.open = false;
+      return;
+    }
+    // Klick auf den Backdrop (offenes details, aber außerhalb des Formulars)
+    const openEd = e.target.closest(".kb-cardedit[open]");
+    if (openEd && !e.target.closest(".kb-cardform")) openEd.open = false;
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") document.querySelectorAll(".kb-cardedit[open]").forEach((d) => { d.open = false; });
+  });
 
   // ---- Board: Checklisten-Punkt umschalten (AJAX) ----
   document.addEventListener("click", async (e) => {

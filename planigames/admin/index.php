@@ -412,6 +412,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_contact_status'])
   header('Location: index.php?view=contacts' . ($fl !== '' ? '&filter=' . urlencode($fl) : '') . '#c' . $i); exit;
 }
 
+/* ---- Devlog-Kommentare: Moderation ---- */
+if (($_GET['view'] ?? '') === 'comments' || isset($_POST['approve_comment']) || isset($_POST['unapprove_comment']) || isset($_POST['delete_comment'])) {
+  if (!pg_can('contacts')) { header('Location: index.php'); exit; }
+  $cfile = PG_DATA_DIR . '/comments.json';
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    pg_csrf_check();
+    $list = pg_load_json($cfile); if (!is_array($list)) $list = [];
+    $id = (string) ($_POST['id'] ?? '');
+    if (isset($_POST['delete_comment'])) {
+      $list = array_values(array_filter($list, fn($c) => ($c['id'] ?? '') !== $id));
+    } else {
+      $set = isset($_POST['approve_comment']);
+      foreach ($list as &$c) if (($c['id'] ?? '') === $id) $c['approved'] = $set;
+      unset($c);
+    }
+    pg_save_json($cfile, $list);
+    header('Location: index.php?view=comments'); exit;
+  }
+  $list = pg_load_json($cfile); if (!is_array($list)) $list = [];
+  usort($list, fn($a, $b) => strcmp((string) ($b['date'] ?? ''), (string) ($a['date'] ?? '')));
+  $pending = array_filter($list, fn($c) => empty($c['approved']));
+  $approved = array_filter($list, fn($c) => !empty($c['approved']));
+  pg_view_head('Kommentare');
+  pg_view_topbar($SCHEMA, null);
+  $csrf = pg_h(pg_csrf());
+  $renderC = function ($c, $isPending) use ($csrf) {
+    $h = '<div class="contact-card' . ($isPending ? ' st-offen' : '') . '">';
+    $h .= '<div class="contact-head"><div><span class="contact-name">' . pg_h($c['name'] ?? '') . '</span> '
+        . '<span class="muted" style="font-size:.82rem">zu <code>' . pg_h($c['slug'] ?? '') . '</code></span></div>'
+        . '<span class="contact-date">' . pg_h(substr($c['date'] ?? '', 0, 16)) . '</span></div>';
+    $h .= '<div class="contact-msg">' . nl2br(pg_h($c['body'] ?? '')) . '</div>';
+    $h .= '<div class="contact-actions"><form method="post" style="margin:0"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($c['id'] ?? '') . '">';
+    $h .= $isPending
+      ? '<button class="btn-add" name="approve_comment" value="1">✓ Freigeben</button>'
+      : '<button class="btn-add" name="unapprove_comment" value="1">↩︎ Verbergen</button>';
+    $h .= '</form><form method="post" style="margin:0" onsubmit="return confirm(\'Kommentar löschen?\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($c['id'] ?? '') . '">'
+        . '<button class="btn-danger sm" name="delete_comment" value="1">Löschen</button></form></div></div>';
+    return $h;
+  };
+  echo '<div class="editor wide">';
+  echo '<div class="editor-head"><div><h1>💬 Devlog-Kommentare</h1><p class="muted">'
+     . count($pending) . ' zu prüfen · ' . count($approved) . ' freigegeben.</p></div></div>';
+  echo '<h2 class="sub-h">Zu prüfen</h2>';
+  if (!$pending) echo '<div class="mailnote">Nichts zu moderieren. 🎉</div>';
+  else { echo '<div class="contacts">'; foreach ($pending as $c) echo $renderC($c, true); echo '</div>'; }
+  if ($approved) {
+    echo '<h2 class="sub-h">Freigegeben</h2><div class="contacts">';
+    foreach ($approved as $c) echo $renderC($c, false);
+    echo '</div>';
+  }
+  echo '</div>';
+  pg_view_foot();
+  exit;
+}
+
 /* ---- Schnellantwort-Vorlagen: speichern ---- */
 $pg_tpl_field = ['name'=>'templates','label'=>'Schnellantwort-Vorlagen','widget'=>'list','summary'=>'title','label_singular'=>'Vorlage',
   'hint'=>'Textbausteine für wiederkehrende Antworten. Im E-Mail-Postfach unter „Verfassen" einfügbar.','fields'=>[
@@ -541,6 +596,7 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
         . '<details class="kb-cardedit"><summary title="Bearbeiten">✎</summary>'
         . '<form method="post" class="kb-cardform"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="card" value="' . pg_h($card['id']) . '">'
         . ($archiveView ? '<input type="hidden" name="ret_archive" value="1">' : '')
+        . '<div class="kb-modal-head"><span>Karte bearbeiten</span><button type="button" class="kb-modal-x" data-kb-close aria-label="Schließen">✕</button></div>'
         . '<label class="ml">Titel</label><input type="text" name="title" value="' . pg_h($card['title'] ?? '') . '" required>'
         . '<label class="ml">Notiz</label><textarea name="text" rows="2">' . pg_h($card['text'] ?? '') . '</textarea>'
         . '<label class="ml">Verknüpftes Spiel</label><select name="game"><option value="">— kein Spiel —</option>';

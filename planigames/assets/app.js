@@ -1257,10 +1257,73 @@
                 ${shareBar(p.title)}
                 ${g && g.wishlistUrl ? `<div class="mt-12 pt-8 border-t border-white/10 text-center">
                     <a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic inline-block px-9 py-4 rounded-full font-semibold">${esc(g.title)} auf Steam wishlisten</a></div>` : ""}
+                ${commentsSection()}
             </div>`;
         initMagnetic();
         initShareCopy();
         initReactions(p.slug);
+        initComments(p.slug);
+    }
+
+    function commentsSection() {
+        const en = LANG === "en";
+        return `
+        <section class="mt-16 pt-10 border-t border-white/10" data-comments>
+            <h2 class="font-display text-2xl md:text-3xl font-extrabold text-white mb-6">${en ? "Comments" : "Kommentare"}</h2>
+            <div data-comments-list class="flex flex-col gap-4 mb-8"></div>
+            <form data-comments-form class="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
+                <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
+                <div class="flex flex-col sm:flex-row gap-3 mb-3">
+                    <input name="name" required maxlength="60" placeholder="${en ? "Your name" : "Dein Name"}" class="flex-1 bg-black/30 border border-white/15 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none">
+                </div>
+                <textarea name="body" required maxlength="3000" rows="4" placeholder="${en ? "Write a comment…" : "Schreib einen Kommentar…"}" class="w-full bg-black/30 border border-white/15 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none"></textarea>
+                <div class="flex items-center justify-between gap-3 mt-3 flex-wrap">
+                    <span class="text-xs text-zinc-500">${en ? "Comments are reviewed before they appear." : "Kommentare werden vor der Veröffentlichung geprüft."}</span>
+                    <button class="btn-accent magnetic px-7 py-3 rounded-full font-semibold">${en ? "Post comment" : "Kommentar senden"}</button>
+                </div>
+                <p data-comments-msg class="text-sm mt-3 hidden"></p>
+            </form>
+        </section>`;
+    }
+
+    async function initComments(slug) {
+        const wrap = $("[data-comments]");
+        if (!wrap) return;
+        const en = LANG === "en";
+        const list = wrap.querySelector("[data-comments-list]");
+        const form = wrap.querySelector("[data-comments-form]");
+        const msg = wrap.querySelector("[data-comments-msg]");
+        // bereits freigegebene Kommentare laden
+        try {
+            const r = await fetch(`comments.php?slug=${encodeURIComponent(slug)}`);
+            const j = await r.json();
+            const cs = (j && j.comments) || [];
+            list.innerHTML = cs.length
+                ? cs.map(c => `<div class="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="font-semibold text-white">${esc(c.name)}</span>
+                            <span class="font-mono text-xs text-zinc-600">${esc(fmtDate(c.date))}</span>
+                        </div>
+                        <p class="text-zinc-300 whitespace-pre-wrap leading-relaxed">${esc(c.body)}</p>
+                    </div>`).join("")
+                : `<p class="text-zinc-500 text-sm">${en ? "No comments yet — be the first!" : "Noch keine Kommentare — sei die*der Erste!"}</p>`;
+        } catch { list.innerHTML = ""; }
+        // Absenden
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const fd = new FormData(form);
+            fd.append("slug", slug);
+            msg.className = "text-sm mt-3 text-zinc-400";
+            msg.textContent = en ? "Sending…" : "Wird gesendet…";
+            try {
+                const r = await fetch("comments.php", { method: "POST", body: fd });
+                const j = await r.json();
+                if (j.error) { msg.className = "text-sm mt-3 text-red-400"; msg.textContent = j.error; return; }
+                form.reset();
+                msg.className = "text-sm mt-3 text-emerald-400";
+                msg.textContent = en ? "Thanks! Your comment will appear after review." : "Danke! Dein Kommentar erscheint nach der Prüfung.";
+            } catch { msg.className = "text-sm mt-3 text-red-400"; msg.textContent = en ? "Something went wrong." : "Etwas ist schiefgelaufen."; }
+        });
     }
 
     /* =========================================================

@@ -13,5 +13,6 @@ data/reactions.json
 data/trash.json
 data/templates.json
 data/board.json
+data/comments.json
 data/secret.php
 data/*.tmp

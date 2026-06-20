@@ -1,6 +1,11 @@
-# JSON-Inhalte sind öffentlich (die Website lädt sie). Aber den Passwort-Hash,
-# die Abonnentenliste (Datenschutz!) und temporäre Dateien nie ausliefern:
-<FilesMatch "(auth\.php|users\.json|invites\.json|subscribers\.json|\.tmp|\.bak)$">
+# Öffentlich sind NUR die Inhalts-JSONs, die die Website lädt
+# (studio, team, games, patchnotes, legal + deren .en-Varianten).
+# Alles andere – Passwort-Hashes, SMTP-Zugang, personenbezogene Daten,
+# interne Zustände – darf NIE ausgeliefert werden.
+<FilesMatch "\.(php|tmp|bak)$">
+  Require all denied
+</FilesMatch>
+<FilesMatch "(auth\.php|secret\.php|users\.json|invites\.json|subscribers\.json|contacts\.json|mail\.json|mail_unread\.json|login_attempts\.json|activity\.json|reactions\.json|trash\.json|templates\.json|board\.json|comments\.json)$">
   Require all denied
 </FilesMatch>
 Options -Indexes

@@ -61,15 +61,28 @@ button{font:inherit;cursor:pointer}
 .tb-menu a{white-space:nowrap;padding:.55rem .7rem;border-radius:8px;font-size:.88rem}
 .tb-right{display:flex;gap:.9rem;font-size:.85rem}
 .tb-right a{color:var(--muted);text-decoration:none}.tb-right a:hover{color:var(--ink)}
-/* Direkter E-Mail-Postfach-Knopf (immer sichtbar) */
-.tb-mailicon{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+/* Direkte Icon-Knöpfe in der Kopfzeile (Board, Glocke) */
+.tb-iconbtn,.tb-notif-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
   width:40px;height:40px;border:1px solid var(--line);background:var(--panel);border-radius:10px;
-  text-decoration:none;font-size:1.1rem;line-height:1}
-.tb-mailicon:hover{border-color:var(--accent)}
-.tb-mailicon.on{border-color:var(--accent);background:rgba(255,125,26,.12)}
-.tb-mailicon .nbadge{position:absolute;top:-7px;right:-7px;margin:0}
-/* Reihenfolge in der Kopfzeile: Marke · (Mail · Burger mobil) · Navi · Mail · rechts */
-.tb-brand{order:0}.tb-burger{order:5}.tb-nav{order:2}.tb-mailicon{order:4}.tb-right{order:6}
+  text-decoration:none;font-size:1.1rem;line-height:1;cursor:pointer;color:var(--ink)}
+.tb-iconbtn:hover,.tb-notif-btn:hover{border-color:var(--accent)}
+.tb-iconbtn.on{border-color:var(--accent);background:rgba(255,125,26,.12)}
+.tb-iconbtn .nbadge,.tb-notif-btn .nbadge{position:absolute;top:-7px;right:-7px;margin:0}
+/* Benachrichtigungs-Center */
+.tb-notif{position:relative}
+.tb-notif-panel{position:absolute;top:calc(100% + .5rem);right:0;width:300px;display:none;flex-direction:column;
+  background:rgba(16,16,18,.98);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;
+  padding:.5rem;box-shadow:0 22px 50px rgba(0,0,0,.55);z-index:40}
+.tb-notif.open .tb-notif-panel{display:flex}
+.tn-head{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:.4rem .6rem .5rem}
+.tn-row{display:flex;align-items:center;gap:.7rem;text-decoration:none;color:var(--ink);padding:.55rem .6rem;border-radius:10px}
+.tn-row:hover{background:var(--panel2)}
+.tn-ico{font-size:1.15rem;flex:0 0 auto}
+.tn-body{flex:1;min-width:0;display:flex;flex-direction:column}
+.tn-label{font-weight:600;font-size:.9rem}
+.tn-note{font-size:.78rem;color:var(--muted)}
+/* Reihenfolge: Marke · Navi · Board-Icon · Glocke · rechts · (Burger mobil) */
+.tb-brand{order:0}.tb-nav{order:2}.tb-iconbtn{order:3}.tb-notif{order:4}.tb-right{order:5}.tb-burger{order:6}
 .tb-burger{display:none;width:40px;height:40px;border:1px solid var(--line);background:var(--panel);border-radius:10px;
   flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;margin-left:auto}
 .tb-burger span{display:block;width:20px;height:2px;background:var(--ink);border-radius:2px;transition:.3s}
@@ -80,7 +93,8 @@ button{font:inherit;cursor:pointer}
 @media(max-width:860px){
   .topbar{flex-wrap:nowrap;gap:.8rem}
   .tb-burger{display:flex;margin-left:.2rem}
-  .tb-mailicon{margin-left:auto}
+  .tb-iconbtn{margin-left:auto}
+  .tb-notif-panel{right:auto;left:0}
   .tb-right{display:none}
   .tb-nav{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:.15rem;
     background:rgba(12,12,14,.98);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:.6rem .9rem 1rem;box-shadow:0 20px 40px rgba(0,0,0,.5)}
@@ -142,11 +156,20 @@ button{font:inherit;cursor:pointer}
 .kb-cardedit>summary,.kb-coledit>summary{cursor:pointer}
 .kb-cardedit>summary{list-style:none;color:var(--muted);font-size:.85rem}
 .kb-cardedit>summary::-webkit-details-marker{display:none}
-.kb-cardedit[open]{position:absolute;z-index:5;right:.4rem;top:.4rem;background:var(--panel);border:1px solid var(--accent);border-radius:10px;padding:.6rem;width:240px;box-shadow:0 20px 40px rgba(0,0,0,.5)}
-.kb-cardform{display:flex;flex-direction:column;gap:.35rem;margin-top:.4rem}
-.kb-cardform .ml{font-size:.72rem;color:var(--muted);font-weight:600}
-.kb-cardform input,.kb-cardform textarea,.kb-cardform select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:.4rem .5rem;font-size:.85rem;font-family:inherit;width:100%}
-.kb-cardform-foot{display:flex;gap:.4rem;align-items:center;margin-top:.3rem}
+/* Karten-Editor als zentriertes Modal (groß & übersichtlich) */
+.kb-cardedit[open]{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:5vh 1rem}
+.kb-cardedit[open]::before{content:"";position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(2px)}
+.kb-cardedit[open]>summary{display:none}
+.kb-cardform{position:relative;z-index:1;display:flex;flex-direction:column;gap:.4rem;background:var(--panel);
+  border:1px solid var(--line);border-radius:16px;padding:1.3rem 1.4rem;width:100%;max-width:480px;max-height:90vh;
+  overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.kb-modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;font-weight:700;font-size:1.05rem}
+.kb-modal-x{background:var(--panel2);border:1px solid var(--line);color:var(--muted);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:.9rem}
+.kb-modal-x:hover{color:var(--ink);border-color:var(--accent)}
+.kb-cardform .ml{font-size:.8rem;color:var(--muted);font-weight:600;margin-top:.3rem}
+.kb-cardform input,.kb-cardform textarea,.kb-cardform select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:.6rem .7rem;font-size:.95rem;font-family:inherit;width:100%}
+.kb-cardform textarea{min-height:64px;resize:vertical}
+.kb-cardform-foot{display:flex;gap:.5rem;align-items:center;margin-top:.8rem;flex-wrap:wrap}
 .kb-add{display:flex;gap:.4rem;padding:.6rem .7rem .8rem}
 .kb-add input{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:.5rem .6rem;font-size:.85rem}
 .kb-addcol{display:flex;flex-direction:column;gap:.5rem}

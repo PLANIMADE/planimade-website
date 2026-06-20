@@ -101,6 +101,53 @@ function pg_mail_unread_store($count){
   pg_save_json(PG_MAIL_UNREAD_FILE, ['count' => max(0, (int) $count), 'time' => time()]);
 }
 
+/* ---------------- Benachrichtigungen (Allrounder) ---------------- */
+// neue Newsletter-Anmeldungen der letzten $days Tage
+function pg_subscribers_recent($days = 7){
+  $n = 0; $cut = time() - $days * 86400;
+  foreach ((array) pg_load_json(PG_DATA_DIR . '/subscribers.json') as $r) {
+    $t = strtotime((string) ($r['date'] ?? '')); if ($t && $t >= $cut) $n++;
+  }
+  return $n;
+}
+// noch nicht freigegebene Devlog-Kommentare
+function pg_comments_pending(){
+  $c = pg_load_json(PG_DATA_DIR . '/comments.json');
+  if (!is_array($c)) return 0;
+  $n = 0; foreach ($c as $x) if (is_array($x) && empty($x['approved'])) $n++;
+  return $n;
+}
+// Sammelt alle Zähler; $total = handlungsrelevante (Mail + Kontakt + Kommentare)
+function pg_notifications(){
+  $mail     = pg_can('mail') ? pg_mail_unread_cached() : 0;
+  $contacts = pg_can('contacts') ? pg_contacts_unread() : 0;
+  $comments = pg_comments_pending();
+  $subs     = pg_can('subscribers') ? pg_subscribers_recent(7) : 0;
+  return ['mail' => $mail, 'contacts' => $contacts, 'comments' => $comments, 'subs' => $subs,
+          'total' => $mail + $contacts + $comments];
+}
+// Eine Zeile im Benachrichtigungs-Panel
+function pg_notif_row($href, $icon, $label, $count, $note){
+  return '<a class="tn-row" href="' . pg_h($href) . '">'
+       . '<span class="tn-ico">' . $icon . '</span>'
+       . '<span class="tn-body"><span class="tn-label">' . pg_h($label) . '</span><span class="tn-note">' . pg_h($note) . '</span></span>'
+       . ($count ? '<span class="nbadge">' . $count . '</span>' : '') . '</a>';
+}
+// Glocken-Menü (ersetzt das frühere Mail-Icon)
+function pg_notif_bell(){
+  $n = pg_notifications();
+  $h = '<div class="tb-notif" data-tb-group>';
+  $h .= '<button type="button" class="tb-group-btn tb-notif-btn" aria-label="Benachrichtigungen" aria-expanded="false">🔔'
+      . ($n['total'] ? '<span class="nbadge">' . $n['total'] . '</span>' : '') . '</button>';
+  $h .= '<div class="tb-notif-panel"><div class="tn-head">Benachrichtigungen</div>';
+  if (pg_can('mail'))     $h .= pg_notif_row('mail.php', '✉️', 'E-Mail-Postfach', $n['mail'], $n['mail'] ? $n['mail'] . ' ungelesen' : 'Keine neuen Mails');
+  if (pg_can('contacts')) $h .= pg_notif_row('index.php?view=contacts', '📨', 'Kontakt-Anfragen', $n['contacts'], $n['contacts'] ? $n['contacts'] . ' neu' : 'Alles gelesen');
+  if (pg_can('subscribers')) $h .= pg_notif_row('index.php?view=subscribers', '📬', 'Newsletter', 0, $n['subs'] ? $n['subs'] . ' neue Anmeldung' . ($n['subs'] === 1 ? '' : 'en') . ' (7 Tage)' : 'Keine neuen Anmeldungen');
+  $h .= pg_notif_row('index.php?view=comments', '💬', 'Kommentare', $n['comments'], $n['comments'] ? $n['comments'] . ' zu prüfen' : 'Nichts zu moderieren');
+  $h .= '</div></div>';
+  return $h;
+}
+
 /* ---------------- Schnellantwort-Vorlagen (Textbausteine) ---------------- */
 const PG_TEMPLATES_FILE = __DIR__ . '/../data/templates.json';
 function pg_templates_load(){
@@ -768,10 +815,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=26"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=27"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=26"></script></body></html>';
+  echo '<script src="assets/admin.js?v=27"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -781,13 +828,11 @@ function pg_view_topbar($SCHEMA, $active){
     : '<span class="diamond"></span> PLANI<span class="grad">GAMES</span>';
   echo '<header class="topbar">';
   echo '<a class="tb-brand" href="index.php">' . $brand . '</a>';
-  // Direkter E-Mail-Postfach-Knopf (immer sichtbar, auch mobil)
-  if (pg_can('mail')) {
-    $mu = pg_mail_unread_cached();
-    echo '<a class="tb-mailicon' . ($active === 'mail' ? ' on' : '') . '" href="mail.php" '
-       . 'title="E-Mail-Postfach" aria-label="E-Mail-Postfach">📮'
-       . ($mu ? '<span class="nbadge">' . $mu . '</span>' : '') . '</a>';
-  }
+  // Direkter Planungsboard-Knopf (immer sichtbar)
+  echo '<a class="tb-iconbtn' . ($active === 'board' ? ' on' : '') . '" href="index.php?view=board" '
+     . 'title="Planungs-Board" aria-label="Planungs-Board">🗂️</a>';
+  // Benachrichtigungs-Center (ersetzt das frühere Mail-Icon)
+  echo pg_notif_bell();
   echo '<button type="button" class="tb-burger" id="tb-burger" aria-label="Menü" aria-expanded="false"><span></span><span></span><span></span></button>';
   echo '<nav class="tb-nav" id="tb-nav">';
 
@@ -811,6 +856,7 @@ function pg_view_topbar($SCHEMA, $active){
   $system[] = ['index.php?view=media', '🖼️ Medien-Bibliothek', 0];
   $system[] = ['index.php?view=stats', '📊 Statistik', 0];
   if (pg_can('mail') || pg_can('contacts')) $system[] = ['index.php?view=templates', '⚡ Schnellantworten', 0];
+  if (pg_can('contacts')) $system[] = ['index.php?view=comments', '💬 Kommentare', pg_comments_pending()];
   $system[] = ['index.php?view=trash', '🗑️ Papierkorb', count(pg_trash_load())];
   $system[] = ['index.php?view=account', '🔒 Konto & 2FA', 0];
   if (pg_is_owner()) {
