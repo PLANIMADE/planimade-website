@@ -815,10 +815,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=27"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=28"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=27"></script></body></html>';
+  echo '<script src="assets/admin.js?v=28"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -1189,6 +1189,7 @@ function pg_render_field($f, $val, $name, $pathKey){
       $prev = $val ? '<a href="' . pg_h($val) . '" target="_blank" class="media-prev">' . pg_h($val) . '</a>' : '';
       $field = '<div class="media" data-media>'
              . '<input type="text" name="' . pg_h($name) . '" value="' . pg_h($val) . '" placeholder="/media/… oder URL" data-media-input>'
+             . '<button type="button" class="btn-up" data-media-pick>Bibliothek</button>'
              . '<label class="btn-up">Hochladen<input type="file" accept="' . $accept . '" hidden data-media-file></label>'
              . '<span class="media-status">' . $prev . '</span></div>';
       break;

@@ -298,6 +298,16 @@ button{font:inherit;cursor:pointer}
 .media-status{flex-basis:100%;font-size:.8rem;color:var(--muted)}
 .media-prev{color:var(--accent);text-decoration:none;word-break:break-all}
 .opt-note{color:#86e0a3;font-size:.78rem}
+/* Medien-Picker („Aus Bibliothek wählen") */
+#media-picker{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.65);backdrop-filter:blur(2px);display:flex;align-items:flex-start;justify-content:center;padding:5vh 1rem}
+.mp-box{background:var(--panel);border:1px solid var(--line);border-radius:16px;width:100%;max-width:780px;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.mp-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.2rem;border-bottom:1px solid var(--line);font-weight:700}
+.mp-grid{overflow:auto;padding:1rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.7rem}
+.mp-tile{display:flex;flex-direction:column;gap:.3rem;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:.4rem;cursor:pointer;text-align:center}
+.mp-tile:hover{border-color:var(--accent)}
+.mp-tile img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:7px;background:#000}
+.mp-file{display:flex;align-items:center;justify-content:center;aspect-ratio:1;font-size:1.8rem}
+.mp-name{font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .up-err{color:#ff8585}
 
 /* ---- Listen & Blöcke ---- */

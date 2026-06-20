@@ -155,6 +155,50 @@
     return ' <span class="opt-note">· optimiert ' + fmtKB(o.before) + " → " + fmtKB(o.after) + (saved > 0 ? " (−" + saved + "%)" : "") + "</span>";
   }
 
+  // ---- „Aus Bibliothek wählen" (Medien-Picker) ----
+  let _pickTarget = null;
+  document.addEventListener("click", async (e) => {
+    const pick = e.target.closest("[data-media-pick]");
+    if (pick) {
+      _pickTarget = pick.closest("[data-media]")?.querySelector("[data-media-input]");
+      openMediaPicker();
+      return;
+    }
+    // Auswahl einer Datei im Picker
+    const tile = e.target.closest("[data-pick-path]");
+    if (tile && _pickTarget) {
+      _pickTarget.value = tile.getAttribute("data-pick-path");
+      _pickTarget.dispatchEvent(new Event("input", { bubbles: true }));
+      const wrap = _pickTarget.closest("[data-media]");
+      const st = wrap && wrap.querySelector(".media-status");
+      if (st) st.innerHTML = '<a href="' + _pickTarget.value + '" target="_blank" class="media-prev">' + _pickTarget.value + "</a>";
+      closeMediaPicker();
+      return;
+    }
+    if (e.target.closest("[data-pick-close]") || e.target.id === "media-picker") closeMediaPicker();
+  });
+  function closeMediaPicker() { const m = document.getElementById("media-picker"); if (m) m.remove(); }
+  async function openMediaPicker() {
+    closeMediaPicker();
+    const ov = document.createElement("div");
+    ov.id = "media-picker";
+    ov.innerHTML = `<div class="mp-box"><div class="mp-head"><span>Aus der Medien-Bibliothek wählen</span>
+      <button type="button" class="kb-modal-x" data-pick-close aria-label="Schließen">✕</button></div>
+      <div class="mp-grid" data-pick-grid><p class="muted" style="padding:1rem">Lädt…</p></div></div>`;
+    document.body.appendChild(ov);
+    try {
+      const r = await fetch("index.php?action=medialist");
+      const j = await r.json();
+      const grid = ov.querySelector("[data-pick-grid]");
+      const files = (j && j.files) || [];
+      grid.innerHTML = files.length
+        ? files.map((f) => `<button type="button" class="mp-tile" data-pick-path="${f.path}" title="${f.name}">
+            ${f.img ? `<img src="${f.path}" alt="" loading="lazy">` : `<span class="mp-file">📄</span>`}
+            <span class="mp-name">${f.name}</span></button>`).join("")
+        : '<p class="muted" style="padding:1rem">Noch keine Dateien hochgeladen.</p>';
+    } catch { ov.querySelector("[data-pick-grid]").innerHTML = '<p class="up-err" style="padding:1rem">Konnte Liste nicht laden.</p>'; }
+  }
+
   // ---- Datei-Upload ----
   document.addEventListener("change", async (e) => {
     const fileInput = e.target.closest("[data-media-file]");

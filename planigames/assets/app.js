@@ -835,6 +835,7 @@
             case "countdown": return blockCountdown(b);
             case "cta": return blockCTA(b, g);
             case "download": return blockDownload(b, g);
+            case "requirements": return blockRequirements(b);
             case "spacer": return `<div style="height:${Math.max(0, +b.size || 48)}px"></div>`;
             default: return "";
         }
@@ -1084,6 +1085,29 @@
             ${b.text ? `<p class="text-zinc-300 text-lg max-w-2xl mb-10 reveal">${esc(b.text)}</p>` : ""}
             ${demo}
             ${cards ? `<div class="grid sm:grid-cols-2 gap-4">${cards}</div>` : ""}`, "py-20 md:py-28");
+    }
+
+    function blockRequirements(b) {
+        const en = LANG === "en";
+        const ROWS = [["os", en ? "OS" : "Betriebssystem"], ["cpu", en ? "Processor" : "Prozessor"],
+            ["ram", en ? "Memory" : "Arbeitsspeicher"], ["gpu", en ? "Graphics" : "Grafikkarte"],
+            ["storage", en ? "Storage" : "Speicherplatz"]];
+        const col = (spec, title) => {
+            if (!spec || !ROWS.some(([k]) => spec[k])) return "";
+            const rows = ROWS.filter(([k]) => spec[k]).map(([k, lbl]) => `
+                <div class="flex gap-3 py-2.5 border-b border-white/8">
+                    <span class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 w-32 shrink-0 pt-0.5">${lbl}</span>
+                    <span class="text-zinc-200">${esc(spec[k])}</span>
+                </div>`).join("");
+            return `<div class="reveal flex-1 rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+                <h3 class="font-display text-lg font-bold text-white mb-3">${esc(title)}</h3>${rows}</div>`;
+        };
+        const cols = col(b.min, en ? "Minimum" : "Minimal") + col(b.rec, en ? "Recommended" : "Empfohlen");
+        if (!cols) return "";
+        return sec(`
+            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3 reveal">${esc(b.heading)}</h2>` : ""}
+            ${b.note ? `<p class="text-zinc-400 mb-8 reveal">${esc(b.note)}</p>` : `<div class="mb-8"></div>`}
+            <div class="flex flex-col md:flex-row gap-5">${cols}</div>`, "py-20 md:py-28");
     }
 
     /* ---------- Interaktive Block-Helfer ---------- */

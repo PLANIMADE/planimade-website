@@ -261,6 +261,24 @@ return [
               ['name'=>'url','label'=>'Externer Link','widget'=>'string','hint'=>'z. B. Steam/itch.io. Überschreibt die Datei.'],
             ]],
           ]],
+          'requirements'=>['label'=>'Systemanforderungen','fields'=>[
+            ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Systemanforderungen'],
+            ['name'=>'note','label'=>'Hinweis (optional)','widget'=>'string','hint'=>'z. B. „Stand der Demo – ändert sich evtl. bis Release."'],
+            ['name'=>'min','label'=>'Minimal','widget'=>'object','fields'=>[
+              ['name'=>'os','label'=>'Betriebssystem','widget'=>'string','hint'=>'z. B. Windows 10 (64-bit)'],
+              ['name'=>'cpu','label'=>'Prozessor','widget'=>'string'],
+              ['name'=>'ram','label'=>'Arbeitsspeicher','widget'=>'string','hint'=>'z. B. 4 GB RAM'],
+              ['name'=>'gpu','label'=>'Grafikkarte','widget'=>'string'],
+              ['name'=>'storage','label'=>'Speicherplatz','widget'=>'string','hint'=>'z. B. 2 GB'],
+            ]],
+            ['name'=>'rec','label'=>'Empfohlen','widget'=>'object','fields'=>[
+              ['name'=>'os','label'=>'Betriebssystem','widget'=>'string'],
+              ['name'=>'cpu','label'=>'Prozessor','widget'=>'string'],
+              ['name'=>'ram','label'=>'Arbeitsspeicher','widget'=>'string'],
+              ['name'=>'gpu','label'=>'Grafikkarte','widget'=>'string'],
+              ['name'=>'storage','label'=>'Speicherplatz','widget'=>'string'],
+            ]],
+          ]],
           'spacer'=>['label'=>'Abstand / Leerraum','fields'=>[
             ['name'=>'size','label'=>'Höhe (px)','widget'=>'number','default'=>48],
           ]],

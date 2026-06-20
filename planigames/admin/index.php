@@ -21,6 +21,25 @@ if ($action === 'upload') {
   exit;
 }
 
+/* ---- Medien-Liste (für „Aus Bibliothek wählen") ---- */
+if ($action === 'medialist') {
+  header('Content-Type: application/json');
+  if (!pg_logged_in()) { http_response_code(403); exit('{"error":"Nicht eingeloggt"}'); }
+  $out = [];
+  if (is_dir(PG_MEDIA_DIR)) {
+    foreach (scandir(PG_MEDIA_DIR) as $f) {
+      if ($f === '.' || $f === '..' || $f[0] === '.' || is_dir(PG_MEDIA_DIR . '/' . $f)) continue;
+      $ext = strtolower(pathinfo($f, PATHINFO_EXTENSION));
+      $out[] = ['path' => '/media/' . $f, 'name' => $f,
+        'img' => in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'avif'], true),
+        'mtime' => @filemtime(PG_MEDIA_DIR . '/' . $f) ?: 0];
+    }
+    usort($out, fn($a, $b) => $b['mtime'] <=> $a['mtime']); // neueste zuerst
+  }
+  echo json_encode(['files' => $out], JSON_UNESCAPED_SLASHES);
+  exit;
+}
+
 /* ---- Board: Reihenfolge per Drag&Drop speichern (AJAX) ---- */
 if ($action === 'board_save') {
   header('Content-Type: application/json');
