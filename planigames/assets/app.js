@@ -1307,9 +1307,9 @@
                 <div class="prose-pg">${md(p.body || "")}</div>
                 ${reactionsBar()}
                 ${shareBar(p.title)}
-                ${g && g.wishlistUrl ? `<div class="mt-12 pt-8 border-t border-white/10 text-center">
-                    <a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic inline-block px-9 py-4 rounded-full font-semibold">${esc(g.title)} auf Steam wishlisten</a></div>` : ""}
                 ${commentsSection()}
+                ${g && g.wishlistUrl ? `<div class="mt-16 pt-10 border-t border-white/10 text-center">
+                    <a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic inline-block px-9 py-4 rounded-full font-semibold">${esc(g.title)} auf Steam wishlisten</a></div>` : ""}
             </div>`;
         initMagnetic();
         initShareCopy();
