@@ -836,6 +836,7 @@
             case "cta": return blockCTA(b, g);
             case "download": return blockDownload(b, g);
             case "requirements": return blockRequirements(b);
+            case "storewidget": return blockStoreWidget(b);
             case "spacer": return `<div style="height:${Math.max(0, +b.size || 48)}px"></div>`;
             default: return "";
         }
@@ -1085,6 +1086,33 @@
             ${b.text ? `<p class="text-zinc-300 text-lg max-w-2xl mb-10 reveal">${esc(b.text)}</p>` : ""}
             ${demo}
             ${cards ? `<div class="grid sm:grid-cols-2 gap-4">${cards}</div>` : ""}`, "py-20 md:py-28");
+    }
+
+    function blockStoreWidget(b) {
+        let src = "", h = 190, maxW = 646;
+        if (b.platform === "itch" && b.itchEmbed) {
+            src = b.itchEmbed; h = Math.min(900, Math.max(150, +b.height || 167)); maxW = 560;
+        } else if (b.steamAppId) {
+            const id = String(b.steamAppId).replace(/\D/g, "");
+            if (id) { src = `https://store.steampowered.com/widget/${id}/`; h = 190; maxW = 646; }
+        }
+        if (!src) return "";
+        const cookieOff = (DATA.studio && DATA.studio.cookie && DATA.studio.cookie.enabled !== false);
+        const inner = (!cookieOff || pgConsentExternal())
+            ? `<iframe class="absolute inset-0 w-full h-full" src="${esc(src)}" frameborder="0" title="Store-Widget"></iframe>`
+            : `<div class="yt-consent absolute inset-0" data-embed-holder data-embed-src="${esc(src)}">
+                   <div class="yt-consent-inner">
+                       <p>${esc(t("yt_consent"))}</p>
+                       <div class="yt-consent-btns">
+                           <button class="btn-accent px-6 py-3 rounded-full font-semibold text-sm" data-embed-load>▶ ${LANG === "en" ? "Load widget" : "Widget laden"}</button>
+                           <button class="btn-ghost px-6 py-3 rounded-full font-semibold text-sm" data-consent="all">${esc(t("yt_load_always"))}</button>
+                       </div>
+                   </div>
+               </div>`;
+        return sec(`
+            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white text-center mb-8 reveal">${esc(b.heading)}</h2>` : ""}
+            <div class="reveal relative rounded-2xl overflow-hidden border border-white/10 mx-auto" style="max-width:${maxW}px;height:${h}px;box-shadow:0 24px 70px -30px color-mix(in srgb,var(--accent) 60%,transparent)">${inner}</div>`,
+            "py-16 md:py-24");
     }
 
     function blockRequirements(b) {

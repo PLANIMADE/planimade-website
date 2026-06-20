@@ -279,6 +279,13 @@ return [
               ['name'=>'storage','label'=>'Speicherplatz','widget'=>'string'],
             ]],
           ]],
+          'storewidget'=>['label'=>'Steam-/itch.io-Widget','fields'=>[
+            ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Auf Steam ansehen'],
+            ['name'=>'platform','label'=>'Plattform','widget'=>'select','default'=>'steam','options'=>['steam'=>'Steam','itch'=>'itch.io']],
+            ['name'=>'steamAppId','label'=>'Steam App-ID','widget'=>'string','hint'=>'Nur die Zahl aus der Steam-URL: store.steampowered.com/app/ＡＰＰＩＤ/…'],
+            ['name'=>'itchEmbed','label'=>'itch.io Widget-URL','widget'=>'string','hint'=>'Auf itch.io unter „Distribute → Widget" die iframe-Adresse kopieren.'],
+            ['name'=>'height','label'=>'Höhe (px, nur itch.io)','widget'=>'number','default'=>167],
+          ]],
           'spacer'=>['label'=>'Abstand / Leerraum','fields'=>[
             ['name'=>'size','label'=>'Höhe (px)','widget'=>'number','default'=>48],
           ]],
