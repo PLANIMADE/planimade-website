@@ -827,17 +827,27 @@
     const previewUrl = form.getAttribute("data-preview") || "../index.html";
     let frame = null;
     function reloadPreview() { if (frame) frame.src = previewUrl + (previewUrl.includes("?") ? "&" : "?") + "_t=" + Date.now(); }
+    let pane = null;
+    function placePane() {
+      if (!pane) return;
+      const tb = document.querySelector(".topbar");
+      const th = tb ? Math.round(tb.getBoundingClientRect().height) : 53;
+      pane.style.top = th + "px";
+      pane.style.height = "calc(100vh - " + th + "px)";
+    }
     function openSplit() {
       document.body.classList.add("split-on");
-      if (!frame) {
-        const pane = document.createElement("div");
+      if (!pane) {
+        pane = document.createElement("div");
         pane.className = "split-preview";
         pane.innerHTML = `<div class="sp-bar"><span>👁 Live-Vorschau</span><a href="${previewUrl}" target="_blank" rel="noopener">↗ Tab</a><button type="button" data-split-close aria-label="Vorschau schließen">✕</button></div><iframe title="Vorschau"></iframe>`;
         document.body.appendChild(pane);
         frame = pane.querySelector("iframe");
         pane.querySelector("[data-split-close]").addEventListener("click", closeSplit);
+        addEventListener("resize", placePane);
         reloadPreview();
       }
+      placePane();   // unter die (evtl. zweizeilige) Topbar setzen, damit der ✕ klickbar ist
       try { localStorage.setItem("pg_split", "1"); } catch {}
     }
     function closeSplit() { document.body.classList.remove("split-on"); try { localStorage.setItem("pg_split", "0"); } catch {} }

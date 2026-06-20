@@ -681,8 +681,10 @@ body.is-dragging .item-body{pointer-events:none}
 .autosave-toggle input{accent-color:var(--accent)}
 
 /* ---- Live-Vorschau-Splitview ---- */
+/* Standard ausgeblendet – nur sichtbar, wenn body.split-on aktiv ist (sonst bleibt das Fenster nach dem Schließen stehen) */
 .split-preview{position:fixed;top:53px;right:0;width:44vw;height:calc(100vh - 53px);z-index:18;
-  background:#000;border-left:1px solid var(--line);display:flex;flex-direction:column;animation:spIn .25s ease}
+  background:#000;border-left:1px solid var(--line);display:none;flex-direction:column}
+body.split-on .split-preview{display:flex;animation:spIn .25s ease}
 @keyframes spIn{from{transform:translateX(20px);opacity:0}to{transform:none;opacity:1}}
 .split-preview .sp-bar{display:flex;align-items:center;gap:.7rem;padding:.5rem .8rem;background:var(--panel);border-bottom:1px solid var(--line);font-size:.82rem;color:var(--muted)}
 .split-preview .sp-bar span{flex:1;font-weight:600;color:var(--ink)}
