@@ -199,6 +199,35 @@
     } catch { ov.querySelector("[data-pick-grid]").innerHTML = '<p class="up-err" style="padding:1rem">Konnte Liste nicht laden.</p>'; }
   }
 
+  // ---- Benachrichtigungsglocke: Echtzeit-Aktualisierung (Polling) ----
+  const notifBell = document.querySelector("[data-notif-bell]");
+  if (notifBell) {
+    const setBadge = (el, val) => { if (!el) return; if (val > 0) { el.textContent = val; el.hidden = false; } else { el.hidden = true; el.textContent = ""; } };
+    let lastTotal = parseInt((document.querySelector("[data-notif-total]") || {}).textContent || "0", 10) || 0;
+    async function pollNotifs() {
+      try {
+        const r = await fetch("index.php?action=notif_counts", { headers: { "X-Requested-With": "fetch" } });
+        if (!r.ok) return;
+        const j = await r.json();
+        const c = j.counts || {}, notes = j.notes || {};
+        setBadge(document.querySelector("[data-notif-total]"), c.total);
+        ["mail", "contacts", "comments", "subs"].forEach((k) => {
+          const row = document.querySelector(`[data-nrow="${k}"]`);
+          if (!row) return;
+          setBadge(row.querySelector("[data-ncount]"), k === "subs" ? 0 : c[k]);
+          const note = row.querySelector("[data-nnote]");
+          if (note && notes[k]) note.textContent = notes[k];
+        });
+        // kurzer Puls, wenn neue Meldungen dazukamen
+        if (c.total > lastTotal) { notifBell.classList.add("notif-pulse"); setTimeout(() => notifBell.classList.remove("notif-pulse"), 1200); }
+        lastTotal = c.total;
+      } catch {}
+    }
+    setInterval(pollNotifs, 30000);
+    // bei Rückkehr zum Tab sofort aktualisieren
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) pollNotifs(); });
+  }
+
   // ---- Bild-Fokuspunkt (Bildausschnitt für Cover) ----
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-media-focus]");

@@ -21,6 +21,15 @@ if ($action === 'upload') {
   exit;
 }
 
+/* ---- Benachrichtigungen: Echtzeit-Zähler (AJAX-Polling) ---- */
+if ($action === 'notif_counts') {
+  header('Content-Type: application/json');
+  if (!pg_logged_in()) { http_response_code(403); exit('{"error":"Nicht eingeloggt"}'); }
+  $n = pg_notifications();
+  echo json_encode(['counts' => $n, 'notes' => pg_notif_notes($n)], JSON_UNESCAPED_UNICODE);
+  exit;
+}
+
 /* ---- Medien-Liste (für „Aus Bibliothek wählen") ---- */
 if ($action === 'medialist') {
   header('Content-Type: application/json');

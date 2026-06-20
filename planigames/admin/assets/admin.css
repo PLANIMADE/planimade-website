@@ -68,6 +68,8 @@ button{font:inherit;cursor:pointer}
 .tb-iconbtn:hover,.tb-notif-btn:hover{border-color:var(--accent)}
 .tb-iconbtn.on{border-color:var(--accent);background:rgba(255,125,26,.12)}
 .tb-iconbtn .nbadge,.tb-notif-btn .nbadge{position:absolute;top:-7px;right:-7px;margin:0}
+.tb-notif-btn.notif-pulse{animation:notifPulse 1.2s ease}
+@keyframes notifPulse{0%,100%{transform:none}20%{transform:scale(1.18) rotate(-8deg)}40%{transform:scale(1.12) rotate(8deg)}60%{transform:scale(1.14) rotate(-5deg)}}
 /* Benachrichtigungs-Center */
 .tb-notif{position:relative}
 .tb-notif-panel{position:absolute;top:calc(100% + .5rem);right:0;width:300px;display:none;flex-direction:column;

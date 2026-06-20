@@ -127,23 +127,33 @@ function pg_notifications(){
           'total' => $mail + $contacts + $comments];
 }
 // Eine Zeile im Benachrichtigungs-Panel
-function pg_notif_row($href, $icon, $label, $count, $note){
-  return '<a class="tn-row" href="' . pg_h($href) . '">'
+function pg_notif_row($href, $icon, $label, $count, $note, $key = ''){
+  return '<a class="tn-row" href="' . pg_h($href) . '"' . ($key ? ' data-nrow="' . pg_h($key) . '"' : '') . '>'
        . '<span class="tn-ico">' . $icon . '</span>'
-       . '<span class="tn-body"><span class="tn-label">' . pg_h($label) . '</span><span class="tn-note">' . pg_h($note) . '</span></span>'
-       . ($count ? '<span class="nbadge">' . $count . '</span>' : '') . '</a>';
+       . '<span class="tn-body"><span class="tn-label">' . pg_h($label) . '</span><span class="tn-note" data-nnote>' . pg_h($note) . '</span></span>'
+       . '<span class="nbadge" data-ncount' . ($count ? '' : ' hidden') . '>' . ($count ?: '') . '</span></a>';
 }
-// Glocken-Menü (ersetzt das frühere Mail-Icon)
+// Notiztexte je Bereich (auch vom Echtzeit-Endpoint genutzt)
+function pg_notif_notes($n){
+  return [
+    'mail'     => $n['mail'] ? $n['mail'] . ' ungelesen' : 'Keine neuen Mails',
+    'contacts' => $n['contacts'] ? $n['contacts'] . ' neu' : 'Alles gelesen',
+    'subs'     => $n['subs'] ? $n['subs'] . ' neue Anmeldung' . ($n['subs'] === 1 ? '' : 'en') . ' (7 Tage)' : 'Keine neuen Anmeldungen',
+    'comments' => $n['comments'] ? $n['comments'] . ' zu prüfen' : 'Nichts zu moderieren',
+  ];
+}
+// Glocken-Menü (ersetzt das frühere Mail-Icon); aktualisiert sich per Polling
 function pg_notif_bell(){
   $n = pg_notifications();
+  $note = pg_notif_notes($n);
   $h = '<div class="tb-notif" data-tb-group>';
-  $h .= '<button type="button" class="tb-group-btn tb-notif-btn" aria-label="Benachrichtigungen" aria-expanded="false">🔔'
-      . ($n['total'] ? '<span class="nbadge">' . $n['total'] . '</span>' : '') . '</button>';
+  $h .= '<button type="button" class="tb-group-btn tb-notif-btn" data-notif-bell aria-label="Benachrichtigungen" aria-expanded="false">🔔'
+      . '<span class="nbadge" data-notif-total' . ($n['total'] ? '' : ' hidden') . '>' . ($n['total'] ?: '') . '</span></button>';
   $h .= '<div class="tb-notif-panel"><div class="tn-head">Benachrichtigungen</div>';
-  if (pg_can('mail'))     $h .= pg_notif_row('mail.php', '✉️', 'E-Mail-Postfach', $n['mail'], $n['mail'] ? $n['mail'] . ' ungelesen' : 'Keine neuen Mails');
-  if (pg_can('contacts')) $h .= pg_notif_row('index.php?view=contacts', '📨', 'Kontakt-Anfragen', $n['contacts'], $n['contacts'] ? $n['contacts'] . ' neu' : 'Alles gelesen');
-  if (pg_can('subscribers')) $h .= pg_notif_row('index.php?view=subscribers', '📬', 'Newsletter', 0, $n['subs'] ? $n['subs'] . ' neue Anmeldung' . ($n['subs'] === 1 ? '' : 'en') . ' (7 Tage)' : 'Keine neuen Anmeldungen');
-  $h .= pg_notif_row('index.php?view=comments', '💬', 'Kommentare', $n['comments'], $n['comments'] ? $n['comments'] . ' zu prüfen' : 'Nichts zu moderieren');
+  if (pg_can('mail'))     $h .= pg_notif_row('mail.php', '✉️', 'E-Mail-Postfach', $n['mail'], $note['mail'], 'mail');
+  if (pg_can('contacts')) $h .= pg_notif_row('index.php?view=contacts', '📨', 'Kontakt-Anfragen', $n['contacts'], $note['contacts'], 'contacts');
+  if (pg_can('subscribers')) $h .= pg_notif_row('index.php?view=subscribers', '📬', 'Newsletter', 0, $note['subs'], 'subs');
+  $h .= pg_notif_row('index.php?view=comments', '💬', 'Kommentare', $n['comments'], $note['comments'], 'comments');
   $h .= '</div></div>';
   return $h;
 }
@@ -900,11 +910,11 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=35"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=36"></head><body>';
 }
 function pg_view_foot(){
   echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
-  echo '<script src="assets/admin.js?v=35"></script></body></html>';
+  echo '<script src="assets/admin.js?v=36"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
