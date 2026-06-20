@@ -230,7 +230,8 @@ function pg_totp_code($secret, $slice = null){
        | ((ord($hash[$off + 2]) & 0xff) << 8) | (ord($hash[$off + 3]) & 0xff);
   return str_pad((string) ($num % 1000000), 6, '0', STR_PAD_LEFT);
 }
-function pg_totp_verify($secret, $code, $window = 1){
+function pg_totp_verify($secret, $code, $window = 4){
+  // window=4 → ±2 Minuten Toleranz, fängt typische Server-Uhr-Abweichungen ab
   $code = preg_replace('/\D/', '', (string) $code);
   if (strlen($code) !== 6 || $secret === '') return false;
   $slice = (int) floor(time() / 30);
@@ -767,10 +768,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=25"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=26"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=25"></script></body></html>';
+  echo '<script src="assets/admin.js?v=26"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');

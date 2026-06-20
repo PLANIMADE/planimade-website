@@ -630,8 +630,20 @@
         const mount = $("[data-hero-countdown]");
         if (!mount) return;
         const c = s.heroCountdown || {};
-        const ts = c.date ? Date.parse(c.date) : NaN;
-        if (c.enabled === false || isNaN(ts) || ts <= Date.now()) { mount.innerHTML = ""; return; }
+        if (c.enabled === false || c.enabled === "0" || c.enabled === "false") { mount.innerHTML = ""; return; }
+        // Datum tolerant parsen: "2026-12-31T18:00" oder "2026-12-31 18:00" oder nur Datum
+        let raw = (c.date || "").trim();
+        if (raw && !raw.includes("T")) raw = raw.replace(" ", "T");
+        const ts = raw ? Date.parse(raw) : NaN;
+        if (isNaN(ts)) { mount.innerHTML = ""; return; }
+        // Bereits abgelaufen → „fertig"-Text zeigen (statt nichts), falls vorhanden
+        if (ts <= Date.now()) {
+            mount.className = "reveal mt-12";
+            mount.innerHTML = c.doneText
+                ? `<div class="text-2xl md:text-3xl font-bold text-[color:var(--accent)]">${esc(c.doneText)}</div>` : "";
+            observeReveals(mount);
+            return;
+        }
         const units = [["d", "Tage", "Days"], ["h", "Std", "Hrs"], ["m", "Min", "Min"], ["s", "Sek", "Sec"]];
         const cells = units.map(([k, de, en]) => `
             <div class="text-center">
@@ -1429,6 +1441,19 @@
             <span class="${LANG === "de" ? "text-white" : "text-zinc-500"}">DE</span><span class="text-zinc-600 mx-1">/</span><span class="${LANG === "en" ? "text-white" : "text-zinc-500"}">EN</span></button>`;
     }
 
+    // Marken-Inhalt: eigenes Logo-Bild, falls hinterlegt – sonst Wortmarke.
+    // Wird schon beim ersten Rendern genutzt (Studio-Daten sind da bereits geladen),
+    // damit nicht erst die Wortmarke aufblitzt und dann das Bild nachlädt.
+    function brandHTML(size) {
+        const s = DATA.studio || {};
+        const lg = size === "lg";
+        if (s.logo) {
+            return `<img src="${esc(s.logo)}" alt="${esc(s.name || "PLANIGAMES")}" class="${lg ? "h-9 md:h-10" : "h-7 md:h-8"} w-auto object-contain">`;
+        }
+        return `<span class="inline-block ${lg ? "w-4 h-4" : "w-3 h-3"} rotate-45 rounded-[${lg ? "3px" : "2px"}] transition-transform duration-500 group-hover:rotate-[225deg]" style="background:linear-gradient(135deg,var(--accent-2),var(--accent))"></span>`
+             + `<span class="font-display ${lg ? "text-2xl" : "text-lg"} font-extrabold uppercase tracking-[0.${lg ? "15" : "18"}em] text-white">PLANI<span class="text-gradient">GAMES</span></span>`;
+    }
+
     function injectChrome() {
         // Pflicht-Effekte oben einsetzen (falls noch nicht vorhanden)
         if (!$("#scroll-progress")) {
@@ -1445,10 +1470,7 @@
             <header id="site-header" class="fixed top-0 left-0 w-full z-50">
                 <div class="max-w-[95%] mx-auto h-20 flex items-center justify-between">
                     <a href="index.html" class="group" aria-label="PLANIGAMES Start">
-                        <span data-brand="sm" class="flex items-center gap-3">
-                            <span class="inline-block w-3 h-3 rotate-45 rounded-[2px] transition-transform duration-500 group-hover:rotate-[225deg]" style="background:linear-gradient(135deg,var(--accent-2),var(--accent))"></span>
-                            <span class="font-display text-lg font-extrabold uppercase tracking-[0.18em] text-white">PLANI<span class="text-gradient">GAMES</span></span>
-                        </span>
+                        <span data-brand="sm" class="flex items-center gap-3">${brandHTML("sm")}</span>
                     </a>
                     <nav class="hidden md:flex items-center gap-9 font-medium text-sm">${navLinks()}</nav>
                     <div class="hidden md:flex items-center gap-3">
@@ -1477,9 +1499,7 @@
                 <div class="max-w-6xl mx-auto px-6 py-20">
                     <div class="grid md:grid-cols-[1.5fr_1fr_1fr] gap-12">
                         <div>
-                            <a href="index.html" data-brand="lg" class="flex items-center gap-3 mb-5">
-                                <span class="inline-block w-4 h-4 rotate-45 rounded-[3px]" style="background:linear-gradient(135deg,var(--accent-2),var(--accent))"></span>
-                                <span class="font-display text-2xl font-extrabold uppercase tracking-[0.15em] text-white">PLANI<span class="text-gradient">GAMES</span></span>
+                            <a href="index.html" data-brand="lg" class="flex items-center gap-3 mb-5">${brandHTML("lg")}
                             </a>
                             <p class="text-zinc-400 max-w-sm leading-relaxed" data-studio="footerNote">Ein unabhängiges Indie-Spielestudio. Wir bauen Welten, die wackeln, zaubern und im Kopf bleiben.</p>
                             <form action="subscribe.php" method="POST" data-newsletter data-source="footer" class="mt-7 flex max-w-sm gap-2">
