@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "29";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "30";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
@@ -437,7 +437,14 @@
 
     // Beobachtet später hinzugefügte (dynamisch gerenderte) Reveal-Elemente
     function observeReveals(root) {
-        $$(".reveal, .reveal-on", root).forEach(el => {
+        // WICHTIG: querySelectorAll findet nur Nachfahren – das root-Element selbst
+        // (z. B. der Countdown-Mount mit class="reveal") muss separat berücksichtigt werden,
+        // sonst bekommt es nie ".in" und bleibt unsichtbar (opacity:0).
+        const els = $$(".reveal, .reveal-on", root);
+        if (root && root.classList && (root.classList.contains("reveal") || root.classList.contains("reveal-on"))) {
+            els.unshift(root);
+        }
+        els.forEach(el => {
             const io = new IntersectionObserver((entries, obs) => {
                 entries.forEach(en => {
                     if (en.isIntersecting) { en.target.classList.add("in", "reveal-on"); obs.disconnect(); }
@@ -887,6 +894,9 @@
                         <span class="flex-1 text-white font-medium group-hover:text-gradient">${esc(p.title)}</span>
                         <span class="text-zinc-600 group-hover:translate-x-1 transition-transform">→</span>
                     </a>`).join("");
+                // Diese Liste liegt außerhalb von [data-game-root] → eigene Reveal-Beobachtung,
+                // sonst bleiben die Einträge auf opacity:0 (unsichtbar).
+                observeReveals(pnMount);
             } else { $("[data-game-patchnotes-section]")?.remove(); }
         }
 
