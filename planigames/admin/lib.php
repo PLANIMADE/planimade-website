@@ -357,7 +357,61 @@ function pg_backup_filenames(){
 // Nur erlaubte Dateinamen sichern/wiederherstellen (kein Pfad-Traversal)
 function pg_backup_allowed($name){
   if ($name !== basename($name)) return false;
+  if ($name === 'backups') return false;
   return (bool) preg_match('/^[A-Za-z0-9_.\-]+\.json$/', $name) || $name === 'secret.php';
+}
+
+/* ---------------- Automatische Backups (cron-frei) ---------------- */
+const PG_BACKUP_DIR = __DIR__ . '/../data/backups';
+const PG_BACKUP_KEEP_AUTO = 14;       // wie viele tägliche Auto-Backups behalten
+const PG_BACKUP_KEEP_MANUAL = 10;     // wie viele manuelle Schnappschüsse behalten
+const PG_BACKUP_INTERVAL = 82800;     // ~23 h – damit ein täglicher Besuch reicht
+// Backup-Bündel (alle erlaubten data-Dateien) als Array bauen
+function pg_backup_build(){
+  $bundle = ['_meta' => ['app' => 'PLANIGAMES', 'type' => 'backup', 'version' => 1, 'created' => date('c'),
+    'host' => preg_replace('/[^a-z0-9.\-:]/i', '', $_SERVER['HTTP_HOST'] ?? 'auto')], 'files' => []];
+  foreach (pg_backup_filenames() as $f) $bundle['files'][$f] = file_get_contents(PG_DATA_DIR . '/' . $f);
+  return $bundle;
+}
+// gespeicherte Backups auflisten (neueste zuerst)
+function pg_backup_list(){
+  $out = [];
+  if (is_dir(PG_BACKUP_DIR)) {
+    foreach (scandir(PG_BACKUP_DIR) as $f) {
+      if (substr($f, -5) !== '.json') continue;
+      $p = PG_BACKUP_DIR . '/' . $f;
+      $out[] = ['name' => $f, 'size' => (int) @filesize($p), 'time' => (int) @filemtime($p), 'auto' => strncmp($f, 'auto-', 5) === 0];
+    }
+    usort($out, fn($a, $b) => $b['time'] <=> $a['time']);
+  }
+  return $out;
+}
+function pg_backup_last_auto_time(){
+  foreach (pg_backup_list() as $b) if ($b['auto']) return $b['time'];
+  return 0;
+}
+function pg_backup_name_ok($name){ return $name === basename($name) && (bool) preg_match('/^(auto|manual)-[0-9\-]+\.json$/', $name); }
+// Snapshot schreiben + rotieren; gibt Dateinamen zurück
+function pg_backup_write($prefix = 'auto'){
+  if (!is_dir(PG_BACKUP_DIR)) @mkdir(PG_BACKUP_DIR, 0775, true);
+  $ht = PG_BACKUP_DIR . '/.htaccess';
+  if (!is_file($ht)) @file_put_contents($ht, "Require all denied\nOptions -Indexes\n");
+  $name = ($prefix === 'manual' ? 'manual-' . date('Y-m-d-His') : 'auto-' . date('Y-m-d')) . '.json';
+  $json = json_encode(pg_backup_build(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+  $ok = @file_put_contents(PG_BACKUP_DIR . '/' . $name, $json) !== false;
+  pg_backup_rotate();
+  return $ok ? $name : false;
+}
+// pro Typ nur die jeweils neuesten behalten
+function pg_backup_rotate(){
+  $auto = []; $manual = [];
+  foreach (pg_backup_list() as $b) { if ($b['auto']) $auto[] = $b; else $manual[] = $b; }
+  foreach (array_slice($auto, PG_BACKUP_KEEP_AUTO) as $b) @unlink(PG_BACKUP_DIR . '/' . $b['name']);
+  foreach (array_slice($manual, PG_BACKUP_KEEP_MANUAL) as $b) @unlink(PG_BACKUP_DIR . '/' . $b['name']);
+}
+// beim Admin-Aufruf: fällig? dann sichern (täglicher Dateiname => idempotent bei Parallelzugriff)
+function pg_backup_auto_maybe(){
+  if (pg_backup_last_auto_time() < time() - PG_BACKUP_INTERVAL) pg_backup_write('auto');
 }
 
 /* ---------------- Einladungen ---------------- */
@@ -815,10 +869,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=28"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=29"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=28"></script></body></html>';
+  echo '<script src="assets/admin.js?v=29"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');

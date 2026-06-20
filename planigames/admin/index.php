@@ -244,6 +244,9 @@ if (!pg_logged_in()) {
   echo '</div></div>'; pg_view_foot(); exit;
 }
 
+// Ab hier: eingeloggt. Tägliches Auto-Backup anstoßen (cron-frei, idempotent).
+if (pg_is_owner()) pg_backup_auto_maybe();
+
 /* ---- Speichern ---- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
   pg_csrf_check();
@@ -301,20 +304,55 @@ if ($action === 'translate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 /* ---- Backup: Export (alle Inhalte als eine Datei) ---- */
 if ($action === 'backup_export') {
   if (!pg_is_owner()) { http_response_code(403); exit('Keine Berechtigung.'); }
-  $bundle = ['_meta' => [
-    'app' => 'PLANIGAMES', 'type' => 'backup', 'version' => 1,
-    'created' => date('c'),
-    'host' => preg_replace('/[^a-z0-9.\-:]/i', '', $_SERVER['HTTP_HOST'] ?? ''),
-  ], 'files' => []];
-  foreach (pg_backup_filenames() as $f) {
-    $bundle['files'][$f] = file_get_contents(PG_DATA_DIR . '/' . $f);
-  }
-  $json = json_encode($bundle, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+  $json = json_encode(pg_backup_build(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
   $fname = 'planigames-backup-' . date('Y-m-d-Hi') . '.json';
   header('Content-Type: application/json; charset=utf-8');
   header('Content-Disposition: attachment; filename="' . $fname . '"');
   header('Content-Length: ' . strlen($json));
   echo $json; exit;
+}
+
+/* ---- Backup: gespeicherten Snapshot herunterladen ---- */
+if ($action === 'backup_download') {
+  if (!pg_is_owner()) { http_response_code(403); exit('Keine Berechtigung.'); }
+  $name = (string) ($_GET['file'] ?? '');
+  $path = PG_BACKUP_DIR . '/' . $name;
+  if (!pg_backup_name_ok($name) || !is_file($path)) { http_response_code(404); exit('Nicht gefunden.'); }
+  header('Content-Type: application/json; charset=utf-8');
+  header('Content-Disposition: attachment; filename="planigames-' . $name . '"');
+  header('Content-Length: ' . filesize($path));
+  readfile($path); exit;
+}
+
+/* ---- Backup: jetzt sichern / Snapshot wiederherstellen / löschen ---- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['backup_now']) || isset($_POST['restore_backup']) || isset($_POST['delete_backup']))) {
+  if (!pg_is_owner()) { http_response_code(403); exit('Keine Berechtigung.'); }
+  pg_csrf_check();
+  if (isset($_POST['backup_now'])) {
+    $name = pg_backup_write('manual');
+    $_SESSION['pg_backup_msg'] = $name ? ['ok', '✓ Snapshot gespeichert: ' . $name] : ['err', 'Konnte nicht speichern (Schreibrechte am Ordner data/backups prüfen).'];
+  } else {
+    $name = (string) ($_POST['file'] ?? '');
+    $path = PG_BACKUP_DIR . '/' . $name;
+    if (!pg_backup_name_ok($name) || !is_file($path)) {
+      $_SESSION['pg_backup_msg'] = ['err', 'Backup nicht gefunden.'];
+    } elseif (isset($_POST['delete_backup'])) {
+      @unlink($path);
+      $_SESSION['pg_backup_msg'] = ['ok', 'Snapshot gelöscht.'];
+    } else { // restore_backup
+      $data = json_decode((string) file_get_contents($path), true);
+      $n = 0;
+      if (is_array($data) && isset($data['files']) && is_array($data['files'])) {
+        foreach ($data['files'] as $fn => $content) {
+          $base = basename((string) $fn);
+          if (pg_backup_allowed($base) && is_string($content) && @file_put_contents(PG_DATA_DIR . '/' . $base, $content) !== false) $n++;
+        }
+      }
+      if ($n > 0) pg_log_activity('Backup wiederhergestellt', $name . ' (' . $n . ' Dateien)');
+      $_SESSION['pg_backup_msg'] = $n > 0 ? ['ok', '✓ Wiederhergestellt aus ' . $name . ': ' . $n . ' Dateien.'] : ['err', 'Backup enthielt keine gültigen Inhalte.'];
+    }
+  }
+  header('Location: index.php?view=backup'); exit;
 }
 
 /* ---- Backup: Import (Inhalte aus einer Backup-Datei wiederherstellen) ---- */
@@ -1097,6 +1135,33 @@ if (($_GET['view'] ?? '') === 'backup') {
      . 'alle Inhalte (Studio, Spiele, Devlog, Team, Rechtliches), die Newsletter-Abos sowie deine Login- und Mail-Einstellungen.<br>'
      . '<b>Tipp:</b> Lade vor jedem Hochladen zu All-Inkl einmal ein Backup herunter – dann bist du komplett abgesichert. '
      . 'Bewahre die Datei sicher auf, sie enthält Zugangsdaten.</div>';
+
+  // Automatische Snapshots auf dem Server
+  $snaps = pg_backup_list();
+  $lastAuto = pg_backup_last_auto_time();
+  echo '<h2 class="sub-h" style="border-top:1px solid var(--line);padding-top:1.2rem;margin-top:1.6rem">🗄️ Automatische Backups</h2>';
+  echo '<p class="hint" style="margin:0 0 .8rem">Das System legt <b>einmal täglich</b> automatisch einen Snapshot auf dem Server an (im Ordner <code>data/backups/</code>, nicht öffentlich abrufbar). '
+     . 'Letztes Auto-Backup: <b>' . ($lastAuto ? pg_h(date('d.m.Y H:i', $lastAuto)) : 'noch keins') . '</b>. '
+     . 'Es werden die letzten ' . PG_BACKUP_KEEP_AUTO . ' Tage + ' . PG_BACKUP_KEEP_MANUAL . ' manuelle Snapshots behalten.</p>';
+  echo '<form method="post" style="margin:0 0 1rem"><input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+     . '<button class="btn-add" name="backup_now" value="1">＋ Jetzt Snapshot sichern</button></form>';
+  if (!$snaps) {
+    echo '<div class="mailnote">Noch keine Snapshots vorhanden – beim nächsten Tagesbesuch wird automatisch einer angelegt, oder sichere jetzt manuell.</div>';
+  } else {
+    echo '<table class="subs"><thead><tr><th>Snapshot</th><th>Typ</th><th>Größe</th><th>Erstellt</th><th></th></tr></thead><tbody>';
+    foreach ($snaps as $b) {
+      $csrf = pg_h(pg_csrf());
+      echo '<tr><td><code>' . pg_h($b['name']) . '</code></td>'
+         . '<td>' . ($b['auto'] ? 'Automatisch' : 'Manuell') . '</td>'
+         . '<td>' . number_format($b['size'] / 1024, 0, ',', '.') . ' KB</td>'
+         . '<td>' . pg_h(date('d.m.Y H:i', $b['time'])) . '</td>'
+         . '<td style="white-space:nowrap"><a class="btn-add" href="index.php?action=backup_download&file=' . urlencode($b['name']) . '">↓</a> '
+         . '<form method="post" style="display:inline" onsubmit="return confirm(\'Diesen Snapshot einspielen? Aktuelle Inhalte werden überschrieben.\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="file" value="' . pg_h($b['name']) . '"><button class="btn-add" name="restore_backup" value="1">↺ Einspielen</button></form> '
+         . '<form method="post" style="display:inline" onsubmit="return confirm(\'Snapshot löschen?\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="file" value="' . pg_h($b['name']) . '"><button class="btn-danger sm" name="delete_backup" value="1">✕</button></form>'
+         . '</td></tr>';
+    }
+    echo '</tbody></table>';
+  }
   echo '<h2 class="sub-h" style="border-top:1px solid var(--line);padding-top:1.2rem;margin-top:1.6rem">Wiederherstellen</h2>';
   echo '<p class="hint" style="margin:0 0 .8rem">Lädt eine zuvor exportierte Backup-Datei hoch und <b>überschreibt</b> die aktuellen Inhalte mit dem Stand aus der Datei.</p>';
   echo '<form method="post" action="index.php?action=backup_import" enctype="multipart/form-data" '

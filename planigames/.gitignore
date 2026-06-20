@@ -14,5 +14,6 @@ data/trash.json
 data/templates.json
 data/board.json
 data/comments.json
+data/backups/
 data/secret.php
 data/*.tmp
