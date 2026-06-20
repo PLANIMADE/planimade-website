@@ -100,7 +100,9 @@ button{font:inherit;cursor:pointer}
   .tb-right{display:none}
   .tb-nav{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:.15rem;
     background:rgba(12,12,14,.98);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:.6rem .9rem 1rem;box-shadow:0 20px 40px rgba(0,0,0,.5)}
-  .topbar.nav-open .tb-nav{display:flex}
+  /* Menü scrollbar machen, falls es länger als der Bildschirm ist */
+  .topbar.nav-open .tb-nav{display:flex;max-height:calc(100vh - 110px);max-height:calc(100dvh - 110px);
+    overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
   .tb-nav a{padding:.7rem .8rem;font-size:.95rem;border-radius:8px}
   .tb-mobile-extra{display:flex;flex-direction:column;gap:.2rem;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--line)}
   .tb-mobile-extra .tb-user{color:var(--muted);font-size:.82rem;padding:.4rem .8rem}
