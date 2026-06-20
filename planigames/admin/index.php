@@ -1178,7 +1178,7 @@ if (($_GET['view'] ?? '') === 'account' || isset($_POST['start_2fa']) || isset($
        . '<p><code class="totp-key" style="font-size:1.2rem;letter-spacing:.15em">' . pg_h(pg_totp_code($sec)) . '</code> <span class="muted" style="font-size:.78rem">(wechselt alle 30 s)</span></p>'
        . '<p class="muted" style="font-size:.8rem">Serverzeit (UTC): <b>' . pg_h(gmdate('H:i:s')) . '</b> · ' . pg_h(date('H:i:s')) . ' lokal.<br>'
        . 'Zeigt deine App eine <b>andere</b> Zahl, stimmt die Uhr deines Handys nicht – aktiviere dort „Automatisch / Netzwerkzeit" (Einstellungen → Datum &amp; Uhrzeit).</p></details>';
-    echo '<script src="assets/qrcode.min.js?v=43"></script>';
+    echo '<script src="assets/qrcode.min.js?v=44"></script>';
     echo '<script>(function(){var b=document.querySelector(".qr-box");if(!b)return;'
        . 'if(!window.QRCode){b.innerHTML="<p class=\"err\" style=\"font-size:.82rem\">QR-Bibliothek konnte nicht geladen werden. Nutze bitte den Schlüssel unten zur manuellen Eingabe.</p>";return;}'
        . 'b.innerHTML="";try{new QRCode(b,{text:b.getAttribute("data-otpauth"),width:200,height:200,colorDark:"#0a0a0b",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});}'

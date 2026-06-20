@@ -863,15 +863,19 @@
       ["index.php", "🏠", "Start"],
       ["index.php?collection=studio", "★", "Studio"],
       ["index.php?view=board", "🗂️", "Board"],
-      ["index.php?view=contacts", "✉️", "Postfach"],
+      ["mail.php", "📮", "Postfach"],
       ["index.php?view=search", "🔎", "Suche"],
     ];
+    const path = location.pathname.split("/").pop() || "index.php";
     const here = location.search;
     const nav = document.createElement("nav");
     nav.id = "pg-mobnav";
     nav.innerHTML = items.map(([href, ico, lbl]) => {
-      const on = (href === "index.php" && here === "") || (href.includes("?") && here.includes(href.split("?")[1])) ? " on" : "";
-      return `<a href="${href}" class="${on.trim()}"><span>${ico}</span>${lbl}</a>`;
+      const hp = href.split("?")[0], hq = href.split("?")[1] || "";
+      let on = false;
+      if (hp === "mail.php") on = path === "mail.php";
+      else if (path === "index.php") on = hq === "" ? here === "" : here.includes(hq);
+      return `<a href="${href}" class="${on ? "on" : ""}"><span>${ico}</span>${lbl}</a>`;
     }).join("");
     document.body.appendChild(nav);
     document.body.classList.add("has-mobnav");
