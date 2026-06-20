@@ -1789,6 +1789,13 @@
             const slug = qs.get("slug");
             const label = (slug ? page + ":" + slug : page).slice(0, 60);
             const data = new FormData(); data.append("p", label);
+            // Verweis-Quelle: nur die Domain (keine vollständige URL), externe ausgenommen
+            try {
+                if (document.referrer) {
+                    const rh = new URL(document.referrer).hostname.replace(/^www\./, "");
+                    if (rh && rh !== location.hostname.replace(/^www\./, "")) data.append("r", rh.slice(0, 80));
+                }
+            } catch (e) {}
             if (navigator.sendBeacon) navigator.sendBeacon("stats.php", data);
             else fetch("stats.php", { method: "POST", body: data, keepalive: true });
         } catch (e) {}
