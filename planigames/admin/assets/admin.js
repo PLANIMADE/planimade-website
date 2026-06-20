@@ -289,6 +289,33 @@
   }
   injectEyesPlacer();
 
+  // ---- Countdown-Datum: warnen, wenn es in der Vergangenheit liegt ----
+  (function countdownDateWarn() {
+    const inp = document.querySelector('input[type="datetime-local"][name$="[heroCountdown][date]"]');
+    if (!inp) return;
+    const note = document.createElement("p");
+    note.className = "hint";
+    note.style.marginTop = ".4rem";
+    inp.insertAdjacentElement("afterend", note);
+    const check = () => {
+      const v = inp.value;
+      if (!v) { note.textContent = ""; return; }
+      const t = new Date(v).getTime();
+      if (isNaN(t)) { note.textContent = ""; return; }
+      if (t <= Date.now()) {
+        note.style.color = "#ffb454";
+        note.textContent = "⚠️ Dieses Datum liegt in der Vergangenheit – der Countdown zählt dann nicht herunter, sondern zeigt sofort den „nach Ablauf“-Text. Bitte ein Datum in der Zukunft wählen.";
+      } else {
+        note.style.color = "var(--ok, #5fd07f)";
+        const days = Math.ceil((t - Date.now()) / 86400000);
+        note.textContent = "✅ Countdown läuft bis " + new Date(t).toLocaleString() + " (noch " + days + " Tage).";
+      }
+    };
+    inp.addEventListener("input", check);
+    inp.addEventListener("change", check);
+    check();
+  })();
+
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-eyes-edit]")) openEyesPicker();
   });
