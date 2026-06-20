@@ -158,25 +158,56 @@ function pg_templates_save($list){ return pg_save_json(PG_TEMPLATES_FILE, array_
 
 /* ---------------- Planungs-Board (Kanban) ---------------- */
 const PG_BOARD_FILE = __DIR__ . '/../data/board.json';
-function pg_board_default(){
+function pg_board_default_columns(){
   // feste IDs, damit Spalten auch ohne gespeicherte Datei zwischen Requests übereinstimmen
-  return ['columns' => [
+  return [
     ['id' => 'col_ideen',    'title' => '💡 Ideen',     'cards' => []],
     ['id' => 'col_geplant',  'title' => '📋 Geplant',   'cards' => []],
     ['id' => 'col_arbeit',   'title' => '🔨 In Arbeit', 'cards' => []],
     ['id' => 'col_erledigt', 'title' => '✅ Erledigt',  'cards' => []],
-  ]];
+  ];
 }
+// Mehrere Boards (pro Spiel/Thema). Migriert das alte Einzel-Board automatisch.
 function pg_board_load(){
   $b = pg_load_json(PG_BOARD_FILE);
-  if (!is_array($b) || empty($b['columns']) || !is_array($b['columns'])) return pg_board_default();
+  if (!is_array($b)) $b = [];
+  if (isset($b['columns']) && !isset($b['boards'])) { // altes Format -> wrappen
+    $b = ['boards' => [['id' => 'board_main', 'name' => 'Allgemein', 'game' => '', 'columns' => $b['columns']]]];
+  }
+  if (empty($b['boards']) || !is_array($b['boards'])) {
+    $b = ['boards' => [['id' => 'board_main', 'name' => 'Allgemein', 'game' => '', 'columns' => pg_board_default_columns()]]];
+  }
   return $b;
 }
 function pg_board_save($b){ return pg_save_json(PG_BOARD_FILE, $b); }
 function pg_board_id($prefix){ return $prefix . '_' . bin2hex(random_bytes(4)); }
+// Index eines Boards anhand der ID (oder 0 als Fallback)
+function pg_board_index(&$b, $id){
+  foreach ($b['boards'] as $i => $bd) if (($bd['id'] ?? '') === $id) return $i;
+  return 0;
+}
 function pg_board_colors(){
   return ['' => 'Keine', '#ff7d1a' => 'Orange', '#5bc0eb' => 'Blau', '#5fd07f' => 'Grün',
           '#c678dd' => 'Lila', '#e06c75' => 'Rot', '#e6c07b' => 'Gelb'];
+}
+function pg_board_priorities(){
+  return ['' => 'Keine', 'high' => '🔴 Hoch', 'med' => '🟡 Mittel', 'low' => '🟢 Niedrig'];
+}
+// mögliche Zuständige = alle Admin-Zugänge (E-Mail => Anzeigename)
+function pg_board_assignees(){
+  $out = ['' => '— niemand —'];
+  foreach (pg_users_load() as $u) {
+    $em = $u['email'] ?? ''; if ($em === '') continue;
+    $out[$em] = ($u['name'] ?? '') !== '' ? $u['name'] : $em;
+  }
+  return $out;
+}
+function pg_board_initials($name){
+  $name = trim((string) $name); if ($name === '') return '?';
+  $parts = preg_split('/[\s@.]+/', $name);
+  $a = mb_substr($parts[0] ?? '', 0, 1);
+  $b = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
+  return mb_strtoupper($a . $b);
 }
 
 /* ---------------- Globale Suche ---------------- */
@@ -869,10 +900,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=32"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=33"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=32"></script></body></html>';
+  echo '<script src="assets/admin.js?v=33"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');

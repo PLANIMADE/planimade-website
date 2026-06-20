@@ -444,6 +444,7 @@
       }));
       const fd = new URLSearchParams();
       fd.append("csrf", csrf());
+      fd.append("board", board.getAttribute("data-board-id") || "");
       fd.append("order", JSON.stringify(order));
       fetch("index.php?action=board_save", { method: "POST", body: fd }).catch(() => {});
     }
@@ -486,18 +487,21 @@
     } catch {}
   });
 
-  // ---- Board: Label-Filter ----
+  // ---- Board: Label- & Zuständig-Filter ----
   const kbFilter = document.querySelector("[data-kb-filter]");
   if (kbFilter) {
     kbFilter.addEventListener("click", (e) => {
-      const tag = e.target.closest("[data-label]");
+      const tag = e.target.closest(".kb-filter-tag");
       if (!tag) return;
       kbFilter.querySelectorAll(".kb-filter-tag").forEach((t) => t.classList.remove("on"));
       tag.classList.add("on");
-      const want = tag.getAttribute("data-label");
+      const wantLabel = tag.getAttribute("data-label");
+      const wantMine = tag.getAttribute("data-mine");
       document.querySelectorAll(".board .kb-card").forEach((c) => {
-        const labels = (c.getAttribute("data-labels") || "").split("|").filter(Boolean);
-        c.style.display = (!want || labels.includes(want)) ? "" : "none";
+        let show = true;
+        if (wantMine) show = (c.getAttribute("data-assignee") || "") === wantMine;
+        else if (wantLabel) show = (c.getAttribute("data-labels") || "").split("|").filter(Boolean).includes(wantLabel);
+        c.style.display = show ? "" : "none";
       });
     });
   }

@@ -48,11 +48,13 @@ if ($action === 'board_save') {
   $order = json_decode($_POST['order'] ?? '[]', true);
   if (!is_array($order)) { echo '{"error":"ungültig"}'; exit; }
   $board = pg_board_load();
+  $bi = pg_board_index($board, (string) ($_POST['board'] ?? ''));
+  $cols = $board['boards'][$bi]['columns'] ?? [];
   // Karten nach ID auffindbar machen + Ursprungsspalte merken (für archivierte Karten, die nicht im DOM sind)
   $byId = []; $origCol = [];
-  foreach ($board['columns'] as $c) foreach (($c['cards'] ?? []) as $card) if (!empty($card['id'])) { $byId[$card['id']] = $card; $origCol[$card['id']] = $c['id']; }
+  foreach ($cols as $c) foreach (($c['cards'] ?? []) as $card) if (!empty($card['id'])) { $byId[$card['id']] = $card; $origCol[$card['id']] = $c['id']; }
   $titles = [];
-  foreach ($board['columns'] as $c) $titles[$c['id']] = $c['title'] ?? '';
+  foreach ($cols as $c) $titles[$c['id']] = $c['title'] ?? '';
   $newCols = []; $idx = [];
   foreach ($order as $col) {
     $cid = $col['col'] ?? '';
@@ -68,7 +70,7 @@ if ($action === 'board_save') {
     if ($oc !== null && isset($idx[$oc])) $newCols[$idx[$oc]]['cards'][] = $card;
     elseif ($newCols) $newCols[0]['cards'][] = $card;
   }
-  if ($newCols) { $board['columns'] = $newCols; pg_board_save($board); }
+  if ($newCols) { $board['boards'][$bi]['columns'] = $newCols; pg_board_save($board); }
   echo '{"ok":true}'; exit;
 }
 
@@ -81,14 +83,14 @@ if ($action === 'board_toggle') {
   $i = (int) ($_POST['i'] ?? -1);
   $board = pg_board_load();
   $done = 0; $total = 0; $found = false;
-  foreach ($board['columns'] as &$c) foreach ($c['cards'] as &$card) {
+  foreach ($board['boards'] as &$bd) foreach ($bd['columns'] as &$c) foreach ($c['cards'] as &$card) {
     if (($card['id'] ?? '') === $cardId && isset($card['checklist'][$i])) {
       $card['checklist'][$i]['done'] = empty($card['checklist'][$i]['done']);
       foreach ($card['checklist'] as $it) { $total++; if (!empty($it['done'])) $done++; }
       $found = true;
     }
   }
-  unset($c, $card);
+  unset($bd, $c, $card);
   if ($found) { pg_board_save($board); echo json_encode(['ok' => true, 'done' => $done, 'total' => $total]); }
   else echo '{"error":"nicht gefunden"}';
   exit;
@@ -560,38 +562,57 @@ if (($_GET['view'] ?? '') === 'templates') {
   exit;
 }
 
-/* ---- Planungs-Board (Kanban) ---- */
-$pg_board_posts = ['board_add_card', 'board_edit_card', 'board_del_card', 'board_add_col', 'board_rename_col', 'board_del_col', 'board_archive_card', 'board_unarchive_card'];
+/* ---- Planungs-Board (Kanban, mehrere Boards) ---- */
+$pg_board_posts = ['board_add_card', 'board_edit_card', 'board_del_card', 'board_add_col', 'board_rename_col', 'board_del_col', 'board_archive_card', 'board_unarchive_card', 'board_add', 'board_rename', 'board_del'];
 if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_keys($_POST))) {
   if (!pg_logged_in()) { header('Location: index.php'); exit; }
   $board = pg_board_load();
-  // Helfer: Labels aus Komma-Text bauen
   $mkLabels = function ($s) {
     $out = [];
     foreach (explode(',', (string) $s) as $l) { $l = trim($l); if ($l !== '' && !in_array($l, $out, true)) $out[] = mb_substr($l, 0, 24); }
     return array_slice($out, 0, 8);
   };
+  // aktuelles Board bestimmen
+  $bi = pg_board_index($board, (string) ($_GET['board'] ?? $_POST['board'] ?? ''));
+  $curId = $board['boards'][$bi]['id'];
+
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     pg_csrf_check();
+    // --- Board-Verwaltung ---
+    if (isset($_POST['board_add'])) {
+      $nb = ['id' => pg_board_id('board'), 'name' => trim((string) ($_POST['name'] ?? '')) ?: 'Neues Board', 'game' => trim((string) ($_POST['game'] ?? '')), 'columns' => pg_board_default_columns()];
+      $board['boards'][] = $nb; pg_board_save($board);
+      header('Location: index.php?view=board&board=' . urlencode($nb['id'])); exit;
+    }
+    if (isset($_POST['board_rename'])) {
+      $name = trim((string) ($_POST['name'] ?? ''));
+      if ($name !== '') { $board['boards'][$bi]['name'] = $name; $board['boards'][$bi]['game'] = trim((string) ($_POST['game'] ?? '')); pg_board_save($board); }
+      header('Location: index.php?view=board&board=' . urlencode($curId)); exit;
+    }
+    if (isset($_POST['board_del'])) {
+      if (count($board['boards']) > 1) { array_splice($board['boards'], $bi, 1); pg_board_save($board); }
+      header('Location: index.php?view=board'); exit;
+    }
+    // --- Karten / Spalten im aktuellen Board ---
     $colId = $_POST['col'] ?? '';
     $cardId = $_POST['card'] ?? '';
     $ci = -1;
-    foreach ($board['columns'] as $k => $c) if ($c['id'] === $colId) $ci = $k;
+    foreach ($board['boards'][$bi]['columns'] as $k => $c) if ($c['id'] === $colId) $ci = $k;
     if (isset($_POST['board_add_card']) && $ci >= 0) {
       $title = trim((string) ($_POST['title'] ?? ''));
       if ($title !== '') {
-        $board['columns'][$ci]['cards'][] = ['id' => pg_board_id('card'), 'title' => $title, 'text' => '', 'color' => '',
-          'due' => '', 'game' => '', 'labels' => [], 'checklist' => [], 'archived' => false, 'created' => date('c')];
+        $board['boards'][$bi]['columns'][$ci]['cards'][] = ['id' => pg_board_id('card'), 'title' => $title, 'text' => '', 'color' => '',
+          'due' => '', 'game' => $board['boards'][$bi]['game'] ?? '', 'priority' => '', 'assignee' => '', 'labels' => [], 'checklist' => [], 'comments' => [], 'archived' => false, 'created' => date('c')];
         pg_board_save($board);
       }
     } elseif (isset($_POST['board_edit_card'])) {
-      // Checkliste neu aufbauen (bestehende Punkte + neue Zeilen)
       $chk = [];
       $texts = (array) ($_POST['chk_text'] ?? []);
       $dones = (array) ($_POST['chk_done'] ?? []);
       foreach ($texts as $i => $tx) { $tx = trim((string) $tx); if ($tx === '') continue; $chk[] = ['text' => mb_substr($tx, 0, 120), 'done' => isset($dones[$i])]; }
       foreach (preg_split('/\r?\n/', (string) ($_POST['chk_new'] ?? '')) as $ln) { $ln = trim($ln); if ($ln !== '') $chk[] = ['text' => mb_substr($ln, 0, 120), 'done' => false]; }
-      foreach ($board['columns'] as &$c) foreach ($c['cards'] as &$card) {
+      $newCmt = trim((string) ($_POST['comment_new'] ?? ''));
+      foreach ($board['boards'][$bi]['columns'] as &$c) foreach ($c['cards'] as &$card) {
         if (($card['id'] ?? '') === $cardId) {
           $card['title'] = trim((string) ($_POST['title'] ?? $card['title']));
           $card['text']  = trim((string) ($_POST['text'] ?? ''));
@@ -599,33 +620,40 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
           $card['color'] = array_key_exists($col, pg_board_colors()) ? $col : '';
           $card['due']   = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($_POST['due'] ?? '')) ? $_POST['due'] : '';
           $card['game']  = trim((string) ($_POST['game'] ?? ''));
+          $pr = (string) ($_POST['priority'] ?? '');
+          $card['priority'] = array_key_exists($pr, pg_board_priorities()) ? $pr : '';
+          $as = (string) ($_POST['assignee'] ?? '');
+          $card['assignee'] = array_key_exists($as, pg_board_assignees()) ? $as : '';
           $card['labels'] = $mkLabels($_POST['labels'] ?? '');
           $card['checklist'] = $chk;
+          if ($newCmt !== '') {
+            $card['comments'] = (array) ($card['comments'] ?? []);
+            $card['comments'][] = ['author' => pg_current_email(), 'text' => mb_substr($newCmt, 0, 1000), 'date' => date('c')];
+          }
         }
       }
       unset($c, $card);
       pg_board_save($board);
     } elseif (isset($_POST['board_archive_card']) || isset($_POST['board_unarchive_card'])) {
       $arch = isset($_POST['board_archive_card']);
-      foreach ($board['columns'] as &$c) foreach ($c['cards'] as &$card) if (($card['id'] ?? '') === $cardId) $card['archived'] = $arch;
+      foreach ($board['boards'][$bi]['columns'] as &$c) foreach ($c['cards'] as &$card) if (($card['id'] ?? '') === $cardId) $card['archived'] = $arch;
       unset($c, $card);
       pg_board_save($board);
     } elseif (isset($_POST['board_del_card'])) {
-      foreach ($board['columns'] as &$c) $c['cards'] = array_values(array_filter($c['cards'], fn($x) => ($x['id'] ?? '') !== $cardId));
+      foreach ($board['boards'][$bi]['columns'] as &$c) $c['cards'] = array_values(array_filter($c['cards'], fn($x) => ($x['id'] ?? '') !== $cardId));
       unset($c);
       pg_board_save($board);
     } elseif (isset($_POST['board_add_col'])) {
-      $title = trim((string) ($_POST['title'] ?? '')) ?: 'Neue Spalte';
-      $board['columns'][] = ['id' => pg_board_id('col'), 'title' => $title, 'cards' => []];
+      $board['boards'][$bi]['columns'][] = ['id' => pg_board_id('col'), 'title' => trim((string) ($_POST['title'] ?? '')) ?: 'Neue Spalte', 'cards' => []];
       pg_board_save($board);
     } elseif (isset($_POST['board_rename_col']) && $ci >= 0) {
       $title = trim((string) ($_POST['title'] ?? ''));
-      if ($title !== '') { $board['columns'][$ci]['title'] = $title; pg_board_save($board); }
+      if ($title !== '') { $board['boards'][$bi]['columns'][$ci]['title'] = $title; pg_board_save($board); }
     } elseif (isset($_POST['board_del_col']) && $ci >= 0) {
-      array_splice($board['columns'], $ci, 1);
+      array_splice($board['boards'][$bi]['columns'], $ci, 1);
       pg_board_save($board);
     }
-    $back = 'index.php?view=board' . (isset($_POST['ret_archive']) ? '&archive=1' : '');
+    $back = 'index.php?view=board&board=' . urlencode($curId) . (isset($_POST['ret_archive']) ? '&archive=1' : '');
     header('Location: ' . $back); exit;
   }
 
@@ -635,34 +663,46 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
     if (!empty($g['slug'])) $gameMap[$g['slug']] = $g['title'] ?? $g['slug'];
   }
   $colors = pg_board_colors();
+  $prios = pg_board_priorities();
+  $assignees = pg_board_assignees();
   $csrf = pg_h(pg_csrf());
   $archiveView = !empty($_GET['archive']);
+  $cols = $board['boards'][$bi]['columns'];
 
   // Karten-Renderer (für Board & Archiv)
-  $renderCard = function ($card, $colId) use ($csrf, $colors, $gameMap, $archiveView) {
+  $renderCard = function ($card) use ($csrf, $colors, $prios, $assignees, $gameMap, $archiveView, $curId) {
     $cc = $card['color'] ?? '';
     $style = $cc !== '' ? ' style="--cc:' . pg_h($cc) . '"' : '';
     $labels = (array) ($card['labels'] ?? []);
     $chk = (array) ($card['checklist'] ?? []);
+    $cmts = (array) ($card['comments'] ?? []);
     $done = 0; foreach ($chk as $it) if (!empty($it['done'])) $done++;
     $total = count($chk);
+    $prio = $card['priority'] ?? '';
+    $assignee = $card['assignee'] ?? '';
     $h = '<div class="kb-card' . ($cc !== '' ? ' has-color' : '') . '" data-card-id="' . pg_h($card['id']) . '"' . $style
-       . ' data-labels="' . pg_h(implode('|', $labels)) . '">';
-    // Kopf: Grip + Bearbeiten-Panel
-    $h .= '<div class="kb-card-top">' . (!$archiveView ? '<span class="kb-grip" data-kb-grip title="Ziehen">⠿</span>' : '')
-        . '<details class="kb-cardedit"><summary title="Bearbeiten">✎</summary>'
-        . '<form method="post" class="kb-cardform"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="card" value="' . pg_h($card['id']) . '">'
+       . ' data-labels="' . pg_h(implode('|', $labels)) . '" data-assignee="' . pg_h($assignee) . '" data-prio="' . pg_h($prio) . '">';
+    // Kopf: Grip + (Avatar) + Bearbeiten-Panel
+    $h .= '<div class="kb-card-top">' . (!$archiveView ? '<span class="kb-grip" data-kb-grip title="Ziehen">⠿</span>' : '');
+    if ($assignee !== '') $h .= '<span class="kb-avatar" title="' . pg_h($assignees[$assignee] ?? $assignee) . '">' . pg_h(pg_board_initials($assignees[$assignee] ?? $assignee)) . '</span>';
+    $h .= '<details class="kb-cardedit"><summary title="Bearbeiten">✎</summary>'
+        . '<form method="post" class="kb-cardform"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="card" value="' . pg_h($card['id']) . '"><input type="hidden" name="board" value="' . pg_h($curId) . '">'
         . ($archiveView ? '<input type="hidden" name="ret_archive" value="1">' : '')
         . '<div class="kb-modal-head"><span>Karte bearbeiten</span><button type="button" class="kb-modal-x" data-kb-close aria-label="Schließen">✕</button></div>'
         . '<label class="ml">Titel</label><input type="text" name="title" value="' . pg_h($card['title'] ?? '') . '" required>'
         . '<label class="ml">Notiz</label><textarea name="text" rows="2">' . pg_h($card['text'] ?? '') . '</textarea>'
+        . '<div class="kb-form-row"><div><label class="ml">Priorität</label><select name="priority">';
+    foreach ($prios as $val => $lbl) $h .= '<option value="' . pg_h($val) . '"' . ($val === $prio ? ' selected' : '') . '>' . pg_h($lbl) . '</option>';
+    $h .= '</select></div><div><label class="ml">Zuständig</label><select name="assignee">';
+    foreach ($assignees as $val => $lbl) $h .= '<option value="' . pg_h($val) . '"' . ($val === $assignee ? ' selected' : '') . '>' . pg_h($lbl) . '</option>';
+    $h .= '</select></div></div>'
         . '<label class="ml">Verknüpftes Spiel</label><select name="game"><option value="">— kein Spiel —</option>';
     foreach ($gameMap as $slug => $title) $h .= '<option value="' . pg_h($slug) . '"' . (($card['game'] ?? '') === $slug ? ' selected' : '') . '>' . pg_h($title) . '</option>';
     $h .= '</select>'
         . '<label class="ml">Labels (Komma-getrennt)</label><input type="text" name="labels" value="' . pg_h(implode(', ', $labels)) . '" placeholder="z. B. Bug, Art, Wichtig">'
-        . '<label class="ml">Farbe</label><select name="color">';
+        . '<div class="kb-form-row"><div><label class="ml">Farbe</label><select name="color">';
     foreach ($colors as $val => $lbl) $h .= '<option value="' . pg_h($val) . '"' . ($val === $cc ? ' selected' : '') . '>' . pg_h($lbl) . '</option>';
-    $h .= '</select><label class="ml">Fällig am</label><input type="date" name="due" value="' . pg_h($card['due'] ?? '') . '">';
+    $h .= '</select></div><div><label class="ml">Fällig am</label><input type="date" name="due" value="' . pg_h($card['due'] ?? '') . '"></div></div>';
     // Checklisten-Editor
     $h .= '<label class="ml">Checkliste</label><div class="kb-chkedit">';
     foreach ($chk as $i => $it) {
@@ -670,27 +710,34 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
           . '<input type="text" name="chk_text[' . $i . ']" value="' . pg_h($it['text'] ?? '') . '"></label>';
     }
     $h .= '</div><textarea name="chk_new" rows="2" placeholder="Neue Punkte – eine pro Zeile"></textarea>';
-    $h .= '<div class="kb-cardform-foot"><button class="btn-primary" name="board_edit_card" value="1">Speichern</button>';
-    if ($archiveView) {
-      $h .= '<button class="btn-add" name="board_unarchive_card" value="1">↩︎ Wiederherstellen</button>';
-    } else {
-      $h .= '<button class="btn-add" name="board_archive_card" value="1">🗄️ Archivieren</button>';
+    // Kommentare
+    $h .= '<label class="ml">Kommentare</label>';
+    if ($cmts) {
+      $h .= '<div class="kb-comments">';
+      foreach ($cmts as $cm) {
+        $h .= '<div class="kb-cmt"><div class="kb-cmt-head"><b>' . pg_h($cm['author'] ?? '') . '</b><span>' . pg_h(date('d.m. H:i', strtotime((string) ($cm['date'] ?? '')))) . '</span></div>'
+            . '<div class="kb-cmt-body">' . nl2br(pg_h($cm['text'] ?? '')) . '</div></div>';
+      }
+      $h .= '</div>';
     }
+    $h .= '<textarea name="comment_new" rows="2" placeholder="Kommentar hinzufügen…"></textarea>';
+    $h .= '<div class="kb-cardform-foot"><button class="btn-primary" name="board_edit_card" value="1">Speichern</button>';
+    $h .= $archiveView ? '<button class="btn-add" name="board_unarchive_card" value="1">↩︎ Wiederherstellen</button>'
+                       : '<button class="btn-add" name="board_archive_card" value="1">🗄️ Archivieren</button>';
     $h .= '<button class="btn-danger sm" name="board_del_card" value="1" onclick="return confirm(\'Karte endgültig löschen?\')">Löschen</button>';
     $h .= '</div></form></details></div>';
     // Vorderseite
     $h .= '<div class="kb-card-title">' . pg_h($card['title'] ?? '') . '</div>';
-    if ($labels) {
+    if ($prio !== '' || $labels) {
       $h .= '<div class="kb-labels">';
+      if ($prio !== '') $h .= '<span class="kb-prio kb-prio-' . $prio . '">' . pg_h($prios[$prio]) . '</span>';
       foreach ($labels as $l) $h .= '<span class="kb-label">' . pg_h($l) . '</span>';
       $h .= '</div>';
     }
     if (trim((string) ($card['text'] ?? '')) !== '') $h .= '<div class="kb-card-text">' . nl2br(pg_h($card['text'])) . '</div>';
-    // Checkliste mit Fortschritt
     if ($total) {
       $pct = round($done / $total * 100);
-      $h .= '<div class="kb-chk"><div class="kb-chk-bar"><span style="width:' . $pct . '%"></span></div>'
-          . '<span class="kb-chk-count">' . $done . '/' . $total . '</span></div>';
+      $h .= '<div class="kb-chk"><div class="kb-chk-bar"><span style="width:' . $pct . '%"></span></div><span class="kb-chk-count">' . $done . '/' . $total . '</span></div>';
       $h .= '<ul class="kb-chk-list">';
       foreach ($chk as $i => $it) {
         $h .= '<li><button type="button" class="kb-chk-item' . (!empty($it['done']) ? ' done' : '') . '" data-chk-card="' . pg_h($card['id']) . '" data-chk-i="' . $i . '">'
@@ -698,9 +745,9 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
       }
       $h .= '</ul>';
     }
-    // Meta: Spiel-Badge + Fälligkeit
     $metas = '';
     if (!empty($card['game']) && isset($gameMap[$card['game']])) $metas .= '<span class="kb-game">🎮 ' . pg_h($gameMap[$card['game']]) . '</span>';
+    if ($cmts) $metas .= '<span class="kb-cmt-n">💬 ' . count($cmts) . '</span>';
     if (!empty($card['due'])) {
       $overdue = strtotime($card['due']) < strtotime(date('Y-m-d'));
       $metas .= '<span class="kb-due' . ($overdue ? ' over' : '') . '">📅 ' . pg_h($card['due']) . '</span>';
@@ -713,68 +760,85 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
   pg_view_head($archiveView ? 'Board-Archiv' : 'Planungs-Board');
   pg_view_topbar($SCHEMA, null);
 
-  // Archiv-Ansicht
+  // Archiv-Ansicht (für aktuelles Board)
   if ($archiveView) {
     $arch = [];
-    foreach ($board['columns'] as $c) foreach ($c['cards'] as $card) if (!empty($card['archived'])) $arch[] = [$c['id'], $card];
+    foreach ($cols as $c) foreach ($c['cards'] as $card) if (!empty($card['archived'])) $arch[] = $card;
     echo '<div class="editor wide">';
-    echo '<div class="editor-head"><div><h1>🗄️ Board-Archiv</h1><p class="muted">' . count($arch) . ' archivierte Karte' . (count($arch) === 1 ? '' : 'n') . '.</p></div>'
-       . '<div class="editor-actions"><a class="btn-add" href="index.php?view=board">← Zum Board</a></div></div>';
-    if (!$arch) {
-      echo '<div class="mailnote">Noch nichts archiviert. Erledigte Karten kannst du im Board über „🗄️ Archivieren" hierher verschieben.</div>';
-    } else {
-      echo '<div class="kb-archive">';
-      foreach ($arch as [$colId, $card]) echo $renderCard($card, $colId);
-      echo '</div>';
-    }
+    echo '<div class="editor-head"><div><h1>🗄️ Board-Archiv</h1><p class="muted">' . count($arch) . ' archivierte Karte' . (count($arch) === 1 ? '' : 'n') . ' in „' . pg_h($board['boards'][$bi]['name']) . '".</p></div>'
+       . '<div class="editor-actions"><a class="btn-add" href="index.php?view=board&board=' . urlencode($curId) . '">← Zum Board</a></div></div>';
+    if (!$arch) echo '<div class="mailnote">Noch nichts archiviert.</div>';
+    else { echo '<div class="kb-archive">'; foreach ($arch as $card) echo $renderCard($card); echo '</div>'; }
     echo '</div>';
     pg_view_foot();
     exit;
   }
 
-  // alle Labels für die Filterleiste sammeln
-  $allLabels = [];
-  $archCount = 0;
-  foreach ($board['columns'] as $c) foreach ($c['cards'] as $card) {
+  // Labels für die Filterleiste + Archiv-Zähler
+  $allLabels = []; $archCount = 0;
+  foreach ($cols as $c) foreach ($c['cards'] as $card) {
     if (!empty($card['archived'])) { $archCount++; continue; }
     foreach ((array) ($card['labels'] ?? []) as $l) $allLabels[$l] = true;
   }
   ksort($allLabels);
+  $meEmail = pg_current_email();
 
   echo '<div class="board-wrap">';
-  echo '<div class="editor-head" style="max-width:none;margin:1.2rem 1.2rem .4rem"><div><h1>🗂️ Planungs-Board</h1>'
-     . '<p class="muted">Ideen &amp; Aufgaben planen – Karten per Anfasser zwischen Spalten ziehen.</p></div>'
-     . '<div class="editor-actions"><a class="btn-add" href="index.php?view=board&archive=1">🗄️ Archiv' . ($archCount ? ' (' . $archCount . ')' : '') . '</a></div></div>';
-  // Label-Filter
-  if ($allLabels) {
-    echo '<div class="kb-filter" data-kb-filter><span class="kb-filter-lbl">Filter:</span>'
-       . '<button class="kb-filter-tag on" data-label="">Alle</button>';
-    foreach (array_keys($allLabels) as $l) echo '<button class="kb-filter-tag" data-label="' . pg_h($l) . '">' . pg_h($l) . '</button>';
-    echo '</div>';
+  // Board-Umschalter (Tabs)
+  echo '<div class="kb-boards">';
+  foreach ($board['boards'] as $bd) {
+    $on = ($bd['id'] === $curId) ? ' on' : '';
+    $gm = !empty($bd['game']) && isset($gameMap[$bd['game']]) ? '🎮 ' : '';
+    echo '<a class="kb-board-tab' . $on . '" href="index.php?view=board&board=' . urlencode($bd['id']) . '">' . $gm . pg_h($bd['name']) . '</a>';
   }
-  echo '<div class="board" data-board>';
-  foreach ($board['columns'] as $c) {
+  echo '<details class="kb-board-add"><summary class="kb-board-tab" title="Neues Board">＋</summary><div class="kb-board-pop">'
+     . '<form method="post"><input type="hidden" name="csrf" value="' . $csrf . '"><label class="ml">Board-Name</label>'
+     . '<input type="text" name="name" placeholder="z. B. Wobbly Wizards" required><label class="ml">Spiel (optional)</label><select name="game"><option value="">— keins —</option>';
+  foreach ($gameMap as $slug => $title) echo '<option value="' . pg_h($slug) . '">' . pg_h($title) . '</option>';
+  echo '</select><button class="btn-primary" name="board_add" value="1" style="margin-top:.5rem">Board anlegen</button></form></div></details>';
+  echo '</div>';
+
+  echo '<div class="editor-head" style="max-width:none;margin:.3rem 1.2rem .4rem"><div><h1>🗂️ ' . pg_h($board['boards'][$bi]['name']) . '</h1>'
+     . '<p class="muted">Karten per Anfasser zwischen Spalten ziehen.</p></div>'
+     . '<div class="editor-actions"><a class="btn-add" href="index.php?view=board&board=' . urlencode($curId) . '&archive=1">🗄️ Archiv' . ($archCount ? ' (' . $archCount . ')' : '') . '</a>'
+     . '<details class="kb-board-edit"><summary class="btn-add">⚙ Board</summary><div class="kb-board-pop">'
+     . '<form method="post"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="board" value="' . pg_h($curId) . '">'
+     . '<label class="ml">Board-Name</label><input type="text" name="name" value="' . pg_h($board['boards'][$bi]['name']) . '" required>'
+     . '<label class="ml">Spiel</label><select name="game"><option value="">— keins —</option>';
+  foreach ($gameMap as $slug => $title) echo '<option value="' . pg_h($slug) . '"' . (($board['boards'][$bi]['game'] ?? '') === $slug ? ' selected' : '') . '>' . pg_h($title) . '</option>';
+  echo '</select><div style="display:flex;gap:.5rem;margin-top:.5rem"><button class="btn-primary" name="board_rename" value="1">Speichern</button>';
+  if (count($board['boards']) > 1) echo '<button class="btn-danger sm" name="board_del" value="1" onclick="return confirm(\'Dieses Board samt Karten löschen?\')">Board löschen</button>';
+  echo '</div></form></div></details></div></div>';
+
+  // Label-/Zuständig-Filter
+  echo '<div class="kb-filter" data-kb-filter><span class="kb-filter-lbl">Filter:</span>'
+     . '<button class="kb-filter-tag on" data-label="" data-mine="">Alle</button>';
+  if ($meEmail !== '') echo '<button class="kb-filter-tag" data-mine="' . pg_h($meEmail) . '">👤 Meine Karten</button>';
+  foreach (array_keys($allLabels) as $l) echo '<button class="kb-filter-tag" data-label="' . pg_h($l) . '">' . pg_h($l) . '</button>';
+  echo '</div>';
+
+  echo '<div class="board" data-board data-board-id="' . pg_h($curId) . '">';
+  foreach ($cols as $c) {
     $cid = pg_h($c['id']);
     $visible = array_filter($c['cards'], fn($x) => empty($x['archived']));
     echo '<div class="kb-col" data-col-id="' . $cid . '">';
     echo '<div class="kb-col-head"><details class="kb-coledit"><summary>' . pg_h($c['title']) . ' <span class="kb-count">' . count($visible) . '</span></summary>'
        . '<div class="kb-coledit-body">'
-       . '<form method="post" class="kb-inline"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="col" value="' . $cid . '">'
+       . '<form method="post" class="kb-inline"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="board" value="' . pg_h($curId) . '"><input type="hidden" name="col" value="' . $cid . '">'
        . '<input type="text" name="title" value="' . pg_h($c['title']) . '" required><button class="btn-add" name="board_rename_col" value="1">Umbenennen</button></form>'
-       . '<form method="post" onsubmit="return confirm(\'Spalte samt Karten löschen?\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="col" value="' . $cid . '">'
+       . '<form method="post" onsubmit="return confirm(\'Spalte samt Karten löschen?\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="board" value="' . pg_h($curId) . '"><input type="hidden" name="col" value="' . $cid . '">'
        . '<button class="btn-danger sm" name="board_del_col" value="1">Spalte löschen</button></form>'
        . '</div></details></div>';
     echo '<div class="kb-cards" data-kb-cards>';
-    foreach ($c['cards'] as $card) { if (!empty($card['archived'])) continue; echo $renderCard($card, $c['id']); }
-    echo '</div>'; // kb-cards
-    echo '<form method="post" class="kb-add"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="col" value="' . $cid . '">'
+    foreach ($c['cards'] as $card) { if (!empty($card['archived'])) continue; echo $renderCard($card); }
+    echo '</div>';
+    echo '<form method="post" class="kb-add"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="board" value="' . pg_h($curId) . '"><input type="hidden" name="col" value="' . $cid . '">'
        . '<input type="text" name="title" placeholder="+ Karte hinzufügen" autocomplete="off"><button class="btn-add" name="board_add_card" value="1">+</button></form>';
-    echo '</div>'; // kb-col
+    echo '</div>';
   }
-  echo '<div class="kb-col kb-col-new"><form method="post" class="kb-addcol"><input type="hidden" name="csrf" value="' . $csrf . '">'
+  echo '<div class="kb-col kb-col-new"><form method="post" class="kb-addcol"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="board" value="' . pg_h($curId) . '">'
      . '<input type="text" name="title" placeholder="Neue Spalte …" required><button class="btn-add" name="board_add_col" value="1">+ Spalte</button></form></div>';
-  echo '</div>'; // board
-  echo '</div>'; // board-wrap
+  echo '</div></div>';
   pg_view_foot();
   exit;
 }
