@@ -1993,10 +1993,19 @@
 
         const el = document.createElement("div");
         el.className = "pg-mascot";
+        const num = (v, d) => { v = +v; return isFinite(v) ? v : d; };
         const face = m.image ? `<img src="${esc(m.image)}" alt="">` : `<span class="pg-mascot-emoji">${esc(m.emoji || "🧙")}</span>`;
+        // Wackelaugen-Overlay (über Bild/Emoji), folgen dem Cursor
+        const ey = m.eyes || {};
+        const eyesOn = !!ey.enabled;
+        const eyesHTML = eyesOn
+            ? `<span class="pg-mascot-eyes" aria-hidden="true" style="--eye:${num(ey.size, 16)}px">`
+              + `<span class="pg-eye" style="left:${num(ey.lx, 38)}%;top:${num(ey.ly, 40)}%"><span class="pg-pupil"></span></span>`
+              + `<span class="pg-eye" style="left:${num(ey.rx, 62)}%;top:${num(ey.ry, 40)}%"><span class="pg-pupil"></span></span></span>`
+            : "";
         el.innerHTML =
             `<div class="pg-mascot-bubble" aria-hidden="true"></div>` +
-            `<button type="button" class="pg-mascot-btn" aria-label="Maskottchen"><span class="pg-mascot-face">${face}</span><span class="pg-mascot-zzz" aria-hidden="true">💤</span></button>` +
+            `<button type="button" class="pg-mascot-btn" aria-label="Maskottchen"><span class="pg-mascot-face">${face}${eyesHTML}</span><span class="pg-mascot-zzz" aria-hidden="true">💤</span></button>` +
             (m.closable !== false ? `<button type="button" class="pg-mascot-close" aria-label="${LANG === "en" ? "Hide mascot" : "Maskottchen ausblenden"}">✕</button>` : "");
         document.body.appendChild(el);
 
@@ -2085,6 +2094,20 @@
                 const tilt = Math.max(-14, Math.min(14, (e.clientX - cx) / 22));
                 const lift = e.clientY < cy ? Math.max(-4, (e.clientY - cy) / 60) : 0;
                 faceEl.style.transform = `rotate(${tilt}deg) translateY(${lift}px)`;
+            }, { passive: true });
+        }
+
+        // ---- Wackelaugen: Pupillen folgen dem Cursor ----
+        if (eyesOn && matchMedia("(pointer: fine)").matches && !reduce) {
+            const eyeEls = [...el.querySelectorAll(".pg-eye")];
+            addEventListener("pointermove", (e) => {
+                eyeEls.forEach(eye => {
+                    const r = eye.getBoundingClientRect();
+                    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+                    const a = Math.atan2(e.clientY - cy, e.clientX - cx);
+                    const reach = r.width * 0.28;
+                    eye.firstElementChild.style.transform = `translate(${Math.cos(a) * reach}px, ${Math.sin(a) * reach}px)`;
+                });
             }, { passive: true });
         }
 

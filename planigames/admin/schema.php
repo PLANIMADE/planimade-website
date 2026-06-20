@@ -97,6 +97,14 @@ return [
         ['name'=>'enabled','label'=>'Maskottchen anzeigen','widget'=>'boolean','default'=>false],
         ['name'=>'emoji','label'=>'Emoji','widget'=>'string','default'=>'🧙','hint'=>'Wird genutzt, wenn kein Bild gesetzt ist.'],
         ['name'=>'image','label'=>'Bild (optional)','widget'=>'image','hint'=>'Transparentes PNG, ca. 200×200 px. Überschreibt das Emoji.'],
+        ['name'=>'eyes','label'=>'Wackelaugen (Overlay)','widget'=>'object','hint'=>'Legt bewegliche Augen über dein PNG, die dem Mauszeiger folgen. Nutze „🪄 Augen platzieren", um sie genau auf dein Bild zu setzen.','fields'=>[
+          ['name'=>'enabled','label'=>'Augen anzeigen','widget'=>'boolean','default'=>false],
+          ['name'=>'size','label'=>'Augengröße (px)','widget'=>'number','default'=>16],
+          ['name'=>'lx','label'=>'Linkes Auge · X (%)','widget'=>'number','default'=>38],
+          ['name'=>'ly','label'=>'Linkes Auge · Y (%)','widget'=>'number','default'=>40],
+          ['name'=>'rx','label'=>'Rechtes Auge · X (%)','widget'=>'number','default'=>62],
+          ['name'=>'ry','label'=>'Rechtes Auge · Y (%)','widget'=>'number','default'=>40],
+        ]],
         ['name'=>'message','label'=>'Sprechblase (Standard)','widget'=>'string','hint'=>'Wird gezeigt, wenn keine wechselnden Sprüche gesetzt sind. z. B. „Psst… wishliste Wobbly Wizards!"'],
         ['name'=>'messages','label'=>'Wechselnde Sprüche','widget'=>'list','summary'=>'text','label_singular'=>'Spruch','hint'=>'Erscheinen abwechselnd beim Drüberfahren. Überschreibt den Standard-Spruch.','fields'=>[
           ['name'=>'text','label'=>'Spruch','widget'=>'string'],
