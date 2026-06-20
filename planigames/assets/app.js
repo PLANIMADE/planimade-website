@@ -74,6 +74,7 @@
             else { add = em; if (mine) remove = mine; mine = em; }
             try { localStorage.setItem(key, mine || ""); } catch {}
             markMine();
+            if (mine) pgBadge("reactor");
             // optimistisches Feedback
             btn.classList.add("pop"); setTimeout(() => btn.classList.remove("pop"), 300);
             const fd = new FormData(); fd.append("slug", slug); fd.append("add", add); fd.append("remove", remove);
@@ -690,6 +691,7 @@
             voted[id] = 1; try { localStorage.setItem("pg_sugg_voted", JSON.stringify(voted)); } catch {}
             const cnt = btn.querySelector(".sv-count"); cnt.textContent = (+cnt.textContent || 0) + 1;
             btn.classList.add("voted"); btn.disabled = true;
+            pgBadge("voter");
             const fd = new FormData(); fd.append("upvote", id);
             try { await fetch("suggestions.php", { method: "POST", body: fd }); } catch {}
         });
@@ -705,6 +707,7 @@
                 msg.className = "text-sm text-center mb-6 text-emerald-400";
                 msg.textContent = en ? "Thanks! Your idea will appear after review." : "Danke! Deine Idee erscheint nach der Prüfung.";
                 confetti({ count: 60, y: innerHeight * 0.6 });
+                pgBadge("ideator");
             } catch { msg.className = "text-sm text-center mb-6 text-red-400"; msg.textContent = en ? "Something went wrong." : "Etwas ist schiefgelaufen."; }
         });
     }
@@ -1481,6 +1484,7 @@
                 form.reset();
                 msg.className = "cmt-success text-sm mt-3";
                 msg.innerHTML = `<span class="cmt-check">✓</span> ${en ? "Thanks! Your comment will appear after review." : "Danke! Dein Kommentar erscheint nach der Prüfung."}`;
+                pgBadge("commenter");
                 // eigene Vorschau (ausstehend) oben einfügen
                 const empty = list.querySelector(":scope > p");
                 if (empty) empty.remove();
@@ -1830,6 +1834,7 @@
                     form.innerHTML = `<div class="w-full text-center text-[color:var(--accent)] font-semibold py-2">${esc(msg)}</div>`;
                     const rc = form.getBoundingClientRect();
                     confetti({ count: 110, x: rc.left + rc.width / 2, y: rc.top + rc.height / 2 });
+                    pgBadge("subscriber");
                 } else {
                     flashFormError(form, j.error || "Hat nicht geklappt. Bitte später erneut.");
                 }
@@ -1967,6 +1972,7 @@
     }
     function wizardMode() {
         confetti({ count: 170 });
+        pgBadge("wizard");
         document.body.classList.toggle("wizard-mode");
         const on = document.body.classList.contains("wizard-mode");
         const toast = document.createElement("div");
@@ -1993,6 +1999,13 @@
         });
     }
 
+    // gemeinsamer Container unten rechts (Tip-Jar + Abzeichen stapeln)
+    function pgCornerRight() {
+        let c = document.getElementById("pg-corner-r");
+        if (!c) { c = document.createElement("div"); c.id = "pg-corner-r"; document.body.appendChild(c); }
+        return c;
+    }
+
     // ---------- Tip-Jar / Ko-fi-Button (im Admin konfigurierbar) ----------
     function initTipJar() {
         const tj = (DATA.studio && DATA.studio.tipjar) || {};
@@ -2001,7 +2014,77 @@
         a.className = "pg-tipjar";
         a.href = tj.url; a.target = "_blank"; a.rel = "noopener";
         a.innerHTML = `<span class="pg-tip-emo">☕</span><span class="pg-tip-lbl">${esc(tj.label || (LANG === "en" ? "Support us" : "Unterstützen"))}</span>`;
-        document.body.appendChild(a);
+        pgCornerRight().appendChild(a);
+    }
+
+    // ---------- Community-Abzeichen (anonym, im Browser gespeichert) ----------
+    const BADGES = [
+        { id: "reactor", emoji: "❤️", title: { de: "Reaktionsfreudig", en: "Reactive" }, desc: { de: "Auf einen Devlog reagiert", en: "Reacted to a devlog" } },
+        { id: "commenter", emoji: "💬", title: { de: "Wortmelder*in", en: "Commenter" }, desc: { de: "Einen Kommentar geschrieben", en: "Posted a comment" } },
+        { id: "subscriber", emoji: "📬", title: { de: "Eingeweiht", en: "Subscriber" }, desc: { de: "Newsletter abonniert", en: "Joined the newsletter" } },
+        { id: "ideator", emoji: "💡", title: { de: "Ideengeber*in", en: "Ideator" }, desc: { de: "Eine Idee eingereicht", en: "Submitted an idea" } },
+        { id: "voter", emoji: "🗳️", title: { de: "Wählerisch", en: "Voter" }, desc: { de: "Für eine Idee abgestimmt", en: "Upvoted an idea" } },
+        { id: "explorer", emoji: "🧭", title: { de: "Entdecker*in", en: "Explorer" }, desc: { de: "5 Seiten erkundet", en: "Explored 5 pages" } },
+        { id: "wizard", emoji: "🧙", title: { de: "Zauberer*in", en: "Wizard" }, desc: { de: "Den Geheim-Code gefunden", en: "Found the secret code" } },
+    ];
+    const badgeT = (o) => (o && (o[LANG] || o.de)) || "";
+    function badgesEarned() { try { return JSON.parse(localStorage.getItem("pg_badges") || "{}"); } catch { return {}; } }
+    function pgBadge(id) {
+        const earned = badgesEarned();
+        if (earned[id] || !BADGES.some(b => b.id === id)) return;
+        earned[id] = Date.now();
+        try { localStorage.setItem("pg_badges", JSON.stringify(earned)); } catch {}
+        ensureBadgeButton();
+        updateBadgeButton();
+        const def = BADGES.find(b => b.id === id);
+        const toast = document.createElement("div");
+        toast.className = "badge-toast";
+        toast.innerHTML = `<span class="badge-toast-emo">${def.emoji}</span><span><b>${LANG === "en" ? "Badge unlocked!" : "Abzeichen freigeschaltet!"}</b><br>${esc(badgeT(def.title))}</span>`;
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add("show"));
+        setTimeout(() => { toast.classList.remove("show"); setTimeout(() => toast.remove(), 400); }, 3600);
+        confetti({ count: 50, x: innerWidth - 80, y: innerHeight - 120 });
+    }
+    function ensureBadgeButton() {
+        if (document.getElementById("pg-badges-btn")) return;
+        const btn = document.createElement("button");
+        btn.id = "pg-badges-btn"; btn.type = "button"; btn.className = "pg-badges-btn";
+        btn.setAttribute("aria-label", LANG === "en" ? "Your badges" : "Deine Abzeichen");
+        btn.addEventListener("click", openBadgePanel);
+        pgCornerRight().appendChild(btn);
+    }
+    function updateBadgeButton() {
+        const btn = document.getElementById("pg-badges-btn"); if (!btn) return;
+        const n = Object.keys(badgesEarned()).length;
+        btn.innerHTML = `🏆 <span class="pgb-count">${n}/${BADGES.length}</span>`;
+    }
+    function openBadgePanel() {
+        const earned = badgesEarned();
+        document.getElementById("pg-member-modal")?.remove();
+        const ov = document.createElement("div");
+        ov.id = "pg-member-modal"; ov.className = "pg-modal";
+        ov.innerHTML = `<div class="pg-modal-box"><button class="pg-modal-x" data-mm-close aria-label="Schließen">✕</button>
+            <h3 style="font-family:'Clash Display','Archivo',sans-serif;font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:.3rem">🏆 ${LANG === "en" ? "Your badges" : "Deine Abzeichen"}</h3>
+            <p class="text-zinc-400" style="font-size:.88rem;margin-bottom:1.2rem">${Object.keys(earned).length}/${BADGES.length} ${LANG === "en" ? "unlocked — earned by engaging with the site." : "freigeschaltet – durch Mitmachen auf der Seite."}</p>
+            <div class="pg-badge-grid">${BADGES.map(b => {
+                const got = !!earned[b.id];
+                return `<div class="pg-badge ${got ? "got" : "locked"}"><span class="pg-badge-emo">${got ? b.emoji : "🔒"}</span><span class="pg-badge-t">${esc(badgeT(b.title))}</span><span class="pg-badge-d">${esc(badgeT(b.desc))}</span></div>`;
+            }).join("")}</div></div>`;
+        document.body.appendChild(ov);
+        requestAnimationFrame(() => ov.classList.add("show"));
+        const close = () => { ov.classList.remove("show"); setTimeout(() => ov.remove(), 250); };
+        ov.addEventListener("click", (e) => { if (e.target === ov || e.target.closest("[data-mm-close]")) close(); });
+        document.addEventListener("keydown", function onEsc(e) { if (e.key === "Escape") { close(); document.removeEventListener("keydown", onEsc); } });
+    }
+    function initBadges() {
+        if (Object.keys(badgesEarned()).length) { ensureBadgeButton(); updateBadgeButton(); }
+        // Entdecker: besuchte Seiten zählen
+        try {
+            const page = (document.body.dataset.page || "") + (qs.get("slug") ? ":" + qs.get("slug") : "");
+            const seen = JSON.parse(localStorage.getItem("pg_seen") || "[]");
+            if (page && !seen.includes(page)) { seen.push(page); localStorage.setItem("pg_seen", JSON.stringify(seen.slice(-30))); }
+            if (seen.length >= 5) pgBadge("explorer");
+        } catch {}
     }
 
     async function boot() {
@@ -2033,6 +2116,7 @@
         initKonami();
         initMascot();
         initTipJar();
+        initBadges();
         trackView();
     }
 
