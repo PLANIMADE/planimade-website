@@ -360,9 +360,10 @@ button{font:inherit;cursor:pointer}
 .focus-dot{position:absolute;width:26px;height:26px;border:3px solid #fff;background:rgba(255,125,26,.5);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 12px rgba(0,0,0,.6);pointer-events:none}
 /* Wackelaugen-Platzierer */
 .ep-stage{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:repeating-conic-gradient(#1c1c22 0% 25%,#222229 0% 50%) 50%/24px 24px;min-height:220px;max-height:50vh;display:flex;align-items:center;justify-content:center;cursor:crosshair;user-select:none}
-.ep-stage img{display:block;max-width:100%;max-height:50vh;object-fit:contain;pointer-events:none}
-.ep-emoji{font-size:7rem;line-height:1;pointer-events:none}
-.ep-eye{position:absolute;background:#fff;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 1px 3px rgba(0,0,0,.45),inset 0 0 0 1px rgba(0,0,0,.15);cursor:grab;overflow:hidden;touch-action:none}
+.ep-face{position:relative;display:inline-block;line-height:0;cursor:crosshair}
+.ep-face img{display:block;max-width:100%;max-height:46vh;object-fit:contain;pointer-events:none}
+.ep-emoji{font-size:7rem;line-height:1;pointer-events:none;display:block}
+.ep-eye{position:absolute;aspect-ratio:1;background:#fff;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 1px 3px rgba(0,0,0,.45),inset 0 0 0 1px rgba(0,0,0,.15);cursor:grab;overflow:hidden;touch-action:none}
 .ep-eye:active{cursor:grabbing}
 .ep-pupil{position:absolute;left:50%;top:55%;width:46%;height:46%;margin:-23% 0 0 -23%;background:#15101c;border-radius:50%}
 .ep-size{display:flex;align-items:center;gap:.6rem;margin-top:1rem;font-size:.85rem;color:var(--muted)}
@@ -385,6 +386,8 @@ button{font:inherit;cursor:pointer}
 .tb-nav a .nbadge,.tb-group-btn .nbadge,.tb-menu a .nbadge,.card .nbadge{display:inline-block;min-width:18px;height:18px;line-height:18px;text-align:center;
   background:var(--accent);color:#1a0d00;border-radius:999px;font-size:.7rem;font-weight:800;padding:0 5px;margin-left:.35rem;vertical-align:middle}
 .card .nbadge{margin-left:.5rem}
+/* Badge ausblenden, wenn leer/0 (sonst bleibt ein leerer oranger Punkt stehen) */
+.nbadge[hidden]{display:none!important}
 
 .item{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
 .item.block{border-left:3px solid var(--accent)}

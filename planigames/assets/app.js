@@ -1999,9 +1999,9 @@
         const ey = m.eyes || {};
         const eyesOn = !!ey.enabled;
         const eyesHTML = eyesOn
-            ? `<span class="pg-mascot-eyes" aria-hidden="true" style="--eye:${num(ey.size, 16)}px">`
-              + `<span class="pg-eye" style="left:${num(ey.lx, 38)}%;top:${num(ey.ly, 40)}%"><span class="pg-pupil"></span></span>`
-              + `<span class="pg-eye" style="left:${num(ey.rx, 62)}%;top:${num(ey.ry, 40)}%"><span class="pg-pupil"></span></span></span>`
+            ? `<span class="pg-mascot-eyes" aria-hidden="true" style="--eye:${num(ey.size, 22)}">`
+              + `<span class="pg-eye" style="left:${num(ey.lx, 35)}%;top:${num(ey.ly, 42)}%"><span class="pg-pupil"></span></span>`
+              + `<span class="pg-eye" style="left:${num(ey.rx, 65)}%;top:${num(ey.ry, 42)}%"><span class="pg-pupil"></span></span></span>`
             : "";
         el.innerHTML =
             `<div class="pg-mascot-bubble" aria-hidden="true"></div>` +

@@ -301,47 +301,51 @@
     const emojiInput = document.querySelector('input[name$="[mascot][emoji]"]');
     const src = imgInput && imgInput.value.trim() ? imgInput.value.split("#")[0] : "";
     const emoji = (emojiInput && emojiInput.value.trim()) || "🧙";
-    let st = { lx: +f.lx.value || 38, ly: +f.ly.value || 40, rx: +f.rx.value || 62, ry: +f.ry.value || 40, size: +f.size.value || 16 };
+    let st = { lx: +f.lx.value || 35, ly: +f.ly.value || 42, rx: +f.rx.value || 65, ry: +f.ry.value || 42, size: +f.size.value || 22 };
     const face = src ? `<img src="${src}" alt="" draggable="false">` : `<span class="ep-emoji">${emoji}</span>`;
     const ov = document.createElement("div");
     ov.id = "media-picker";
     ov.innerHTML = `<div class="mp-box" style="max-width:440px"><div class="mp-head"><span>Augen platzieren</span>
         <button type="button" class="kb-modal-x" data-ep-close aria-label="Schließen">✕</button></div>
       <div style="padding:1rem">
-        <p class="muted" style="margin:0 0 .7rem;font-size:.85rem">Zieh die beiden Augen auf dein Maskottchen (oder klick auf die Stelle). Der Regler stellt die Größe ein.</p>
-        <div class="ep-stage" data-ep-stage>${face}
-          <span class="ep-eye" data-eye="l"><span class="ep-pupil"></span></span>
-          <span class="ep-eye" data-eye="r"><span class="ep-pupil"></span></span>
+        <p class="muted" style="margin:0 0 .7rem;font-size:.85rem">Zieh die beiden Augen auf dein Maskottchen (oder klick auf die Stelle). Die Größe ist relativ zum Bild – die Vorschau entspricht der Live-Ansicht.</p>
+        <div class="ep-stage" data-ep-stage>
+          <div class="ep-face" data-ep-face>${face}
+            <span class="ep-eye" data-eye="l"><span class="ep-pupil"></span></span>
+            <span class="ep-eye" data-eye="r"><span class="ep-pupil"></span></span>
+          </div>
         </div>
-        <label class="ep-size">Augengröße <input type="range" min="8" max="40" value="${st.size}" data-ep-size> <span data-ep-sizeval>${st.size}px</span></label>
+        <label class="ep-size">Augengröße <input type="range" min="8" max="40" value="${st.size}" data-ep-size> <span data-ep-sizeval>${st.size}%</span></label>
         <div class="kb-cardform-foot" style="margin-top:1rem"><button type="button" class="btn-primary" data-ep-save>Übernehmen</button>
           <button type="button" class="btn-add" data-ep-reset>Standard</button></div>
       </div></div>`;
     document.body.appendChild(ov);
     const stage = ov.querySelector("[data-ep-stage]");
+    const faceEl = ov.querySelector("[data-ep-face]");
     const eyeL = ov.querySelector('[data-eye="l"]'), eyeR = ov.querySelector('[data-eye="r"]');
     const sizeIn = ov.querySelector("[data-ep-size]"), sizeVal = ov.querySelector("[data-ep-sizeval]");
     function render() {
-      [eyeL, eyeR].forEach(el => { el.style.width = el.style.height = st.size + "px"; });
+      [eyeL, eyeR].forEach(el => { el.style.width = st.size + "%"; });
       eyeL.style.left = st.lx + "%"; eyeL.style.top = st.ly + "%";
       eyeR.style.left = st.rx + "%"; eyeR.style.top = st.ry + "%";
-      sizeVal.textContent = st.size + "px";
+      sizeVal.textContent = st.size + "%";
     }
     render();
     let drag = null;
     eyeL.addEventListener("pointerdown", (e) => { e.preventDefault(); drag = "l"; });
     eyeR.addEventListener("pointerdown", (e) => { e.preventDefault(); drag = "r"; });
-    const toPct = (ev) => { const r = stage.getBoundingClientRect(); return { x: Math.round(Math.min(100, Math.max(0, ((ev.clientX - r.left) / r.width) * 100))), y: Math.round(Math.min(100, Math.max(0, ((ev.clientY - r.top) / r.height) * 100))) }; };
+    // Koordinaten relativ zum BILD (nicht zur Bühne) – damit Vorschau == Live
+    const toPct = (ev) => { const r = faceEl.getBoundingClientRect(); return { x: Math.round(Math.min(100, Math.max(0, ((ev.clientX - r.left) / r.width) * 100))), y: Math.round(Math.min(100, Math.max(0, ((ev.clientY - r.top) / r.height) * 100))) }; };
     stage.addEventListener("pointermove", (ev) => { if (!drag) return; const { x, y } = toPct(ev); if (drag === "l") { st.lx = x; st.ly = y; } else { st.rx = x; st.ry = y; } render(); });
     window.addEventListener("pointerup", () => { drag = null; });
-    stage.addEventListener("click", (ev) => {
+    faceEl.addEventListener("click", (ev) => {
       if (ev.target.closest(".ep-eye")) return;
       const { x, y } = toPct(ev);
       if (Math.hypot(x - st.lx, y - st.ly) <= Math.hypot(x - st.rx, y - st.ry)) { st.lx = x; st.ly = y; } else { st.rx = x; st.ry = y; }
       render();
     });
     sizeIn.addEventListener("input", () => { st.size = +sizeIn.value; render(); });
-    ov.querySelector("[data-ep-reset]").addEventListener("click", () => { st = { lx: 38, ly: 40, rx: 62, ry: 40, size: 16 }; sizeIn.value = 16; render(); });
+    ov.querySelector("[data-ep-reset]").addEventListener("click", () => { st = { lx: 35, ly: 42, rx: 65, ry: 42, size: 22 }; sizeIn.value = 22; render(); });
     ov.querySelector("[data-ep-save]").addEventListener("click", () => {
       f.lx.value = st.lx; f.ly.value = st.ly; f.rx.value = st.rx; f.ry.value = st.ry; f.size.value = st.size;
       [f.lx, f.ly, f.rx, f.ry, f.size].forEach(i => i.dispatchEvent(new Event("input", { bubbles: true })));

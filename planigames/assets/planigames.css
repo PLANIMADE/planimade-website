@@ -327,7 +327,7 @@ body.fx-particles-only .glow-blob { display: none; }
 .pg-mascot-emoji { font-size: 3rem; display: block; }
 /* Wackelaugen-Overlay */
 .pg-mascot-eyes { position: absolute; inset: 0; pointer-events: none; }
-.pg-mascot-eyes .pg-eye { position: absolute; width: var(--eye, 16px); height: var(--eye, 16px); margin: calc(var(--eye, 16px) / -2) 0 0 calc(var(--eye, 16px) / -2);
+.pg-mascot-eyes .pg-eye { position: absolute; width: calc(var(--eye, 22) * 1%); aspect-ratio: 1; transform: translate(-50%, -50%);
     background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.12); overflow: hidden; }
 .pg-mascot-eyes .pg-pupil { position: absolute; left: 50%; top: 50%; width: 46%; height: 46%; margin: -23% 0 0 -23%;
     background: #1a1320; border-radius: 50%; transition: transform .08s linear; }
