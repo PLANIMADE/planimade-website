@@ -11,6 +11,9 @@
 (() => {
     "use strict";
 
+    const VERSION = "29";   // muss zur ?v=… in den HTML-Dateien passen
+    try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
+
     /* ---------- kleine Helfer ---------- */
     const $  = (s, r = document) => r.querySelector(s);
     const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -2254,6 +2257,56 @@
         initTipJar();
         initBadges();
         trackView();
+        if (qs.has("diag")) renderDiag();
+    }
+
+    // Selbst-Diagnose: ?diag=1 an die URL hängen → zeigt, was wirklich live ist.
+    function renderDiag() {
+        const page = document.body.dataset.page || "?";
+        const ok = (b) => b ? "✅" : "❌";
+        const lines = [];
+        lines.push(["app.js Version", "v" + VERSION + "  (HTML erwartet ?v=…)"]);
+        lines.push(["Seite (data-page)", page]);
+
+        // Hero-Countdown (nur Home relevant)
+        const c = (DATA.studio && DATA.studio.heroCountdown) || null;
+        if (page === "home") {
+            lines.push(["[data-hero-countdown] im HTML", ok(!!$("[data-hero-countdown]"))]);
+            if (!c) lines.push(["heroCountdown in studio.json", "❌ fehlt"]);
+            else {
+                let raw = (c.date || "").trim(); if (raw && !raw.includes("T")) raw = raw.replace(" ", "T");
+                const ts = raw ? Date.parse(raw) : NaN;
+                lines.push(["Countdown · enabled", String(c.enabled) + " " + ok(c.enabled !== false && c.enabled !== "false" && c.enabled !== "0")]);
+                lines.push(["Countdown · date", JSON.stringify(c.date || "") ]);
+                lines.push(["Countdown · date gültig", isNaN(ts) ? "❌ nicht lesbar" : (new Date(ts)).toLocaleString() + (ts > Date.now() ? " ✅ Zukunft" : " ⚠️ Vergangenheit")]);
+                lines.push(["Countdown sichtbar gerendert", ok(!!$("[data-countdown]"))]);
+            }
+        }
+
+        // Patchnotes (nur Game relevant)
+        if (page === "game") {
+            const g = (DATA.games && DATA.games.games || []).find(x => x.slug === qs.get("slug")) || (DATA.games && DATA.games.games || [])[0];
+            const all = (DATA.patchnotes && DATA.patchnotes.posts) || null;
+            lines.push(["[data-game-patchnotes] im HTML", ok(!!$("[data-game-patchnotes]"))]);
+            lines.push(["patchnotes.json geladen", all ? ("✅ " + all.length + " Beiträge") : "❌ nicht geladen / leer"]);
+            if (g && all) {
+                const gs = (g.slug || "").toLowerCase(), gt = (g.title || "").toLowerCase();
+                const belongs = (p) => { const v = (p.game || "").trim().toLowerCase(); if (v && (v === gs || v === gt)) return true; return (p.tags || []).some(t => { const x = String(t).toLowerCase(); return x === gs || x === gt; }); };
+                const mine = all.filter(p => belongs(p));
+                const pub = mine.filter(isPublished);
+                lines.push(["Spiel (slug)", g.slug || "?"]);
+                lines.push(["Beiträge mit game=" + (g.slug || "?"), String(mine.length) + " " + ok(mine.length)]);
+                lines.push(["davon veröffentlicht (nicht Entwurf/geplant)", String(pub.length) + " " + ok(pub.length)]);
+                if (mine.length) lines.push(["game-Werte der Beiträge", JSON.stringify(all.map(p => p.game || ""))]);
+            }
+        }
+
+        const box = document.createElement("div");
+        box.style.cssText = "position:fixed;inset:auto 12px 12px auto;z-index:99999;max-width:min(92vw,460px);max-height:80vh;overflow:auto;background:#0e0e14;color:#eee;border:1px solid #ff7d1a;border-radius:12px;padding:14px 16px;font:12px/1.5 ui-monospace,Menlo,monospace;box-shadow:0 16px 48px rgba(0,0,0,.6)";
+        box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem"><b style="color:#ff7d1a">PLANIGAMES Diagnose</b><button style="background:#ff7d1a;border:0;border-radius:6px;padding:2px 8px;cursor:pointer;font-weight:700">✕</button></div>'
+            + lines.map(([k, v]) => `<div style="display:flex;gap:10px;padding:2px 0;border-bottom:1px solid #222"><span style="color:#9aa;flex:0 0 46%">${esc(k)}</span><span style="flex:1;word-break:break-word">${esc(v)}</span></div>`).join("");
+        box.querySelector("button").addEventListener("click", () => box.remove());
+        document.body.appendChild(box);
     }
 
     // Datenschutzfreundliche Statistik: nur aggregierter Seitenaufruf (kein Cookie, keine IP)
@@ -2293,5 +2346,5 @@
     else boot();
 
     // für Debugging im Browser
-    window.PLANIGAMES = { DATA, loadData };
+    window.PLANIGAMES = { DATA, loadData, VERSION };
 })();
