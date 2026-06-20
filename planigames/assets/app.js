@@ -596,17 +596,26 @@
         const team = $("[data-studio='team']");
         const members = (DATA.team && DATA.team.members) || [];
         if (team && members.length) {
-            team.innerHTML = members.map((m, i) => `
-                <div class="reveal text-center w-48 sm:w-56" style="transition-delay:${i * 70}ms">
+            const hasProfile = (m) => (m.bio && m.bio.trim()) || m.funFact || m.location || (m.socials || []).some(s => s.url && s.url !== "#");
+            team.innerHTML = members.map((m, i) => {
+                const more = hasProfile(m);
+                return `
+                <div class="reveal text-center w-48 sm:w-56 ${more ? "cursor-pointer group/m" : ""}" style="transition-delay:${i * 70}ms" ${more ? `data-member="${i}" role="button" tabindex="0"` : ""}>
                     <div class="relative mx-auto w-40 h-40 sm:w-48 sm:h-48 rounded-3xl overflow-hidden border border-white/10 bg-white/5 transition-transform duration-500 hover:scale-[1.03]">
-                        ${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.photoAlt || m.name)}" class="w-full h-full object-cover">`
+                        ${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.photoAlt || m.name)}" style="object-position:${focusPos(m.photo)}" class="w-full h-full object-cover">`
                                   : `<div class="w-full h-full grid place-items-center text-6xl">${esc(m.emoji || "🧙")}</div>`}
                         <div class="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-3xl"></div>
+                        ${more ? `<div class="absolute inset-x-0 bottom-0 p-2 text-[10px] font-mono uppercase tracking-widest text-white/90 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover/m:opacity-100 transition">${LANG === "en" ? "View profile" : "Profil ansehen"}</div>` : ""}
                     </div>
                     <div class="mt-5 text-xl font-bold text-white">${esc(m.name || "")}</div>
                     <div class="font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] mt-1.5">${esc(m.role || "")}</div>
-                </div>`).join("");
+                    ${m.tagline ? `<div class="text-zinc-400 text-sm mt-2">${esc(m.tagline)}</div>` : ""}
+                </div>`;
+            }).join("");
             observeReveals(team);
+            const openMember = (i) => openMemberModal(members[i]);
+            team.addEventListener("click", (e) => { const c = e.target.closest("[data-member]"); if (c) openMember(+c.dataset.member); });
+            team.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target.closest("[data-member]")) { e.preventDefault(); openMember(+e.target.closest("[data-member]").dataset.member); } });
         } else { $("#team-section")?.remove(); }
 
         // Featured Game + Games-Teaser
@@ -1816,6 +1825,35 @@
     /* =========================================================
        BOOT
        ========================================================= */
+    // ---------- Team-Profil-Modal ----------
+    function openMemberModal(m) {
+        if (!m) return;
+        document.getElementById("pg-member-modal")?.remove();
+        const socials = (m.socials || []).filter(s => s.url && s.url !== "#");
+        const ov = document.createElement("div");
+        ov.id = "pg-member-modal";
+        ov.className = "pg-modal";
+        ov.innerHTML = `<div class="pg-modal-box">
+            <button class="pg-modal-x" data-mm-close aria-label="Schließen">✕</button>
+            <div class="pg-member-head">
+                ${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.photoAlt || m.name)}" style="object-position:${focusPos(m.photo)}">` : `<div class="pg-member-emoji">${esc(m.emoji || "🧙")}</div>`}
+                <div>
+                    <h3>${esc(m.name || "")}</h3>
+                    <div class="pg-member-role">${esc(m.role || "")}</div>
+                    ${m.tagline ? `<div class="pg-member-tag">${esc(m.tagline)}</div>` : ""}
+                </div>
+            </div>
+            ${m.bio ? `<div class="prose-pg pg-member-bio">${md(m.bio)}</div>` : ""}
+            ${(m.location || m.funFact) ? `<div class="pg-member-meta">${m.location ? `<span>📍 ${esc(m.location)}</span>` : ""}${m.funFact ? `<span>✨ ${esc(m.funFact)}</span>` : ""}</div>` : ""}
+            ${socials.length ? `<div class="pg-member-socials">${socials.map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener" class="btn-ghost px-4 py-2 rounded-full text-sm font-semibold">${esc(s.label || "Link")} ↗</a>`).join("")}</div>` : ""}
+        </div>`;
+        document.body.appendChild(ov);
+        requestAnimationFrame(() => ov.classList.add("show"));
+        const close = () => { ov.classList.remove("show"); setTimeout(() => ov.remove(), 250); };
+        ov.addEventListener("click", (e) => { if (e.target === ov || e.target.closest("[data-mm-close]")) close(); });
+        document.addEventListener("keydown", function onEsc(e) { if (e.key === "Escape") { close(); document.removeEventListener("keydown", onEsc); } });
+    }
+
     // ---------- Konfetti (canvas, ohne Library) ----------
     function confetti(opts = {}) {
         if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;

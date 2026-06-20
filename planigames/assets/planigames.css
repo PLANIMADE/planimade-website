@@ -288,6 +288,27 @@ body.fx-particles-only .glow-blob { display: none; }
     background: #34d399; color: #06281b; font-size: .8rem; font-weight: 900; animation: cmtCheck .5s cubic-bezier(0.34,1.56,0.64,1) both; }
 @keyframes cmtCheck { 0% { transform: scale(0); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
 
+/* ---------- Team-Profil-Modal ---------- */
+.pg-modal { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.2rem;
+    background: rgba(5,5,8,.7); backdrop-filter: blur(6px); opacity: 0; transition: opacity .25s; }
+.pg-modal.show { opacity: 1; }
+.pg-modal-box { position: relative; width: 100%; max-width: 520px; max-height: 88vh; overflow: auto;
+    background: #0e0e12; border: 1px solid rgba(255,255,255,.12); border-radius: 22px; padding: 1.8rem;
+    box-shadow: 0 40px 90px rgba(0,0,0,.6); transform: translateY(12px) scale(.98); transition: transform .25s; }
+.pg-modal.show .pg-modal-box { transform: none; }
+.pg-modal-x { position: absolute; top: 1rem; right: 1rem; width: 36px; height: 36px; border-radius: 9999px;
+    border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.04); color: #fff; cursor: pointer; font-size: 1rem; }
+.pg-modal-x:hover { border-color: var(--accent); }
+.pg-member-head { display: flex; gap: 1.1rem; align-items: center; }
+.pg-member-head img { width: 92px; height: 92px; border-radius: 20px; object-fit: cover; border: 1px solid rgba(255,255,255,.12); flex: 0 0 auto; }
+.pg-member-emoji { width: 92px; height: 92px; border-radius: 20px; display: grid; place-items: center; font-size: 3rem; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); flex: 0 0 auto; }
+.pg-member-head h3 { font-family: 'Clash Display','Archivo',sans-serif; font-size: 1.6rem; font-weight: 800; color: #fff; line-height: 1.1; }
+.pg-member-role { font-family: 'JetBrains Mono',monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--accent); margin-top: .35rem; }
+.pg-member-tag { color: #a1a1aa; font-size: .92rem; margin-top: .4rem; }
+.pg-member-bio { margin-top: 1.3rem; }
+.pg-member-meta { display: flex; flex-wrap: wrap; gap: .5rem .9rem; margin-top: 1.1rem; color: #c4c4cc; font-size: .88rem; }
+.pg-member-socials { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.3rem; }
+
 /* ---------- Maskottchen ---------- */
 .pg-mascot { position: fixed; left: 18px; bottom: 18px; z-index: 60; display: flex; flex-direction: column; align-items: center; gap: .4rem; }
 .pg-mascot-btn { background: none; border: 0; cursor: pointer; padding: 0; line-height: 1; filter: drop-shadow(0 8px 18px rgba(0,0,0,.5)); animation: mascotBob 3.2s ease-in-out infinite; }
