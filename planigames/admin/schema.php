@@ -88,6 +88,17 @@ return [
         ['name'=>'buttonLabel','label'=>'Button-Text','widget'=>'string','default'=>'Discord beitreten'],
         ['name'=>'url','label'=>'Discord-Einladungslink','widget'=>'string','hint'=>'z. B. https://discord.gg/…'],
       ]],
+      ['name'=>'mascot','label'=>'Maskottchen','widget'=>'object','hint'=>'Kleiner animierter Begleiter unten in der Ecke (klickbar). Komplett ein-/ausschaltbar.','fields'=>[
+        ['name'=>'enabled','label'=>'Maskottchen anzeigen','widget'=>'boolean','default'=>false],
+        ['name'=>'emoji','label'=>'Emoji','widget'=>'string','default'=>'🧙','hint'=>'Wird genutzt, wenn kein Bild gesetzt ist.'],
+        ['name'=>'image','label'=>'Bild (optional)','widget'=>'image','hint'=>'Transparentes PNG, ca. 200×200 px. Überschreibt das Emoji.'],
+        ['name'=>'message','label'=>'Sprechblase (optional)','widget'=>'string','hint'=>'z. B. „Psst… wishliste Wobbly Wizards!"'],
+      ]],
+      ['name'=>'tipjar','label'=>'Unterstützen-Button (Ko-fi / Tip-Jar)','widget'=>'object','hint'=>'Schwebender Button unten rechts, der zu deiner Support-Seite führt.','fields'=>[
+        ['name'=>'enabled','label'=>'Button anzeigen','widget'=>'boolean','default'=>false],
+        ['name'=>'label','label'=>'Beschriftung','widget'=>'string','default'=>'Unterstützen'],
+        ['name'=>'url','label'=>'Link','widget'=>'string','hint'=>'z. B. https://ko-fi.com/deinstudio'],
+      ]],
       ['name'=>'presskit','label'=>'Press Kit','widget'=>'object','hint'=>'Eigene Seite (presse.html) für Presse & Creator. Logos, Fakten, Downloads.','fields'=>[
         ['name'=>'enabled','label'=>'Press Kit aktiv','widget'=>'boolean','default'=>true],
         ['name'=>'intro','label'=>'Einleitung','widget'=>'markdown','hint'=>'Kurzvorstellung für Presse & Content-Creator.'],

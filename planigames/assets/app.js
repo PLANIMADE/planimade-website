@@ -1744,6 +1744,8 @@
                 if (r.ok && j.ok) {
                     const msg = j.message || nl.successMessage || "Danke! Du bist dabei. 🧡";
                     form.innerHTML = `<div class="w-full text-center text-[color:var(--accent)] font-semibold py-2">${esc(msg)}</div>`;
+                    const rc = form.getBoundingClientRect();
+                    confetti({ count: 110, x: rc.left + rc.width / 2, y: rc.top + rc.height / 2 });
                 } else {
                     flashFormError(form, j.error || "Hat nicht geklappt. Bitte später erneut.");
                 }
@@ -1809,6 +1811,86 @@
     /* =========================================================
        BOOT
        ========================================================= */
+    // ---------- Konfetti (canvas, ohne Library) ----------
+    function confetti(opts = {}) {
+        if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        const n = opts.count || 90;
+        const colors = ["#ff7d1a", "#e6a015", "#8b5cf6", "#22d3ee", "#5fd07f", "#ff5a8a", "#ffffff"];
+        const cv = document.createElement("canvas");
+        cv.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999";
+        cv.width = innerWidth; cv.height = innerHeight;
+        document.body.appendChild(cv);
+        const ctx = cv.getContext("2d");
+        const ox = opts.x ?? innerWidth / 2, oy = opts.y ?? innerHeight * 0.35;
+        const parts = Array.from({ length: n }, () => ({
+            x: ox, y: oy, vx: (Math.random() - 0.5) * 14, vy: Math.random() * -12 - 4,
+            g: 0.3 + Math.random() * 0.15, w: 6 + Math.random() * 6, h: 8 + Math.random() * 8,
+            rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3, color: colors[(Math.random() * colors.length) | 0],
+        }));
+        const t0 = performance.now();
+        (function frame(t) {
+            ctx.clearRect(0, 0, cv.width, cv.height);
+            let alive = false;
+            for (const p of parts) {
+                p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.vx *= 0.99;
+                if (p.y < cv.height + 20) alive = true;
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+                ctx.globalAlpha = Math.max(0, 1 - (t - t0) / 2600); ctx.fillStyle = p.color;
+                ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+            }
+            if (alive && t - t0 < 2800) requestAnimationFrame(frame); else cv.remove();
+        })(t0);
+    }
+
+    // ---------- Konami-Code → Zauberer-Modus ----------
+    function initKonami() {
+        const seq = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
+        let i = 0;
+        addEventListener("keydown", (e) => {
+            const k = (e.key || "").toLowerCase();
+            if (k === seq[i]) { if (++i === seq.length) { i = 0; wizardMode(); } }
+            else { i = (k === seq[0]) ? 1 : 0; }
+        });
+    }
+    function wizardMode() {
+        confetti({ count: 170 });
+        document.body.classList.toggle("wizard-mode");
+        const on = document.body.classList.contains("wizard-mode");
+        const toast = document.createElement("div");
+        toast.className = "wizard-toast";
+        toast.textContent = on ? (LANG === "en" ? "🧙 Wizard mode unlocked!" : "🧙 Zauberer-Modus aktiviert!") : (LANG === "en" ? "Wizard mode off" : "Zauberer-Modus aus");
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add("show"));
+        setTimeout(() => { toast.classList.remove("show"); setTimeout(() => toast.remove(), 400); }, 3000);
+    }
+
+    // ---------- Maskottchen (im Admin ein-/ausschaltbar) ----------
+    function initMascot() {
+        const m = (DATA.studio && DATA.studio.mascot) || {};
+        if (!m.enabled) return;
+        const el = document.createElement("div");
+        el.className = "pg-mascot";
+        const inner = m.image ? `<img src="${esc(m.image)}" alt="">` : `<span class="pg-mascot-emoji">${esc(m.emoji || "🧙")}</span>`;
+        el.innerHTML = `${m.message ? `<div class="pg-mascot-bubble">${esc(m.message)}</div>` : ""}<button type="button" class="pg-mascot-btn" aria-label="Maskottchen">${inner}</button>`;
+        document.body.appendChild(el);
+        el.querySelector(".pg-mascot-btn").addEventListener("click", () => {
+            el.classList.add("wave");
+            confetti({ count: 45, x: innerWidth - 80, y: innerHeight - 120 });
+            setTimeout(() => el.classList.remove("wave"), 800);
+        });
+    }
+
+    // ---------- Tip-Jar / Ko-fi-Button (im Admin konfigurierbar) ----------
+    function initTipJar() {
+        const tj = (DATA.studio && DATA.studio.tipjar) || {};
+        if (!tj.enabled || !tj.url || tj.url === "#") return;
+        const a = document.createElement("a");
+        a.className = "pg-tipjar";
+        a.href = tj.url; a.target = "_blank"; a.rel = "noopener";
+        a.innerHTML = `<span class="pg-tip-emo">☕</span><span class="pg-tip-lbl">${esc(tj.label || (LANG === "en" ? "Support us" : "Unterstützen"))}</span>`;
+        document.body.appendChild(a);
+    }
+
     async function boot() {
         document.documentElement.lang = LANG;
         await loadData("studio");   // früh laden (Hintergrund-Effekt braucht die Config)
@@ -1835,6 +1917,9 @@
         initContact();
         injectOrgJsonLd();
         initCookieBanner();
+        initKonami();
+        initMascot();
+        initTipJar();
         trackView();
     }
 
