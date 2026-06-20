@@ -369,7 +369,9 @@ function pg_totp_verify($secret, $code, $window = 4){
   return false;
 }
 function pg_otpauth_uri($secret, $account, $issuer = 'PLANIGAMES'){
-  return 'otpauth://totp/' . rawurlencode($issuer . ':' . $account)
+  // Label mit LITERALEM Doppelpunkt (issuer:account) – maximal kompatibel.
+  // Manche Authenticator-Apps lehnen einen url-kodierten ":" (%3A) ab.
+  return 'otpauth://totp/' . rawurlencode($issuer) . ':' . rawurlencode($account)
        . '?secret=' . $secret . '&issuer=' . rawurlencode($issuer) . '&algorithm=SHA1&digits=6&period=30';
 }
 // Einmal-Wiederherstellungscodes (Klartext zum Anzeigen; gespeichert wird der Hash)

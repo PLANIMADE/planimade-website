@@ -1163,15 +1163,24 @@ if (($_GET['view'] ?? '') === 'account' || isset($_POST['start_2fa']) || isset($
     echo '<ol class="setup-steps">';
     echo '<li>Öffne deine Authenticator-App (Google Authenticator, Authy, 1Password …) und scanne den QR-Code:';
     echo '<div class="qr-box" data-otpauth="' . pg_h($uri) . '"><div class="qr-loading">QR wird geladen …</div></div>';
-    echo '<p class="muted" style="font-size:.82rem">Kein Scanner? Schlüssel manuell eingeben:<br><code class="totp-key">' . pg_h(trim(chunk_split($sec, 4, ' '))) . '</code></p></li>';
+    echo '<p class="muted" style="font-size:.82rem">Kein Scanner? Schlüssel manuell eingeben (Typ: „zeitbasiert / TOTP"):<br><code class="totp-key">' . pg_h(trim(chunk_split($sec, 4, ' '))) . '</code></p></li>';
     echo '<li>Gib zur Bestätigung den aktuell angezeigten 6-stelligen Code ein:';
     echo '<form method="post" class="codeform" style="margin-top:.6rem"><input type="hidden" name="csrf" value="' . $csrf . '">'
        . '<input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="123 456" class="otp-input sm" required autofocus>'
        . '<button class="btn-primary" name="confirm_2fa" value="1">Aktivieren</button>'
        . '<button class="btn-add" name="cancel_setup" value="1" formnovalidate>Abbrechen</button></form></li>';
     echo '</ol>';
-    echo '<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>';
-    echo '<script>(function(){var b=document.querySelector(".qr-box");if(!b||!window.QRCode)return;b.innerHTML="";new QRCode(b,{text:b.getAttribute("data-otpauth"),width:180,height:180,colorDark:"#0a0a0b",colorLight:"#ffffff"});})();</script>';
+    // Diagnose: Serverzeit + aktuell gültiger Code → hilft bei Uhrzeit-Problemen
+    echo '<details class="twofa-diag"><summary>Code wird nicht akzeptiert? Hier prüfen</summary>'
+       . '<p class="muted" style="font-size:.82rem;margin:.5rem 0">Die App und der Server müssen dieselbe Uhrzeit haben. <b>Genau jetzt</b> sollte deine App diesen Code zeigen:</p>'
+       . '<p><code class="totp-key" style="font-size:1.2rem;letter-spacing:.15em">' . pg_h(pg_totp_code($sec)) . '</code> <span class="muted" style="font-size:.78rem">(wechselt alle 30 s)</span></p>'
+       . '<p class="muted" style="font-size:.8rem">Serverzeit (UTC): <b>' . pg_h(gmdate('H:i:s')) . '</b> · ' . pg_h(date('H:i:s')) . ' lokal.<br>'
+       . 'Zeigt deine App eine <b>andere</b> Zahl, stimmt die Uhr deines Handys nicht – aktiviere dort „Automatisch / Netzwerkzeit" (Einstellungen → Datum &amp; Uhrzeit).</p></details>';
+    echo '<script src="assets/qrcode.min.js?v=42"></script>';
+    echo '<script>(function(){var b=document.querySelector(".qr-box");if(!b)return;'
+       . 'if(!window.QRCode){b.innerHTML="<p class=\"err\" style=\"font-size:.82rem\">QR-Bibliothek konnte nicht geladen werden. Nutze bitte den Schlüssel unten zur manuellen Eingabe.</p>";return;}'
+       . 'b.innerHTML="";try{new QRCode(b,{text:b.getAttribute("data-otpauth"),width:200,height:200,colorDark:"#0a0a0b",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});}'
+       . 'catch(e){b.innerHTML="<p class=\"err\" style=\"font-size:.82rem\">QR konnte nicht erzeugt werden – bitte Schlüssel manuell eingeben.</p>";}})();</script>';
   } else {
     echo '<p class="muted">Schütze deinen Zugang zusätzlich mit einer Authenticator-App. Nach dem Passwort wird dann ein '
        . 'einmaliger 6-stelliger Code abgefragt.</p>';
