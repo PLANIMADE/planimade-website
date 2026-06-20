@@ -869,10 +869,10 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=30"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=31"></head><body>';
 }
 function pg_view_foot(){
-  echo '<script src="assets/admin.js?v=30"></script></body></html>';
+  echo '<script src="assets/admin.js?v=31"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -909,6 +909,7 @@ function pg_view_topbar($SCHEMA, $active){
   $system[] = ['index.php?view=search', '🔎 Suche', 0];
   $system[] = ['index.php?view=media', '🖼️ Medien-Bibliothek', 0];
   $system[] = ['index.php?view=stats', '📊 Statistik', 0];
+  $system[] = ['index.php?view=seo', '🔍 SEO-Assistent', 0];
   if (pg_can('mail') || pg_can('contacts')) $system[] = ['index.php?view=templates', '⚡ Schnellantworten', 0];
   if (pg_can('contacts')) $system[] = ['index.php?view=comments', '💬 Kommentare', pg_comments_pending()];
   $system[] = ['index.php?view=trash', '🗑️ Papierkorb', count(pg_trash_load())];

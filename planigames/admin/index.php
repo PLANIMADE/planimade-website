@@ -1278,6 +1278,92 @@ if (($_GET['view'] ?? '') === 'trash') {
 }
 
 /* ---- Statistik (datenschutzfreundlich) ---- */
+/* ---- SEO-Assistent (ganze Seite prüfen) ---- */
+if (($_GET['view'] ?? '') === 'seo') {
+  if (!pg_logged_in()) { header('Location: index.php'); exit; }
+  $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
+  $games = pg_load_json(PG_DATA_DIR . '/games.json')['games'] ?? [];
+  $posts = pg_load_json(PG_DATA_DIR . '/patchnotes.json')['posts'] ?? [];
+  $team  = pg_load_json(PG_DATA_DIR . '/team.json')['members'] ?? [];
+  $legal = pg_load_json(PG_DATA_DIR . '/legal.json');
+  $checks = [];
+  $add = function ($status, $label, $msg, $fix = '') use (&$checks) { $checks[] = compact('status', 'label', 'msg', 'fix'); };
+  $has = fn($v) => trim((string) $v) !== '';
+
+  // Grundlagen
+  $add($has($studio['name'] ?? '') ? 'ok' : 'fail', 'Studio-Name', $has($studio['name'] ?? '') ? 'Gesetzt.' : 'Fehlt – wichtig für Titel & Marke.', 'index.php?collection=studio');
+  $add($has($studio['tagline'] ?? '') || $has($studio['intro'] ?? '') ? 'ok' : 'warn', 'Tagline / Intro', $has($studio['tagline'] ?? '') || $has($studio['intro'] ?? '') ? 'Vorhanden.' : 'Kurzbeschreibung hilft Suchmaschinen & Social-Previews.', 'index.php?collection=studio');
+  $add($has($studio['logo'] ?? '') ? 'ok' : 'warn', 'Logo', $has($studio['logo'] ?? '') ? 'Eigenes Logo hinterlegt.' : 'Kein Logo – es wird die Schrift-Wortmarke genutzt.', 'index.php?collection=studio');
+  $add($has($studio['favicon'] ?? '') ? 'ok' : 'warn', 'Favicon', $has($studio['favicon'] ?? '') ? 'Gesetzt.' : 'Browser-Tab-Icon fehlt.', 'index.php?collection=studio');
+  $add($has($studio['email'] ?? '') ? 'ok' : 'warn', 'Kontakt-E-Mail', $has($studio['email'] ?? '') ? 'Gesetzt.' : 'Für Presse & Kontakt empfehlenswert.', 'index.php?collection=studio');
+  $add(count(array_filter((array) ($studio['socials'] ?? []), fn($x) => $has($x['url'] ?? '') && ($x['url'] ?? '') !== '#')) ? 'ok' : 'warn', 'Social-Links', 'Verlinkte Profile stärken Sichtbarkeit & „sameAs"-Daten.', 'index.php?collection=studio');
+  // Technik
+  $add(is_file(PG_MEDIA_DIR . '/og.jpg') ? 'ok' : 'fail', 'OG-Vorschaubild', is_file(PG_MEDIA_DIR . '/og.jpg') ? 'media/og.jpg vorhanden (Social-Preview).' : 'media/og.jpg fehlt – Links sehen beim Teilen schlecht aus.', 'index.php?view=media');
+  $add(is_file(__DIR__ . '/../sitemap.php') ? 'ok' : 'warn', 'Sitemap', 'sitemap.xml wird dynamisch erzeugt.', '');
+  $add(is_file(__DIR__ . '/../robots.txt') ? 'ok' : 'warn', 'robots.txt', 'Vorhanden.', '');
+  // Recht (DE-Pflicht)
+  $add($has($legal['impressum'] ?? '') ? 'ok' : 'fail', 'Impressum', $has($legal['impressum'] ?? '') ? 'Gefüllt.' : 'In Deutschland Pflicht!', 'index.php?collection=legal');
+  $add($has($legal['datenschutz'] ?? '') ? 'ok' : 'fail', 'Datenschutzerklärung', $has($legal['datenschutz'] ?? '') ? 'Gefüllt.' : 'In Deutschland Pflicht!', 'index.php?collection=legal');
+
+  // Spiele
+  $gNoCover = 0; $gNoAlt = 0; $gNoTag = 0; $galleryNoAlt = 0;
+  foreach ($games as $g) {
+    if (!$has($g['cover'] ?? '')) $gNoCover++;
+    elseif (!$has($g['coverAlt'] ?? '')) $gNoAlt++;
+    if (!$has($g['tagline'] ?? '')) $gNoTag++;
+    foreach ((array) ($g['blocks'] ?? []) as $bl) {
+      if (($bl['type'] ?? '') === 'gallery') foreach ((array) ($bl['images'] ?? []) as $im) if ($has($im['image'] ?? '') && !$has($im['alt'] ?? '')) $galleryNoAlt++;
+    }
+  }
+  if ($games) {
+    $add($gNoCover ? 'warn' : 'ok', 'Spiel-Cover', $gNoCover ? $gNoCover . ' Spiel(e) ohne Cover-Bild.' : 'Alle Spiele haben ein Cover.', 'index.php?collection=games');
+    $add($gNoAlt ? 'warn' : 'ok', 'Cover-Alt-Texte (Spiele)', $gNoAlt ? $gNoAlt . ' Spiel-Cover ohne Alt-Text (SEO & Barrierefreiheit).' : 'Alle Cover haben Alt-Texte.', 'index.php?collection=games');
+    $add($gNoTag ? 'warn' : 'ok', 'Spiel-Taglines', $gNoTag ? $gNoTag . ' Spiel(e) ohne Kurzbeschreibung.' : 'Alle Spiele beschrieben.', 'index.php?collection=games');
+    $add($galleryNoAlt ? 'warn' : 'ok', 'Galerie-Alt-Texte', $galleryNoAlt ? $galleryNoAlt . ' Galerie-Bild(er) ohne Alt-Text.' : 'Galerie-Bilder beschriftet.', 'index.php?collection=games');
+  }
+  // Devlog
+  $pNoExcerpt = 0; $pNoAlt = 0;
+  foreach ($posts as $p) {
+    if (!$has($p['excerpt'] ?? '')) $pNoExcerpt++;
+    if ($has($p['cover'] ?? '') && !$has($p['coverAlt'] ?? '')) $pNoAlt++;
+  }
+  if ($posts) {
+    $add($pNoExcerpt ? 'warn' : 'ok', 'Devlog-Kurzfassungen', $pNoExcerpt ? $pNoExcerpt . ' Beitrag/Beiträge ohne Kurzfassung (Teaser/Meta-Description).' : 'Alle Beiträge haben eine Kurzfassung.', 'index.php?collection=patchnotes');
+    $add($pNoAlt ? 'warn' : 'ok', 'Devlog-Titelbild-Alt', $pNoAlt ? $pNoAlt . ' Titelbild(er) ohne Alt-Text.' : 'Titelbilder beschriftet.', 'index.php?collection=patchnotes');
+  }
+  // Team
+  $tNoAlt = 0; foreach ($team as $m) if ($has($m['photo'] ?? '') && !$has($m['photoAlt'] ?? '')) $tNoAlt++;
+  if ($team) $add($tNoAlt ? 'warn' : 'ok', 'Team-Foto-Alt-Texte', $tNoAlt ? $tNoAlt . ' Foto(s) ohne Alt-Text.' : 'Team-Fotos beschriftet.', 'index.php?collection=team');
+
+  $okN = count(array_filter($checks, fn($c) => $c['status'] === 'ok'));
+  $warnN = count(array_filter($checks, fn($c) => $c['status'] === 'warn'));
+  $failN = count(array_filter($checks, fn($c) => $c['status'] === 'fail'));
+  $score = count($checks) ? (int) round(($okN + 0.5 * $warnN) / count($checks) * 100) : 100;
+
+  pg_view_head('SEO-Assistent');
+  pg_view_topbar($SCHEMA, null);
+  echo '<div class="editor wide">';
+  echo '<div class="editor-head"><div><h1>🔍 SEO-Assistent</h1>'
+     . '<p class="muted">Prüft deine ganze Seite auf Suchmaschinen- &amp; Social-Optimierung.</p></div></div>';
+  $scoreColor = $score >= 80 ? '#5fd07f' : ($score >= 50 ? '#e6c07b' : '#e06c75');
+  echo '<div class="seo-score"><div class="seo-ring" style="--p:' . $score . ';--c:' . $scoreColor . '"><span>' . $score . '</span></div>'
+     . '<div><div class="seo-score-lbl">SEO-Punktzahl</div>'
+     . '<div class="muted">' . $okN . ' ok · ' . $warnN . ' Hinweis' . ($warnN === 1 ? '' : 'e') . ' · ' . $failN . ' kritisch</div></div></div>';
+  echo '<div class="seo-list">';
+  $icon = ['ok' => '✓', 'warn' => '!', 'fail' => '✕'];
+  foreach ($checks as $c) {
+    echo '<div class="seo-item seo-' . $c['status'] . '">'
+       . '<span class="seo-dot">' . $icon[$c['status']] . '</span>'
+       . '<span class="seo-body"><span class="seo-label">' . pg_h($c['label']) . '</span>'
+       . '<span class="seo-msg">' . pg_h($c['msg']) . '</span></span>'
+       . ($c['fix'] ? '<a class="seo-fix" href="' . pg_h($c['fix']) . '">Beheben →</a>' : '')
+       . '</div>';
+  }
+  echo '</div></div>';
+  pg_view_foot();
+  exit;
+}
+
 /* ---- Statistik: CSV-Export ---- */
 if ($action === 'stats_csv') {
   if (!pg_logged_in()) { http_response_code(403); exit('Keine Berechtigung.'); }
