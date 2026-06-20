@@ -12,6 +12,16 @@ $file = PG_DATA_DIR . '/comments.json';
 $slug = preg_replace('/[^a-z0-9\-]/i', '', substr((string) ($_GET['slug'] ?? $_POST['slug'] ?? ''), 0, 80));
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+  // Anzahl freigegebener Kommentare je Beitrag (für die Devlog-Übersicht)
+  if (isset($_GET['counts'])) {
+    $counts = [];
+    foreach ((array) pg_load_json($file) as $c) {
+      if (!is_array($c) || empty($c['approved'])) continue;
+      $sl = $c['slug'] ?? ''; if ($sl !== '') $counts[$sl] = ($counts[$sl] ?? 0) + 1;
+    }
+    echo json_encode(['counts' => (object) $counts], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+  }
   // Öffentlich: nur freigegebene Kommentare dieses Beitrags, ohne personenbez. Felder
   $out = [];
   foreach ((array) pg_load_json($file) as $c) {

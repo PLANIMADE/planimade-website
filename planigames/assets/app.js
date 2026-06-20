@@ -86,8 +86,8 @@
         const url = location.href;
         const u = encodeURIComponent(url), tt = encodeURIComponent(title);
         const ico = (label, href, svg) => `<a href="${href}" target="_blank" rel="noopener" aria-label="${label}" title="${label}" class="share-btn">${svg}</a>`;
-        return `<div class="flex items-center gap-3 flex-wrap mt-14 pt-8 border-t border-white/10">
-            <span class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 mr-1">${t("share")}</span>
+        return `<div class="flex items-center gap-2 flex-wrap">
+            <span class="font-mono text-[10px] uppercase tracking-widest text-zinc-500 mr-0.5">${t("share")}</span>
             ${ico("X / Twitter", `https://twitter.com/intent/tweet?text=${tt}&url=${u}`, "𝕏")}
             ${ico("Bluesky", `https://bsky.app/intent/compose?text=${tt}%20${u}`, "🦋")}
             ${ico("Reddit", `https://www.reddit.com/submit?url=${u}&title=${tt}`, "👽")}
@@ -1256,8 +1256,12 @@
         }
 
         const shown = activeGame ? posts.filter(p => p.game === activeGame) : posts;
+        // Kommentar-Anzahlen je Beitrag (für 💬-Badge)
+        let cmtCounts = {};
+        try { const rc = await fetch("comments.php?counts=1"); cmtCounts = ((await rc.json()) || {}).counts || {}; } catch {}
         list.innerHTML = shown.map(p => {
             const g = games.find(x => x.slug === p.game);
+            const cmtN = cmtCounts[p.slug] || 0;
             return `
             <a href="devlog.php?slug=${esc(p.slug)}" class="reveal tilt-card group relative block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]" style="--accent:${esc(g?.accent || "#8b5cf6")}">
                 <div class="card-glow"></div>
@@ -1271,6 +1275,7 @@
                             <span class="font-mono text-xs text-zinc-500">${esc(fmtDate(p.date))}</span>
                             ${g ? `<span class="badge px-2 py-0.5 rounded border border-white/10 text-zinc-400">${esc(g.title)}</span>` : ""}
                             ${p.version ? `<span class="badge text-[color:var(--accent)]">v${esc(p.version)}</span>` : ""}
+                            ${cmtN ? `<span class="badge px-2 py-0.5 rounded border border-white/10 text-zinc-400">💬 ${cmtN}</span>` : ""}
                         </div>
                         <h2 class="font-display text-2xl font-extrabold text-white group-hover:text-gradient">${esc(p.title)}</h2>
                         ${p.excerpt ? `<p class="text-zinc-400 mt-2 line-clamp-2">${esc(p.excerpt)}</p>` : ""}
@@ -1305,8 +1310,10 @@
                 <h1 class="font-display text-4xl md:text-6xl font-extrabold text-white leading-[1.05] mb-8">${esc(p.title)}</h1>
                 ${p.cover ? `<img src="${esc(p.cover)}" alt="${esc(p.coverAlt || p.title || "")}" class="w-full rounded-2xl border border-white/10 mb-10">` : ""}
                 <div class="prose-pg">${md(p.body || "")}</div>
-                ${reactionsBar()}
-                ${shareBar(p.title)}
+                <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-4 mt-14 pt-8 border-t border-white/10">
+                    ${reactionsBar()}
+                    ${shareBar(p.title)}
+                </div>
                 ${commentsSection()}
                 ${g && g.wishlistUrl ? `<div class="mt-16 pt-10 border-t border-white/10 text-center">
                     <a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic inline-block px-9 py-4 rounded-full font-semibold">${esc(g.title)} auf Steam wishlisten</a></div>` : ""}
@@ -1346,37 +1353,56 @@
         const form = wrap.querySelector("[data-comments-form]");
         const msg = wrap.querySelector("[data-comments-msg]");
         const countEl = wrap.querySelector("[data-comments-count]");
+        const renderC = (c, pending) => `<div class="cmt-item${pending ? " cmt-new" : ""} rounded-2xl border ${pending ? "border-[color:var(--accent)]/50" : "border-white/8"} bg-white/[0.02] p-5">
+            <div class="flex items-center gap-2 mb-2 flex-wrap">
+                <span class="font-semibold text-white">${esc(c.name)}</span>
+                <span class="font-mono text-xs text-zinc-600">${pending ? (en ? "just now" : "gerade eben") : esc(fmtDate(c.date))}</span>
+                ${pending ? `<span class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--accent)]">⏳ ${en ? "under review" : "wird geprüft"}</span>` : ""}
+            </div>
+            <p class="text-zinc-300 whitespace-pre-wrap leading-relaxed">${esc(c.body)}</p>
+        </div>`;
         // bereits freigegebene Kommentare laden
         try {
             const r = await fetch(`comments.php?slug=${encodeURIComponent(slug)}`);
             const j = await r.json();
             const cs = (j && j.comments) || [];
             if (countEl) countEl.textContent = cs.length ? `(${cs.length})` : "";
-            list.innerHTML = cs.length
-                ? cs.map(c => `<div class="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="font-semibold text-white">${esc(c.name)}</span>
-                            <span class="font-mono text-xs text-zinc-600">${esc(fmtDate(c.date))}</span>
-                        </div>
-                        <p class="text-zinc-300 whitespace-pre-wrap leading-relaxed">${esc(c.body)}</p>
-                    </div>`).join("")
-                : `<p class="text-zinc-500 text-sm">${en ? "No comments yet — be the first!" : "Noch keine Kommentare — sei die*der Erste!"}</p>`;
+            if (!cs.length) {
+                list.innerHTML = `<p class="text-zinc-500 text-sm">${en ? "No comments yet — be the first!" : "Noch keine Kommentare — sei die*der Erste!"}</p>`;
+            } else {
+                const INITIAL = 5;
+                const older = cs.slice(0, Math.max(0, cs.length - INITIAL));
+                const recent = cs.slice(Math.max(0, cs.length - INITIAL));
+                list.innerHTML = (older.length
+                    ? `<button type="button" class="cmt-more" data-cmt-more>${en ? `Load ${older.length} earlier comments` : `${older.length} frühere Kommentare laden`}</button><div class="cmt-older" hidden>${older.map(c => renderC(c, false)).join("")}</div>`
+                    : "") + recent.map(c => renderC(c, false)).join("");
+                const moreBtn = list.querySelector("[data-cmt-more]");
+                if (moreBtn) moreBtn.addEventListener("click", () => { const o = list.querySelector(".cmt-older"); if (o) { o.hidden = false; o.querySelectorAll(".cmt-item").forEach(el => el.classList.add("cmt-new")); } moreBtn.remove(); });
+            }
         } catch { list.innerHTML = ""; }
         // Absenden
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
+            const name = (form.querySelector("[name=name]") || {}).value || "";
+            const body = (form.querySelector("[name=body]") || {}).value || "";
             const fd = new FormData(form);
             fd.append("slug", slug);
-            msg.className = "text-sm mt-3 text-zinc-400";
-            msg.textContent = en ? "Sending…" : "Wird gesendet…";
+            const btn = form.querySelector("button");
+            msg.className = "text-sm mt-3 text-zinc-400"; msg.textContent = en ? "Sending…" : "Wird gesendet…";
+            if (btn) btn.disabled = true;
             try {
                 const r = await fetch("comments.php", { method: "POST", body: fd });
                 const j = await r.json();
                 if (j.error) { msg.className = "text-sm mt-3 text-red-400"; msg.textContent = j.error; return; }
                 form.reset();
-                msg.className = "text-sm mt-3 text-emerald-400";
-                msg.textContent = en ? "Thanks! Your comment will appear after review." : "Danke! Dein Kommentar erscheint nach der Prüfung.";
+                msg.className = "cmt-success text-sm mt-3";
+                msg.innerHTML = `<span class="cmt-check">✓</span> ${en ? "Thanks! Your comment will appear after review." : "Danke! Dein Kommentar erscheint nach der Prüfung."}`;
+                // eigene Vorschau (ausstehend) oben einfügen
+                const empty = list.querySelector(":scope > p");
+                if (empty) empty.remove();
+                list.insertAdjacentHTML("afterbegin", renderC({ name, body, date: new Date().toISOString() }, true));
             } catch { msg.className = "text-sm mt-3 text-red-400"; msg.textContent = en ? "Something went wrong." : "Etwas ist schiefgelaufen."; }
+            finally { if (btn) btn.disabled = false; }
         });
     }
 

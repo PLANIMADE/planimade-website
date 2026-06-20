@@ -252,11 +252,11 @@ body.fx-particles-only .glow-blob { display: none; }
 }
 
 /* ---------- Emoji-Reaktionen (Devlog) ---------- */
-.react-bar { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin-top: 3rem; }
-.react-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: #71717a; margin-right: .3rem; }
-.react-btn { display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .8rem; border-radius: 9999px;
+.react-bar { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
+.react-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: #71717a; margin-right: .25rem; }
+.react-btn { display: inline-flex; align-items: center; gap: .3rem; padding: .35rem .6rem; border-radius: 9999px;
     border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); color: #d7d7df; cursor: pointer;
-    font-size: 1rem; transition: border-color .2s, background .2s, transform .15s; }
+    font-size: .95rem; transition: border-color .2s, background .2s, transform .15s; }
 .react-btn:hover { border-color: var(--accent); transform: translateY(-2px); }
 .react-btn.mine { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); }
 .react-btn .re-count { font-size: .82rem; font-weight: 700; color: #a1a1aa; min-width: .8em; }
@@ -266,13 +266,27 @@ body.fx-particles-only .glow-blob { display: none; }
 
 /* ---------- Teilen-Buttons (Devlog) ---------- */
 .share-btn {
-    display: inline-grid; place-items: center; width: 42px; height: 42px;
+    display: inline-grid; place-items: center; width: 36px; height: 36px;
     border-radius: 9999px; border: 1px solid rgba(255,255,255,0.15);
-    background: rgba(255,255,255,0.03); color: #fff; font-size: 1.05rem;
+    background: rgba(255,255,255,0.03); color: #fff; font-size: .95rem;
     text-decoration: none; cursor: pointer; transition: border-color .2s, background .2s, transform .2s;
 }
 .share-btn:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); transform: translateY(-2px); }
 .share-btn.copied { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- Kommentare ---------- */
+.cmt-more { display: block; width: 100%; padding: .7rem 1rem; margin-bottom: 1rem; border-radius: 14px;
+    border: 1px dashed rgba(255,255,255,0.18); background: rgba(255,255,255,0.02); color: #d7d7df;
+    font-family: 'JetBrains Mono', monospace; font-size: .82rem; letter-spacing: .04em; cursor: pointer; transition: border-color .2s, color .2s; }
+.cmt-more:hover { border-color: var(--accent); color: var(--accent); }
+.cmt-new { animation: cmtIn .45s cubic-bezier(0.16,1,0.3,1) both; }
+@keyframes cmtIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+.cmt-success { display: inline-flex; align-items: center; gap: .5rem; color: #6ee7a0; font-weight: 600;
+    animation: cmtFade .4s ease both; }
+@keyframes cmtFade { from { opacity: 0; } to { opacity: 1; } }
+.cmt-check { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 9999px;
+    background: #34d399; color: #06281b; font-size: .8rem; font-weight: 900; animation: cmtCheck .5s cubic-bezier(0.34,1.56,0.64,1) both; }
+@keyframes cmtCheck { 0% { transform: scale(0); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
 
 /* ---------- Roadmap-Fortschrittsbalken ---------- */
 .roadmap-bar { transition: width 1.2s cubic-bezier(0.16,1,0.3,1); box-shadow: 0 0 18px -2px color-mix(in srgb, var(--accent) 70%, transparent); }
