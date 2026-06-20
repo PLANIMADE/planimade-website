@@ -637,6 +637,76 @@
         }
 
         renderCommunity(s);
+        renderSuggestions(s);
+    }
+
+    // Vorschlagsbox (Community-Ideen mit Upvotes) – vor der Newsletter-Sektion
+    function renderSuggestions(s) {
+        const cfg = s.suggestions || {};
+        if (!cfg.enabled) return;
+        const nl = $("[data-newsletter-section]");
+        const sec = document.createElement("section");
+        sec.className = "relative px-6 py-12 md:py-20";
+        sec.innerHTML = `
+            <div class="max-w-3xl mx-auto reveal">
+                <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3 text-center">${esc(cfg.heading || "Was sollen wir als Nächstes bauen?")}</h2>
+                ${cfg.intro ? `<p class="text-zinc-400 text-center max-w-xl mx-auto mb-9">${esc(cfg.intro)}</p>` : ""}
+                <form data-sugg-form class="flex flex-col sm:flex-row gap-3 mb-8">
+                    <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
+                    <input name="text" required maxlength="200" placeholder="${LANG === "en" ? "Your idea…" : "Deine Idee…"}" class="flex-1 bg-black/30 border border-white/15 rounded-full px-6 py-4 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none">
+                    <button class="btn-accent magnetic px-8 py-4 rounded-full font-semibold whitespace-nowrap">${LANG === "en" ? "Submit" : "Einreichen"}</button>
+                </form>
+                <p data-sugg-msg class="text-sm text-center mb-6 hidden"></p>
+                <div data-sugg-list class="flex flex-col gap-3"></div>
+            </div>`;
+        if (nl && nl.parentNode) nl.parentNode.insertBefore(sec, nl); else document.body.appendChild(sec);
+        observeReveals(sec);
+        initSuggestions(sec);
+    }
+
+    async function initSuggestions(sec) {
+        const en = LANG === "en";
+        const list = sec.querySelector("[data-sugg-list]");
+        const form = sec.querySelector("[data-sugg-form]");
+        const msg = sec.querySelector("[data-sugg-msg]");
+        let voted = {};
+        try { voted = JSON.parse(localStorage.getItem("pg_sugg_voted") || "{}"); } catch {}
+        const stLabel = { planned: en ? "Planned" : "Geplant", done: en ? "Done" : "Umgesetzt" };
+        const render = (items) => {
+            list.innerHTML = items.length ? items.map(s => `
+                <div class="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.02] p-3 pl-4">
+                    <button type="button" class="sugg-vote ${voted[s.id] ? "voted" : ""}" data-vote="${s.id}" ${voted[s.id] ? "disabled" : ""} aria-label="Upvote">
+                        <span class="sv-arrow">▲</span><span class="sv-count">${s.votes}</span>
+                    </button>
+                    <span class="flex-1 text-zinc-200">${esc(s.text)}</span>
+                    ${s.status && s.status !== "open" ? `<span class="badge px-2 py-0.5 rounded-full border ${s.status === "done" ? "border-emerald-400/40 text-emerald-300" : "border-[color:var(--accent)]/40 text-[color:var(--accent)]"}">${stLabel[s.status] || ""}</span>` : ""}
+                </div>`).join("") : `<p class="text-zinc-500 text-sm text-center">${en ? "No suggestions yet — add the first!" : "Noch keine Vorschläge — mach den Anfang!"}</p>`;
+        };
+        async function load() { try { const r = await fetch("suggestions.php"); render((await r.json()).suggestions || []); } catch {} }
+        await load();
+        list.addEventListener("click", async (e) => {
+            const btn = e.target.closest("[data-vote]"); if (!btn) return;
+            const id = btn.dataset.vote; if (voted[id]) return;
+            voted[id] = 1; try { localStorage.setItem("pg_sugg_voted", JSON.stringify(voted)); } catch {}
+            const cnt = btn.querySelector(".sv-count"); cnt.textContent = (+cnt.textContent || 0) + 1;
+            btn.classList.add("voted"); btn.disabled = true;
+            const fd = new FormData(); fd.append("upvote", id);
+            try { await fetch("suggestions.php", { method: "POST", body: fd }); } catch {}
+        });
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const fd = new FormData(form);
+            msg.className = "text-sm text-center mb-6 text-zinc-400"; msg.textContent = en ? "Sending…" : "Wird gesendet…";
+            try {
+                const r = await fetch("suggestions.php", { method: "POST", body: fd });
+                const j = await r.json();
+                if (j.error) { msg.className = "text-sm text-center mb-6 text-red-400"; msg.textContent = j.error; return; }
+                form.reset();
+                msg.className = "text-sm text-center mb-6 text-emerald-400";
+                msg.textContent = en ? "Thanks! Your idea will appear after review." : "Danke! Deine Idee erscheint nach der Prüfung.";
+                confetti({ count: 60, y: innerHeight * 0.6 });
+            } catch { msg.className = "text-sm text-center mb-6 text-red-400"; msg.textContent = en ? "Something went wrong." : "Etwas ist schiefgelaufen."; }
+        });
     }
 
     // Release-Countdown im Hero (im Admin konfigurierbar)

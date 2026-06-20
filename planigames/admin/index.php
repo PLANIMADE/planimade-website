@@ -535,6 +535,62 @@ if (($_GET['view'] ?? '') === 'comments' || isset($_POST['approve_comment']) || 
   exit;
 }
 
+/* ---- Vorschlagsbox: Moderation ---- */
+if (($_GET['view'] ?? '') === 'suggestions' || isset($_POST['approve_sugg']) || isset($_POST['del_sugg']) || isset($_POST['sugg_status'])) {
+  if (!pg_can('contacts')) { header('Location: index.php'); exit; }
+  $sfile = PG_DATA_DIR . '/suggestions.json';
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    pg_csrf_check();
+    $list = pg_load_json($sfile); if (!is_array($list)) $list = [];
+    $id = (string) ($_POST['id'] ?? '');
+    if (isset($_POST['del_sugg'])) {
+      $list = array_values(array_filter($list, fn($s) => ($s['id'] ?? '') !== $id));
+    } elseif (isset($_POST['approve_sugg'])) {
+      foreach ($list as &$s) if (($s['id'] ?? '') === $id) $s['approved'] = true; unset($s);
+    } elseif (isset($_POST['sugg_status'])) {
+      $st = (string) ($_POST['status'] ?? 'open');
+      if (in_array($st, ['open', 'planned', 'done'], true)) { foreach ($list as &$s) if (($s['id'] ?? '') === $id) $s['status'] = $st; unset($s); }
+    }
+    pg_save_json($sfile, $list);
+    header('Location: index.php?view=suggestions'); exit;
+  }
+  $list = pg_load_json($sfile); if (!is_array($list)) $list = [];
+  $pending = array_filter($list, fn($s) => empty($s['approved']));
+  $approved = array_filter($list, fn($s) => !empty($s['approved']));
+  usort($approved, fn($a, $b) => (int) ($b['votes'] ?? 0) <=> (int) ($a['votes'] ?? 0));
+  $stLabels = ['open' => 'Offen', 'planned' => 'Geplant', 'done' => 'Umgesetzt'];
+  pg_view_head('Vorschläge');
+  pg_view_topbar($SCHEMA, null);
+  $csrf = pg_h(pg_csrf());
+  echo '<div class="editor wide">';
+  echo '<div class="editor-head"><div><h1>💡 Vorschläge</h1><p class="muted">' . count($pending) . ' zu prüfen · ' . count($approved) . ' veröffentlicht. Freigegebene erscheinen in der Vorschlagsbox auf der Startseite.</p></div></div>';
+  echo '<h2 class="sub-h">Zu prüfen</h2>';
+  if (!$pending) echo '<div class="mailnote">Nichts zu prüfen. 🎉</div>';
+  else {
+    echo '<div class="contacts">';
+    foreach ($pending as $s) {
+      echo '<div class="contact-card st-offen"><div class="contact-msg">' . pg_h($s['text'] ?? '') . '</div>'
+         . '<div class="contact-actions"><form method="post" style="margin:0"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($s['id'] ?? '') . '"><button class="btn-add" name="approve_sugg" value="1">✓ Freigeben</button></form>'
+         . '<form method="post" style="margin:0" onsubmit="return confirm(\'Löschen?\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($s['id'] ?? '') . '"><button class="btn-danger sm" name="del_sugg" value="1">Löschen</button></form></div></div>';
+    }
+    echo '</div>';
+  }
+  if ($approved) {
+    echo '<h2 class="sub-h">Veröffentlicht (nach Stimmen)</h2><table class="subs"><thead><tr><th>Vorschlag</th><th>Stimmen</th><th>Status</th><th></th></tr></thead><tbody>';
+    foreach ($approved as $s) {
+      echo '<tr><td>' . pg_h($s['text'] ?? '') . '</td><td>' . (int) ($s['votes'] ?? 0) . '</td>'
+         . '<td><form method="post" style="margin:0;display:flex;gap:.3rem"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($s['id'] ?? '') . '"><select name="status" onchange="this.form.querySelector(\'[name=sugg_status]\').click()">';
+      foreach ($stLabels as $k => $lbl) echo '<option value="' . $k . '"' . (($s['status'] ?? 'open') === $k ? ' selected' : '') . '>' . $lbl . '</option>';
+      echo '</select><button type="submit" name="sugg_status" value="1" hidden></button></form></td>'
+         . '<td><form method="post" style="margin:0" onsubmit="return confirm(\'Löschen?\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($s['id'] ?? '') . '"><button class="btn-danger sm" name="del_sugg" value="1">✕</button></form></td></tr>';
+    }
+    echo '</tbody></table>';
+  }
+  echo '</div>';
+  pg_view_foot();
+  exit;
+}
+
 /* ---- Schnellantwort-Vorlagen: speichern ---- */
 $pg_tpl_field = ['name'=>'templates','label'=>'Schnellantwort-Vorlagen','widget'=>'list','summary'=>'title','label_singular'=>'Vorlage',
   'hint'=>'Textbausteine für wiederkehrende Antworten. Im E-Mail-Postfach unter „Verfassen" einfügbar.','fields'=>[

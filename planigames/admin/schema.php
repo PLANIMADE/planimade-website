@@ -88,6 +88,11 @@ return [
         ['name'=>'buttonLabel','label'=>'Button-Text','widget'=>'string','default'=>'Discord beitreten'],
         ['name'=>'url','label'=>'Discord-Einladungslink','widget'=>'string','hint'=>'z. B. https://discord.gg/…'],
       ]],
+      ['name'=>'suggestions','label'=>'Vorschlagsbox (Community-Ideen)','widget'=>'object','hint'=>'Besucher schlagen Features vor & stimmen ab. Eingaben landen zur Freigabe im Admin unter „Vorschläge".','fields'=>[
+        ['name'=>'enabled','label'=>'Vorschlagsbox auf der Startseite anzeigen','widget'=>'boolean','default'=>false],
+        ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Was sollen wir als Nächstes bauen?'],
+        ['name'=>'intro','label'=>'Einleitung','widget'=>'text','default'=>'Reich deine Idee ein oder stimme für bestehende ab – die beliebtesten landen auf unserem Plan.'],
+      ]],
       ['name'=>'mascot','label'=>'Maskottchen','widget'=>'object','hint'=>'Kleiner animierter Begleiter unten in der Ecke (klickbar). Komplett ein-/ausschaltbar.','fields'=>[
         ['name'=>'enabled','label'=>'Maskottchen anzeigen','widget'=>'boolean','default'=>false],
         ['name'=>'emoji','label'=>'Emoji','widget'=>'string','default'=>'🧙','hint'=>'Wird genutzt, wenn kein Bild gesetzt ist.'],

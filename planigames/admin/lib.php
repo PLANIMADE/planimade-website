@@ -117,6 +117,13 @@ function pg_comments_pending(){
   $n = 0; foreach ($c as $x) if (is_array($x) && empty($x['approved'])) $n++;
   return $n;
 }
+// noch nicht freigegebene Vorschläge
+function pg_suggestions_pending(){
+  $c = pg_load_json(PG_DATA_DIR . '/suggestions.json');
+  if (!is_array($c)) return 0;
+  $n = 0; foreach ($c as $x) if (is_array($x) && empty($x['approved'])) $n++;
+  return $n;
+}
 // Sammelt alle Zähler; $total = handlungsrelevante (Mail + Kontakt + Kommentare)
 function pg_notifications(){
   $mail     = pg_can('mail') ? pg_mail_unread_cached() : 0;
@@ -910,11 +917,11 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=36"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=37"></head><body>';
 }
 function pg_view_foot(){
   echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
-  echo '<script src="assets/admin.js?v=36"></script></body></html>';
+  echo '<script src="assets/admin.js?v=37"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -954,6 +961,7 @@ function pg_view_topbar($SCHEMA, $active){
   $system[] = ['index.php?view=seo', '🔍 SEO-Assistent', 0];
   if (pg_can('mail') || pg_can('contacts')) $system[] = ['index.php?view=templates', '⚡ Schnellantworten', 0];
   if (pg_can('contacts')) $system[] = ['index.php?view=comments', '💬 Kommentare', pg_comments_pending()];
+  if (pg_can('contacts')) $system[] = ['index.php?view=suggestions', '💡 Vorschläge', pg_suggestions_pending()];
   $system[] = ['index.php?view=trash', '🗑️ Papierkorb', count(pg_trash_load())];
   $system[] = ['index.php?view=account', '🔒 Konto & 2FA', 0];
   if (pg_is_owner()) {

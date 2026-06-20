@@ -19,9 +19,9 @@
             display: ['"Clash Display"', 'Archivo', 'sans-serif'],
         } } } };
     </script>
-    <link rel="stylesheet" href="assets/planigames.css?v=24">
+    <link rel="stylesheet" href="assets/planigames.css?v=25">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="assets/app.js?v=24" defer></script>
+    <script src="assets/app.js?v=25" defer></script>
 </head>
 <body data-page="game" class="bg-[#050505] text-zinc-100 font-sans antialiased overflow-x-hidden noise-bg grain-overlay">
 
