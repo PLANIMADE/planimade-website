@@ -12,6 +12,30 @@ const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
+function pg_de_month($n){
+  $m = ['', 'Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  return $m[(int)$n] ?? '';
+}
+/* "vor X" – relative Zeitangabe */
+function pg_time_ago($ts){
+  $s = time() - (int)$ts;
+  if ($s < 60)    return 'gerade eben';
+  if ($s < 3600)  return 'vor ' . floor($s / 60) . ' Min';
+  if ($s < 86400) return 'vor ' . floor($s / 3600) . ' Std';
+  if ($s < 172800) return 'gestern';
+  if ($s < 604800) return 'vor ' . floor($s / 86400) . ' Tagen';
+  return date('d.m.Y', (int)$ts);
+}
+/* Begrüßung nach Tageszeit (fürs Dashboard) */
+function pg_greeting(){
+  $h = (int) date('G');
+  if ($h < 5)  return 'Noch wach';
+  if ($h < 11) return 'Guten Morgen';
+  if ($h < 17) return 'Hallo';
+  if ($h < 22) return 'Guten Abend';
+  return 'Gute Nacht';
+}
+
 function pg_session_boot(){
   if (session_status() !== PHP_SESSION_ACTIVE) {
     session_set_cookie_params([
@@ -928,11 +952,11 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=41"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=42"></head><body>';
 }
 function pg_view_foot(){
   echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
-  echo '<script src="assets/admin.js?v=41"></script></body></html>';
+  echo '<script src="assets/admin.js?v=42"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');

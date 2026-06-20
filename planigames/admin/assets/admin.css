@@ -653,3 +653,108 @@ body.is-dragging .item-body{pointer-events:none}
   .mr-subj{grid-column:1/-1;order:3}
   .mailgrid{grid-template-columns:1fr}
 }
+
+/* ============================================================
+   Admin 2.0 — Toasts, Autosave, Splitview, Mobile, Kalender, Politur
+   ============================================================ */
+
+/* ---- Toast-Meldungen ---- */
+#pg-toasts{position:fixed;right:16px;bottom:16px;z-index:10000;display:flex;flex-direction:column;gap:.5rem;max-width:min(92vw,360px)}
+.pg-toast{display:flex;align-items:flex-start;gap:.6rem;background:#16161c;border:1px solid var(--line);border-left:3px solid var(--accent);
+  color:var(--ink);padding:.7rem .9rem;border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.5);font-size:.9rem;
+  opacity:0;transform:translateY(10px);transition:opacity .3s,transform .3s}
+.pg-toast.show{opacity:1;transform:none}
+.pg-toast.ok{border-left-color:#5fd07f}
+.pg-toast.err{border-left-color:#ff6b6b}
+.pg-toast.info{border-left-color:#22d3ee}
+.pgt-ico{flex:0 0 auto}
+.flash{display:none}  /* werden als Toast gezeigt */
+
+/* ---- Autosave-Status & Schalter ---- */
+.save-status{font-size:.8rem;color:var(--muted);min-width:7ch;transition:color .2s}
+.save-status.dirty{color:#ffb454}
+.save-status.saving{color:var(--muted)}
+.save-status.ok{color:#5fd07f}
+.save-status.err{color:#ff8585}
+.autosave-toggle{display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--muted);cursor:pointer;
+  border:1px solid var(--line);padding:.3rem .6rem;border-radius:999px}
+.autosave-toggle input{accent-color:var(--accent)}
+
+/* ---- Live-Vorschau-Splitview ---- */
+.split-preview{position:fixed;top:53px;right:0;width:44vw;height:calc(100vh - 53px);z-index:18;
+  background:#000;border-left:1px solid var(--line);display:flex;flex-direction:column;animation:spIn .25s ease}
+@keyframes spIn{from{transform:translateX(20px);opacity:0}to{transform:none;opacity:1}}
+.split-preview .sp-bar{display:flex;align-items:center;gap:.7rem;padding:.5rem .8rem;background:var(--panel);border-bottom:1px solid var(--line);font-size:.82rem;color:var(--muted)}
+.split-preview .sp-bar span{flex:1;font-weight:600;color:var(--ink)}
+.split-preview .sp-bar a{color:var(--accent);text-decoration:none}
+.split-preview .sp-bar button{background:none;border:0;color:var(--muted);font-size:1rem}
+.split-preview iframe{flex:1;width:100%;border:0;background:#000}
+body.split-on #editor{max-width:none;margin:0;width:56vw;padding-left:2rem}
+body.split-on .editor.lang-bar,body.split-on .editor.lang-hint-wrap{max-width:56vw;margin:0;padding-left:2rem}
+@media(max-width:900px){.split-preview{display:none!important}body.split-on #editor{width:auto;max-width:880px;margin:0 auto;padding-left:1.2rem}[data-split-toggle]{display:none}}
+
+/* ---- Dashboard 2.0: „Zuletzt bearbeitet" ---- */
+.dash-recent{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:-.6rem 0 1.4rem}
+.dash-recent .dr-lbl{color:var(--muted);font-size:.85rem}
+.dr-chip{display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;background:var(--panel);border:1px solid var(--line);
+  color:var(--ink);padding:.35rem .7rem;border-radius:999px;font-size:.85rem;transition:border-color .15s,transform .15s}
+.dr-chip:hover{border-color:var(--accent);transform:translateY(-1px)}
+.dr-ago{color:var(--muted);font-size:.75rem}
+
+/* ---- Board: Ansichts-Umschalter ---- */
+.kb-viewtoggle{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.kb-vt{padding:.4rem .8rem;font-size:.82rem;text-decoration:none;color:var(--muted)}
+.kb-vt.on{background:var(--accent);color:#1a0d00;font-weight:700}
+
+/* ---- Board: Kalender-Ansicht ---- */
+.kb-cal-wrap{padding:0 1.2rem 3rem;display:grid;grid-template-columns:1fr 260px;gap:1.2rem;align-items:start}
+.kb-cal-nav{grid-column:1/-1;display:flex;align-items:center;gap:.6rem;margin:.3rem 0 .2rem}
+.kb-cal-title{font-weight:700;font-size:1.1rem;min-width:11ch}
+.kb-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px}
+.kb-cal-wd{text-align:center;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:2px 0}
+.kb-cal-cell{min-height:92px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:5px;display:flex;flex-direction:column;gap:3px}
+.kb-cal-cell.empty{background:transparent;border:0}
+.kb-cal-cell.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.kb-cal-day{font-size:.72rem;color:var(--muted);font-weight:700}
+.kb-cal-cell.today .kb-cal-day{color:var(--accent)}
+.kb-cal-card{font-size:.74rem;text-decoration:none;color:var(--ink);background:rgba(255,255,255,.05);border-left:3px solid var(--cc,var(--accent));
+  border-radius:5px;padding:3px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .15s}
+.kb-cal-card:hover{background:rgba(255,125,26,.18)}
+.kb-cal-card.over{border-left-color:#ff6b6b;color:#ffb3b3}
+.kb-cal-side{display:flex;flex-direction:column;gap:1rem}
+.kb-cal-box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.8rem}
+.kb-cal-box h3{margin:0 0 .5rem;font-size:.9rem}
+.kb-cal-box .kb-cal-card{white-space:normal;display:block;margin-bottom:4px}
+@media(max-width:860px){.kb-cal-wrap{grid-template-columns:1fr}.kb-cal-cell{min-height:64px}}
+
+/* ---- Mobiles Admin: untere Tab-Leiste ---- */
+#pg-mobnav{display:none}
+.has-mobnav{padding-bottom:env(safe-area-inset-bottom)}
+@media(max-width:760px){
+  #pg-mobnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;
+    background:rgba(10,10,11,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:.3rem .2rem calc(.3rem + env(safe-area-inset-bottom))}
+  #pg-mobnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;color:var(--muted);
+    font-size:.62rem;padding:.35rem 0;border-radius:10px}
+  #pg-mobnav a span{font-size:1.15rem}
+  #pg-mobnav a.on{color:var(--accent)}
+  .has-mobnav{padding-bottom:64px}
+  .has-mobnav #pg-toasts{bottom:74px}
+  .dash{padding:1.4rem 1rem 2rem}
+  .dash h1{font-size:1.4rem}
+  .editor{padding:1rem .9rem 4rem}
+  .editor-head,.editor-foot{flex-direction:column;align-items:stretch}
+  .editor-actions{flex-wrap:wrap}
+  .board{overflow-x:auto}
+}
+
+/* ---- Politur: Toggles, Leerzustände, Mikro-Animation ---- */
+.switch{transition:color .15s}
+.switch input{accent-color:var(--accent)}
+.card{transition:border-color .15s,transform .15s,box-shadow .15s}
+.card:hover{box-shadow:0 12px 30px -16px var(--accent)}
+.dp-bar{transition:height .4s cubic-bezier(.16,1,.3,1)}
+.dash-section{display:flex;align-items:center;gap:.5rem}
+.dp-empty,.dp-item{transition:background .15s}
+.btn-add,.btn-primary,.dr-chip,.kb-vt{transition:all .15s}
+.flabel{transition:color .15s}
+.field:focus-within>.flabel{color:var(--accent)}

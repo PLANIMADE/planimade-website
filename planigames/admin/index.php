@@ -294,6 +294,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
 
   $ok = pg_save_json(pg_lang_file($SCHEMA[$key]['file'], $lang), $data);
   if ($ok) pg_log_activity('Gespeichert', $SCHEMA[$key]['label'] . ' (' . strtoupper($lang) . ')' . ($sentCount ? ' · Newsletter an ' . $sentCount : ''));
+  // Autosave/AJAX: JSON zurückgeben statt Redirect
+  if (isset($_POST['ajax'])) {
+    header('Content-Type: application/json');
+    echo json_encode(['ok' => $ok, 'sent' => $sentCount, 'time' => date('H:i')]);
+    exit;
+  }
   $extra = $sentCount > 0 ? '&sent=' . $sentCount : '';
   header('Location: index.php?collection=' . urlencode($key) . '&lang=' . $lang . ($ok ? '&saved=1' : '&error=1') . $extra);
   exit;
@@ -829,6 +835,7 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
   $assignees = pg_board_assignees();
   $csrf = pg_h(pg_csrf());
   $archiveView = !empty($_GET['archive']);
+  $boardview = ($_GET['boardview'] ?? '') === 'calendar' ? 'calendar' : 'columns';
   $cols = $board['boards'][$bi]['columns'];
 
   // Karten-Renderer (für Board & Archiv)
@@ -960,9 +967,14 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
   echo '</select><button class="btn-primary" name="board_add" value="1" style="margin-top:.5rem">Board anlegen</button></form></div></details>';
   echo '</div>';
 
+  $colOn = $boardview === 'columns' ? ' on' : '';
+  $calOn = $boardview === 'calendar' ? ' on' : '';
   echo '<div class="editor-head" style="max-width:none;margin:.3rem 1.2rem .4rem"><div><h1>🗂️ ' . pg_h($board['boards'][$bi]['name']) . '</h1>'
-     . '<p class="muted">Karten per Anfasser zwischen Spalten ziehen.</p></div>'
-     . '<div class="editor-actions"><a class="btn-add" href="index.php?view=board&board=' . urlencode($curId) . '&archive=1">🗄️ Archiv' . ($archCount ? ' (' . $archCount . ')' : '') . '</a>'
+     . '<p class="muted">' . ($boardview === 'calendar' ? 'Karten nach Fälligkeitsdatum.' : 'Karten per Anfasser zwischen Spalten ziehen.') . '</p></div>'
+     . '<div class="editor-actions">'
+     . '<div class="kb-viewtoggle"><a class="kb-vt' . $colOn . '" href="index.php?view=board&board=' . urlencode($curId) . '">▦ Spalten</a>'
+     . '<a class="kb-vt' . $calOn . '" href="index.php?view=board&board=' . urlencode($curId) . '&boardview=calendar">📅 Kalender</a></div>'
+     . '<a class="btn-add" href="index.php?view=board&board=' . urlencode($curId) . '&archive=1">🗄️ Archiv' . ($archCount ? ' (' . $archCount . ')' : '') . '</a>'
      . '<details class="kb-board-edit"><summary class="btn-add">⚙ Board</summary><div class="kb-board-pop">'
      . '<form method="post"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="board" value="' . pg_h($curId) . '">'
      . '<label class="ml">Board-Name</label><input type="text" name="name" value="' . pg_h($board['boards'][$bi]['name']) . '" required>'
@@ -971,6 +983,68 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
   echo '</select><div style="display:flex;gap:.5rem;margin-top:.5rem"><button class="btn-primary" name="board_rename" value="1">Speichern</button>';
   if (count($board['boards']) > 1) echo '<button class="btn-danger sm" name="board_del" value="1" onclick="return confirm(\'Dieses Board samt Karten löschen?\')">Board löschen</button>';
   echo '</div></form></div></details></div></div>';
+
+  if ($boardview === 'calendar') {
+    // --- Kalender-Ansicht: Karten nach Fälligkeitsdatum ---
+    $ym = preg_match('/^\d{4}-\d{2}$/', (string) ($_GET['ym'] ?? '')) ? $_GET['ym'] : date('Y-m');
+    $first = DateTime::createFromFormat('Y-m-d', $ym . '-01');
+    if (!$first) $first = new DateTime('first day of this month');
+    $first->setTime(0, 0, 0);
+    $prev = (clone $first)->modify('-1 month')->format('Y-m');
+    $next = (clone $first)->modify('+1 month')->format('Y-m');
+    $today = date('Y-m-d');
+    // Karten nach Datum gruppieren
+    $byDate = []; $undated = []; $overdueBefore = [];
+    foreach ($cols as $c) foreach ($c['cards'] as $card) {
+      if (!empty($card['archived'])) continue;
+      $d = $card['due'] ?? '';
+      if ($d === '') { $undated[] = $card; continue; }
+      $byDate[$d][] = $card;
+      if ($d < $today) $overdueBefore[] = $card;
+    }
+    $monthName = pg_de_month((int) $first->format('n')) . ' ' . $first->format('Y');
+    echo '<div class="kb-cal-wrap"><div class="kb-cal-nav">'
+       . '<a class="btn-add" href="index.php?view=board&board=' . urlencode($curId) . '&boardview=calendar&ym=' . $prev . '">←</a>'
+       . '<span class="kb-cal-title">' . pg_h($monthName) . '</span>'
+       . '<a class="btn-add" href="index.php?view=board&board=' . urlencode($curId) . '&boardview=calendar&ym=' . $next . '">→</a>'
+       . '<a class="btn-add" href="index.php?view=board&board=' . urlencode($curId) . '&boardview=calendar" style="margin-left:.5rem">Heute</a></div>';
+    echo '<div class="kb-cal">';
+    foreach (['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'] as $wd) echo '<div class="kb-cal-wd">' . $wd . '</div>';
+    $startDow = ((int) $first->format('N')) - 1; // 0=Mo
+    $daysInMonth = (int) $first->format('t');
+    for ($i = 0; $i < $startDow; $i++) echo '<div class="kb-cal-cell empty"></div>';
+    for ($day = 1; $day <= $daysInMonth; $day++) {
+      $ds = $first->format('Y-m') . '-' . str_pad((string) $day, 2, '0', STR_PAD_LEFT);
+      $isToday = $ds === $today ? ' today' : '';
+      echo '<div class="kb-cal-cell' . $isToday . '"><span class="kb-cal-day">' . $day . '</span>';
+      foreach (($byDate[$ds] ?? []) as $card) {
+        $cc = $card['color'] ?? '';
+        $over = $ds < $today ? ' over' : '';
+        echo '<a class="kb-cal-card' . $over . '" href="index.php?view=board&board=' . urlencode($curId) . '#card-' . pg_h($card['id']) . '"'
+           . ($cc !== '' ? ' style="--cc:' . pg_h($cc) . '"' : '') . '>' . pg_h($card['title'] ?? '') . '</a>';
+      }
+      echo '</div>';
+    }
+    echo '</div>'; // .kb-cal
+    if ($overdueBefore || $undated) {
+      echo '<div class="kb-cal-side">';
+      if ($overdueBefore) {
+        echo '<div class="kb-cal-box"><h3>⚠️ Überfällig (' . count($overdueBefore) . ')</h3>';
+        foreach ($overdueBefore as $card) echo '<a class="kb-cal-card over" href="index.php?view=board&board=' . urlencode($curId) . '">' . pg_h($card['due']) . ' · ' . pg_h($card['title'] ?? '') . '</a>';
+        echo '</div>';
+      }
+      if ($undated) {
+        echo '<div class="kb-cal-box"><h3>Ohne Datum (' . count($undated) . ')</h3>';
+        foreach ($undated as $card) echo '<a class="kb-cal-card" href="index.php?view=board&board=' . urlencode($curId) . '">' . pg_h($card['title'] ?? '') . '</a>';
+        echo '</div>';
+      }
+      echo '</div>';
+    }
+    echo '</div>'; // .kb-cal-wrap
+    echo '</div>'; // .board-wrap
+    pg_view_foot();
+    exit;
+  }
 
   // Label-/Zuständig-Filter
   echo '<div class="kb-filter" data-kb-filter><span class="kb-filter-lbl">Filter:</span>'
@@ -1818,18 +1892,20 @@ if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
   echo '</div>';
   if ($lang === 'en') echo '<div class="editor lang-hint-wrap"><p class="muted lang-hint">Tipp: Leere englische Felder fallen auf der Website automatisch auf Deutsch zurück. Nicht-Textfelder (Bilder, Farben, Links) gelten für beide Sprachen.</p></div>';
 
-  echo '<form method="post" class="editor" id="editor">';
-  echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
-  echo '<input type="hidden" name="collection" value="' . pg_h($key) . '">';
-  echo '<input type="hidden" name="lang" value="' . pg_h($lang) . '">';
   $previewUrl = [
     'studio' => '../index.html', 'team' => '../index.html#team-section',
     'games' => '../games.html', 'patchnotes' => '../devlog.php', 'legal' => '../rechtliches.html',
   ][$key] ?? '../index.html';
+  echo '<form method="post" class="editor" id="editor" data-autosave data-preview="' . pg_h($previewUrl) . '">';
+  echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
+  echo '<input type="hidden" name="collection" value="' . pg_h($key) . '">';
+  echo '<input type="hidden" name="lang" value="' . pg_h($lang) . '">';
   echo '<div class="editor-head"><div><h1>' . pg_h($coll['icon']) . ' ' . pg_h($coll['label'])
      . ' <span class="lang-pill">' . strtoupper($lang) . '</span></h1>'
      . '<p class="muted">Änderungen werden direkt auf dem Server gespeichert.</p></div>'
-     . '<div class="editor-actions"><a class="btn-preview" href="' . pg_h($previewUrl) . '" target="_blank" rel="noopener">↗ Vorschau</a>'
+     . '<div class="editor-actions"><span class="save-status" data-save-status></span>'
+     . '<button type="button" class="btn-add" data-split-toggle title="Live-Vorschau neben dem Editor">⊟ Vorschau</button>'
+     . '<a class="btn-preview" href="' . pg_h($previewUrl) . '" target="_blank" rel="noopener">↗ Tab</a>'
      . '<button class="btn-primary" type="submit" name="save" value="1">Speichern</button></div></div>';
   echo '<div class="fields">';
   echo pg_render_fields($coll['fields'], $data, 'd', $key);
@@ -1844,7 +1920,27 @@ if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
 pg_view_head('Dashboard');
 pg_view_topbar($SCHEMA, null);
 echo '<div class="dash">';
-echo '<h1>Hallo 👋 Was möchtest du bearbeiten?</h1>';
+$me = pg_current_user();
+$firstName = trim((string) ($me['name'] ?? ''));
+if ($firstName !== '') $firstName = ', ' . explode(' ', $firstName)[0];
+echo '<h1>' . pg_h(pg_greeting()) . $firstName . ' 👋</h1>';
+
+// Zuletzt bearbeitet (nach Datei-Änderungszeit)
+$recent = [];
+foreach ($SCHEMA as $rk => $rc) {
+  if (!pg_can($rk) || empty($rc['file']) || !is_file($rc['file'])) continue;
+  $recent[] = ['key' => $rk, 'icon' => $rc['icon'], 'label' => $rc['label'], 'mt' => filemtime($rc['file'])];
+}
+usort($recent, fn($a, $b) => $b['mt'] - $a['mt']);
+$recent = array_slice($recent, 0, 4);
+if ($recent) {
+  echo '<div class="dash-recent"><span class="dr-lbl">Zuletzt bearbeitet:</span>';
+  foreach ($recent as $r) {
+    echo '<a class="dr-chip" href="index.php?collection=' . pg_h($r['key']) . '">' . $r['icon'] . ' ' . pg_h($r['label'])
+       . '<span class="dr-ago">' . pg_h(pg_time_ago($r['mt'])) . '</span></a>';
+  }
+  echo '</div>';
+}
 
 // Globale Suche
 echo '<form method="get" class="searchbar dash-search"><input type="hidden" name="view" value="search">'
@@ -1909,6 +2005,34 @@ if ($spark) {
   $sb .= '<div class="dp-empty">Noch keine Aufrufe erfasst.</div>';
 }
 $ov .= '<section class="dash-panel">' . $sh . $sb . '</section>';
+
+// Newsletter-Wachstum (Sparkline der letzten 14 Tage)
+if (pg_can('subscribers')) {
+  $subs = pg_load_json(PG_DATA_DIR . '/subscribers.json');
+  $subTotal = is_array($subs) ? count($subs) : 0;
+  $subDays = [];
+  for ($i = 13; $i >= 0; $i--) $subDays[date('Y-m-d', strtotime("-$i day"))] = 0;
+  $sub7 = 0;
+  foreach ((array) $subs as $r) {
+    $d = substr((string) ($r['date'] ?? ''), 0, 10);
+    if ($d !== '' && isset($subDays[$d])) $subDays[$d]++;
+    if ($d !== '' && $d >= date('Y-m-d', strtotime('-6 day'))) $sub7++;
+  }
+  $subMax = $subDays ? max(max($subDays), 1) : 1;
+  $nh = '<div class="dp-head"><span class="dp-title">📬 Newsletter</span>'
+      . '<a class="dp-more" href="index.php?view=subscribers">Abos →</a></div>';
+  $nb = '<div class="dp-stats">'
+      . '<div class="dp-stat"><span class="dp-num">' . $subTotal . '</span><span class="dp-lbl">Gesamt</span></div>'
+      . '<div class="dp-stat"><span class="dp-num">+' . $sub7 . '</span><span class="dp-lbl">7 Tage</span></div></div>';
+  if (array_sum($subDays) > 0) {
+    $nb .= '<div class="dp-spark" title="Neue Abos der letzten 14 Tage">';
+    foreach ($subDays as $d => $n) $nb .= '<span class="dp-bar" title="' . pg_h($d) . ': ' . (int) $n . '" style="height:' . max(6, round($n / $subMax * 100)) . '%"></span>';
+    $nb .= '</div>';
+  } else {
+    $nb .= '<div class="dp-empty">Noch keine Anmeldungen in den letzten 14 Tagen.</div>';
+  }
+  $ov .= '<section class="dash-panel">' . $nh . $nb . '</section>';
+}
 echo '<div class="dash-grid">' . $ov . '</div>';
 
 // kleine Helfer-Funktion: eine Karte ausgeben

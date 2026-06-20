@@ -755,6 +755,118 @@
     });
   }
 
+  // ---- Toast-Meldungen ----
+  function toast(msg, type = "ok", ms = 2800) {
+    let box = document.getElementById("pg-toasts");
+    if (!box) { box = document.createElement("div"); box.id = "pg-toasts"; document.body.appendChild(box); }
+    const t = document.createElement("div");
+    t.className = "pg-toast " + type;
+    t.innerHTML = `<span class="pgt-ico">${type === "err" ? "⚠️" : type === "info" ? "ℹ️" : "✓"}</span><span>${String(msg)}</span>`;
+    box.appendChild(t);
+    requestAnimationFrame(() => t.classList.add("show"));
+    setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 350); }, ms);
+  }
+  window.pgToast = toast;
+  // Flash-Meldungen (?saved=1 etc.) als Toast zeigen und die Box ausblenden
+  document.querySelectorAll(".flash").forEach((f) => {
+    toast(f.textContent.replace(/^[✓📣🌐]\s*/, "").trim(), f.classList.contains("err") ? "err" : "ok", 4000);
+  });
+
+  // ---- Autosave + Schutz vor ungespeicherten Änderungen ----
+  (function autosave() {
+    const form = document.querySelector('form#editor[data-autosave]');
+    if (!form) return;
+    const statusEl = form.querySelector("[data-save-status]");
+    let dirty = false, saving = false, timer = null;
+    let autoOn = true;
+    try { autoOn = localStorage.getItem("pg_autosave") !== "0"; } catch {}
+
+    // Autosave-Schalter in die Aktionsleiste
+    const actions = form.querySelector(".editor-actions");
+    if (actions) {
+      const lab = document.createElement("label");
+      lab.className = "autosave-toggle";
+      lab.title = "Automatisch speichern, während du tippst";
+      lab.innerHTML = `<input type="checkbox" ${autoOn ? "checked" : ""}> Autosave`;
+      lab.querySelector("input").addEventListener("change", (e) => {
+        autoOn = e.target.checked;
+        try { localStorage.setItem("pg_autosave", autoOn ? "1" : "0"); } catch {}
+        if (autoOn && dirty) schedule();
+      });
+      actions.insertBefore(lab, actions.firstChild);
+    }
+    const setStatus = (txt, cls) => { if (statusEl) { statusEl.textContent = txt; statusEl.className = "save-status " + (cls || ""); } };
+
+    const markDirty = () => { dirty = true; setStatus("● Nicht gespeichert", "dirty"); if (autoOn) schedule(); };
+    form.addEventListener("input", markDirty);
+    form.addEventListener("change", markDirty);
+    function schedule() { clearTimeout(timer); timer = setTimeout(save, 2600); }
+
+    async function save() {
+      if (saving || !dirty) return;
+      saving = true; setStatus("Speichert …", "saving");
+      const fd = new FormData(form);
+      fd.append("save", "1"); fd.append("ajax", "1");
+      try {
+        const r = await fetch("index.php", { method: "POST", body: fd, headers: { "X-Requested-With": "fetch" } });
+        const j = await r.json();
+        if (j.ok) {
+          dirty = false; setStatus("Gespeichert ✓", "ok"); toast("Automatisch gespeichert", "ok", 1800);
+          if (j.sent) toast("📣 Newsletter an " + j.sent + " gesendet", "info", 4000);
+          reloadPreview();
+        } else { setStatus("Fehler", "err"); toast("Speichern fehlgeschlagen", "err"); }
+      } catch (e) { setStatus("Offline", "err"); }
+      saving = false;
+    }
+    // Manuelles Speichern: normal absenden, aber dirty zurücksetzen (kein Warn-Dialog)
+    form.addEventListener("submit", () => { dirty = false; });
+    addEventListener("beforeunload", (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+    // ---- Live-Vorschau-Splitview (ein/ausschaltbar) ----
+    const splitBtn = form.querySelector("[data-split-toggle]");
+    const previewUrl = form.getAttribute("data-preview") || "../index.html";
+    let frame = null;
+    function reloadPreview() { if (frame) frame.src = previewUrl + (previewUrl.includes("?") ? "&" : "?") + "_t=" + Date.now(); }
+    function openSplit() {
+      document.body.classList.add("split-on");
+      if (!frame) {
+        const pane = document.createElement("div");
+        pane.className = "split-preview";
+        pane.innerHTML = `<div class="sp-bar"><span>👁 Live-Vorschau</span><a href="${previewUrl}" target="_blank" rel="noopener">↗ Tab</a><button type="button" data-split-close aria-label="Vorschau schließen">✕</button></div><iframe title="Vorschau"></iframe>`;
+        document.body.appendChild(pane);
+        frame = pane.querySelector("iframe");
+        pane.querySelector("[data-split-close]").addEventListener("click", closeSplit);
+        reloadPreview();
+      }
+      try { localStorage.setItem("pg_split", "1"); } catch {}
+    }
+    function closeSplit() { document.body.classList.remove("split-on"); try { localStorage.setItem("pg_split", "0"); } catch {} }
+    if (splitBtn) splitBtn.addEventListener("click", () => document.body.classList.contains("split-on") ? closeSplit() : openSplit());
+    try { if (localStorage.getItem("pg_split") === "1" && innerWidth > 900) openSplit(); } catch {}
+  })();
+
+  // ---- Mobiles Admin: untere Tab-Leiste ----
+  (function mobileNav() {
+    if (document.getElementById("pg-mobnav")) return;
+    if (!document.querySelector(".topbar")) return;   // nur im eingeloggten Bereich
+    const items = [
+      ["index.php", "🏠", "Start"],
+      ["index.php?collection=studio", "★", "Studio"],
+      ["index.php?view=board", "🗂️", "Board"],
+      ["index.php?view=contacts", "✉️", "Postfach"],
+      ["index.php?view=search", "🔎", "Suche"],
+    ];
+    const here = location.search;
+    const nav = document.createElement("nav");
+    nav.id = "pg-mobnav";
+    nav.innerHTML = items.map(([href, ico, lbl]) => {
+      const on = (href === "index.php" && here === "") || (href.includes("?") && here.includes(href.split("?")[1])) ? " on" : "";
+      return `<a href="${href}" class="${on.trim()}"><span>${ico}</span>${lbl}</a>`;
+    }).join("");
+    document.body.appendChild(nav);
+    document.body.classList.add("has-mobnav");
+  })();
+
   // ---- Tastatur-Shortcuts ----
   function primarySaveButton() {
     return document.querySelector('#editor button[name="save"], button[name="save"], form .btn-primary[type="submit"], form button.btn-primary');
