@@ -199,6 +199,53 @@
     } catch { ov.querySelector("[data-pick-grid]").innerHTML = '<p class="up-err" style="padding:1rem">Konnte Liste nicht laden.</p>'; }
   }
 
+  // ---- Bild-Fokuspunkt (Bildausschnitt für Cover) ----
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-media-focus]");
+    if (!btn) return;
+    const input = btn.closest("[data-media]")?.querySelector("[data-media-input]");
+    if (!input || !input.value.trim()) { alert("Bitte zuerst ein Bild hochladen oder auswählen."); return; }
+    openFocusPicker(input);
+  });
+  function parseFocus(val) {
+    const m = String(val || "").match(/#focus=(\d+),(\d+)/);
+    return m ? { x: +m[1], y: +m[2] } : { x: 50, y: 50 };
+  }
+  function openFocusPicker(input) {
+    const src = input.value.split("#")[0];
+    let { x, y } = parseFocus(input.value);
+    const ov = document.createElement("div");
+    ov.id = "media-picker";
+    ov.innerHTML = `<div class="mp-box" style="max-width:560px"><div class="mp-head"><span>Fokuspunkt setzen</span>
+        <button type="button" class="kb-modal-x" data-focus-close aria-label="Schließen">✕</button></div>
+      <div style="padding:1rem">
+        <p class="muted" style="margin:0 0 .7rem;font-size:.85rem">Klicke auf den wichtigsten Bildbereich – er bleibt beim Zuschneiden (z. B. als Cover) immer sichtbar.</p>
+        <div class="focus-stage" data-focus-stage><img src="${src}" alt="" draggable="false"><span class="focus-dot" data-focus-dot></span></div>
+        <div class="kb-cardform-foot" style="margin-top:1rem"><button type="button" class="btn-primary" data-focus-save>Übernehmen</button>
+          <button type="button" class="btn-add" data-focus-reset>Mittig</button></div>
+      </div></div>`;
+    document.body.appendChild(ov);
+    const stage = ov.querySelector("[data-focus-stage]");
+    const dot = ov.querySelector("[data-focus-dot]");
+    const place = () => { dot.style.left = x + "%"; dot.style.top = y + "%"; };
+    place();
+    const setFromEvent = (ev) => {
+      const r = stage.getBoundingClientRect();
+      x = Math.round(Math.min(100, Math.max(0, ((ev.clientX - r.left) / r.width) * 100)));
+      y = Math.round(Math.min(100, Math.max(0, ((ev.clientY - r.top) / r.height) * 100)));
+      place();
+    };
+    stage.addEventListener("click", setFromEvent);
+    ov.querySelector("[data-focus-reset]").addEventListener("click", () => { x = 50; y = 50; place(); });
+    ov.querySelector("[data-focus-save]").addEventListener("click", () => {
+      input.value = src + (x === 50 && y === 50 ? "" : `#focus=${x},${y}`);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      ov.remove();
+    });
+    const close = (ev) => { if (ev.target === ov || ev.target.closest("[data-focus-close]")) ov.remove(); };
+    ov.addEventListener("click", close);
+  }
+
   // ---- Markdown-Editor: Toolbar + Live-Vorschau ----
   function enhanceMarkdown(ta) {
     if (ta.dataset.mdReady) return;

@@ -19,6 +19,11 @@
     ));
     const slugify = (s = "") => String(s).toLowerCase().trim()
         .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    // Fokuspunkt aus dem Pfad-Fragment (#focus=x,y) → object-position-Wert
+    const focusPos = (path) => {
+        const m = String(path || "").match(/#focus=(\d+),(\d+)/);
+        return m ? `${m[1]}% ${m[2]}%` : "center";
+    };
 
     async function fetchJSON(path) {
         try {
@@ -690,7 +695,7 @@
         wrap.innerHTML = `
             <div class="relative grid lg:grid-cols-2 gap-10 items-center rounded-3xl border border-white/10 overflow-hidden bg-gradient-to-br from-white/[0.04] to-transparent p-2 md:p-3">
                 <a href="game.php?slug=${esc(g.slug)}" class="block relative aspect-[16/10] rounded-2xl overflow-hidden group">
-                    ${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.coverAlt || g.title)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">`
+                    ${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.coverAlt || g.title)}" style="object-position:${focusPos(g.cover)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">`
                               : `<div class="w-full h-full grid-lines bg-white/[0.03]"></div>`}
                     <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent"></div>
                 </a>
@@ -714,7 +719,7 @@
         <a href="game.php?slug=${esc(g.slug)}" class="reveal tilt-card group relative block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]" style="--accent:${esc(g.accent || "#8b5cf6")}">
             <div class="card-glow"></div><div class="card-shine"></div>
             <div class="relative aspect-[16/10] overflow-hidden">
-                ${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.coverAlt || g.title)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">`
+                ${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.coverAlt || g.title)}" style="object-position:${focusPos(g.cover)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">`
                           : `<div class="w-full h-full grid-lines bg-white/[0.03]"></div>`}
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
                 <div class="absolute top-3 left-3">${statusBadge(g.status)}</div>
@@ -852,7 +857,7 @@
         const ls = logoScale(g);
         const media = b.video
             ? `<video class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline ${b.poster ? `poster="${esc(b.poster)}"` : ""}><source src="${esc(b.video)}"></video>`
-            : (bg ? `<img src="${esc(bg)}" alt="" class="absolute inset-0 w-full h-full object-cover">`
+            : (bg ? `<img src="${esc(bg)}" alt="" style="object-position:${focusPos(bg)}" class="absolute inset-0 w-full h-full object-cover">`
                   : `<div class="absolute inset-0 grid-lines"></div>`);
         return `
         <section class="relative min-h-[88vh] flex items-end overflow-hidden">
@@ -1267,7 +1272,7 @@
                 <div class="card-glow"></div>
                 <div class="grid md:grid-cols-[260px_1fr]">
                     <div class="relative aspect-video md:aspect-auto overflow-hidden">
-                        ${p.cover ? `<img src="${esc(p.cover)}" alt="${esc(p.coverAlt || p.title || "")}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">`
+                        ${p.cover ? `<img src="${esc(p.cover)}" alt="${esc(p.coverAlt || p.title || "")}" style="object-position:${focusPos(p.cover)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">`
                                   : `<div class="w-full h-full grid-lines bg-white/[0.03] min-h-[160px]"></div>`}
                     </div>
                     <div class="p-7">
@@ -1460,7 +1465,7 @@
 
         const gameCards = games.map(g => `
             <div class="rounded-2xl border border-white/10 overflow-hidden bg-white/[0.02]">
-                <div class="aspect-[16/9] overflow-hidden">${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.coverAlt || g.title)}" class="w-full h-full object-cover">` : `<div class="w-full h-full grid-lines"></div>`}</div>
+                <div class="aspect-[16/9] overflow-hidden">${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.coverAlt || g.title)}" style="object-position:${focusPos(g.cover)}" class="w-full h-full object-cover">` : `<div class="w-full h-full grid-lines"></div>`}</div>
                 <div class="p-5">
                     <div class="flex items-center gap-2 mb-2">${statusBadge(g.status)}</div>
                     <h3 class="font-display text-xl font-bold text-white">${esc(g.title)}</h3>

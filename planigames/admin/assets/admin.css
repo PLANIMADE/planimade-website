@@ -352,6 +352,10 @@ button{font:inherit;cursor:pointer}
 .mp-tile img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:7px;background:#000}
 .mp-file{display:flex;align-items:center;justify-content:center;aspect-ratio:1;font-size:1.8rem}
 .mp-name{font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Fokuspunkt-Picker */
+.focus-stage{position:relative;border-radius:12px;overflow:hidden;cursor:crosshair;border:1px solid var(--line);max-height:60vh}
+.focus-stage img{display:block;width:100%;max-height:60vh;object-fit:contain;background:#000;user-select:none}
+.focus-dot{position:absolute;width:26px;height:26px;border:3px solid #fff;background:rgba(255,125,26,.5);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 12px rgba(0,0,0,.6);pointer-events:none}
 .up-err{color:#ff8585}
 
 /* ---- Listen & Blöcke ---- */
