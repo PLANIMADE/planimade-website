@@ -199,6 +199,71 @@
     } catch { ov.querySelector("[data-pick-grid]").innerHTML = '<p class="up-err" style="padding:1rem">Konnte Liste nicht laden.</p>'; }
   }
 
+  // ---- Markdown-Editor: Toolbar + Live-Vorschau ----
+  function enhanceMarkdown(ta) {
+    if (ta.dataset.mdReady) return;
+    ta.dataset.mdReady = "1";
+    const wrap = document.createElement("div");
+    wrap.className = "md-wrap";
+    ta.parentNode.insertBefore(wrap, ta);
+    const bar = document.createElement("div");
+    bar.className = "md-bar";
+    const tools = [
+      ["B", "Fett", () => surround("**", "**")],
+      ["I", "Kursiv", () => surround("*", "*")],
+      ["H", "Überschrift", () => linePrefix("## ")],
+      ["•", "Liste", () => linePrefix("- ")],
+      ["❝", "Zitat", () => linePrefix("> ")],
+      ["🔗", "Link", () => surround("[", "](https://)")],
+      ["🖼️", "Bild", () => insert("![Beschreibung](/media/…)")],
+    ];
+    tools.forEach(([label, title, fn]) => {
+      const btn = document.createElement("button");
+      btn.type = "button"; btn.className = "md-btn"; btn.textContent = label; btn.title = title;
+      btn.addEventListener("click", (e) => { e.preventDefault(); fn(); ta.dispatchEvent(new Event("input", { bubbles: true })); });
+      bar.appendChild(btn);
+    });
+    const pvBtn = document.createElement("button");
+    pvBtn.type = "button"; pvBtn.className = "md-btn md-pv"; pvBtn.textContent = "👁 Vorschau"; pvBtn.title = "Vorschau umschalten";
+    bar.appendChild(pvBtn);
+    const prev = document.createElement("div");
+    prev.className = "md-preview prose-pg";
+    prev.hidden = true;
+    wrap.appendChild(bar); wrap.appendChild(ta); wrap.appendChild(prev);
+    const renderPv = () => { if (window.marked) prev.innerHTML = window.marked.parse(ta.value || ""); };
+    pvBtn.addEventListener("click", () => {
+      const show = prev.hidden;
+      prev.hidden = !show; ta.style.display = show ? "none" : "";
+      pvBtn.classList.toggle("on", show);
+      if (show) renderPv();
+    });
+    ta.addEventListener("input", () => { if (!prev.hidden) renderPv(); });
+
+    function insert(text) {
+      const s = ta.selectionStart, e = ta.selectionEnd;
+      ta.value = ta.value.slice(0, s) + text + ta.value.slice(e);
+      ta.focus(); ta.selectionStart = ta.selectionEnd = s + text.length;
+    }
+    function surround(before, after) {
+      const s = ta.selectionStart, e = ta.selectionEnd, sel = ta.value.slice(s, e);
+      ta.value = ta.value.slice(0, s) + before + sel + after + ta.value.slice(e);
+      ta.focus(); ta.selectionStart = s + before.length; ta.selectionEnd = e + before.length;
+    }
+    function linePrefix(pfx) {
+      const s = ta.selectionStart;
+      let ls = ta.value.lastIndexOf("\n", s - 1) + 1;
+      ta.value = ta.value.slice(0, ls) + pfx + ta.value.slice(ls);
+      ta.focus(); ta.selectionStart = ta.selectionEnd = s + pfx.length;
+    }
+  }
+  document.querySelectorAll("textarea.md").forEach(enhanceMarkdown);
+  // neu hinzugefügte/duplizierte Blöcke ebenfalls aufwerten
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("[data-add],[data-add-block],[data-dup]")) {
+      setTimeout(() => document.querySelectorAll("textarea.md").forEach(enhanceMarkdown), 80);
+    }
+  });
+
   // ---- Datei-Upload ----
   document.addEventListener("change", async (e) => {
     const fileInput = e.target.closest("[data-media-file]");
