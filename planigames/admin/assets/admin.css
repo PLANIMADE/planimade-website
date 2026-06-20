@@ -513,6 +513,19 @@ body.is-dragging .item-body{pointer-events:none}
 .stat-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.3rem 1.4rem;display:flex;flex-direction:column;gap:.2rem}
 .stat-num{font-size:2rem;font-weight:800;color:var(--accent)}
 .stat-lbl{color:var(--muted);font-size:.85rem}
+/* Key-Verteilung */
+.key-add{display:flex;flex-direction:column;gap:.6rem;max-width:560px}
+.key-add input,.key-add textarea{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:.6rem .8rem;font-family:inherit;font-size:.92rem}
+.key-add textarea{font-family:ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+.key-add button{align-self:flex-start}
+.keycode{cursor:pointer;font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:.15rem .45rem;font-size:.82rem}
+.keycode:hover{border-color:var(--accent);color:var(--accent)}
+.key-edit>summary{cursor:pointer;list-style:none}
+.key-edit>summary::-webkit-details-marker{display:none}
+.key-edit[open]{position:relative}
+.key-form{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:.6rem;min-width:280px}
+.key-form input{flex:1;min-width:120px;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:.4rem .6rem;font-size:.85rem}
+
 /* SEO-Assistent */
 .seo-score{display:flex;align-items:center;gap:1.2rem;margin:1rem 0 1.6rem}
 .seo-ring{--p:0;--c:var(--accent);width:84px;height:84px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;

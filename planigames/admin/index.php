@@ -535,6 +535,103 @@ if (($_GET['view'] ?? '') === 'comments' || isset($_POST['approve_comment']) || 
   exit;
 }
 
+/* ---- Key-Verteilung (Presse/Streamer) ---- */
+if ($action === 'keys_export') {
+  if (!pg_is_owner()) { http_response_code(403); exit('Keine Berechtigung.'); }
+  header('Content-Type: text/csv; charset=utf-8');
+  header('Content-Disposition: attachment; filename="planigames-keys-' . date('Y-m-d') . '.csv"');
+  $out = fopen('php://output', 'w'); fwrite($out, "\xEF\xBB\xBF");
+  fputcsv($out, ['Key', 'Plattform', 'Status', 'Empfänger', 'E-Mail', 'Notiz', 'Datum']);
+  foreach (pg_keys_load() as $k) fputcsv($out, [$k['key'] ?? '', $k['platform'] ?? '', $k['status'] ?? '', $k['recipient'] ?? '', $k['email'] ?? '', $k['note'] ?? '', substr($k['date'] ?? '', 0, 10)]);
+  fclose($out); exit;
+}
+$pg_keys_posts = ['keys_add', 'key_assign', 'key_redeem', 'key_reset', 'key_del'];
+if (($_GET['view'] ?? '') === 'keys' || array_intersect($pg_keys_posts, array_keys($_POST))) {
+  if (!pg_is_owner()) { header('Location: index.php'); exit; }
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    pg_csrf_check();
+    $keys = pg_keys_load();
+    $id = (string) ($_POST['id'] ?? '');
+    if (isset($_POST['keys_add'])) {
+      $platform = trim((string) ($_POST['platform'] ?? '')) ?: 'Steam';
+      $added = 0;
+      foreach (preg_split('/\r?\n/', (string) ($_POST['bulk'] ?? '')) as $line) {
+        $code = trim($line); if ($code === '') continue;
+        $keys[] = ['id' => bin2hex(random_bytes(5)), 'key' => mb_substr($code, 0, 80), 'platform' => $platform,
+          'status' => 'available', 'recipient' => '', 'email' => '', 'note' => '', 'date' => date('c')];
+        $added++;
+      }
+      if ($added) { pg_keys_save($keys); pg_log_activity('Keys hinzugefügt', $added . '× ' . $platform); }
+    } elseif (isset($_POST['key_assign'])) {
+      foreach ($keys as &$k) if (($k['id'] ?? '') === $id) {
+        $k['recipient'] = trim((string) ($_POST['recipient'] ?? '')); $k['email'] = trim((string) ($_POST['email'] ?? '')); $k['note'] = trim((string) ($_POST['note'] ?? ''));
+        $k['status'] = $k['recipient'] !== '' ? 'assigned' : 'available';
+      }
+      unset($k); pg_keys_save($keys);
+    } elseif (isset($_POST['key_redeem'])) {
+      foreach ($keys as &$k) if (($k['id'] ?? '') === $id) $k['status'] = 'redeemed'; unset($k); pg_keys_save($keys);
+    } elseif (isset($_POST['key_reset'])) {
+      foreach ($keys as &$k) if (($k['id'] ?? '') === $id) { $k['status'] = 'available'; $k['recipient'] = ''; $k['email'] = ''; } unset($k); pg_keys_save($keys);
+    } elseif (isset($_POST['key_del'])) {
+      $keys = array_values(array_filter($keys, fn($k) => ($k['id'] ?? '') !== $id)); pg_keys_save($keys);
+    }
+    header('Location: index.php?view=keys' . (isset($_GET['filter']) ? '&filter=' . urlencode($_GET['filter']) : '')); exit;
+  }
+  $keys = pg_keys_load();
+  $st = pg_keys_stats();
+  $filter = (string) ($_GET['filter'] ?? '');
+  $stLabels = ['available' => 'Verfügbar', 'assigned' => 'Vergeben', 'redeemed' => 'Eingelöst'];
+  pg_view_head('Key-Verteilung');
+  pg_view_topbar($SCHEMA, null);
+  $csrf = pg_h(pg_csrf());
+  echo '<div class="editor wide">';
+  echo '<div class="editor-head"><div><h1>🔑 Key-Verteilung</h1><p class="muted">Steam-/itch-Keys an Presse &amp; Streamer vergeben und die Einlösung verfolgen.</p></div>'
+     . ($keys ? '<a class="btn-add" href="index.php?action=keys_export">⬇ CSV</a>' : '') . '</div>';
+  echo '<div class="stat-cards">';
+  echo '<div class="stat-card"><span class="stat-num">' . $st['available'] . '</span><span class="stat-lbl">Verfügbar</span></div>';
+  echo '<div class="stat-card"><span class="stat-num">' . $st['assigned'] . '</span><span class="stat-lbl">Vergeben</span></div>';
+  echo '<div class="stat-card"><span class="stat-num">' . $st['redeemed'] . '</span><span class="stat-lbl">Eingelöst</span></div>';
+  echo '</div>';
+  // Keys hinzufügen
+  echo '<h2 class="sub-h">Keys hinzufügen</h2>';
+  echo '<form method="post" class="key-add"><input type="hidden" name="csrf" value="' . $csrf . '">';
+  echo '<input type="text" name="platform" placeholder="Plattform (z. B. Steam)" value="Steam">';
+  echo '<textarea name="bulk" rows="3" placeholder="Ein Key pro Zeile …" required></textarea>';
+  echo '<button class="btn-primary" name="keys_add" value="1">＋ Hinzufügen</button></form>';
+  if ($keys) {
+    // Filter
+    echo '<div class="cfilter" style="margin-top:1.4rem"><span class="kb-filter-lbl">Filter:</span>';
+    $tabs = ['' => 'Alle (' . $st['total'] . ')'] + ['available' => 'Verfügbar (' . $st['available'] . ')', 'assigned' => 'Vergeben (' . $st['assigned'] . ')', 'redeemed' => 'Eingelöst (' . $st['redeemed'] . ')'];
+    foreach ($tabs as $k => $lbl) echo '<a class="cfilter-tab' . ($k === $filter ? ' on' : '') . '" href="index.php?view=keys' . ($k ? '&filter=' . $k : '') . '">' . pg_h($lbl) . '</a>';
+    echo '</div>';
+    echo '<table class="subs"><thead><tr><th>Key</th><th>Plattform</th><th>Status</th><th>Empfänger</th><th></th></tr></thead><tbody>';
+    foreach (array_reverse($keys) as $k) {
+      $kst = $k['status'] ?? 'available';
+      if ($filter !== '' && $kst !== $filter) continue;
+      $badge = '<span class="cstatus st-' . ($kst === 'redeemed' ? 'erledigt' : ($kst === 'assigned' ? 'beantwortet' : 'offen')) . '">' . $stLabels[$kst] . '</span>';
+      echo '<tr><td><code class="keycode" data-copy="' . pg_h($k['key']) . '" title="Kopieren">' . pg_h($k['key']) . '</code></td>'
+         . '<td>' . pg_h($k['platform'] ?? '') . '</td><td>' . $badge . '</td>'
+         . '<td><details class="key-edit"><summary>' . ($k['recipient'] !== '' ? pg_h($k['recipient']) : '<span class="muted">— zuweisen —</span>') . '</summary>'
+         . '<form method="post" class="key-form"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($k['id']) . '">'
+         . '<input type="text" name="recipient" value="' . pg_h($k['recipient'] ?? '') . '" placeholder="Name / Outlet">'
+         . '<input type="text" name="email" value="' . pg_h($k['email'] ?? '') . '" placeholder="E-Mail (optional)">'
+         . '<input type="text" name="note" value="' . pg_h($k['note'] ?? '') . '" placeholder="Notiz">'
+         . '<button class="btn-primary" name="key_assign" value="1">Speichern</button></form></details></td>'
+         . '<td style="white-space:nowrap">'
+         . ($kst !== 'redeemed' ? '<form method="post" style="display:inline"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($k['id']) . '"><button class="btn-add" name="key_redeem" value="1" title="Als eingelöst markieren">✓</button></form> ' : '')
+         . ($kst !== 'available' ? '<form method="post" style="display:inline"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($k['id']) . '"><button class="btn-add" name="key_reset" value="1" title="Zurücksetzen">↺</button></form> ' : '')
+         . '<form method="post" style="display:inline" onsubmit="return confirm(\'Key löschen?\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($k['id']) . '"><button class="btn-danger sm" name="key_del" value="1">✕</button></form>'
+         . '</td></tr>';
+    }
+    echo '</tbody></table>';
+  } else {
+    echo '<div class="mailnote" style="margin-top:1.2rem">Noch keine Keys. Füge oben welche hinzu (einen pro Zeile).</div>';
+  }
+  echo '</div>';
+  pg_view_foot();
+  exit;
+}
+
 /* ---- Vorschlagsbox: Moderation ---- */
 if (($_GET['view'] ?? '') === 'suggestions' || isset($_POST['approve_sugg']) || isset($_POST['del_sugg']) || isset($_POST['sugg_status'])) {
   if (!pg_can('contacts')) { header('Location: index.php'); exit; }

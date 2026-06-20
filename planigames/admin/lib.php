@@ -124,6 +124,17 @@ function pg_suggestions_pending(){
   $n = 0; foreach ($c as $x) if (is_array($x) && empty($x['approved'])) $n++;
   return $n;
 }
+
+/* ---------------- Key-Verteilung (Presse/Streamer-Keys) ---------------- */
+const PG_KEYS_FILE = __DIR__ . '/../data/keys.json';
+function pg_keys_load(){ $k = pg_load_json(PG_KEYS_FILE); return is_array($k) ? $k : []; }
+function pg_keys_save($k){ return pg_save_json(PG_KEYS_FILE, array_values($k)); }
+function pg_keys_stats(){
+  $s = ['available' => 0, 'assigned' => 0, 'redeemed' => 0, 'total' => 0];
+  foreach (pg_keys_load() as $k) { $st = $k['status'] ?? 'available'; if (isset($s[$st])) $s[$st]++; $s['total']++; }
+  return $s;
+}
+
 // Sammelt alle Zähler; $total = handlungsrelevante (Mail + Kontakt + Kommentare)
 function pg_notifications(){
   $mail     = pg_can('mail') ? pg_mail_unread_cached() : 0;
@@ -917,11 +928,11 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=37"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=38"></head><body>';
 }
 function pg_view_foot(){
   echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
-  echo '<script src="assets/admin.js?v=37"></script></body></html>';
+  echo '<script src="assets/admin.js?v=38"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -965,6 +976,7 @@ function pg_view_topbar($SCHEMA, $active){
   $system[] = ['index.php?view=trash', '🗑️ Papierkorb', count(pg_trash_load())];
   $system[] = ['index.php?view=account', '🔒 Konto & 2FA', 0];
   if (pg_is_owner()) {
+    $system[] = ['index.php?view=keys', '🔑 Key-Verteilung', 0];
     $system[] = ['index.php?view=users', '🔑 Zugänge & Rollen', 0];
     $system[] = ['index.php?view=activity', '📋 Protokoll', 0];
     $system[] = ['index.php?view=backup', '💾 Backup', 0];
