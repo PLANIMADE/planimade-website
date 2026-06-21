@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "31";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "32";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
@@ -2100,30 +2100,37 @@
         });
 
         // ---- 2) Blick folgt der Maus (Neigung – funktioniert mit Emoji & PNG) ----
-        if (m.follow !== false && !reduce && matchMedia("(pointer: fine)").matches) {
-            addEventListener("pointermove", (e) => {
+        // KEIN (pointer:fine)-Gate mehr: das blockierte das Tracking auf Touch-fähigen
+        // Desktops/Laptops. Auf echten Touch-Geräten feuert pointermove eh nicht laufend.
+        if (m.follow !== false && !reduce) {
+            const onTilt = (e) => {
                 if (dragging) return;
                 const r = el.getBoundingClientRect();
                 const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-                const ang = Math.atan2(e.clientY - cy, e.clientX - cx);
                 const tilt = Math.max(-14, Math.min(14, (e.clientX - cx) / 22));
                 const lift = e.clientY < cy ? Math.max(-4, (e.clientY - cy) / 60) : 0;
                 faceEl.style.transform = `rotate(${tilt}deg) translateY(${lift}px)`;
-            }, { passive: true });
+            };
+            addEventListener("pointermove", onTilt, { passive: true });
+            addEventListener("mousemove", onTilt, { passive: true });
         }
 
         // ---- Wackelaugen: Pupillen folgen dem Cursor ----
-        if (eyesOn && matchMedia("(pointer: fine)").matches && !reduce) {
+        if (eyesOn && !reduce) {
             const eyeEls = [...el.querySelectorAll(".pg-eye")];
-            addEventListener("pointermove", (e) => {
+            const onEyes = (e) => {
                 eyeEls.forEach(eye => {
                     const r = eye.getBoundingClientRect();
+                    if (!r.width) return;
                     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
                     const a = Math.atan2(e.clientY - cy, e.clientX - cx);
-                    const reach = r.width * 0.28;
-                    eye.firstElementChild.style.transform = `translate(${Math.cos(a) * reach}px, ${Math.sin(a) * reach}px)`;
+                    const reach = r.width * 0.30;
+                    const pupil = eye.firstElementChild;
+                    if (pupil) pupil.style.transform = `translate(${Math.cos(a) * reach}px, ${Math.sin(a) * reach}px)`;
                 });
-            }, { passive: true });
+            };
+            addEventListener("pointermove", onEyes, { passive: true });
+            addEventListener("mousemove", onEyes, { passive: true });
         }
 
         // ---- 3) Einschlafen bei Inaktivität ----
