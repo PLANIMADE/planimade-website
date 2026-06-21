@@ -457,8 +457,10 @@ if (($_GET['view'] ?? '') === 'subscribers') {
 }
 
 /* ---- Beta-Warteliste / Vorschläge: Bereich-Helfer ---- */
-/* Bereich (scope) → Anzeigename: Spieltitel oder „Startseite". */
+/* Bereich (scope) → Anzeigename: Spieltitel oder „Startseite". (einmal pro Request gecacht) */
 function pg_scope_labels(){
+  static $map = null;
+  if ($map !== null) return $map;
   $map = ['' => '🏠 Startseite'];
   $g = pg_load_json(PG_DATA_DIR . '/games.json');
   foreach (($g['games'] ?? []) as $game) {
@@ -2193,11 +2195,10 @@ if ($i18n) {
     $note = $r['missing'] === 0
       ? '<span class="i18n-ok">✓ vollständig</span>'
       : '<span class="i18n-gap">' . $r['missing'] . ' offen</span>';
-    $tb .= '<a class="i18n-row" href="index.php?collection=' . pg_h($k) . '&lang=en">'
-         . '<span class="i18n-name">' . $r['icon'] . ' ' . pg_h($r['label'])
-         . (!$r['enExists'] ? ' <span class="i18n-new">neu</span>' : '') . '</span>'
-         . '<span class="i18n-bar"><span class="i18n-fill ' . $cls . '" style="width:' . $pct . '%"></span></span>'
-         . $note . '</a>';
+    $tb .= '<a class="i18n-row" href="index.php?collection=' . pg_h($k) . '&lang=en" title="' . pg_h($r['label']) . '">'
+         . '<span class="i18n-top"><span class="i18n-name"><span class="i18n-lbl">' . $r['icon'] . ' ' . pg_h($r['label']) . '</span>'
+         . (!$r['enExists'] ? '<span class="i18n-new">neu</span>' : '') . '</span>' . $note . '</span>'
+         . '<span class="i18n-bar"><span class="i18n-fill ' . $cls . '" style="width:' . $pct . '%"></span></span></a>';
   }
   $tb .= '</div>';
   $tb .= $missAll === 0

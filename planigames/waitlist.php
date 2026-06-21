@@ -47,8 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   if ($token !== '') {
     foreach ($scoped as $e) {
       if (($e['token'] ?? '') === $token) {
-        echo json_encode(['ok' => true, 'position' => pg_wl_position($scoped, $e['code']),
-          'referrals' => pg_wl_referrals($scoped, $e['code']), 'code' => $e['code'], 'total' => $total],
+        echo json_encode(['ok' => true, 'position' => pg_wl_position($scoped, $e['code'] ?? ''),
+          'referrals' => pg_wl_referrals($scoped, $e['code'] ?? ''), 'code' => $e['code'] ?? '', 'total' => $total],
           JSON_UNESCAPED_SLASHES);
         exit;
       }
@@ -59,10 +59,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 /* ---- Eintragen ---- */
+if ((string) ($_POST['website'] ?? '') !== '') { echo '{"ok":true}'; exit; }   // Honeypot zuerst (Bots erhalten still „ok")
 // Die Warteliste gibt es ausschließlich als Spiel-Seiten-Block (scope=Spiel-Slug).
 // Eine Startseiten-Variante (scope="") existiert nicht mehr.
 if ($scope === '') { echo '{"error":"Die Warteliste ist nur auf den Spiel-Seiten verfügbar."}'; exit; }
-if ((string) ($_POST['website'] ?? '') !== '') { echo '{"ok":true}'; exit; }   // Honeypot
 $email = trim((string) ($_POST['email'] ?? ''));
 $ref   = preg_replace('/[^a-z0-9]/', '', strtolower((string) ($_POST['ref'] ?? '')));
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { echo '{"error":"Bitte gib eine gültige E-Mail-Adresse ein."}'; exit; }
@@ -71,8 +71,8 @@ $email = mb_substr($email, 0, 180);
 // Bereits in DIESEM Bereich eingetragen? → bestehenden Stand zurückgeben (idempotent)
 foreach ($scoped as $e) {
   if (isset($e['email']) && strcasecmp($e['email'], $email) === 0) {
-    echo json_encode(['ok' => true, 'already' => true, 'position' => pg_wl_position($scoped, $e['code']),
-      'referrals' => pg_wl_referrals($scoped, $e['code']), 'code' => $e['code'], 'token' => $e['token'] ?? '', 'total' => $total],
+    echo json_encode(['ok' => true, 'already' => true, 'position' => pg_wl_position($scoped, $e['code'] ?? ''),
+      'referrals' => pg_wl_referrals($scoped, $e['code'] ?? ''), 'code' => $e['code'] ?? '', 'token' => $e['token'] ?? '', 'total' => $total],
       JSON_UNESCAPED_SLASHES);
     exit;
   }

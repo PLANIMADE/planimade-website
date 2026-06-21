@@ -43,11 +43,10 @@ if (isset($_POST['upvote'])) {
 // ---- Neuer Vorschlag ----
 $text  = trim((string) ($_POST['text'] ?? ''));
 $scope = pg_sugg_scope($_POST['scope'] ?? '');
+if ((string) ($_POST['website'] ?? '') !== '') { echo '{"ok":true}'; exit; }   // Honeypot zuerst (Bots erhalten still „ok")
 // Die Vorschlagsbox gibt es ausschließlich als Spiel-Seiten-Block (scope=Spiel-Slug).
 // Eine Startseiten-Variante (scope="") existiert nicht mehr.
 if ($scope === '') { echo '{"error":"Vorschläge können nur auf den Spiel-Seiten eingereicht werden."}'; exit; }
-$hp    = (string) ($_POST['website'] ?? '');
-if ($hp !== '') { echo '{"ok":true}'; exit; }
 if (mb_strlen($text) < 4) { echo '{"error":"Bitte einen etwas längeren Vorschlag eingeben."}'; exit; }
 
 $ipHash = pg_ip_hash();
