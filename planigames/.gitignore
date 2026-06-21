@@ -16,6 +16,7 @@ data/board.json
 data/comments.json
 data/suggestions.json
 data/keys.json
+data/waitlist.json
 data/backups/
 data/secret.php
 data/*.tmp

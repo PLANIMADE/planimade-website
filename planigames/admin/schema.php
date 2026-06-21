@@ -93,6 +93,12 @@ return [
         ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Was sollen wir als Nächstes bauen?'],
         ['name'=>'intro','label'=>'Einleitung','widget'=>'text','default'=>'Reich deine Idee ein oder stimme für bestehende ab – die beliebtesten landen auf unserem Plan.'],
       ]],
+      ['name'=>'waitlist','label'=>'Beta-Warteliste (mit Empfehlungslink)','widget'=>'object','hint'=>'Besucher tragen sich ein und steigen in der Liste auf, indem sie Freunde über ihren persönlichen Link werben. Eintragungen erscheinen im Admin unter „Warteliste".','fields'=>[
+        ['name'=>'enabled','label'=>'Warteliste auf der Startseite anzeigen','widget'=>'boolean','default'=>false],
+        ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Sei bei der Beta dabei'],
+        ['name'=>'intro','label'=>'Einleitung','widget'=>'text','default'=>'Trag dich ein und sichere dir frühen Zugang. Lade Freunde über deinen persönlichen Link ein, um in der Liste aufzusteigen.'],
+        ['name'=>'successText','label'=>'Text nach Eintragung','widget'=>'string','default'=>'Du bist dabei! 🎉 Teile deinen Link, um aufzusteigen.'],
+      ]],
       ['name'=>'mascot','label'=>'Maskottchen','widget'=>'object','hint'=>'Kleiner animierter Begleiter unten in der Ecke (klickbar). Komplett ein-/ausschaltbar. Alle Effekte funktionieren mit Emoji und mit eigenem PNG.','fields'=>[
         ['name'=>'enabled','label'=>'Maskottchen anzeigen','widget'=>'boolean','default'=>false],
         ['name'=>'emoji','label'=>'Emoji','widget'=>'string','default'=>'🧙','hint'=>'Wird genutzt, wenn kein Bild gesetzt ist.'],

@@ -964,11 +964,11 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=45"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=46"></head><body>';
 }
 function pg_view_foot(){
   echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
-  echo '<script src="assets/admin.js?v=45"></script></body></html>';
+  echo '<script src="assets/admin.js?v=46"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -996,6 +996,7 @@ function pg_view_topbar($SCHEMA, $active){
   // Gruppe „Community" – Abos & Kontakt (Mails haben eigenes Icon oben)
   $community = [];
   if (pg_can('subscribers')) $community[] = ['index.php?view=subscribers', '📬 Newsletter-Abos', 0];
+  if (pg_can('subscribers')) $community[] = ['index.php?view=waitlist', '📋 Beta-Warteliste', 0];
   if (pg_can('contacts'))    $community[] = ['index.php?view=contacts', '✉️ Kontakt-Anfragen', pg_contacts_unread()];
   pg_nav_group('Community', $community, false);
 

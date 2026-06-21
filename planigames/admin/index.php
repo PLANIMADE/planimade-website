@@ -456,6 +456,94 @@ if (($_GET['view'] ?? '') === 'subscribers') {
   exit;
 }
 
+/* ---- Beta-Warteliste: Ranking-Helfer (gespiegelt aus waitlist.php) ---- */
+function pg_adm_wl_referrals($list, $code){
+  if ($code === '') return 0;
+  $n = 0; foreach ($list as $e) if (($e['ref'] ?? '') === $code) $n++;
+  return $n;
+}
+function pg_adm_wl_ranked($list){
+  $rows = array_values(array_filter($list, fn($e) => is_array($e) && !empty($e['email'])));
+  usort($rows, function ($a, $b) use ($list) {
+    $ra = pg_adm_wl_referrals($list, $a['code'] ?? '');
+    $rb = pg_adm_wl_referrals($list, $b['code'] ?? '');
+    if ($ra !== $rb) return $rb <=> $ra;
+    return strcmp((string)($a['date'] ?? ''), (string)($b['date'] ?? ''));
+  });
+  return $rows;
+}
+
+/* ---- Beta-Warteliste: CSV-Export ---- */
+if ($action === 'waitlist_csv') {
+  if (!pg_can('subscribers')) { http_response_code(403); exit('Keine Berechtigung.'); }
+  $list = pg_load_json(PG_DATA_DIR . '/waitlist.json'); if (!is_array($list)) $list = [];
+  $ranked = pg_adm_wl_ranked($list);
+  header('Content-Type: text/csv; charset=utf-8');
+  header('Content-Disposition: attachment; filename="beta-warteliste.csv"');
+  $out = fopen('php://output', 'w');
+  fputcsv($out, ['position', 'email', 'date', 'referrals', 'code', 'referred_by']);
+  $pos = 0;
+  foreach ($ranked as $r) {
+    $pos++;
+    fputcsv($out, [$pos, $r['email'] ?? '', $r['date'] ?? '',
+      pg_adm_wl_referrals($list, $r['code'] ?? ''), $r['code'] ?? '', $r['ref'] ?? '']);
+  }
+  fclose($out); exit;
+}
+
+/* ---- Beta-Warteliste: leeren ---- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_waitlist'])) {
+  pg_csrf_check();
+  if (!pg_can('subscribers')) { http_response_code(403); exit('Keine Berechtigung.'); }
+  pg_save_json(PG_DATA_DIR . '/waitlist.json', []);
+  header('Location: index.php?view=waitlist&cleared=1'); exit;
+}
+
+/* ---- Beta-Warteliste: Ansicht ---- */
+if (($_GET['view'] ?? '') === 'waitlist') {
+  if (!pg_can('subscribers')) { header('Location: index.php'); exit; }
+  $list = pg_load_json(PG_DATA_DIR . '/waitlist.json'); if (!is_array($list)) $list = [];
+  $ranked = pg_adm_wl_ranked($list);
+  $total = count($ranked);
+  $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
+  $wlOn = !empty($studio['waitlist']['enabled']);
+  pg_view_head('Beta-Warteliste');
+  pg_view_topbar($SCHEMA, null);
+  echo '<div class="editor wide">';
+  if (isset($_GET['cleared'])) echo '<div class="flash ok">✓ Warteliste geleert.</div>';
+  echo '<div class="editor-head"><div><h1>📋 Beta-Warteliste</h1>'
+     . '<p class="muted">' . $total . ' Anmeldung' . ($total === 1 ? '' : 'en')
+     . ' · Reihenfolge nach Empfehlungen, dann Anmeldedatum. '
+     . ($wlOn ? '<span style="color:#9ff0b5">● aktiv</span>' : '<span style="color:#ffb37a">● ausgeblendet</span> – unter Studio &amp; Startseite aktivierbar.')
+     . '</p></div>';
+  if ($ranked) echo '<a class="btn-primary" href="index.php?action=waitlist_csv">CSV exportieren</a>';
+  echo '</div>';
+  if (!$ranked) {
+    echo '<p class="muted">Noch keine Anmeldungen.</p>';
+  } else {
+    echo '<table class="subs"><thead><tr><th>#</th><th>E-Mail</th><th>Empfehlungen</th><th>Datum</th><th>Geworben von</th></tr></thead><tbody>';
+    $byCode = [];
+    foreach ($ranked as $r) if (!empty($r['code'])) $byCode[$r['code']] = $r['email'] ?? '';
+    $pos = 0;
+    foreach ($ranked as $r) {
+      $pos++;
+      $refs = pg_adm_wl_referrals($list, $r['code'] ?? '');
+      $by = ($r['ref'] ?? '') !== '' ? ($byCode[$r['ref']] ?? '—') : '—';
+      $medal = $pos === 1 ? '🥇 ' : ($pos === 2 ? '🥈 ' : ($pos === 3 ? '🥉 ' : ''));
+      echo '<tr><td>' . $medal . $pos . '</td><td>' . pg_h($r['email'] ?? '') . '</td><td><b>'
+         . $refs . '</b></td><td>' . pg_h(substr($r['date'] ?? '', 0, 10)) . '</td><td>'
+         . pg_h($by) . '</td></tr>';
+    }
+    echo '</tbody></table>';
+    echo '<form method="post" class="clear-form" onsubmit="return confirm(\'Wirklich die GESAMTE Warteliste löschen? (Vorher exportieren!)\')">'
+       . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+       . '<button class="btn-danger" name="clear_waitlist" value="1">Warteliste löschen</button></form>';
+  }
+  echo '</div>';
+  pg_view_foot();
+  exit;
+}
+
 /* ---- Kontakt-Anfragen: einzeln löschen / alle leeren ---- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['delete_contact']) || isset($_POST['clear_contacts']))) {
   pg_csrf_check();
@@ -2085,6 +2173,10 @@ if (pg_can('subscribers')) {
   $subCount = count(pg_load_json(PG_DATA_DIR . '/subscribers.json'));
   $community .= $card('index.php?view=subscribers', '📬', 'Newsletter-Abos',
     $subCount . ' Anmeldung' . ($subCount === 1 ? '' : 'en') . ' · ansehen &amp; exportieren.');
+  $wl = pg_load_json(PG_DATA_DIR . '/waitlist.json'); if (!is_array($wl)) $wl = [];
+  $wlCount = count(array_filter($wl, fn($e) => is_array($e) && !empty($e['email'])));
+  $community .= $card('index.php?view=waitlist', '📋', 'Beta-Warteliste',
+    $wlCount . ' Anmeldung' . ($wlCount === 1 ? '' : 'en') . ' mit Empfehlungs-Ranking.');
 }
 if (pg_can('contacts')) {
   $cCount = count(pg_load_json(PG_DATA_DIR . '/contacts.json'));

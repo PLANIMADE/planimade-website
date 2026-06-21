@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "32";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "33";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
@@ -647,7 +647,8 @@
             } else { $("#devlog-section")?.remove(); }
         }
 
-        // Reihenfolge: Vorschlagsbox ZUERST einsetzen → landet über dem Discord-/Community-Banner
+        // Reihenfolge: Warteliste & Vorschlagsbox ZUERST einsetzen → landen über dem Discord-/Community-Banner
+        renderWaitlist(s);
         renderSuggestions(s);
         renderCommunity(s);
     }
@@ -720,6 +721,90 @@
                 confetti({ count: 60, y: innerHeight * 0.6 });
                 pgBadge("ideator");
             } catch { msg.className = "text-sm text-center mb-6 text-red-400"; msg.textContent = en ? "Something went wrong." : "Etwas ist schiefgelaufen."; }
+        });
+    }
+
+    // Beta-Warteliste mit Empfehlungslink – vor der Newsletter-Sektion
+    function renderWaitlist(s) {
+        const cfg = s.waitlist || {};
+        if (!cfg.enabled) return;
+        const en = LANG === "en";
+        const nl = $("[data-newsletter-section]");
+        const sec = document.createElement("section");
+        sec.className = "relative px-6 py-12 md:py-20";
+        sec.innerHTML = `
+            <div class="max-w-2xl mx-auto reveal">
+                <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3 text-center">${esc(cfg.heading || (en ? "Join the beta" : "Sei bei der Beta dabei"))}</h2>
+                ${cfg.intro ? `<p class="text-zinc-400 text-center max-w-xl mx-auto mb-8">${esc(cfg.intro)}</p>` : ""}
+                <form data-wl-form class="flex flex-col sm:flex-row gap-3">
+                    <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
+                    <input name="email" type="email" required placeholder="${en ? "your@email.com" : "deine@email.de"}" class="flex-1 bg-black/30 border border-white/15 rounded-full px-6 py-4 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none">
+                    <button class="btn-accent magnetic px-8 py-4 rounded-full font-semibold whitespace-nowrap">${en ? "Join waitlist" : "Eintragen"}</button>
+                </form>
+                <p data-wl-msg class="text-sm text-center mt-4 hidden"></p>
+                <div data-wl-status class="hidden mt-7 rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-center"></div>
+            </div>`;
+        if (nl && nl.parentNode) nl.parentNode.insertBefore(sec, nl); else document.body.appendChild(sec);
+        observeReveals(sec);
+        initWaitlist(sec, cfg);
+    }
+
+    function initWaitlist(sec, cfg) {
+        const en = LANG === "en";
+        const form = sec.querySelector("[data-wl-form]");
+        const msg = sec.querySelector("[data-wl-msg]");
+        const statusBox = sec.querySelector("[data-wl-status]");
+
+        // Empfehlungs-Code aus ?ref= merken (auch für späteres Eintragen)
+        try {
+            const r = qs.get("ref");
+            if (r) localStorage.setItem("pg_wl_ref", r.replace(/[^a-z0-9]/gi, "").toLowerCase());
+        } catch {}
+
+        const refLink = (code) => location.origin + location.pathname.replace(/[^/]*$/, "") + "?ref=" + code;
+        function showStatus(d) {
+            form.classList.add("hidden");
+            statusBox.classList.remove("hidden");
+            const link = refLink(d.code);
+            statusBox.innerHTML = `
+                <p class="text-lg font-semibold text-white mb-1">${esc(cfg.successText || (en ? "You're in! 🎉" : "Du bist dabei! 🎉"))}</p>
+                <p class="text-zinc-300 mb-4">${en ? "Your spot:" : "Dein Platz:"} <span class="text-[color:var(--accent)] font-extrabold text-2xl">#${d.position}</span>
+                    ${d.referrals ? ` · ${d.referrals} ${en ? "referred" : "geworben"}` : ""}</p>
+                <p class="text-sm text-zinc-400 mb-2">${en ? "Move up by inviting friends with your link:" : "Steig auf, indem du Freunde mit deinem Link einlädst:"}</p>
+                <div class="flex gap-2 max-w-md mx-auto">
+                    <input readonly value="${esc(link)}" class="flex-1 bg-black/40 border border-white/15 rounded-full px-4 py-2.5 text-sm text-zinc-200" data-wl-link>
+                    <button type="button" class="btn-accent px-5 py-2.5 rounded-full font-semibold text-sm" data-wl-copy>${en ? "Copy" : "Kopieren"}</button>
+                </div>`;
+            statusBox.querySelector("[data-wl-copy]").addEventListener("click", () => {
+                const inp = statusBox.querySelector("[data-wl-link]");
+                const done = () => { const b = statusBox.querySelector("[data-wl-copy]"); b.textContent = en ? "Copied!" : "Kopiert!"; setTimeout(() => b.textContent = en ? "Copy" : "Kopieren", 1400); };
+                if (navigator.clipboard) navigator.clipboard.writeText(link).then(done, () => {}); else { inp.select(); try { document.execCommand("copy"); done(); } catch {} }
+            });
+        }
+
+        // Schon eingetragen? Stand laden
+        let token = "";
+        try { token = localStorage.getItem("pg_wl_token") || ""; } catch {}
+        if (token) {
+            fetch("waitlist.php?status=" + encodeURIComponent(token)).then(r => r.json()).then(d => { if (d && d.ok) showStatus(d); }).catch(() => {});
+        }
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const fd = new FormData(form);
+            let ref = ""; try { ref = localStorage.getItem("pg_wl_ref") || ""; } catch {}
+            if (ref) fd.append("ref", ref);
+            msg.className = "text-sm text-center mt-4 text-zinc-400"; msg.classList.remove("hidden");
+            msg.textContent = en ? "Joining…" : "Wird eingetragen…";
+            try {
+                const r = await fetch("waitlist.php", { method: "POST", body: fd });
+                const j = await r.json();
+                if (j.error) { msg.className = "text-sm text-center mt-4 text-red-400"; msg.textContent = j.error; return; }
+                msg.classList.add("hidden");
+                if (j.token) { try { localStorage.setItem("pg_wl_token", j.token); } catch {} }
+                showStatus(j);
+                if (!j.already) { confetti({ count: 80, y: innerHeight * 0.55 }); pgBadge("subscriber"); }
+            } catch { msg.className = "text-sm text-center mt-4 text-red-400"; msg.textContent = en ? "Something went wrong." : "Etwas ist schiefgelaufen."; }
         });
     }
 
