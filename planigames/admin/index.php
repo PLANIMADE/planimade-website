@@ -2038,6 +2038,12 @@ if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
     'studio' => '../index.html', 'team' => '../index.html#team-section',
     'games' => '../games.html', 'patchnotes' => '../devlog.php', 'legal' => '../rechtliches.html',
   ][$key] ?? '../index.html';
+  // Bei „Spiele" direkt die erste Spielseite zeigen (dort baut man die Blöcke), nicht nur die Übersicht
+  if ($key === 'games') {
+    $firstSlug = '';
+    foreach (($data['games'] ?? []) as $gEntry) { if (!empty($gEntry['slug'])) { $firstSlug = (string) $gEntry['slug']; break; } }
+    $previewUrl = $firstSlug !== '' ? '../game.php?slug=' . rawurlencode($firstSlug) : '../games.html';
+  }
   echo '<form method="post" class="editor" id="editor" data-autosave data-preview="' . pg_h($previewUrl) . '">';
   echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
   echo '<input type="hidden" name="collection" value="' . pg_h($key) . '">';

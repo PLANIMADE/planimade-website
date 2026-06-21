@@ -857,7 +857,16 @@
 
     // ---- Live-Vorschau-Splitview (ein/ausschaltbar) ----
     const splitBtn = form.querySelector("[data-split-toggle]");
-    const previewUrl = form.getAttribute("data-preview") || "../index.html";
+    // Vorschau-Ziel: bevorzugt das vom Server gesetzte data-preview; sonst aus ?collection= ableiten
+    // (robust, falls eine ältere index.php das Attribut nicht setzt).
+    function resolvePreviewUrl() {
+      const explicit = form.getAttribute("data-preview");
+      if (explicit) return explicit;
+      const c = new URLSearchParams(location.search).get("collection") || "";
+      return ({ studio: "../index.html", team: "../index.html#team-section",
+        games: "../games.html", patchnotes: "../devlog.php", legal: "../rechtliches.html" })[c] || "../index.html";
+    }
+    const previewUrl = resolvePreviewUrl();
     let frame = null;
     function reloadPreview() { if (frame) frame.src = previewUrl + (previewUrl.includes("?") ? "&" : "?") + "_t=" + Date.now(); }
     let pane = null;
