@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "37";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "38";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
@@ -2384,6 +2384,18 @@
         const lines = [];
         lines.push(["app.js Version", "v" + VERSION + "  (HTML erwartet ?v=…)"]);
         lines.push(["Seite (data-page)", page]);
+
+        // Maskottchen-Diagnose: zeigt, was der Browser meldet & ob es rendert
+        const rm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const ms = (DATA.studio && DATA.studio.mascot) || null;
+        lines.push(["Browser meldet 'reduce motion'", rm ? "JA ⚠️ (ab v37 egal fürs Maskottchen)" : "nein ✅"]);
+        if (ms) {
+            lines.push(["Maskottchen · enabled", String(ms.enabled) + " " + ok(!!ms.enabled)]);
+            lines.push(["Maskottchen · im DOM gerendert", ok(!!$(".pg-mascot"))]);
+            lines.push(["Maskottchen · Augen aktiv", String(!!(ms.eyes && ms.eyes.enabled))]);
+        } else {
+            lines.push(["Maskottchen in studio.json", "❌ fehlt / nicht geladen"]);
+        }
 
         // Hero-Countdown (nur Home relevant)
         const c = (DATA.studio && DATA.studio.heroCountdown) || null;
