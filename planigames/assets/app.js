@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "39";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "40";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
@@ -559,7 +559,7 @@
        ========================================================= */
     const DATA = {};
     async function loadData(...names) {
-        const map = { studio: "data/studio.json", team: "data/team.json", games: "data/games.json", patchnotes: "data/patchnotes.json", legal: "data/legal.json", lore: "data/lore.json" };
+        const map = { studio: "data/studio.json", team: "data/team.json", games: "data/games.json", patchnotes: "data/patchnotes.json", legal: "data/legal.json" };
         await Promise.all(names.map(async n => {
             if (DATA[n] !== undefined) return;   // schon geladen
             const de = await fetchJSON(map[n]);
@@ -776,6 +776,25 @@
     // Warteliste als Game-Block (eigene Liste & eigenes Ranking pro Spiel)
     function blockWaitlist(b, g) {
         return `<section class="relative px-6 py-12 md:py-20"><div class="max-w-2xl mx-auto reveal">${wlBoxInner(b, g.slug || "")}</div></section>`;
+    }
+
+    // „Welt erkunden"-Teaser: verlinkt auf die spielspezifische Lore-Seite (lore.html?slug=…)
+    function blockLore(b, g) {
+        const lore = g.lore || {};
+        if (!lore.enabled) return "";                       // ohne aktive Lore nichts anzeigen
+        const en = LANG === "en";
+        const heading = b.heading || lore.title || (en ? "Discover the world" : "Entdecke die Welt");
+        const text = b.text || lore.intro || "";
+        const label = b.label || (en ? "Explore the world" : "Welt erkunden");
+        const bg = b.image || lore.hero || g.cover || "";
+        const href = "lore.html?slug=" + encodeURIComponent(g.slug || "");
+        return `<section class="relative px-6 py-12 md:py-20"><a href="${href}" class="lore-teaser reveal" style="${bg ? `--lore-bg:url('${esc(bg)}')` : ""}">
+            <div class="lore-teaser-inner">
+                <span class="lore-teaser-kicker">${en ? "World & Story" : "Welt & Story"}</span>
+                <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white">${esc(heading)}</h2>
+                ${text ? `<p class="mt-3 text-zinc-300 max-w-xl mx-auto">${esc(text)}</p>` : ""}
+                <span class="btn-accent magnetic mt-7 px-8 py-4 rounded-full font-semibold inline-block">${esc(label)} →</span>
+            </div></a></section>`;
     }
 
     function initWaitlist(sec) {
@@ -1063,6 +1082,7 @@
             case "storewidget": return blockStoreWidget(b);
             case "suggestions": return blockSuggestions(b, g);
             case "waitlist": return blockWaitlist(b, g);
+            case "lore": return blockLore(b, g);
             case "spacer": return `<div style="height:${Math.max(0, +b.size || 48)}px"></div>`;
             default: return "";
         }
@@ -1658,20 +1678,31 @@
         observeReveals(root);
     }
 
-    // ---------- Lore / Story-Seite (Scrollytelling) ----------
+    // ---------- Lore / Story-Seite (pro Spiel, Scrollytelling) – lore.html?slug=<spiel> ----------
     async function renderLore() {
-        await loadData("lore");
-        const d = DATA.lore || {};
+        await loadData("games");
         const root = $("[data-lore]");
         if (!root) return;
         const en = LANG === "en";
-        document.title = (d.title || (en ? "World" : "Welt")) + " — PLANIGAMES";
+        const games = (DATA.games && DATA.games.games) || [];
+        const slug = qs.get("slug");
+        const g = games.find(x => x.slug === slug) || null;
+        const d = (g && g.lore) || {};
+        if (!g || !d.enabled) {
+            document.title = (en ? "World" : "Welt") + " — PLANIGAMES";
+            root.innerHTML = notFound(en ? "This world isn't available." : "Diese Welt ist nicht verfügbar.");
+            return;
+        }
+        applyAccent(g.accent || "#8b5cf6", g.accent2 || "#22d3ee");   // an das Spiel anpassen
+        document.title = (d.title || g.title) + " — PLANIGAMES";
         const scenes = (Array.isArray(d.scenes) ? d.scenes : []).filter(s => s && (s.heading || s.text || s.image));
+        const back = `<a href="game.php?slug=${esc(g.slug)}" class="lore-back">← ${esc(g.title)}</a>`;
 
         const hero = `<header class="lore-hero">
             ${d.hero ? `<div class="lore-hero-bg"><img src="${esc(d.hero)}" alt="" data-lore-px></div>` : ""}
             <div class="lore-hero-inner reveal">
-                <h1 class="font-display text-4xl md:text-6xl font-extrabold text-white leading-[1.05]">${esc(d.title || (en ? "Our world" : "Unsere Welt"))}</h1>
+                ${back}
+                <h1 class="font-display text-4xl md:text-6xl font-extrabold text-white leading-[1.05] mt-4">${esc(d.title || (en ? "The world of " : "Die Welt von ") + g.title)}</h1>
                 ${d.intro ? `<p class="mt-5 text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto">${esc(d.intro)}</p>` : ""}
                 ${scenes.length ? `<div class="lore-scroll-hint mt-10" aria-hidden="true">↓</div>` : ""}
             </div></header>`;
@@ -1680,8 +1711,10 @@
             ? scenes.map((s, i) => loreScene(s, i)).join("")
             : `<section class="px-6 py-24 text-center text-zinc-500">${en ? "The story will be told soon…" : "Die Geschichte wird bald erzählt …"}</section>`;
 
-        root.innerHTML = hero + `<div class="lore-scenes">${body}</div>`;
-        observeReveals(root);
+        const foot = `<div class="px-6 pb-24 text-center"><a href="game.php?slug=${esc(g.slug)}" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold inline-block">← ${en ? "Back to " : "Zurück zu "}${esc(g.title)}</a></div>`;
+
+        root.innerHTML = hero + `<div class="lore-scenes">${body}</div>` + foot;
+        observeReveals(root); initMagnetic();
         initLoreParallax(root);
     }
     function loreScene(s, i) {
@@ -1848,17 +1881,14 @@
        wird in jede Seite injiziert, damit die HTML-Dateien
        schlank bleiben und Navigation überall identisch ist.
        ========================================================= */
-    // Navigation – die Lore/Story-Seite erscheint nur, wenn sie im Admin aktiviert ist.
-    // Eintrag: [href, i18n-key ODER null, optionales Literal-Label]
+    // Navigation – global, ohne Lore (die Story-Seite gehört jetzt zu einzelnen Spielen).
     function getNav() {
-        const nav = [
+        return [
             ["index.html", "nav_studio"],
             ["games.html", "nav_games"],
             ["devlog.php", "nav_devlog"],
+            ["kontakt.html", "nav_contact"],
         ];
-        if (DATA.lore && DATA.lore.enabled) nav.push(["lore.html", null, DATA.lore.navLabel || (LANG === "en" ? "World" : "Welt")]);
-        nav.push(["kontakt.html", "nav_contact"]);
-        return nav;
     }
     const navLabel = (key, lit) => lit != null ? esc(lit) : t(key);
     function navLinks(extra = "") {
@@ -2447,7 +2477,7 @@
 
     async function boot() {
         document.documentElement.lang = LANG;
-        await loadData("studio", "lore");   // früh laden (Hintergrund-Effekt + Menü-Eintrag der Story-Seite)
+        await loadData("studio");   // früh laden (Hintergrund-Effekt braucht die Config)
         const fx = (DATA.studio && DATA.studio.background && DATA.studio.background.effect) || "particles";
         const fxClass = { particles: "fx-particles", particles_only: "fx-particles-only", glow: "fx-glow", off: "fx-off" }[fx] || "fx-particles";
         document.body.classList.add(fxClass);

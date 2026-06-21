@@ -92,7 +92,6 @@ function pg_areas_map(){
     'games'       => 'Spiele',
     'patchnotes'  => 'Devlog & Patch Notes',
     'legal'       => 'Rechtliches',
-    'lore'        => 'Lore / Story-Seite',
     'subscribers' => 'Newsletter-Abos',
     'contacts'    => 'Kontakt-Anfragen',
     'mail'        => 'E-Mail-Postfach',
