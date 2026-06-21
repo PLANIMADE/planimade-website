@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "40";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "41";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
@@ -845,7 +845,12 @@
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
             const fd = new FormData(form);
-            let ref = ""; try { ref = localStorage.getItem("pg_wl_ref" + sfx) || ""; } catch {}
+            // Empfehlungscode: bevorzugt direkt aus der aktuellen URL (?ref=…), sonst aus dem Speicher.
+            // So wird die Empfehlung auch erkannt, wenn localStorage zuvor nicht geschrieben werden konnte.
+            let ref = "";
+            const urlRef = (qs.get("ref") || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+            if (urlRef) ref = urlRef;
+            else { try { ref = localStorage.getItem("pg_wl_ref" + sfx) || ""; } catch {} }
             if (ref) fd.append("ref", ref);
             if (scope) fd.append("scope", scope);
             msg.className = "text-sm text-center mt-4 text-zinc-400"; msg.classList.remove("hidden");

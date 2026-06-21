@@ -537,16 +537,14 @@ if (($_GET['view'] ?? '') === 'waitlist') {
   $list = pg_load_json(PG_DATA_DIR . '/waitlist.json'); if (!is_array($list)) $list = [];
   $groups = pg_adm_wl_groups($list);
   $total = array_sum(array_map('count', $groups));
-  $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
-  $wlOn = !empty($studio['waitlist']['enabled']);
   pg_view_head('Beta-Warteliste');
   pg_view_topbar($SCHEMA, null);
   echo '<div class="editor wide">';
   if (isset($_GET['cleared'])) echo '<div class="flash ok">✓ Warteliste geleert.</div>';
   echo '<div class="editor-head"><div><h1>📋 Beta-Warteliste</h1>'
      . '<p class="muted">' . $total . ' Anmeldung' . ($total === 1 ? '' : 'en')
-     . ' · jeder Bereich hat ein eigenes Ranking (Empfehlungen, dann Anmeldedatum). '
-     . ($wlOn ? '<span style="color:#9ff0b5">● aktiv</span>' : '<span style="color:#ffb37a">● ausgeblendet</span> – unter Studio &amp; Startseite aktivierbar.')
+     . ' · jedes Spiel hat eine eigene Warteliste mit eigenem Ranking (Empfehlungen, dann Anmeldedatum). '
+     . 'Die Warteliste fügst du als Block „Beta-Warteliste" auf der jeweiligen Spielseite ein.'
      . '</p></div>';
   if ($total) echo '<a class="btn-primary" href="index.php?action=waitlist_csv">CSV exportieren</a>';
   echo '</div>';

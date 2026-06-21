@@ -58,6 +58,10 @@
     if (t.closest("[data-down]")) { const n = item.nextElementSibling; if (n) item.parentNode.insertBefore(n, item); e.preventDefault(); return; }
     if (t.closest("[data-dup]")) { duplicateItem(item); e.preventDefault(); return; }
     if (t.closest("[data-fold]")) { item.classList.toggle("folded"); e.preventDefault(); return; }
+    // Tippen auf die Kopfzeile (Zusammenfassung) klappt auch auf/zu – große Trefferfläche fürs Handy
+    if (t.closest(".item-bar") && !t.closest("[data-grip], button, input, select, a, label")) {
+      item.classList.toggle("folded"); e.preventDefault();
+    }
   });
 
   // ---- Eintrag/Block duplizieren (mit allen Werten, neuer Index) ----

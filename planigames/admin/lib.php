@@ -857,7 +857,9 @@ function pg_smtp_send($to, $subject, $html, $fromName, $fromEmail, $replyTo = ''
   $fn = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
   $subj = '=?UTF-8?B?' . base64_encode($subject) . '?=';
   $date = date('r');
-  $msgid = '<' . bin2hex(random_bytes(12)) . '@' . preg_replace('/[^a-z0-9.\-]/i','',$_SERVER['HTTP_HOST'] ?? 'planigames.com') . '>';
+  // Message-ID-Domain an die Absender-Adresse koppeln (bessere DMARC/DKIM-Ausrichtung → weniger Spam)
+  $midDomain = preg_replace('/[^a-z0-9.\-]/i', '', substr((string) strrchr($fromEmail, '@'), 1) ?: ($_SERVER['HTTP_HOST'] ?? 'planigames.com'));
+  $msgid = '<' . bin2hex(random_bytes(12)) . '@' . $midDomain . '>';
   $head = "Date: $date\r\nFrom: $fn <$fromEmail>\r\n"
     . ($replyTo ? "Reply-To: $replyTo\r\n" : '')
     . "To: <$to>\r\nSubject: $subj\r\nMessage-ID: $msgid\r\n"
@@ -964,11 +966,11 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=52"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=53"></head><body>';
 }
 function pg_view_foot(){
   echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
-  echo '<script src="assets/admin.js?v=52"></script></body></html>';
+  echo '<script src="assets/admin.js?v=53"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');

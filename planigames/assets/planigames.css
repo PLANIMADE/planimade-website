@@ -468,13 +468,20 @@ body.menu-open #cookie-banner { display: none; }
 #cookie-banner .cb-settings-toggle { background: transparent; border: 0; color: #9a9aa6; text-decoration: underline; text-underline-offset: 2px; padding: .6rem .4rem; }
 #cookie-banner .cb-settings-toggle:hover { color: #d7d7df; }
 #cookie-banner .cb-settings { flex-basis: 100%; display: flex; flex-direction: column; gap: .7rem; margin: .2rem 0 .4rem; padding-top: .6rem; border-top: 1px solid rgba(255,255,255,0.08); }
+#cookie-banner .cb-settings[hidden] { display: none; }
 #cookie-banner .cb-cat { display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; }
 #cookie-banner .cb-cat > span { display: flex; flex-direction: column; }
 #cookie-banner .cb-cat b { color: #fff; font-size: .9rem; }
 #cookie-banner .cb-cat .cb-sub { color: #8a8a93; font-size: .78rem; line-height: 1.4; }
 #cookie-banner .cb-cat input { width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
 #cookie-banner .cb-save { align-self: flex-start; margin-top: .2rem; }
-@media (max-width: 560px) { #cookie-banner { flex-direction: column; align-items: stretch; } #cookie-banner .cb-actions { justify-content: stretch; } #cookie-banner .cb-actions button { flex: 1; } }
+@media (max-width: 560px) {
+    #cookie-banner { flex-direction: column; align-items: stretch; padding: 1rem 1.1rem; gap: .75rem; bottom: .6rem; }
+    #cookie-banner .cb-text { font-size: .82rem; line-height: 1.5; min-width: 0; }
+    #cookie-banner .cb-actions { flex-wrap: wrap; gap: .5rem; }
+    #cookie-banner .cb-decline, #cookie-banner .cb-accept { flex: 1 1 0; min-width: 130px; order: 1; padding: .7rem 1rem; }
+    #cookie-banner .cb-settings-toggle { order: 2; flex-basis: 100%; text-align: center; padding: .35rem; }
+}
 
 /* YouTube-Consent-Platzhalter (lädt erst nach Zustimmung) */
 .yt-consent { display: grid; place-items: center; background-size: cover; background-position: center; }
