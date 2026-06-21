@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "35";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "36";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
@@ -2090,8 +2090,10 @@
     function initMascot() {
         const m = (DATA.studio && DATA.studio.mascot) || {};
         if (!m.enabled) return;
-        // Vom Besucher dauerhaft geschlossen?
-        if (m.closable !== false) { try { if (localStorage.getItem("pg_mascot_closed") === "1") return; } catch {} }
+        // Vom Besucher geschlossen? Nur für die AKTUELLE Sitzung merken (sessionStorage):
+        // ein versehentlicher ✕-Klick soll das Maskottchen nicht dauerhaft (pro Gerät) verschwinden lassen.
+        // Alte dauerhafte Markierung (localStorage) wird dabei entfernt – so taucht es nach Fixes wieder auf.
+        if (m.closable !== false) { try { localStorage.removeItem("pg_mascot_closed"); if (sessionStorage.getItem("pg_mascot_closed") === "1") return; } catch {} }
         const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
         const el = document.createElement("div");
@@ -2240,7 +2242,7 @@
         if (closeBtn) closeBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             el.classList.add("leaving");
-            try { localStorage.setItem("pg_mascot_closed", "1"); } catch {}
+            try { sessionStorage.setItem("pg_mascot_closed", "1"); } catch {}
             setTimeout(() => el.remove(), 350);
         });
     }
@@ -2344,15 +2346,19 @@
         applyI18n();          // statische [data-i18n]-Texte übersetzen
         initShell();
         const page = document.body.dataset.page;
-        await ({
-            home: renderHome,
-            games: renderGamesList,
-            game: renderGame,
-            devlog: renderDevlog,
-            legal: renderLegal,
-            presskit: renderPressKit,
-            contact: renderContact,
-        }[page] || (() => {}))();
+        // Seiten-Renderer abschirmen: ein Fehler hier darf NICHT verhindern, dass
+        // Footer, Cookie-Banner, Maskottchen usw. unten noch initialisiert werden.
+        try {
+            await ({
+                home: renderHome,
+                games: renderGamesList,
+                game: renderGame,
+                devlog: renderDevlog,
+                legal: renderLegal,
+                presskit: renderPressKit,
+                contact: renderContact,
+            }[page] || (() => {}))();
+        } catch (e) { try { console.error("PLANIGAMES Seiten-Render-Fehler:", e); } catch {} }
         // Studio-Daten für den Footer sicherstellen (auch ohne Home)
         if (!DATA.studio) await loadData("studio");
         fillStudioFooter();

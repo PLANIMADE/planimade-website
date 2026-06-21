@@ -358,7 +358,7 @@ button{font:inherit;cursor:pointer}
 /* media */
 .media{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
 .media input[data-media-input]{flex:1;min-width:200px}
-.btn-up{background:var(--panel2);border:1px solid var(--line);padding:.6rem 1rem;border-radius:10px;font-size:.85rem;cursor:pointer;white-space:nowrap}
+.btn-up{background:var(--panel2);color:var(--ink);border:1px solid var(--line);padding:.6rem 1rem;border-radius:10px;font-size:.85rem;cursor:pointer;white-space:nowrap}
 .btn-up:hover{border-color:var(--accent)}
 .media-status{flex-basis:100%;font-size:.8rem;color:var(--muted)}
 .media-prev{color:var(--accent);text-decoration:none;word-break:break-all}
