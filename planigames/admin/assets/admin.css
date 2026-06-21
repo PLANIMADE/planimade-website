@@ -108,9 +108,9 @@ button{font:inherit;cursor:pointer}
   .tb-mobile-extra{display:flex;flex-direction:column;gap:.2rem;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--line)}
   .tb-mobile-extra .tb-user{color:var(--muted);font-size:.82rem;padding:.4rem .8rem}
   .tb-mobile-extra a{color:var(--muted);text-decoration:none;padding:.6rem .8rem;font-size:.92rem}
-  /* Im Burger-Menü Gruppen dauerhaft aufgeklappt zeigen (kein Dropdown) */
+  /* Im Burger-Menü Gruppen dauerhaft aufgeklappt zeigen (kein Dropdown) – aber NICHT die Glocke! */
   .tb-group{margin-top:.4rem}
-  .tb-group-btn{width:100%;justify-content:flex-start;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;
+  .tb-group-btn:not(.tb-notif-btn){width:100%;justify-content:flex-start;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;
     color:var(--muted);padding:.5rem .8rem .2rem;pointer-events:none}
   .tb-group.on>.tb-group-btn{background:none;color:var(--muted);font-weight:600}
   .tb-caret{display:none}
