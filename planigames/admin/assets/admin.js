@@ -399,7 +399,7 @@
       ["•", "Liste", () => linePrefix("- ")],
       ["❝", "Zitat", () => linePrefix("> ")],
       ["🔗", "Link", () => surround("[", "](https://)")],
-      ["🖼️", "Bild", () => insert("![Beschreibung](/media/…)")],
+      ["🖼️", "Bild einfügen – oder Bild direkt hierher ziehen / einfügen", () => insert("![Beschreibung](/media/…)")],
     ];
     tools.forEach(([label, title, fn]) => {
       const btn = document.createElement("button");
@@ -439,6 +439,39 @@
       ta.value = ta.value.slice(0, ls) + pfx + ta.value.slice(ls);
       ta.focus(); ta.selectionStart = ta.selectionEnd = s + pfx.length;
     }
+
+    // ---- Bild per Drag&Drop oder Einfügen (Zwischenablage) → hochladen & als Markdown einsetzen ----
+    async function dropImages(files) {
+      const imgs = [...files].filter((f) => f && /^image\//.test(f.type));
+      if (!imgs.length) return false;
+      for (const file of imgs) {
+        const token = "![⏳ lädt #" + Date.now() + Math.floor(Math.random() * 1000) + "]()";
+        insert(token + "\n"); ta.dispatchEvent(new Event("input", { bubbles: true }));
+        let repl;
+        try {
+          const fd = new FormData(); fd.append("csrf", csrf()); fd.append("file", file);
+          const r = await fetch("index.php?action=upload", { method: "POST", body: fd });
+          const j = await r.json();
+          repl = j && j.path ? "![](" + j.path + ")" : "![⚠️ " + ((j && j.error) || "Upload-Fehler") + "]()";
+        } catch (err) { repl = "![⚠️ Upload-Fehler]()"; }
+        ta.value = ta.value.replace(token, repl);
+        ta.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      return true;
+    }
+    ta.addEventListener("dragover", (e) => {
+      if (e.dataTransfer && [...e.dataTransfer.items || []].some((i) => i.kind === "file")) { e.preventDefault(); wrap.classList.add("md-drop"); }
+    });
+    ta.addEventListener("dragleave", () => wrap.classList.remove("md-drop"));
+    ta.addEventListener("drop", (e) => {
+      if (e.dataTransfer && [...e.dataTransfer.files].some((f) => /^image\//.test(f.type))) {
+        e.preventDefault(); wrap.classList.remove("md-drop"); dropImages(e.dataTransfer.files);
+      }
+    });
+    ta.addEventListener("paste", (e) => {
+      const files = [...(e.clipboardData && e.clipboardData.items || [])].filter((i) => i.kind === "file" && /^image\//.test(i.type)).map((i) => i.getAsFile());
+      if (files.length) { e.preventDefault(); dropImages(files); }
+    });
   }
   document.querySelectorAll("textarea.md").forEach(enhanceMarkdown);
   // neu hinzugefügte/duplizierte Blöcke ebenfalls aufwerten

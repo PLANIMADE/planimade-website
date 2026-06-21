@@ -80,6 +80,7 @@ return [
           'calm'=>'Ruhig','normal'=>'Normal','lively'=>'Lebhaft',
         ]],
         ['name'=>'color','label'=>'Partikel-Farbe','widget'=>'color','default'=>'#ff7d1a','hint'=>'Standard: Orange. Für eine andere Stimmung anpassbar.'],
+        ['name'=>'cursorSparkles','label'=>'Magie-Funken am Mauszeiger','widget'=>'boolean','default'=>false,'hint'=>'Feiner Funken-/Glitzerschweif, der dem Mauszeiger folgt (nur am PC mit Maus).'],
       ]],
       ['name'=>'community','label'=>'Community-Banner (Discord)','widget'=>'object','hint'=>'Auffälliger Aufruf auf der Startseite, der zur Community führt.','fields'=>[
         ['name'=>'enabled','label'=>'Banner anzeigen','widget'=>'boolean','default'=>true],
@@ -376,6 +377,29 @@ return [
     'fields' => [
       ['name'=>'impressum','label'=>'Impressum','widget'=>'markdown','hint'=>'Pflichtangaben nach § 5 TMG. Platzhalter in [ ] ersetzen. Im Zweifel rechtlich prüfen lassen.'],
       ['name'=>'datenschutz','label'=>'Datenschutzerklärung','widget'=>'markdown','hint'=>'Datenschutzhinweise (DSGVO). Platzhalter ersetzen und an genutzte Dienste anpassen.'],
+    ],
+  ],
+
+  // ================= LORE / STORY-SEITE =================
+  'lore' => [
+    'label' => 'Lore / Story-Seite',
+    'icon'  => '📖',
+    'file'  => __DIR__ . '/../data/lore.json',
+    'fields' => [
+      ['name'=>'enabled','label'=>'Story-Seite veröffentlichen (im Menü zeigen)','widget'=>'boolean','default'=>false],
+      ['name'=>'navLabel','label'=>'Menü-Beschriftung','widget'=>'string','default'=>'Welt','hint'=>'Kurzer Text im Hauptmenü, z. B. „Welt", „Story" oder „Lore".'],
+      ['name'=>'title','label'=>'Seitentitel','widget'=>'string','default'=>'Die Welt von Wobbly Wizards','hint'=>'Große Überschrift ganz oben.'],
+      ['name'=>'intro','label'=>'Einleitung','widget'=>'text','hint'=>'Kurzer Teaser unter dem Titel.'],
+      ['name'=>'hero','label'=>'Hero-Bild (oben, optional)','widget'=>'image','hint'=>'Großes Stimmungsbild im Querformat, ca. 2000×1100 px.'],
+      ['name'=>'scenes','label'=>'Kapitel / Szenen','widget'=>'list','summary'=>'heading','label_singular'=>'Szene',
+        'hint'=>'Beim Scrollen erscheint Szene für Szene. Bild abwechselnd links/rechts oder als Vollbild-Hintergrund.','fields'=>[
+        ['name'=>'heading','label'=>'Überschrift','widget'=>'string'],
+        ['name'=>'text','label'=>'Text','widget'=>'markdown'],
+        ['name'=>'image','label'=>'Bild','widget'=>'image','hint'=>'Quer- oder Hochformat. Bei „Vollbild" am besten Querformat ≥ 1920 px.'],
+        ['name'=>'align','label'=>'Bild-Anordnung','widget'=>'select','default'=>'auto','options'=>[
+          'auto'=>'Automatisch abwechselnd','left'=>'Bild links','right'=>'Bild rechts','full'=>'Vollbild-Hintergrund',
+        ]],
+      ]],
     ],
   ],
 

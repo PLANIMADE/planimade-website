@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "38";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "39";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
@@ -385,6 +385,42 @@
         });
     }
 
+    // Magie-Funken am Mauszeiger (im Admin unter „Hintergrund & Atmosphäre" aktivierbar)
+    function initCursorSparkles() {
+        const bg = (DATA.studio && DATA.studio.background) || {};
+        if (!bg.cursorSparkles) return;
+        if (!matchMedia("(pointer: fine)").matches) return;   // nur echte Maus, kein Touch
+        const layer = document.createElement("div");
+        layer.className = "pg-spark-layer";
+        document.body.appendChild(layer);
+        let last = 0;
+        addEventListener("mousemove", (e) => {
+            const now = performance.now();
+            if (now - last < 36) return;                       // drosseln
+            last = now;
+            spark(e.clientX, e.clientY);
+        }, { passive: true });
+        function spark(x, y) {
+            const s = document.createElement("span");
+            s.className = "pg-spark";
+            const dx = (Math.random() - 0.5) * 30;
+            const dy = 8 + Math.random() * 30;                 // fällt leicht wie Funken
+            const isStar = Math.random() < 0.16;
+            if (isStar) {
+                s.classList.add("star"); s.textContent = "✨";
+                s.style.cssText = `left:${x}px;top:${y}px;font-size:${9 + Math.random() * 9}px`;
+            } else {
+                const size = 4 + Math.random() * 7;
+                s.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px`;
+            }
+            layer.appendChild(s);
+            s.animate([
+                { transform: "translate(-50%,-50%) scale(1) rotate(0deg)", opacity: .95 },
+                { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.2) rotate(${(Math.random() - 0.5) * 140}deg)`, opacity: 0 }
+            ], { duration: 620 + Math.random() * 320, easing: "cubic-bezier(.2,.6,.3,1)" }).onfinish = () => s.remove();
+        }
+    }
+
     function initScrollProgress() {
         const bar = $("#scroll-progress");
         if (!bar) return;
@@ -523,7 +559,7 @@
        ========================================================= */
     const DATA = {};
     async function loadData(...names) {
-        const map = { studio: "data/studio.json", team: "data/team.json", games: "data/games.json", patchnotes: "data/patchnotes.json", legal: "data/legal.json" };
+        const map = { studio: "data/studio.json", team: "data/team.json", games: "data/games.json", patchnotes: "data/patchnotes.json", legal: "data/legal.json", lore: "data/lore.json" };
         await Promise.all(names.map(async n => {
             if (DATA[n] !== undefined) return;   // schon geladen
             const de = await fetchJSON(map[n]);
@@ -1622,6 +1658,69 @@
         observeReveals(root);
     }
 
+    // ---------- Lore / Story-Seite (Scrollytelling) ----------
+    async function renderLore() {
+        await loadData("lore");
+        const d = DATA.lore || {};
+        const root = $("[data-lore]");
+        if (!root) return;
+        const en = LANG === "en";
+        document.title = (d.title || (en ? "World" : "Welt")) + " — PLANIGAMES";
+        const scenes = (Array.isArray(d.scenes) ? d.scenes : []).filter(s => s && (s.heading || s.text || s.image));
+
+        const hero = `<header class="lore-hero">
+            ${d.hero ? `<div class="lore-hero-bg"><img src="${esc(d.hero)}" alt="" data-lore-px></div>` : ""}
+            <div class="lore-hero-inner reveal">
+                <h1 class="font-display text-4xl md:text-6xl font-extrabold text-white leading-[1.05]">${esc(d.title || (en ? "Our world" : "Unsere Welt"))}</h1>
+                ${d.intro ? `<p class="mt-5 text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto">${esc(d.intro)}</p>` : ""}
+                ${scenes.length ? `<div class="lore-scroll-hint mt-10" aria-hidden="true">↓</div>` : ""}
+            </div></header>`;
+
+        const body = scenes.length
+            ? scenes.map((s, i) => loreScene(s, i)).join("")
+            : `<section class="px-6 py-24 text-center text-zinc-500">${en ? "The story will be told soon…" : "Die Geschichte wird bald erzählt …"}</section>`;
+
+        root.innerHTML = hero + `<div class="lore-scenes">${body}</div>`;
+        observeReveals(root);
+        initLoreParallax(root);
+    }
+    function loreScene(s, i) {
+        let align = s.align || "auto";
+        if (align === "auto") align = i % 2 === 0 ? "left" : "right";
+        if (align === "full" && s.image) {
+            return `<section class="lore-scene lore-full">
+                <div class="lore-full-bg"><img src="${esc(s.image)}" alt="" loading="lazy" data-lore-px></div>
+                <div class="lore-full-inner reveal">
+                    ${s.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-4">${esc(s.heading)}</h2>` : ""}
+                    <div class="prose-pg text-zinc-200">${md(s.text || "")}</div>
+                </div></section>`;
+        }
+        const textCol = `<div class="lore-text reveal">
+            ${s.heading ? `<h2 class="font-display text-3xl md:text-4xl font-extrabold text-white mb-4">${esc(s.heading)}</h2>` : ""}
+            <div class="prose-pg text-zinc-300">${md(s.text || "")}</div></div>`;
+        const imgCol = s.image ? `<div class="lore-img reveal"><img src="${esc(s.image)}" alt="${esc(s.heading || "")}" loading="lazy" data-lore-px></div>` : "";
+        const right = align === "right";
+        return `<section class="lore-scene lore-split ${right ? "img-right" : "img-left"}">${right ? textCol + imgCol : imgCol + textCol}</section>`;
+    }
+    function initLoreParallax(root) {
+        const imgs = $$("[data-lore-px]", root);
+        if (!imgs.length) return;
+        let ticking = false;
+        const upd = () => {
+            const vh = innerHeight;
+            imgs.forEach(img => {
+                const r = img.getBoundingClientRect();
+                if (r.bottom < -240 || r.top > vh + 240) return;
+                const off = ((r.top + r.height / 2) - vh / 2) / vh;   // -0.5 … 0.5
+                img.style.transform = `translate3d(0, ${(-off * 26).toFixed(1)}px, 0) scale(1.08)`;
+            });
+            ticking = false;
+        };
+        addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(upd); } }, { passive: true });
+        addEventListener("resize", upd, { passive: true });
+        upd();
+    }
+
     async function renderPressKit() {
         await loadData("studio", "games");
         const s = DATA.studio || {};
@@ -1749,24 +1848,31 @@
        wird in jede Seite injiziert, damit die HTML-Dateien
        schlank bleiben und Navigation überall identisch ist.
        ========================================================= */
-    const NAV = [
-        ["index.html", "nav_studio"],
-        ["games.html", "nav_games"],
-        ["devlog.php", "nav_devlog"],
-        ["kontakt.html", "nav_contact"],
-    ];
+    // Navigation – die Lore/Story-Seite erscheint nur, wenn sie im Admin aktiviert ist.
+    // Eintrag: [href, i18n-key ODER null, optionales Literal-Label]
+    function getNav() {
+        const nav = [
+            ["index.html", "nav_studio"],
+            ["games.html", "nav_games"],
+            ["devlog.php", "nav_devlog"],
+        ];
+        if (DATA.lore && DATA.lore.enabled) nav.push(["lore.html", null, DATA.lore.navLabel || (LANG === "en" ? "World" : "Welt")]);
+        nav.push(["kontakt.html", "nav_contact"]);
+        return nav;
+    }
+    const navLabel = (key, lit) => lit != null ? esc(lit) : t(key);
     function navLinks(extra = "") {
         const here = location.pathname.split("/").pop() || "index.html";
-        return NAV.map(([href, key]) => {
+        return getNav().map(([href, key, lit]) => {
             const active = !href.includes("#") && href === here;
-            return `<a href="${href}" class="${extra} ${active ? "text-white" : "text-zinc-400 hover:text-white"} transition-colors">${t(key)}</a>`;
+            return `<a href="${href}" class="${extra} ${active ? "text-white" : "text-zinc-400 hover:text-white"} transition-colors">${navLabel(key, lit)}</a>`;
         }).join("");
     }
     function mobileNavLinks() {
         const here = location.pathname.split("/").pop() || "index.html";
-        return NAV.map(([href, key], i) => {
+        return getNav().map(([href, key, lit], i) => {
             const active = !href.includes("#") && href === here;
-            return `<a href="${href}" class="mm-link${active ? " is-active" : ""}" style="--i:${i}">${t(key)}</a>`;
+            return `<a href="${href}" class="mm-link${active ? " is-active" : ""}" style="--i:${i}">${navLabel(key, lit)}</a>`;
         }).join("");
     }
     function langSwitch() {
@@ -2341,7 +2447,7 @@
 
     async function boot() {
         document.documentElement.lang = LANG;
-        await loadData("studio");   // früh laden (Hintergrund-Effekt braucht die Config)
+        await loadData("studio", "lore");   // früh laden (Hintergrund-Effekt + Menü-Eintrag der Story-Seite)
         const fx = (DATA.studio && DATA.studio.background && DATA.studio.background.effect) || "particles";
         const fxClass = { particles: "fx-particles", particles_only: "fx-particles-only", glow: "fx-glow", off: "fx-off" }[fx] || "fx-particles";
         document.body.classList.add(fxClass);
@@ -2358,6 +2464,7 @@
                 game: renderGame,
                 devlog: renderDevlog,
                 legal: renderLegal,
+                lore: renderLore,
                 presskit: renderPressKit,
                 contact: renderContact,
             }[page] || (() => {}))();
@@ -2371,6 +2478,7 @@
         initCookieBanner();
         initKonami();
         initMascot();
+        initCursorSparkles();
         initTipJar();
         initBadges();
         trackView();

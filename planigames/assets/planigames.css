@@ -77,6 +77,41 @@ body { overscroll-behavior-y: none; background: var(--bg); }
 }
 .text-stroke:hover { -webkit-text-stroke: 1px #fff; color: #fff; }
 
+/* ---------- Lore / Story-Seite (Scrollytelling) ---------- */
+.lore-hero { position: relative; min-height: 78vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 9rem 1.5rem 4rem; overflow: hidden; }
+.lore-hero-bg { position: absolute; inset: 0; z-index: 0; }
+.lore-hero-bg img { width: 100%; height: 100%; object-fit: cover; opacity: .5; will-change: transform; }
+.lore-hero::after { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(5,5,5,.35) 0%, rgba(5,5,5,.7) 60%, #050505 100%); }
+.lore-hero-inner { position: relative; z-index: 2; max-width: 50rem; }
+.lore-scroll-hint { font-size: 1.7rem; color: var(--accent); animation: loreBounce 1.8s ease-in-out infinite; }
+@keyframes loreBounce { 0%,100% { transform: translateY(0); opacity: .55; } 50% { transform: translateY(9px); opacity: 1; } }
+.lore-scenes { position: relative; }
+.lore-scene { max-width: 1100px; margin: 0 auto; padding: 5rem 1.5rem; }
+.lore-split { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
+.lore-split.img-right .lore-img { order: 2; }
+.lore-img { border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); box-shadow: 0 30px 80px -30px rgba(0,0,0,.85); aspect-ratio: 4/3; }
+.lore-img img { display: block; width: 100%; height: 100%; object-fit: cover; will-change: transform; }
+.lore-text h2 { line-height: 1.1; }
+.lore-full { position: relative; max-width: none; padding: 0; min-height: 82vh; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+.lore-full-bg { position: absolute; inset: 0; z-index: 0; }
+.lore-full-bg img { width: 100%; height: 100%; object-fit: cover; opacity: .55; will-change: transform; }
+.lore-full::after { content: ""; position: absolute; inset: 0; z-index: 1; background: radial-gradient(120% 90% at 50% 50%, rgba(5,5,5,.32), rgba(5,5,5,.84)); }
+.lore-full-inner { position: relative; z-index: 2; padding: 6rem 1.5rem; max-width: 46rem; }
+.lore-full-inner .prose-pg { margin-inline: auto; }
+@media (max-width: 760px) {
+    .lore-split { grid-template-columns: 1fr; gap: 1.6rem; }
+    .lore-split.img-right .lore-img { order: 0; }
+    .lore-scene { padding: 3.4rem 1.3rem; }
+    .lore-hero { min-height: 70vh; padding-top: 8rem; }
+}
+
+/* ---------- Magie-Funken am Mauszeiger ---------- */
+.pg-spark-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9997; overflow: hidden; }
+.pg-spark { position: fixed; border-radius: 50%; transform: translate(-50%, -50%); will-change: transform, opacity;
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 96%, #fff) 0%, var(--accent) 45%, transparent 72%);
+    box-shadow: 0 0 6px var(--accent); }
+.pg-spark.star { background: none; box-shadow: none; line-height: 1; }
+
 /* ---------- Custom Cursor ---------- */
 #cursor-dot {
     position: fixed; top: 0; left: 0; width: 7px; height: 7px;
