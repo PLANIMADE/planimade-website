@@ -963,14 +963,25 @@ function pg_imap_part($mbox, $uid, $structure, $want, $prefix = ''){
 
 /* =================== VIEW-HELFER (von index.php & mail.php genutzt) =================== */
 function pg_view_head($title){
+  // Admin als installierbare App (nur Backend): Manifest + Apple-Tags + App-Icon
+  $s = pg_load_json(PG_DATA_DIR . '/studio.json');
+  $appIcon = trim((string) ($s['pwa']['appIcon'] ?? '')) ?: '../assets/icon-180.png';
+  $appName = (trim((string) ($s['pwa']['appName'] ?? '')) ?: (trim((string) ($s['name'] ?? '')) ?: 'PLANIGAMES')) . ' Admin';
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
-     . '<meta name="viewport" content="width=device-width, initial-scale=1">'
+     . '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=54"></head><body>';
+     . '<meta name="theme-color" content="#0a0a0b">'
+     . '<link rel="manifest" href="manifest.php">'
+     . '<link rel="apple-touch-icon" href="' . pg_h($appIcon) . '">'
+     . '<meta name="apple-mobile-web-app-capable" content="yes">'
+     . '<meta name="mobile-web-app-capable" content="yes">'
+     . '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">'
+     . '<meta name="apple-mobile-web-app-title" content="' . pg_h($appName) . '">'
+     . '<link rel="stylesheet" href="assets/admin.css?v=55"></head><body>';
 }
 function pg_view_foot(){
   echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
-  echo '<script src="assets/admin.js?v=54"></script></body></html>';
+  echo '<script src="assets/admin.js?v=55"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');

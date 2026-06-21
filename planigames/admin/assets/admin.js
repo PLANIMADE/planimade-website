@@ -4,6 +4,11 @@
   let uid = Date.now() % 1000000;
   const csrf = () => (document.querySelector('input[name="csrf"]') || {}).value || "";
 
+  // Admin als installierbare App (Homescreen): Service Worker registrieren (nur über HTTPS).
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+
   const itemsBox = (c) => c.querySelector(":scope > .list-items, :scope > [data-items]");
 
   function addListItem(list) {

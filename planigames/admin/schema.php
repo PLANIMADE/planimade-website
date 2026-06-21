@@ -34,9 +34,9 @@ return [
       ['name'=>'name','label'=>'Studio-Name','widget'=>'string'],
       ['name'=>'logo','label'=>'Logo (optional)','widget'=>'image','hint'=>'Transparentes PNG/SVG, Höhe ~80 px (z. B. 240×80). Ersetzt den Schriftzug in Kopf-/Fußzeile. Leer = Wortmarke.'],
       ['name'=>'favicon','label'=>'Favicon (Browser-Tab-Icon)','widget'=>'image','hint'=>'Quadratisch, z. B. 64×64 oder 192×192 px (PNG/SVG/ICO). Separat vom Logo.'],
-      ['name'=>'pwa','label'=>'App-Symbol (Homescreen)','widget'=>'object','hint'=>'Wenn Besucher die Seite am Handy „zum Home-Bildschirm hinzufügen", öffnet sie im Vollbild wie eine App – mit diesem Symbol.','fields'=>[
+      ['name'=>'pwa','label'=>'Admin-App-Symbol (Homescreen)','widget'=>'object','hint'=>'Nur fürs Admin/Backend: Ihr könnt das Admin am Handy „zum Home-Bildschirm hinzufügen" und es öffnet im Vollbild wie eine App – mit diesem Symbol. Für normale Besucher gibt es das nicht.','fields'=>[
         ['name'=>'appIcon','label'=>'App-Icon','widget'=>'image','hint'=>'Quadratisch, mind. 512×512 px (PNG). Am besten mit etwas Rand (Sicherheitszone), sonst beschneidet Android die Ecken. Leer = Standard-Symbol.'],
-        ['name'=>'appName','label'=>'App-Name (unter dem Icon)','widget'=>'string','default'=>'PLANIGAMES'],
+        ['name'=>'appName','label'=>'App-Name (unter dem Icon)','widget'=>'string','default'=>'PLANIGAMES','hint'=>'Im Homescreen erscheint „… Admin".'],
       ]],
       ['name'=>'tagline','label'=>'Untertitel / Tagline','widget'=>'string'],
       ['name'=>'founded','label'=>'Gegründet (Jahr)','widget'=>'string'],

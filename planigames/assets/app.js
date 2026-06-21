@@ -11,8 +11,18 @@
 (() => {
     "use strict";
 
-    const VERSION = "43";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "44";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
+
+    // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
+    // ggf. noch registrierte Root-SW abmelden (der Admin-SW unter /admin/ bleibt unangetastet).
+    try {
+        if ("serviceWorker" in navigator && navigator.serviceWorker.getRegistrations) {
+            navigator.serviceWorker.getRegistrations().then((regs) => {
+                regs.forEach((r) => { if (r.scope && !/\/admin\//.test(r.scope)) r.unregister(); });
+            }).catch(() => {});
+        }
+    } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
     const $  = (s, r = document) => r.querySelector(s);
@@ -1929,26 +1939,6 @@
              + `<span class="font-display ${lg ? "text-2xl" : "text-lg"} font-extrabold uppercase tracking-[0.${lg ? "15" : "18"}em] text-white">PLANI<span class="text-gradient">GAMES</span></span>`;
     }
 
-    // PWA: Manifest + Apple-Tags ins <head> einsetzen und Service Worker registrieren.
-    // So lässt sich die Seite am Handy „Zum Homescreen hinzufügen" und öffnet im Vollbild wie eine App.
-    function initPWA() {
-        const head = document.head;
-        const has = (sel) => !!head.querySelector(sel);
-        if (!has('link[rel="manifest"]')) head.insertAdjacentHTML("beforeend", '<link rel="manifest" href="manifest.php">');
-        // Apple-Touch-Icon: eigenes App-Icon (Admin → App-Symbol) bevorzugen, sonst Standard
-        const appIcon = (DATA.studio && DATA.studio.pwa && DATA.studio.pwa.appIcon) || "assets/icon-180.png";
-        const appName = (DATA.studio && DATA.studio.pwa && DATA.studio.pwa.appName) || (DATA.studio && DATA.studio.name) || "PLANIGAMES";
-        if (!has('link[rel="apple-touch-icon"]')) head.insertAdjacentHTML("beforeend", '<link rel="apple-touch-icon" href="' + esc(appIcon) + '">');
-        if (!has('meta[name="apple-mobile-web-app-capable"]')) head.insertAdjacentHTML("beforeend",
-            '<meta name="apple-mobile-web-app-capable" content="yes">'
-          + '<meta name="mobile-web-app-capable" content="yes">'
-          + '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">'
-          + '<meta name="apple-mobile-web-app-title" content="' + esc(appName) + '">');
-        if ("serviceWorker" in navigator && location.protocol === "https:") {
-            addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
-        }
-    }
-
     function injectChrome() {
         // Pflicht-Effekte oben einsetzen (falls noch nicht vorhanden)
         if (!$("#scroll-progress")) {
@@ -2503,7 +2493,6 @@
     async function boot() {
         document.documentElement.lang = LANG;
         await loadData("studio");   // früh laden (Hintergrund-Effekt braucht die Config)
-        initPWA();            // Homescreen-Installierbarkeit (nutzt das im Admin gesetzte App-Icon)
         const fx = (DATA.studio && DATA.studio.background && DATA.studio.background.effect) || "particles";
         const fxClass = { particles: "fx-particles", particles_only: "fx-particles-only", glow: "fx-glow", off: "fx-off" }[fx] || "fx-particles";
         document.body.classList.add(fxClass);
