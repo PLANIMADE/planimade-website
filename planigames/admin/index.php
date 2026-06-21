@@ -456,37 +456,67 @@ if (($_GET['view'] ?? '') === 'subscribers') {
   exit;
 }
 
-/* ---- Beta-Warteliste: Ranking-Helfer (gespiegelt aus waitlist.php) ---- */
-function pg_adm_wl_referrals($list, $code){
+/* ---- Beta-Warteliste / Vorschläge: Bereich-Helfer ---- */
+/* Bereich (scope) → Anzeigename: Spieltitel oder „Startseite". */
+function pg_scope_labels(){
+  $map = ['' => '🏠 Startseite'];
+  $g = pg_load_json(PG_DATA_DIR . '/games.json');
+  foreach (($g['games'] ?? []) as $game) {
+    $slug = strtolower(trim((string) ($game['slug'] ?? '')));
+    if ($slug !== '') $map[$slug] = '🎮 ' . ($game['title'] ?? $slug);
+  }
+  return $map;
+}
+function pg_scope_label($scope){
+  $scope = strtolower(trim((string) $scope));
+  $m = pg_scope_labels();
+  return $m[$scope] ?? ('🎮 ' . $scope);
+}
+
+/* ---- Beta-Warteliste: Ranking-Helfer (pro Bereich, gespiegelt aus waitlist.php) ---- */
+function pg_adm_wl_scope($raw){ return preg_replace('/[^a-z0-9\-]/', '', strtolower((string) $raw)); }
+function pg_adm_wl_referrals($scoped, $code){
   if ($code === '') return 0;
-  $n = 0; foreach ($list as $e) if (($e['ref'] ?? '') === $code) $n++;
+  $n = 0; foreach ($scoped as $e) if (($e['ref'] ?? '') === $code) $n++;
   return $n;
 }
-function pg_adm_wl_ranked($list){
-  $rows = array_values(array_filter($list, fn($e) => is_array($e) && !empty($e['email'])));
-  usort($rows, function ($a, $b) use ($list) {
-    $ra = pg_adm_wl_referrals($list, $a['code'] ?? '');
-    $rb = pg_adm_wl_referrals($list, $b['code'] ?? '');
+function pg_adm_wl_ranked($scoped){
+  $rows = array_values($scoped);
+  usort($rows, function ($a, $b) use ($rows) {
+    $ra = pg_adm_wl_referrals($rows, $a['code'] ?? '');
+    $rb = pg_adm_wl_referrals($rows, $b['code'] ?? '');
     if ($ra !== $rb) return $rb <=> $ra;
     return strcmp((string)($a['date'] ?? ''), (string)($b['date'] ?? ''));
   });
   return $rows;
+}
+/* Liste → [ scope => ranked rows[] ] (Startseite zuerst, dann alphabetisch) */
+function pg_adm_wl_groups($list){
+  $byScope = [];
+  foreach ($list as $e) {
+    if (!is_array($e) || empty($e['email'])) continue;
+    $byScope[pg_adm_wl_scope($e['scope'] ?? '')][] = $e;
+  }
+  uksort($byScope, fn($a, $b) => $a === '' ? -1 : ($b === '' ? 1 : strcmp($a, $b)));
+  foreach ($byScope as $sc => $rows) $byScope[$sc] = pg_adm_wl_ranked($rows);
+  return $byScope;
 }
 
 /* ---- Beta-Warteliste: CSV-Export ---- */
 if ($action === 'waitlist_csv') {
   if (!pg_can('subscribers')) { http_response_code(403); exit('Keine Berechtigung.'); }
   $list = pg_load_json(PG_DATA_DIR . '/waitlist.json'); if (!is_array($list)) $list = [];
-  $ranked = pg_adm_wl_ranked($list);
   header('Content-Type: text/csv; charset=utf-8');
   header('Content-Disposition: attachment; filename="beta-warteliste.csv"');
   $out = fopen('php://output', 'w');
-  fputcsv($out, ['position', 'email', 'date', 'referrals', 'code', 'referred_by']);
-  $pos = 0;
-  foreach ($ranked as $r) {
-    $pos++;
-    fputcsv($out, [$pos, $r['email'] ?? '', $r['date'] ?? '',
-      pg_adm_wl_referrals($list, $r['code'] ?? ''), $r['code'] ?? '', $r['ref'] ?? '']);
+  fputcsv($out, ['bereich', 'position', 'email', 'date', 'referrals', 'code', 'referred_by']);
+  foreach (pg_adm_wl_groups($list) as $sc => $ranked) {
+    $label = pg_scope_label($sc); $pos = 0;
+    foreach ($ranked as $r) {
+      $pos++;
+      fputcsv($out, [$label, $pos, $r['email'] ?? '', $r['date'] ?? '',
+        pg_adm_wl_referrals($ranked, $r['code'] ?? ''), $r['code'] ?? '', $r['ref'] ?? '']);
+    }
   }
   fclose($out); exit;
 }
@@ -499,12 +529,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_waitlist'])) {
   header('Location: index.php?view=waitlist&cleared=1'); exit;
 }
 
-/* ---- Beta-Warteliste: Ansicht ---- */
+/* ---- Beta-Warteliste: Ansicht (pro Bereich gruppiert) ---- */
 if (($_GET['view'] ?? '') === 'waitlist') {
   if (!pg_can('subscribers')) { header('Location: index.php'); exit; }
   $list = pg_load_json(PG_DATA_DIR . '/waitlist.json'); if (!is_array($list)) $list = [];
-  $ranked = pg_adm_wl_ranked($list);
-  $total = count($ranked);
+  $groups = pg_adm_wl_groups($list);
+  $total = array_sum(array_map('count', $groups));
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
   $wlOn = !empty($studio['waitlist']['enabled']);
   pg_view_head('Beta-Warteliste');
@@ -513,29 +543,32 @@ if (($_GET['view'] ?? '') === 'waitlist') {
   if (isset($_GET['cleared'])) echo '<div class="flash ok">✓ Warteliste geleert.</div>';
   echo '<div class="editor-head"><div><h1>📋 Beta-Warteliste</h1>'
      . '<p class="muted">' . $total . ' Anmeldung' . ($total === 1 ? '' : 'en')
-     . ' · Reihenfolge nach Empfehlungen, dann Anmeldedatum. '
+     . ' · jeder Bereich hat ein eigenes Ranking (Empfehlungen, dann Anmeldedatum). '
      . ($wlOn ? '<span style="color:#9ff0b5">● aktiv</span>' : '<span style="color:#ffb37a">● ausgeblendet</span> – unter Studio &amp; Startseite aktivierbar.')
      . '</p></div>';
-  if ($ranked) echo '<a class="btn-primary" href="index.php?action=waitlist_csv">CSV exportieren</a>';
+  if ($total) echo '<a class="btn-primary" href="index.php?action=waitlist_csv">CSV exportieren</a>';
   echo '</div>';
-  if (!$ranked) {
+  if (!$total) {
     echo '<p class="muted">Noch keine Anmeldungen.</p>';
   } else {
-    echo '<table class="subs"><thead><tr><th>#</th><th>E-Mail</th><th>Empfehlungen</th><th>Datum</th><th>Geworben von</th></tr></thead><tbody>';
-    $byCode = [];
-    foreach ($ranked as $r) if (!empty($r['code'])) $byCode[$r['code']] = $r['email'] ?? '';
-    $pos = 0;
-    foreach ($ranked as $r) {
-      $pos++;
-      $refs = pg_adm_wl_referrals($list, $r['code'] ?? '');
-      $by = ($r['ref'] ?? '') !== '' ? ($byCode[$r['ref']] ?? '—') : '—';
-      $medal = $pos === 1 ? '🥇 ' : ($pos === 2 ? '🥈 ' : ($pos === 3 ? '🥉 ' : ''));
-      echo '<tr><td>' . $medal . $pos . '</td><td>' . pg_h($r['email'] ?? '') . '</td><td><b>'
-         . $refs . '</b></td><td>' . pg_h(substr($r['date'] ?? '', 0, 10)) . '</td><td>'
-         . pg_h($by) . '</td></tr>';
+    foreach ($groups as $sc => $ranked) {
+      echo '<h2 class="sub-h">' . pg_h(pg_scope_label($sc)) . ' <span class="muted" style="font-weight:400">· ' . count($ranked) . '</span></h2>';
+      echo '<table class="subs"><thead><tr><th>#</th><th>E-Mail</th><th>Empfehlungen</th><th>Datum</th><th>Geworben von</th></tr></thead><tbody>';
+      $byCode = [];
+      foreach ($ranked as $r) if (!empty($r['code'])) $byCode[$r['code']] = $r['email'] ?? '';
+      $pos = 0;
+      foreach ($ranked as $r) {
+        $pos++;
+        $refs = pg_adm_wl_referrals($ranked, $r['code'] ?? '');
+        $by = ($r['ref'] ?? '') !== '' ? ($byCode[$r['ref']] ?? '—') : '—';
+        $medal = $pos === 1 ? '🥇 ' : ($pos === 2 ? '🥈 ' : ($pos === 3 ? '🥉 ' : ''));
+        echo '<tr><td>' . $medal . $pos . '</td><td>' . pg_h($r['email'] ?? '') . '</td><td><b>'
+           . $refs . '</b></td><td>' . pg_h(substr($r['date'] ?? '', 0, 10)) . '</td><td>'
+           . pg_h($by) . '</td></tr>';
+      }
+      echo '</tbody></table>';
     }
-    echo '</tbody></table>';
-    echo '<form method="post" class="clear-form" onsubmit="return confirm(\'Wirklich die GESAMTE Warteliste löschen? (Vorher exportieren!)\')">'
+    echo '<form method="post" class="clear-form" onsubmit="return confirm(\'Wirklich die GESAMTE Warteliste (alle Bereiche) löschen? (Vorher exportieren!)\')">'
        . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
        . '<button class="btn-danger" name="clear_waitlist" value="1">Warteliste löschen</button></form>';
   }
@@ -754,22 +787,23 @@ if (($_GET['view'] ?? '') === 'suggestions' || isset($_POST['approve_sugg']) || 
   pg_view_topbar($SCHEMA, null);
   $csrf = pg_h(pg_csrf());
   echo '<div class="editor wide">';
-  echo '<div class="editor-head"><div><h1>💡 Vorschläge</h1><p class="muted">' . count($pending) . ' zu prüfen · ' . count($approved) . ' veröffentlicht. Freigegebene erscheinen in der Vorschlagsbox auf der Startseite.</p></div></div>';
+  echo '<div class="editor-head"><div><h1>💡 Vorschläge</h1><p class="muted">' . count($pending) . ' zu prüfen · ' . count($approved) . ' veröffentlicht. Der „Bereich" zeigt, ob ein Vorschlag von der Startseite oder einer Spiel-Seite kommt.</p></div></div>';
   echo '<h2 class="sub-h">Zu prüfen</h2>';
   if (!$pending) echo '<div class="mailnote">Nichts zu prüfen. 🎉</div>';
   else {
     echo '<div class="contacts">';
     foreach ($pending as $s) {
-      echo '<div class="contact-card st-offen"><div class="contact-msg">' . pg_h($s['text'] ?? '') . '</div>'
+      echo '<div class="contact-card st-offen"><div class="contact-msg">' . pg_h($s['text'] ?? '')
+         . ' <span class="badge" style="margin-left:.4rem;opacity:.8">' . pg_h(pg_scope_label($s['scope'] ?? '')) . '</span></div>'
          . '<div class="contact-actions"><form method="post" style="margin:0"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($s['id'] ?? '') . '"><button class="btn-add" name="approve_sugg" value="1">✓ Freigeben</button></form>'
          . '<form method="post" style="margin:0" onsubmit="return confirm(\'Löschen?\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($s['id'] ?? '') . '"><button class="btn-danger sm" name="del_sugg" value="1">Löschen</button></form></div></div>';
     }
     echo '</div>';
   }
   if ($approved) {
-    echo '<h2 class="sub-h">Veröffentlicht (nach Stimmen)</h2><table class="subs"><thead><tr><th>Vorschlag</th><th>Stimmen</th><th>Status</th><th></th></tr></thead><tbody>';
+    echo '<h2 class="sub-h">Veröffentlicht (nach Stimmen)</h2><table class="subs"><thead><tr><th>Vorschlag</th><th>Bereich</th><th>Stimmen</th><th>Status</th><th></th></tr></thead><tbody>';
     foreach ($approved as $s) {
-      echo '<tr><td>' . pg_h($s['text'] ?? '') . '</td><td>' . (int) ($s['votes'] ?? 0) . '</td>'
+      echo '<tr><td>' . pg_h($s['text'] ?? '') . '</td><td>' . pg_h(pg_scope_label($s['scope'] ?? '')) . '</td><td>' . (int) ($s['votes'] ?? 0) . '</td>'
          . '<td><form method="post" style="margin:0;display:flex;gap:.3rem"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($s['id'] ?? '') . '"><select name="status" onchange="this.form.querySelector(\'[name=sugg_status]\').click()">';
       foreach ($stLabels as $k => $lbl) echo '<option value="' . $k . '"' . (($s['status'] ?? 'open') === $k ? ' selected' : '') . '>' . $lbl . '</option>';
       echo '</select><button type="submit" name="sugg_status" value="1" hidden></button></form></td>'

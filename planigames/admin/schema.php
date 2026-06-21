@@ -336,6 +336,15 @@ return [
             ['name'=>'itchEmbed','label'=>'itch.io Widget-URL','widget'=>'string','hint'=>'Auf itch.io unter „Distribute → Widget" die iframe-Adresse kopieren.'],
             ['name'=>'height','label'=>'Höhe (px, nur itch.io)','widget'=>'number','default'=>167],
           ]],
+          'suggestions'=>['label'=>'Vorschlagsbox (Community-Voting)','fields'=>[
+            ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Was sollen wir als Nächstes bauen?'],
+            ['name'=>'intro','label'=>'Einleitung','widget'=>'text','hint'=>'Kurzer Text über dem Eingabefeld.'],
+          ],'hint'=>'Besucher schlagen Ideen für DIESES Spiel vor und stimmen ab. Freigabe & Status unter „💡 Vorschläge" im Menü.'],
+          'waitlist'=>['label'=>'Beta-Warteliste (Empfehlungslink)','fields'=>[
+            ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Sei bei der Beta dabei'],
+            ['name'=>'intro','label'=>'Einleitung','widget'=>'text'],
+            ['name'=>'successText','label'=>'Erfolgs-Text','widget'=>'string','default'=>'Du bist dabei! 🎉 Teile deinen Link, um aufzusteigen.'],
+          ],'hint'=>'Eigene Warteliste & eigenes Empfehlungs-Ranking nur für DIESES Spiel. Anmeldungen unter „📋 Beta-Warteliste".'],
           'spacer'=>['label'=>'Abstand / Leerraum','fields'=>[
             ['name'=>'size','label'=>'Höhe (px)','widget'=>'number','default'=>48],
           ]],

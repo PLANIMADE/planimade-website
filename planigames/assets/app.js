@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "33";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "34";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
@@ -654,27 +654,36 @@
     }
 
     // Vorschlagsbox (Community-Ideen mit Upvotes) – vor der Newsletter-Sektion
+    // Innenleben der Vorschlagsbox – auf Startseite (scope="") und als Game-Block (scope=Slug) gleich.
+    function suggBoxInner(cfg, scope) {
+        const en = LANG === "en";
+        return `
+            <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3 text-center">${esc(cfg.heading || (en ? "What should we build next?" : "Was sollen wir als Nächstes bauen?"))}</h2>
+            ${cfg.intro ? `<p class="text-zinc-400 text-center max-w-xl mx-auto mb-9">${esc(cfg.intro)}</p>` : ""}
+            <form data-sugg-form data-scope="${esc(scope || "")}" class="flex flex-col sm:flex-row gap-3 mb-8">
+                <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
+                <input name="text" required maxlength="200" placeholder="${en ? "Your idea…" : "Deine Idee…"}" class="flex-1 bg-black/30 border border-white/15 rounded-full px-6 py-4 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none">
+                <button class="btn-accent magnetic px-8 py-4 rounded-full font-semibold whitespace-nowrap">${en ? "Submit" : "Einreichen"}</button>
+            </form>
+            <p data-sugg-msg class="text-sm text-center mb-6 hidden"></p>
+            <div data-sugg-list class="flex flex-col gap-3"></div>`;
+    }
+
     function renderSuggestions(s) {
         const cfg = s.suggestions || {};
         if (!cfg.enabled) return;
         const nl = $("[data-newsletter-section]");
         const sec = document.createElement("section");
         sec.className = "relative px-6 py-12 md:py-20";
-        sec.innerHTML = `
-            <div class="max-w-3xl mx-auto reveal">
-                <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3 text-center">${esc(cfg.heading || "Was sollen wir als Nächstes bauen?")}</h2>
-                ${cfg.intro ? `<p class="text-zinc-400 text-center max-w-xl mx-auto mb-9">${esc(cfg.intro)}</p>` : ""}
-                <form data-sugg-form class="flex flex-col sm:flex-row gap-3 mb-8">
-                    <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
-                    <input name="text" required maxlength="200" placeholder="${LANG === "en" ? "Your idea…" : "Deine Idee…"}" class="flex-1 bg-black/30 border border-white/15 rounded-full px-6 py-4 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none">
-                    <button class="btn-accent magnetic px-8 py-4 rounded-full font-semibold whitespace-nowrap">${LANG === "en" ? "Submit" : "Einreichen"}</button>
-                </form>
-                <p data-sugg-msg class="text-sm text-center mb-6 hidden"></p>
-                <div data-sugg-list class="flex flex-col gap-3"></div>
-            </div>`;
+        sec.innerHTML = `<div class="max-w-3xl mx-auto reveal">${suggBoxInner(cfg, "")}</div>`;
         if (nl && nl.parentNode) nl.parentNode.insertBefore(sec, nl); else document.body.appendChild(sec);
         observeReveals(sec);
         initSuggestions(sec);
+    }
+
+    // Vorschlagsbox als Game-Block (bezieht sich auf dieses Spiel)
+    function blockSuggestions(b, g) {
+        return `<section class="relative px-6 py-12 md:py-20"><div class="max-w-3xl mx-auto reveal">${suggBoxInner(b, g.slug || "")}</div></section>`;
     }
 
     async function initSuggestions(sec) {
@@ -682,6 +691,8 @@
         const list = sec.querySelector("[data-sugg-list]");
         const form = sec.querySelector("[data-sugg-form]");
         const msg = sec.querySelector("[data-sugg-msg]");
+        const scope = form.dataset.scope || "";
+        const q = scope ? "?scope=" + encodeURIComponent(scope) : "";
         let voted = {};
         try { voted = JSON.parse(localStorage.getItem("pg_sugg_voted") || "{}"); } catch {}
         const stLabel = { planned: en ? "Planned" : "Geplant", done: en ? "Done" : "Umgesetzt" };
@@ -695,7 +706,7 @@
                     ${s.status && s.status !== "open" ? `<span class="badge px-2 py-0.5 rounded-full border ${s.status === "done" ? "border-emerald-400/40 text-emerald-300" : "border-[color:var(--accent)]/40 text-[color:var(--accent)]"}">${stLabel[s.status] || ""}</span>` : ""}
                 </div>`).join("") : `<p class="text-zinc-500 text-sm text-center">${en ? "No suggestions yet — add the first!" : "Noch keine Vorschläge — mach den Anfang!"}</p>`;
         };
-        async function load() { try { const r = await fetch("suggestions.php"); render((await r.json()).suggestions || []); } catch {} }
+        async function load() { try { const r = await fetch("suggestions.php" + q); render((await r.json()).suggestions || []); } catch {} }
         await load();
         list.addEventListener("click", async (e) => {
             const btn = e.target.closest("[data-vote]"); if (!btn) return;
@@ -710,6 +721,7 @@
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
             const fd = new FormData(form);
+            if (scope) fd.append("scope", scope);
             msg.className = "text-sm text-center mb-6 text-zinc-400"; msg.textContent = en ? "Sending…" : "Wird gesendet…";
             try {
                 const r = await fetch("suggestions.php", { method: "POST", body: fd });
@@ -724,50 +736,63 @@
         });
     }
 
+    // Innenleben der Warteliste – auf Startseite (scope="") und als Game-Block (scope=Slug) gleich.
+    function wlBoxInner(cfg, scope) {
+        const en = LANG === "en";
+        return `
+            <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3 text-center">${esc(cfg.heading || (en ? "Join the beta" : "Sei bei der Beta dabei"))}</h2>
+            ${cfg.intro ? `<p class="text-zinc-400 text-center max-w-xl mx-auto mb-8">${esc(cfg.intro)}</p>` : ""}
+            <form data-wl-form data-scope="${esc(scope || "")}" data-success="${esc(cfg.successText || "")}" class="flex flex-col sm:flex-row gap-3">
+                <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
+                <input name="email" type="email" required placeholder="${en ? "your@email.com" : "deine@email.de"}" class="flex-1 bg-black/30 border border-white/15 rounded-full px-6 py-4 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none">
+                <button class="btn-accent magnetic px-8 py-4 rounded-full font-semibold whitespace-nowrap">${en ? "Join waitlist" : "Eintragen"}</button>
+            </form>
+            <p data-wl-msg class="text-sm text-center mt-4 hidden"></p>
+            <div data-wl-status class="hidden mt-7 rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-center"></div>`;
+    }
+
     // Beta-Warteliste mit Empfehlungslink – vor der Newsletter-Sektion
     function renderWaitlist(s) {
         const cfg = s.waitlist || {};
         if (!cfg.enabled) return;
-        const en = LANG === "en";
         const nl = $("[data-newsletter-section]");
         const sec = document.createElement("section");
         sec.className = "relative px-6 py-12 md:py-20";
-        sec.innerHTML = `
-            <div class="max-w-2xl mx-auto reveal">
-                <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3 text-center">${esc(cfg.heading || (en ? "Join the beta" : "Sei bei der Beta dabei"))}</h2>
-                ${cfg.intro ? `<p class="text-zinc-400 text-center max-w-xl mx-auto mb-8">${esc(cfg.intro)}</p>` : ""}
-                <form data-wl-form class="flex flex-col sm:flex-row gap-3">
-                    <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
-                    <input name="email" type="email" required placeholder="${en ? "your@email.com" : "deine@email.de"}" class="flex-1 bg-black/30 border border-white/15 rounded-full px-6 py-4 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none">
-                    <button class="btn-accent magnetic px-8 py-4 rounded-full font-semibold whitespace-nowrap">${en ? "Join waitlist" : "Eintragen"}</button>
-                </form>
-                <p data-wl-msg class="text-sm text-center mt-4 hidden"></p>
-                <div data-wl-status class="hidden mt-7 rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-center"></div>
-            </div>`;
+        sec.innerHTML = `<div class="max-w-2xl mx-auto reveal">${wlBoxInner(cfg, "")}</div>`;
         if (nl && nl.parentNode) nl.parentNode.insertBefore(sec, nl); else document.body.appendChild(sec);
         observeReveals(sec);
-        initWaitlist(sec, cfg);
+        initWaitlist(sec);
     }
 
-    function initWaitlist(sec, cfg) {
+    // Warteliste als Game-Block (eigene Liste & eigenes Ranking pro Spiel)
+    function blockWaitlist(b, g) {
+        return `<section class="relative px-6 py-12 md:py-20"><div class="max-w-2xl mx-auto reveal">${wlBoxInner(b, g.slug || "")}</div></section>`;
+    }
+
+    function initWaitlist(sec) {
         const en = LANG === "en";
         const form = sec.querySelector("[data-wl-form]");
         const msg = sec.querySelector("[data-wl-msg]");
         const statusBox = sec.querySelector("[data-wl-status]");
+        const scope = form.dataset.scope || "";
+        const successText = form.dataset.success || "";
+        const sfx = scope ? "_" + scope : "";                       // eigene Speicher-Keys je Bereich
+        const scopeQ = scope ? "&scope=" + encodeURIComponent(scope) : "";
 
-        // Empfehlungs-Code aus ?ref= merken (auch für späteres Eintragen)
+        // Empfehlungs-Code aus ?ref= merken (nur für diesen Bereich)
         try {
             const r = qs.get("ref");
-            if (r) localStorage.setItem("pg_wl_ref", r.replace(/[^a-z0-9]/gi, "").toLowerCase());
+            if (r) localStorage.setItem("pg_wl_ref" + sfx, r.replace(/[^a-z0-9]/gi, "").toLowerCase());
         } catch {}
 
-        const refLink = (code) => location.origin + location.pathname.replace(/[^/]*$/, "") + "?ref=" + code;
+        // Empfehlungslink = aktuelle Seite (inkl. Spiel-Slug) + ?ref=CODE
+        const refLink = (code) => { try { const u = new URL(location.href); u.searchParams.set("ref", code); u.hash = ""; return u.toString(); } catch { return location.href; } };
         function showStatus(d) {
             form.classList.add("hidden");
             statusBox.classList.remove("hidden");
             const link = refLink(d.code);
             statusBox.innerHTML = `
-                <p class="text-lg font-semibold text-white mb-1">${esc(cfg.successText || (en ? "You're in! 🎉" : "Du bist dabei! 🎉"))}</p>
+                <p class="text-lg font-semibold text-white mb-1">${esc(successText || (en ? "You're in! 🎉" : "Du bist dabei! 🎉"))}</p>
                 <p class="text-zinc-300 mb-4">${en ? "Your spot:" : "Dein Platz:"} <span class="text-[color:var(--accent)] font-extrabold text-2xl">#${d.position}</span>
                     ${d.referrals ? ` · ${d.referrals} ${en ? "referred" : "geworben"}` : ""}</p>
                 <p class="text-sm text-zinc-400 mb-2">${en ? "Move up by inviting friends with your link:" : "Steig auf, indem du Freunde mit deinem Link einlädst:"}</p>
@@ -784,16 +809,17 @@
 
         // Schon eingetragen? Stand laden
         let token = "";
-        try { token = localStorage.getItem("pg_wl_token") || ""; } catch {}
+        try { token = localStorage.getItem("pg_wl_token" + sfx) || ""; } catch {}
         if (token) {
-            fetch("waitlist.php?status=" + encodeURIComponent(token)).then(r => r.json()).then(d => { if (d && d.ok) showStatus(d); }).catch(() => {});
+            fetch("waitlist.php?status=" + encodeURIComponent(token) + scopeQ).then(r => r.json()).then(d => { if (d && d.ok) showStatus(d); }).catch(() => {});
         }
 
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
             const fd = new FormData(form);
-            let ref = ""; try { ref = localStorage.getItem("pg_wl_ref") || ""; } catch {}
+            let ref = ""; try { ref = localStorage.getItem("pg_wl_ref" + sfx) || ""; } catch {}
             if (ref) fd.append("ref", ref);
+            if (scope) fd.append("scope", scope);
             msg.className = "text-sm text-center mt-4 text-zinc-400"; msg.classList.remove("hidden");
             msg.textContent = en ? "Joining…" : "Wird eingetragen…";
             try {
@@ -801,7 +827,7 @@
                 const j = await r.json();
                 if (j.error) { msg.className = "text-sm text-center mt-4 text-red-400"; msg.textContent = j.error; return; }
                 msg.classList.add("hidden");
-                if (j.token) { try { localStorage.setItem("pg_wl_token", j.token); } catch {} }
+                if (j.token) { try { localStorage.setItem("pg_wl_token" + sfx, j.token); } catch {} }
                 showStatus(j);
                 if (!j.already) { confetti({ count: 80, y: innerHeight * 0.55 }); pgBadge("subscriber"); }
             } catch { msg.className = "text-sm text-center mt-4 text-red-400"; msg.textContent = en ? "Something went wrong." : "Etwas ist schiefgelaufen."; }
@@ -988,6 +1014,9 @@
 
         initTilt(root); initMagnetic(); observeReveals(root);
         initLightbox(); initFaq(root); initCountdowns(root); initCounters(root); initRoadmapBars(root);
+        // Interaktive Community-Blöcke dieses Spiels starten (Vorschläge / Warteliste)
+        $$("[data-sugg-form]", root).forEach(f => initSuggestions(f.closest("section")));
+        $$("[data-wl-form]", root).forEach(f => initWaitlist(f.closest("section")));
     }
 
     // Roadmap-Fortschrittsbalken auf die Zielbreite animieren, sobald sichtbar
@@ -1023,6 +1052,8 @@
             case "download": return blockDownload(b, g);
             case "requirements": return blockRequirements(b);
             case "storewidget": return blockStoreWidget(b);
+            case "suggestions": return blockSuggestions(b, g);
+            case "waitlist": return blockWaitlist(b, g);
             case "spacer": return `<div style="height:${Math.max(0, +b.size || 48)}px"></div>`;
             default: return "";
         }
