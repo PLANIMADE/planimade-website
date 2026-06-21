@@ -2204,7 +2204,7 @@ if ($i18n) {
   $tb .= $missAll === 0
     ? '<div class="dp-foot" style="color:#9ff0b5">Alles übersetzt – super! 🎉</div>'
     : '<div class="i18n-hint">Leere EN-Felder fallen auf der Website automatisch auf Deutsch zurück.</div>';
-  $ov .= '<section class="dash-panel">' . $th . $tb . '</section>';
+  $ov .= '<section class="dash-panel dash-i18n">' . $th . $tb . '</section>';
 }
 
 echo '<div class="dash-grid">' . $ov . '</div>';
