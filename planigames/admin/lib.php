@@ -964,11 +964,11 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<link rel="stylesheet" href="assets/admin.css?v=46"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=47"></head><body>';
 }
 function pg_view_foot(){
   echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
-  echo '<script src="assets/admin.js?v=46"></script></body></html>';
+  echo '<script src="assets/admin.js?v=47"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -1156,6 +1156,85 @@ function pg_translate_value($f, $val){
       }, $val);
   }
   return $val;
+}
+
+/* ---------------- Übersetzungs-Status (DE → EN Lücken) ----------------
+ * Zählt übersetzbare Textfelder und wie viele davon auf Englisch noch leer sind.
+ * Die Auswahl, was übersetzbar ist, spiegelt pg_translate_value() exakt wider. */
+function pg_i18n_count($fields, $de, $en){
+  $t = 0; $m = 0;
+  $de = is_array($de) ? $de : [];
+  $en = is_array($en) ? $en : [];
+  foreach ($fields as $f) {
+    if (($f['widget'] ?? '') === 'heading') continue;
+    $name = $f['name'] ?? '';
+    if ($name === '' || !array_key_exists($name, $de)) continue;
+    [$ct, $cm] = pg_i18n_value($f, $de[$name], $en[$name] ?? null);
+    $t += $ct; $m += $cm;
+  }
+  return [$t, $m];
+}
+function pg_i18n_value($f, $dval, $eval){
+  $w = $f['widget'] ?? '';
+  if (in_array($w, ['select','date','datetime','image','file','color','number','boolean'], true)) return [0, 0];
+  if (!empty($f['slug'])) return [0, 0];
+  if (preg_match('/url$/i', $f['name'] ?? '') || in_array($f['name'] ?? '', ['email','accent','accent2','game','slug','icon','emoji'], true)) return [0, 0];
+  switch ($w) {
+    case 'string': case 'text': case 'markdown':
+      if (trim((string) $dval) === '') return [0, 0];          // auf Deutsch leer = nichts zu übersetzen
+      return [1, trim((string) $eval) === '' ? 1 : 0];
+    case 'object':
+      return pg_i18n_count($f['fields'] ?? [], is_array($dval) ? $dval : [], is_array($eval) ? $eval : []);
+    case 'list':
+      if (!is_array($dval)) return [0, 0];
+      if (isset($f['field'])) {                                 // einfache Werteliste
+        if (in_array($f['field']['widget'] ?? '', ['image','file'], true)) return [0, 0];
+        $t = 0; $m = 0;
+        foreach ($dval as $i => $v) {
+          if (trim((string) $v) === '') continue;
+          $t++;
+          $ev = (is_array($eval) && array_key_exists($i, $eval)) ? trim((string) $eval[$i]) : '';
+          if ($ev === '') $m++;
+        }
+        return [$t, $m];
+      }
+      $t = 0; $m = 0;
+      foreach ($dval as $i => $it) {
+        $eit = (is_array($eval) && isset($eval[$i])) ? $eval[$i] : [];
+        [$ct, $cm] = pg_i18n_count($f['fields'] ?? [], is_array($it) ? $it : [], is_array($eit) ? $eit : []);
+        $t += $ct; $m += $cm;
+      }
+      return [$t, $m];
+    case 'blocks':
+      if (!is_array($dval)) return [0, 0];
+      $t = 0; $m = 0;
+      foreach ($dval as $i => $it) {
+        $type = $it['type'] ?? '';
+        if (!isset($f['types'][$type])) continue;
+        $eit = (is_array($eval) && isset($eval[$i])) ? $eval[$i] : [];
+        if (($eit['type'] ?? '') !== $type) $eit = [];           // anders sortiert/abweichend = nicht übersetzt
+        [$ct, $cm] = pg_i18n_count($f['types'][$type]['fields'] ?? [], is_array($it) ? $it : [], is_array($eit) ? $eit : []);
+        $t += $ct; $m += $cm;
+      }
+      return [$t, $m];
+  }
+  return [0, 0];
+}
+/* Pro Sammlung: [key => [label,icon,total,missing,enExists]] – nur bearbeitbare mit Textinhalt. */
+function pg_i18n_report($SCHEMA){
+  $rows = [];
+  foreach ($SCHEMA as $key => $coll) {
+    if (empty($coll['file']) || !pg_can($key)) continue;
+    $de = pg_load_json($coll['file']);
+    $enFile = pg_lang_file($coll['file'], 'en');
+    $enExists = is_file($enFile);
+    $en = $enExists ? pg_load_json($enFile) : [];
+    [$t, $m] = pg_i18n_count($coll['fields'] ?? [], is_array($de) ? $de : [], is_array($en) ? $en : []);
+    if ($t === 0) continue;                                      // nichts Übersetzbares → uninteressant
+    $rows[$key] = ['label' => $coll['label'], 'icon' => $coll['icon'] ?? '📄',
+      'total' => $t, 'missing' => $m, 'enExists' => $enExists];
+  }
+  return $rows;
 }
 
 /* ---------------- CSRF ---------------- */

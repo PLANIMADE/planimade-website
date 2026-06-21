@@ -2173,6 +2173,39 @@ if (pg_can('subscribers')) {
   }
   $ov .= '<section class="dash-panel">' . $nh . $nb . '</section>';
 }
+
+// Übersetzungs-Status (DE → EN): welche Inhalte haben noch keine englische Fassung?
+$i18n = pg_i18n_report($SCHEMA);
+if ($i18n) {
+  $totAll = array_sum(array_column($i18n, 'total'));
+  $missAll = array_sum(array_column($i18n, 'missing'));
+  $doneAll = $totAll - $missAll;
+  $pctAll = $totAll > 0 ? round($doneAll / $totAll * 100) : 100;
+  $th = '<div class="dp-head"><span class="dp-title">🌐 Übersetzungen</span>'
+      . '<span class="dp-more" style="cursor:default">' . $pctAll . '% EN</span></div>';
+  $tb = '<div class="i18n-list">';
+  // Lückenhafte zuerst, dann nach Anzahl fehlender sortieren
+  uasort($i18n, fn($a, $b) => ($b['missing'] <=> $a['missing']) ?: strcmp($a['label'], $b['label']));
+  foreach ($i18n as $k => $r) {
+    $done = $r['total'] - $r['missing'];
+    $pct = $r['total'] > 0 ? round($done / $r['total'] * 100) : 100;
+    $cls = $r['missing'] === 0 ? 'full' : ($pct < 50 ? 'low' : 'mid');
+    $note = $r['missing'] === 0
+      ? '<span class="i18n-ok">✓ vollständig</span>'
+      : '<span class="i18n-gap">' . $r['missing'] . ' offen</span>';
+    $tb .= '<a class="i18n-row" href="index.php?collection=' . pg_h($k) . '&lang=en">'
+         . '<span class="i18n-name">' . $r['icon'] . ' ' . pg_h($r['label'])
+         . (!$r['enExists'] ? ' <span class="i18n-new">neu</span>' : '') . '</span>'
+         . '<span class="i18n-bar"><span class="i18n-fill ' . $cls . '" style="width:' . $pct . '%"></span></span>'
+         . $note . '</a>';
+  }
+  $tb .= '</div>';
+  $tb .= $missAll === 0
+    ? '<div class="dp-foot" style="color:#9ff0b5">Alles übersetzt – super! 🎉</div>'
+    : '<div class="i18n-hint">Leere EN-Felder fallen auf der Website automatisch auf Deutsch zurück.</div>';
+  $ov .= '<section class="dash-panel">' . $th . $tb . '</section>';
+}
+
 echo '<div class="dash-grid">' . $ov . '</div>';
 
 // kleine Helfer-Funktion: eine Karte ausgeben
