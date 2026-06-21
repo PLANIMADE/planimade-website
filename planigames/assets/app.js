@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "34";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "35";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
@@ -647,14 +647,12 @@
             } else { $("#devlog-section")?.remove(); }
         }
 
-        // Reihenfolge: Warteliste & Vorschlagsbox ZUERST einsetzen → landen über dem Discord-/Community-Banner
-        renderWaitlist(s);
-        renderSuggestions(s);
+        // Warteliste & Vorschlagsbox gibt es nur als Spiel-Seiten-Blöcke, nicht auf der Startseite.
         renderCommunity(s);
     }
 
-    // Vorschlagsbox (Community-Ideen mit Upvotes) – vor der Newsletter-Sektion
-    // Innenleben der Vorschlagsbox – auf Startseite (scope="") und als Game-Block (scope=Slug) gleich.
+    // Vorschlagsbox (Community-Ideen mit Upvotes) – nur als Spiel-Seiten-Block.
+    // Innenleben der Vorschlagsbox (scope = Spiel-Slug).
     function suggBoxInner(cfg, scope) {
         const en = LANG === "en";
         return `
@@ -667,18 +665,6 @@
             </form>
             <p data-sugg-msg class="text-sm text-center mb-6 hidden"></p>
             <div data-sugg-list class="flex flex-col gap-3"></div>`;
-    }
-
-    function renderSuggestions(s) {
-        const cfg = s.suggestions || {};
-        if (!cfg.enabled) return;
-        const nl = $("[data-newsletter-section]");
-        const sec = document.createElement("section");
-        sec.className = "relative px-6 py-12 md:py-20";
-        sec.innerHTML = `<div class="max-w-3xl mx-auto reveal">${suggBoxInner(cfg, "")}</div>`;
-        if (nl && nl.parentNode) nl.parentNode.insertBefore(sec, nl); else document.body.appendChild(sec);
-        observeReveals(sec);
-        initSuggestions(sec);
     }
 
     // Vorschlagsbox als Game-Block (bezieht sich auf dieses Spiel)
@@ -736,7 +722,7 @@
         });
     }
 
-    // Innenleben der Warteliste – auf Startseite (scope="") und als Game-Block (scope=Slug) gleich.
+    // Innenleben der Warteliste – nur als Spiel-Seiten-Block (scope = Spiel-Slug).
     function wlBoxInner(cfg, scope) {
         const en = LANG === "en";
         return `
@@ -749,19 +735,6 @@
             </form>
             <p data-wl-msg class="text-sm text-center mt-4 hidden"></p>
             <div data-wl-status class="hidden mt-7 rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-center"></div>`;
-    }
-
-    // Beta-Warteliste mit Empfehlungslink – vor der Newsletter-Sektion
-    function renderWaitlist(s) {
-        const cfg = s.waitlist || {};
-        if (!cfg.enabled) return;
-        const nl = $("[data-newsletter-section]");
-        const sec = document.createElement("section");
-        sec.className = "relative px-6 py-12 md:py-20";
-        sec.innerHTML = `<div class="max-w-2xl mx-auto reveal">${wlBoxInner(cfg, "")}</div>`;
-        if (nl && nl.parentNode) nl.parentNode.insertBefore(sec, nl); else document.body.appendChild(sec);
-        observeReveals(sec);
-        initWaitlist(sec);
     }
 
     // Warteliste als Game-Block (eigene Liste & eigenes Ranking pro Spiel)
