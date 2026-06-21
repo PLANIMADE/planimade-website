@@ -797,6 +797,22 @@ function pg_mail_from(){
   return [trim($c['from_name']) ?: 'PLANIGAMES', $email];
 }
 
+/* ---- Postausgang / Gesendet (lokal protokollieren, was aus dem Dashboard rausging) ---- */
+const PG_MAIL_SENT_FILE = __DIR__ . '/../data/mail_sent.json';
+function pg_mail_sent_load(){ $l = pg_load_json(PG_MAIL_SENT_FILE); return is_array($l) ? $l : []; }
+function pg_mail_sent_log($to, $subject, $html){
+  $list = pg_mail_sent_load();
+  array_unshift($list, [
+    'id'      => bin2hex(random_bytes(5)),
+    'to'      => mb_substr((string) $to, 0, 200),
+    'subject' => mb_substr((string) $subject, 0, 300),
+    'html'    => (string) $html,
+    'date'    => date('c'),
+  ]);
+  if (count($list) > 200) $list = array_slice($list, 0, 200);   // nicht unbegrenzt wachsen lassen
+  pg_save_json(PG_MAIL_SENT_FILE, $list);
+}
+
 /* Zentrale Versandfunktion: nutzt SMTP, wenn konfiguriert, sonst mail().
    $html = vollständiges HTML (z. B. via pg_mail_shell). Gibt true/false zurück. */
 function pg_send_mail($to, $subject, $html, $replyTo = ''){
@@ -977,11 +993,11 @@ function pg_view_head($title){
      . '<meta name="mobile-web-app-capable" content="yes">'
      . '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">'
      . '<meta name="apple-mobile-web-app-title" content="' . pg_h($appName) . '">'
-     . '<link rel="stylesheet" href="assets/admin.css?v=55"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=56"></head><body>';
 }
 function pg_view_foot(){
   echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
-  echo '<script src="assets/admin.js?v=55"></script></body></html>';
+  echo '<script src="assets/admin.js?v=56"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');

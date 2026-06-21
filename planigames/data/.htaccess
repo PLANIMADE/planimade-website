@@ -5,7 +5,7 @@
 <FilesMatch "\.(php|tmp|bak)$">
   Require all denied
 </FilesMatch>
-<FilesMatch "(auth\.php|secret\.php|users\.json|invites\.json|subscribers\.json|contacts\.json|mail\.json|mail_unread\.json|login_attempts\.json|activity\.json|reactions\.json|trash\.json|templates\.json|board\.json|comments\.json|suggestions\.json|keys\.json|waitlist\.json)$">
+<FilesMatch "(auth\.php|secret\.php|users\.json|invites\.json|subscribers\.json|contacts\.json|mail\.json|mail_unread\.json|mail_sent\.json|login_attempts\.json|activity\.json|reactions\.json|trash\.json|templates\.json|board\.json|comments\.json|suggestions\.json|keys\.json|waitlist\.json)$">
   Require all denied
 </FilesMatch>
 Options -Indexes

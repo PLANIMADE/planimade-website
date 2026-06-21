@@ -52,6 +52,19 @@ if ($action === 'body') {
   exit;
 }
 
+/* ---- Gesendete Mail im IFrame anzeigen (aus dem lokalen Postausgang) ---- */
+if ($action === 'sentbody') {
+  header('Content-Type: text/html; charset=UTF-8');
+  header("Content-Security-Policy: default-src 'none'; img-src https: http: data:; style-src 'unsafe-inline'; font-src https: data:");
+  $id = preg_replace('/[^a-f0-9]/', '', $_GET['id'] ?? '');
+  $row = null;
+  foreach (pg_mail_sent_load() as $e) { if (($e['id'] ?? '') === $id) { $row = $e; break; } }
+  if (!$row) { echo '<p style="font-family:sans-serif;color:#888;padding:1rem">Nachricht nicht verfügbar.</p>'; exit; }
+  $b = preg_replace('#<script\b[^>]*>.*?</script>#is', '', (string) $row['html']);
+  echo '<base target="_blank">' . $b;
+  exit;
+}
+
 /* ---- Einstellungen speichern ---- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
   pg_csrf_check();
@@ -93,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_mail'])) {
     $html = pg_mail_build_personal($message);
     $ok = pg_send_mail($to, $subject, $html, pg_mail_from()[1]);
     if ($ok) {
+      pg_mail_sent_log($to, $subject, $html);   // im Postausgang ablegen
       $how = pg_mail_configured_send() ? 'per SMTP' : 'über den Server (mail())';
       pg_log_activity('E-Mail gesendet', $to);
       $flash = '<div class="flash ok">✓ Nachricht an ' . pg_h($to) . ' gesendet (' . $how . ').</div>'; $tab = 'compose';
@@ -120,6 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_newsletter'])) {
       if (pg_send_mail($to, $subject, $html)) $sent++; else $fail++;
       usleep(120000); // freundlich zum Mailserver
     }
+    if ($sent > 0) pg_mail_sent_log('📣 Newsletter · ' . $sent . ' Empfänger', $subject, pg_mail_build_newsletter($message, '#'));
     pg_log_activity('Newsletter verschickt', $sent . ' Abonnenten');
     $flash = '<div class="flash ' . ($fail ? 'err' : 'ok') . '">✓ Newsletter verschickt: ' . $sent . ' zugestellt'
            . ($fail ? ', ' . $fail . ' fehlgeschlagen' : '') . '.</div>';
@@ -134,7 +149,7 @@ echo $flash;
 echo '<div class="editor mailwrap">';
 
 // Tab-Leiste
-$tabs = ['inbox'=>'📥 Posteingang', 'compose'=>'✍️ Verfassen', 'newsletter'=>'📣 Newsletter', 'settings'=>'⚙️ Einstellungen'];
+$tabs = ['inbox'=>'📥 Posteingang', 'sent'=>'📤 Gesendet', 'compose'=>'✍️ Verfassen', 'newsletter'=>'📣 Newsletter', 'settings'=>'⚙️ Einstellungen'];
 echo '<div class="mailtabs">';
 foreach ($tabs as $k => $lbl) {
   echo '<a href="mail.php?tab=' . $k . '"' . ($tab === $k ? ' class="on"' : '') . '>' . $lbl . '</a>';
@@ -199,6 +214,48 @@ if ($tab === 'inbox') {
         }
         echo '</div>';
       }
+    }
+  }
+}
+
+/* ---------------- POSTAUSGANG / GESENDET ---------------- */
+if ($tab === 'sent') {
+  $list = pg_mail_sent_load();
+  $id = preg_replace('/[^a-f0-9]/', '', $_GET['id'] ?? '');
+  if ($id !== '') {
+    // Einzelansicht einer gesendeten Mail
+    $row = null;
+    foreach ($list as $e) { if (($e['id'] ?? '') === $id) { $row = $e; break; } }
+    echo '<a class="mailback" href="mail.php?tab=sent">← Zurück zum Postausgang</a>';
+    if (!$row) {
+      echo '<div class="flash err">Nachricht nicht gefunden.</div>';
+    } else {
+      $isNl = strpos((string) $row['to'], 'Newsletter') !== false;
+      echo '<div class="mailview">';
+      echo '<h1 class="mailsubj">' . pg_h($row['subject'] ?: '(kein Betreff)') . '</h1>';
+      echo '<div class="mailmeta"><b>An: ' . pg_h($row['to']) . '</b>'
+         . '<span>' . pg_h(date('d.m.Y · H:i', strtotime($row['date'] ?? 'now'))) . '</span></div>';
+      if (!$isNl && filter_var($row['to'], FILTER_VALIDATE_EMAIL)) {
+        echo '<a class="btn-add" href="mail.php?tab=compose&to=' . urlencode($row['to']) . '">✍️ Erneut an diese Adresse</a>';
+      }
+      echo '<iframe class="mailframe" src="mail.php?action=sentbody&id=' . urlencode($row['id']) . '" sandbox="allow-popups allow-popups-to-escape-sandbox"></iframe>';
+      echo '</div>';
+    }
+  } else {
+    // Liste
+    echo '<p class="muted" style="margin:.2rem 0 1rem">' . count($list) . ' gesendete Nachricht' . (count($list) === 1 ? '' : 'en') . ' · neueste zuerst</p>';
+    if (!$list) {
+      echo '<div class="mailnote">Noch nichts gesendet. Verfasste Mails &amp; Newsletter erscheinen hier.</div>';
+    } else {
+      echo '<div class="maillist">';
+      foreach ($list as $it) {
+        echo '<a class="mailrow" href="mail.php?tab=sent&id=' . urlencode($it['id'] ?? '') . '">'
+           . '<span class="mr-from">' . pg_h($it['to'] ?? '') . '</span>'
+           . '<span class="mr-subj">' . pg_h($it['subject'] ?? '') . '</span>'
+           . '<span class="mr-date">' . pg_h(!empty($it['date']) ? date('d.m.y', strtotime($it['date'])) : '') . '</span>'
+           . '</a>';
+      }
+      echo '</div>';
     }
   }
 }
