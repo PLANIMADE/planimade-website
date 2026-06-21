@@ -355,7 +355,8 @@ body.fx-particles-only .glow-blob { display: none; }
 @keyframes mascotSnore { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-3px) rotate(0); } }
 @keyframes mascotZzz { 0% { transform: translateY(2px); opacity: .4; } 50% { transform: translateY(-3px); opacity: 1; } 100% { transform: translateY(2px); opacity: .4; } }
 @media (max-width: 640px) { .pg-mascot { left: 10px; bottom: 10px; --ms: 64px; } }
-@media (prefers-reduced-motion: reduce) { .pg-mascot-btn, .pg-mascot.sleeping .pg-mascot-btn { animation: none; } .pg-mascot-face { transition: none; } }
+/* Das Maskottchen ist ein bewusst aktiviertes Spaß-Element und bleibt auch bei
+   „prefers-reduced-motion" lebendig (kleine, lokale Bewegung) – daher KEIN Abschalten. */
 
 /* ---------- Ecke unten rechts (Tip-Jar + Abzeichen) ---------- */
 #pg-corner-r { position: fixed; right: 18px; bottom: 18px; z-index: 60; display: flex; flex-direction: column; align-items: flex-end; gap: .55rem; }

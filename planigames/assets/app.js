@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "36";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "37";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
@@ -2034,7 +2034,8 @@
 
     // ---------- Konfetti (canvas, ohne Library) ----------
     function confetti(opts = {}) {
-        if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        // „reduce motion" respektieren – außer wenn explizit als direkte Nutzer-Reaktion erzwungen (opts.force)
+        if (!opts.force && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
         const n = opts.count || 90;
         const colors = ["#ff7d1a", "#e6a015", "#8b5cf6", "#22d3ee", "#5fd07f", "#ff5a8a", "#ffffff"];
         const cv = document.createElement("canvas");
@@ -2094,7 +2095,9 @@
         // ein versehentlicher ✕-Klick soll das Maskottchen nicht dauerhaft (pro Gerät) verschwinden lassen.
         // Alte dauerhafte Markierung (localStorage) wird dabei entfernt – so taucht es nach Fixes wieder auf.
         if (m.closable !== false) { try { localStorage.removeItem("pg_mascot_closed"); if (sessionStorage.getItem("pg_mascot_closed") === "1") return; } catch {} }
-        const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        // Hinweis: Das Maskottchen ist ein bewusst aktiviertes Spaß-Element und bleibt
+        // auch bei „prefers-reduced-motion" lebendig (Augen, Blick, Idle, Konfetti beim Klick).
+        // Die Bewegungen sind klein/lokal bzw. nutzergesteuert.
 
         const el = document.createElement("div");
         el.className = "pg-mascot";
@@ -2177,23 +2180,23 @@
             if (moved) { moved = false; return; }   // war ein Drag, kein Klick
             wake();
             el.classList.remove("wave"); void el.offsetWidth; el.classList.add("wave");
-            confetti({ count: 40, x: el.getBoundingClientRect().left + 40, y: el.getBoundingClientRect().top + 40 });
+            confetti({ count: 40, force: true, x: el.getBoundingClientRect().left + 40, y: el.getBoundingClientRect().top + 40 });
             setTimeout(() => el.classList.remove("wave"), 800);
             pets++;
             clearTimeout(petTimer); petTimer = setTimeout(() => { pets = 0; }, 1500);
             if (pets >= 5) {
                 pets = 0;
                 el.classList.remove("spin"); void el.offsetWidth; el.classList.add("spin");
-                confetti({ count: 90, x: el.getBoundingClientRect().left + 40, y: el.getBoundingClientRect().top + 40 });
+                confetti({ count: 90, force: true, x: el.getBoundingClientRect().left + 40, y: el.getBoundingClientRect().top + 40 });
                 setTimeout(() => el.classList.remove("spin"), 900);
                 pgBadge("friend");
             }
         });
 
         // ---- 2) Blick folgt der Maus (Neigung – funktioniert mit Emoji & PNG) ----
-        // KEIN (pointer:fine)-Gate mehr: das blockierte das Tracking auf Touch-fähigen
-        // Desktops/Laptops. Auf echten Touch-Geräten feuert pointermove eh nicht laufend.
-        if (m.follow !== false && !reduce) {
+        // KEIN (pointer:fine)- und KEIN reduce-Gate: das blockierte das Tracking auf
+        // Touch-fähigen Desktops bzw. bei aktivem „Animationen reduzieren".
+        if (m.follow !== false) {
             const onTilt = (e) => {
                 if (dragging) return;
                 const r = el.getBoundingClientRect();
@@ -2207,7 +2210,7 @@
         }
 
         // ---- Wackelaugen: Pupillen folgen dem Cursor ----
-        if (eyesOn && !reduce) {
+        if (eyesOn) {
             const eyeEls = [...el.querySelectorAll(".pg-eye")];
             const onEyes = (e) => {
                 eyeEls.forEach(eye => {
@@ -2228,11 +2231,11 @@
         let idleTimer = null;
         function wake() {
             el.classList.remove("sleeping");
-            if (m.idle === false || reduce) return;
+            if (m.idle === false) return;
             clearTimeout(idleTimer);
             idleTimer = setTimeout(() => el.classList.add("sleeping"), 22000);
         }
-        if (m.idle !== false && !reduce) {
+        if (m.idle !== false) {
             ["scroll", "pointermove", "keydown", "touchstart"].forEach(ev => addEventListener(ev, wake, { passive: true }));
             wake();
         }
