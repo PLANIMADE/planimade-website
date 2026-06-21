@@ -59,8 +59,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 /* ---- Eintragen ---- */
+// Der „enabled"-Schalter in studio.json steuert NUR die Startseite (scope="").
+// Spiel-Seiten-Blöcke (scope=Slug) sind immer aktiv – ihr Block-Dasein ist der Schalter.
 $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
-if (isset($studio['waitlist']['enabled']) && !$studio['waitlist']['enabled']) { echo '{"error":"Die Warteliste ist derzeit geschlossen."}'; exit; }
+if ($scope === '' && isset($studio['waitlist']['enabled']) && !$studio['waitlist']['enabled']) { echo '{"error":"Die Warteliste ist derzeit geschlossen."}'; exit; }
 if ((string) ($_POST['website'] ?? '') !== '') { echo '{"ok":true}'; exit; }   // Honeypot
 $email = trim((string) ($_POST['email'] ?? ''));
 $ref   = preg_replace('/[^a-z0-9]/', '', strtolower((string) ($_POST['ref'] ?? '')));

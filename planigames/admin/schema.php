@@ -88,13 +88,13 @@ return [
         ['name'=>'buttonLabel','label'=>'Button-Text','widget'=>'string','default'=>'Discord beitreten'],
         ['name'=>'url','label'=>'Discord-Einladungslink','widget'=>'string','hint'=>'z. B. https://discord.gg/…'],
       ]],
-      ['name'=>'suggestions','label'=>'Vorschlagsbox (Community-Ideen)','widget'=>'object','hint'=>'Besucher schlagen Features vor & stimmen ab. Eingaben landen zur Freigabe im Admin unter „Vorschläge".','fields'=>[
-        ['name'=>'enabled','label'=>'Vorschlagsbox auf der Startseite anzeigen','widget'=>'boolean','default'=>false],
+      ['name'=>'suggestions','label'=>'Vorschlagsbox (Community-Ideen)','widget'=>'object','hint'=>'Besucher schlagen Features vor & stimmen ab. Eingaben landen zur Freigabe im Admin unter „Vorschläge". Hinweis: Dieser Schalter betrifft nur die Startseite – auf Spiel-Seiten fügst du die Vorschlagsbox als Block ein, unabhängig davon.','fields'=>[
+        ['name'=>'enabled','label'=>'Vorschlagsbox auf der Startseite anzeigen','widget'=>'boolean','default'=>false,'hint'=>'Nur Startseite. Spiel-Seiten-Blöcke bleiben davon unberührt.'],
         ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Was sollen wir als Nächstes bauen?'],
         ['name'=>'intro','label'=>'Einleitung','widget'=>'text','default'=>'Reich deine Idee ein oder stimme für bestehende ab – die beliebtesten landen auf unserem Plan.'],
       ]],
-      ['name'=>'waitlist','label'=>'Beta-Warteliste (mit Empfehlungslink)','widget'=>'object','hint'=>'Besucher tragen sich ein und steigen in der Liste auf, indem sie Freunde über ihren persönlichen Link werben. Eintragungen erscheinen im Admin unter „Warteliste".','fields'=>[
-        ['name'=>'enabled','label'=>'Warteliste auf der Startseite anzeigen','widget'=>'boolean','default'=>false],
+      ['name'=>'waitlist','label'=>'Beta-Warteliste (mit Empfehlungslink)','widget'=>'object','hint'=>'Besucher tragen sich ein und steigen in der Liste auf, indem sie Freunde über ihren persönlichen Link werben. Eintragungen erscheinen im Admin unter „Warteliste". Hinweis: Dieser Schalter betrifft nur die Startseite – auf Spiel-Seiten fügst du die Warteliste als Block ein, unabhängig davon.','fields'=>[
+        ['name'=>'enabled','label'=>'Warteliste auf der Startseite anzeigen','widget'=>'boolean','default'=>false,'hint'=>'Nur Startseite. Spiel-Seiten-Blöcke bleiben davon unberührt.'],
         ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Sei bei der Beta dabei'],
         ['name'=>'intro','label'=>'Einleitung','widget'=>'text','default'=>'Trag dich ein und sichere dir frühen Zugang. Lade Freunde über deinen persönlichen Link ein, um in der Liste aufzusteigen.'],
         ['name'=>'successText','label'=>'Text nach Eintragung','widget'=>'string','default'=>'Du bist dabei! 🎉 Teile deinen Link, um aufzusteigen.'],

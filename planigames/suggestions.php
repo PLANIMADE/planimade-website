@@ -41,10 +41,12 @@ if (isset($_POST['upvote'])) {
 }
 
 // ---- Neuer Vorschlag ----
-$studio = pg_load_json(PG_DATA_DIR . '/studio.json');
-if (isset($studio['suggestions']['enabled']) && !$studio['suggestions']['enabled']) { echo '{"error":"Vorschläge sind deaktiviert."}'; exit; }
 $text  = trim((string) ($_POST['text'] ?? ''));
 $scope = pg_sugg_scope($_POST['scope'] ?? '');
+// Der „enabled"-Schalter in studio.json steuert NUR die Startseite (scope="").
+// Spiel-Seiten-Blöcke (scope=Slug) sind immer aktiv – ihr Block-Dasein ist der Schalter.
+$studio = pg_load_json(PG_DATA_DIR . '/studio.json');
+if ($scope === '' && isset($studio['suggestions']['enabled']) && !$studio['suggestions']['enabled']) { echo '{"error":"Vorschläge sind deaktiviert."}'; exit; }
 $hp    = (string) ($_POST['website'] ?? '');
 if ($hp !== '') { echo '{"ok":true}'; exit; }
 if (mb_strlen($text) < 4) { echo '{"error":"Bitte einen etwas längeren Vorschlag eingeben."}'; exit; }
