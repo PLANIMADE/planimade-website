@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "41";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "42";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     /* ---------- kleine Helfer ---------- */
@@ -1929,6 +1929,23 @@
              + `<span class="font-display ${lg ? "text-2xl" : "text-lg"} font-extrabold uppercase tracking-[0.${lg ? "15" : "18"}em] text-white">PLANI<span class="text-gradient">GAMES</span></span>`;
     }
 
+    // PWA: Manifest + Apple-Tags ins <head> einsetzen und Service Worker registrieren.
+    // So lässt sich die Seite am Handy „Zum Homescreen hinzufügen" und öffnet im Vollbild wie eine App.
+    function initPWA() {
+        const head = document.head;
+        const has = (sel) => !!head.querySelector(sel);
+        if (!has('link[rel="manifest"]')) head.insertAdjacentHTML("beforeend", '<link rel="manifest" href="manifest.webmanifest">');
+        if (!has('link[rel="apple-touch-icon"]')) head.insertAdjacentHTML("beforeend", '<link rel="apple-touch-icon" href="assets/icon-180.png">');
+        if (!has('meta[name="apple-mobile-web-app-capable"]')) head.insertAdjacentHTML("beforeend",
+            '<meta name="apple-mobile-web-app-capable" content="yes">'
+          + '<meta name="mobile-web-app-capable" content="yes">'
+          + '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">'
+          + '<meta name="apple-mobile-web-app-title" content="PLANIGAMES">');
+        if ("serviceWorker" in navigator && location.protocol === "https:") {
+            addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+        }
+    }
+
     function injectChrome() {
         // Pflicht-Effekte oben einsetzen (falls noch nicht vorhanden)
         if (!$("#scroll-progress")) {
@@ -2482,6 +2499,7 @@
 
     async function boot() {
         document.documentElement.lang = LANG;
+        initPWA();            // Homescreen-Installierbarkeit (Manifest + Service Worker)
         await loadData("studio");   // früh laden (Hintergrund-Effekt braucht die Config)
         const fx = (DATA.studio && DATA.studio.background && DATA.studio.background.effect) || "particles";
         const fxClass = { particles: "fx-particles", particles_only: "fx-particles-only", glow: "fx-glow", off: "fx-off" }[fx] || "fx-particles";
