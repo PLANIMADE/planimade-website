@@ -791,7 +791,7 @@ function pg_mail_from(){
     $email = trim((string)($s['email'] ?? ''));
   }
   if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    $host = preg_replace('/[^a-z0-9.\-]/i', '', $_SERVER['HTTP_HOST'] ?? 'planigames.de');
+    $host = preg_replace('/[^a-z0-9.\-]/i', '', $_SERVER['HTTP_HOST'] ?? 'planigames.com');
     $email = 'no-reply@' . $host;
   }
   return [trim($c['from_name']) ?: 'PLANIGAMES', $email];
@@ -838,11 +838,11 @@ function pg_smtp_send($to, $subject, $html, $fromName, $fromEmail, $replyTo = ''
 
   $ok = true;
   $read(); // Greeting
-  $ehlo = $cmd('EHLO ' . ($_SERVER['HTTP_HOST'] ?? 'planigames.de'));
+  $ehlo = $cmd('EHLO ' . ($_SERVER['HTTP_HOST'] ?? 'planigames.com'));
   if ($secure === 'tls') {
     if ($code($cmd('STARTTLS')) !== 220) { fclose($fp); return false; }
     if (!@stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT)) { fclose($fp); return false; }
-    $cmd('EHLO ' . ($_SERVER['HTTP_HOST'] ?? 'planigames.de'));
+    $cmd('EHLO ' . ($_SERVER['HTTP_HOST'] ?? 'planigames.com'));
   }
   // AUTH LOGIN
   if ($c['smtp_user'] !== '') {
@@ -857,7 +857,7 @@ function pg_smtp_send($to, $subject, $html, $fromName, $fromEmail, $replyTo = ''
   $fn = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
   $subj = '=?UTF-8?B?' . base64_encode($subject) . '?=';
   $date = date('r');
-  $msgid = '<' . bin2hex(random_bytes(12)) . '@' . preg_replace('/[^a-z0-9.\-]/i','',$_SERVER['HTTP_HOST'] ?? 'planigames.de') . '>';
+  $msgid = '<' . bin2hex(random_bytes(12)) . '@' . preg_replace('/[^a-z0-9.\-]/i','',$_SERVER['HTTP_HOST'] ?? 'planigames.com') . '>';
   $head = "Date: $date\r\nFrom: $fn <$fromEmail>\r\n"
     . ($replyTo ? "Reply-To: $replyTo\r\n" : '')
     . "To: <$to>\r\nSubject: $subj\r\nMessage-ID: $msgid\r\n"

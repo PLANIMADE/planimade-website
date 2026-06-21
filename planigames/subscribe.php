@@ -102,7 +102,7 @@ if ($existing !== null) {
   // Benachrichtigung ans Studio
   $notify = ($cfg['notifyEmail'] ?? '') ?: ($studio['email'] ?? '');
   if ($notify && filter_var($notify, FILTER_VALIDATE_EMAIL)) {
-    $host = preg_replace('/[^a-z0-9.\-]/i', '', $_SERVER['HTTP_HOST'] ?? 'planigames.de');
+    $host = preg_replace('/[^a-z0-9.\-]/i', '', $_SERVER['HTTP_HOST'] ?? 'planigames.com');
     @mail($notify, 'Neue Newsletter-Anmeldung', "Neue Anmeldung: {$email}\nZeit: " . date('c'), "From: no-reply@{$host}\r\nContent-Type: text/plain; charset=utf-8");
   }
 }

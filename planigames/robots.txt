@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /data/
 
-Sitemap: https://planigames.de/sitemap.xml
+Sitemap: https://planigames.com/sitemap.xml
