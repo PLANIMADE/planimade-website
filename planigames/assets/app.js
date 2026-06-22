@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "44";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "45";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
@@ -546,9 +546,23 @@
     }
 
     /* Akzentfarbe live setzen (Game-Welten) */
+    // Hex aufhellen (Anteil 0..1 Richtung Weiß) – für die abgeleitete helle Akzentfarbe
+    function lightenHex(hex, amt) {
+        const m = String(hex).trim().replace("#", "").match(/^([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if (!m) return hex;
+        let h = m[1]; if (h.length === 3) h = h.split("").map(c => c + c).join("");
+        const ch = (i) => parseInt(h.substr(i, 2), 16);
+        const up = (c) => Math.round(c + (255 - c) * amt).toString(16).padStart(2, "0");
+        return "#" + up(ch(0)) + up(ch(2)) + up(ch(4));
+    }
     function applyAccent(hex, hex2) {
-        if (hex)  document.documentElement.style.setProperty("--accent", hex);
-        if (hex2) document.documentElement.style.setProperty("--accent-2", hex2);
+        const st = document.documentElement.style;
+        if (hex) {
+            st.setProperty("--accent", hex);
+            // --accent-3 (helleres Geschwister) MUSS mitziehen, sonst bleibt hier Orange stehen
+            st.setProperty("--accent-3", lightenHex(hex, 0.28));
+        }
+        if (hex2) st.setProperty("--accent-2", hex2);
     }
 
     const STATUS = {
