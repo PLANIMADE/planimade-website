@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "46";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "47";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
@@ -570,8 +570,8 @@
         const r = parseInt(h.substr(0, 2), 16), g = parseInt(h.substr(2, 2), 16), b = parseInt(h.substr(4, 2), 16);
         return (r * 299 + g * 587 + b * 114) / 1000;
     }
-    function applyAccent(hex, hex2) {
-        const st = document.documentElement.style;
+    // Akzent-Variablen auf ein beliebiges Style-Ziel schreiben (Doc-Root ODER eine einzelne Card)
+    function setAccentVars(st, hex, hex2) {
         const c1 = hex || "#ff7d1a";
         const c2 = hex2 || c1;
         if (hex) {
@@ -584,18 +584,21 @@
         const bright = (hexBrightness(c1) + hexBrightness(c2)) / 2;
         st.setProperty("--accent-ink", bright > 176 ? "#1a0d00" : "#ffffff");
     }
+    function applyAccent(hex, hex2) {
+        setAccentVars(document.documentElement.style, hex, hex2);
+    }
 
     const STATUS = {
-        released:   { key: "st_released",    cls: "text-emerald-300 border-emerald-400/30 bg-emerald-400/10" },
-        early:      { key: "st_early",       cls: "text-orange-300 border-orange-400/30 bg-orange-400/10" },
-        demo:       { key: "st_demo",        cls: "text-amber-200 border-amber-300/30 bg-amber-300/10" },
-        development:{ key: "st_development", cls: "text-orange-300 border-orange-400/30 bg-orange-400/10" },
-        announced:  { key: "st_announced",   cls: "text-zinc-300 border-white/20 bg-white/5" },
+        released:   { key: "st_released",    cls: "text-emerald-100 border-emerald-400/60 bg-emerald-400/20" },
+        early:      { key: "st_early",       cls: "text-orange-100 border-orange-400/60 bg-orange-400/20" },
+        demo:       { key: "st_demo",        cls: "text-amber-100 border-amber-300/60 bg-amber-300/20" },
+        development:{ key: "st_development", cls: "text-orange-100 border-orange-400/60 bg-orange-400/20" },
+        announced:  { key: "st_announced",   cls: "text-zinc-100 border-white/40 bg-white/15" },
     };
     function statusBadge(s) {
         const m = STATUS[s] || STATUS.development;
-        return `<span class="badge inline-flex items-center gap-2 px-3 py-1 rounded-full border ${m.cls}">
-            <span class="w-1.5 h-1.5 rounded-full bg-current"></span>${t(m.key)}</span>`;
+        return `<span class="badge inline-flex items-center gap-2 px-3 py-1 rounded-full border font-semibold ${m.cls}">
+            <span class="w-1.5 h-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></span>${t(m.key)}</span>`;
     }
 
     /* =========================================================
@@ -971,7 +974,8 @@
         const wrap = $("[data-featured]");
         if (!wrap) return;
         // Game-Farbe nur innerhalb der Featured-Card – der Studio-Rahmen behält seinen Look.
-        wrap.style.setProperty("--accent", g.accent || "#8b5cf6");
+        // Beide Akzentfarben + adaptive Schrift setzen, sonst bleibt der Button-Verlauf orange.
+        setAccentVars(wrap.style, g.accent || "#8b5cf6", g.accent2 || g.accent || "#22d3ee");
         const ls = logoScale(g);
         wrap.innerHTML = `
             <div class="relative grid lg:grid-cols-2 gap-10 items-center rounded-3xl border border-white/10 overflow-hidden bg-gradient-to-br from-white/[0.04] to-transparent p-2 md:p-3">
