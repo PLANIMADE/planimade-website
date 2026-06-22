@@ -993,11 +993,11 @@ function pg_view_head($title){
      . '<meta name="mobile-web-app-capable" content="yes">'
      . '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">'
      . '<meta name="apple-mobile-web-app-title" content="' . pg_h($appName) . '">'
-     . '<link rel="stylesheet" href="assets/admin.css?v=56"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=57"></head><body>';
 }
 function pg_view_foot(){
   echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
-  echo '<script src="assets/admin.js?v=56"></script></body></html>';
+  echo '<script src="assets/admin.js?v=57"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');

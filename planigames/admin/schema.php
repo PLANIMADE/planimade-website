@@ -212,6 +212,10 @@ return [
         ['name'=>'coverAlt','label'=>'Cover – Alt-Text','widget'=>'string','hint'=>'Bildbeschreibung für SEO & Screenreader. Leer = Spieltitel.'],
         ['name'=>'logo','label'=>'Logo (transparent)','widget'=>'image','hint'=>'Transparentes PNG, ca. 800×400 px – wird im Hero statt des Titels gezeigt.'],
         ['name'=>'logoScale','label'=>'Logo-Größe (%)','widget'=>'number','default'=>100,'hint'=>'100 = Standard. Wirkt auf Hero & Startseiten-Card. z. B. 60 (kleiner) oder 160 (größer).'],
+        ['name'=>'logoPos','label'=>'Logo-Position im Hero','widget'=>'object','hint'=>'Leer = Standard (unten links). Tipp: „🖼️ Logo platzieren“ öffnet eine Vorschau zum Ziehen. Oder X/Y in % eintragen.','fields'=>[
+          ['name'=>'x','label'=>'X (%)','widget'=>'number','hint'=>'0 = links … 100 = rechts. Leer lassen = Standard.'],
+          ['name'=>'y','label'=>'Y (%)','widget'=>'number','hint'=>'0 = oben … 100 = unten.'],
+        ]],
         ['name'=>'wishlistUrl','label'=>'Wishlist / Store-Link','widget'=>'string','hint'=>'z. B. Steam-Seite.'],
         ['widget'=>'heading','label'=>'Spielseite · Inhalts-Blöcke','hint'=>'Der Seitenaufbau – Blöcke hinzufügen, sortieren & einklappen.'],
         ['name'=>'blocks','label'=>'Seiten-Blöcke (Website-Builder)','widget'=>'blocks','types'=>[

@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "47";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "48";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
@@ -630,7 +630,7 @@
                 if (de[k] !== undefined) merged[k] = de[k];
             });
         } else if (name === "games" && Array.isArray(merged.games) && Array.isArray(de.games)) {
-            const SHARED_GAME = ["accent", "accent2", "cover", "logo", "logoScale", "wishlistUrl", "status", "featured", "slug"];
+            const SHARED_GAME = ["accent", "accent2", "particleColor", "cover", "logo", "logoScale", "logoPos", "wishlistUrl", "status", "featured", "slug"];
             merged.games.forEach((g, i) => {
                 const d = de.games[i]; if (!d) return;
                 SHARED_GAME.forEach(k => { if (d[k] !== undefined) g[k] = d[k]; });
@@ -1147,6 +1147,13 @@
 
     function logoScale(g) { return Math.min(3, Math.max(0.3, (+g.logoScale || 100) / 100)); }
 
+    // Logo-Position im Hero: gültige X/Y in % -> frei platziertes Logo, sonst Standard (im Textfluss).
+    function logoPosOf(g) {
+        const p = g.logoPos || {};
+        const num = (v) => (v === 0 || v === "0" || (v != null && v !== "" && !isNaN(+v))) ? Math.min(100, Math.max(0, +v)) : null;
+        const x = num(p.x), y = num(p.y);
+        return (x != null && y != null) ? { x, y } : null;
+    }
     function blockHero(b, g) {
         const bg = b.background || g.cover;
         const ls = logoScale(g);
@@ -1154,15 +1161,25 @@
             ? `<video class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline ${b.poster ? `poster="${esc(b.poster)}"` : ""}><source src="${esc(b.video)}"></video>`
             : (bg ? `<img src="${esc(bg)}" alt="" style="object-position:${focusPos(bg)}" class="absolute inset-0 w-full h-full object-cover">`
                   : `<div class="absolute inset-0 grid-lines"></div>`);
+        const pos = g.logo ? logoPosOf(g) : null;
+        // Frei platziertes Logo (absolut über dem Hero); blockiert keine Klicks.
+        const floatLogo = pos
+            ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="absolute object-contain pointer-events-none reveal z-[2]" style="left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);height:clamp(${Math.round(64 * ls)}px, ${(18 * ls).toFixed(1)}vh, ${Math.round(150 * ls)}px);width:auto;max-width:80vw">`
+            : "";
+        // Logo im Textfluss nur, wenn keine freie Position gesetzt ist.
+        const inlineTitle = pos
+            ? ""
+            : (g.logo ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-6 object-contain object-left reveal" style="height:${Math.round(150 * ls)}px;width:auto;max-width:92vw">`
+                      : `<h1 class="font-display text-6xl md:text-8xl font-extrabold text-white mb-6 reveal-on"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`);
         return `
         <section class="relative min-h-[88vh] flex items-end overflow-hidden">
             ${media}
             <div class="absolute inset-0" style="background:linear-gradient(to top, var(--bg) 4%, color-mix(in srgb, var(--accent) 18%, transparent) 55%, rgba(0,0,0,.35))"></div>
             <div class="absolute inset-0 bg-black/30"></div>
+            ${floatLogo}
             <div class="relative max-w-6xl mx-auto w-full px-6 pb-16 md:pb-24">
                 <div class="mb-6 reveal-on">${statusBadge(g.status)}</div>
-                ${g.logo ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-6 object-contain object-left reveal" style="height:${Math.round(150 * ls)}px;width:auto;max-width:92vw">`
-                         : `<h1 class="font-display text-6xl md:text-8xl font-extrabold text-white mb-6 reveal-on"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`}
+                ${inlineTitle}
                 <p class="text-xl md:text-2xl text-zinc-200 max-w-2xl mb-9 reveal">${esc(b.tagline || g.tagline || "")}</p>
                 <div class="flex flex-wrap gap-3 reveal">
                     ${g.wishlistUrl ? `<a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold">${esc(b.ctaLabel || t("wishlist"))}</a>` : ""}

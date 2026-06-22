@@ -393,6 +393,11 @@ button{font:inherit;cursor:pointer}
 .ep-pupil{position:absolute;left:50%;top:55%;width:46%;height:46%;margin:-23% 0 0 -23%;background:#15101c;border-radius:50%}
 .ep-size{display:flex;align-items:center;gap:.6rem;margin-top:1rem;font-size:.85rem;color:var(--muted)}
 .ep-size input[type=range]{flex:1}
+/* Logo-Platzierer (Hero) */
+.logo-stage{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#0c0c11 center/cover no-repeat;cursor:crosshair;user-select:none;touch-action:none}
+.logo-stage::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55),rgba(0,0,0,.1) 55%,rgba(0,0,0,.3));pointer-events:none}
+.logo-ghost{position:absolute;width:auto;max-width:80%;object-fit:contain;transform:translate(-50%,-50%);cursor:grab;z-index:1;filter:drop-shadow(0 6px 18px rgba(0,0,0,.5));touch-action:none}
+.logo-ghost:active{cursor:grabbing}
 .up-err{color:#ff8585}
 
 /* ---- Listen & Blöcke ---- */

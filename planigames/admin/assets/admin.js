@@ -19,6 +19,7 @@
     itemsBox(list).insertAdjacentHTML("beforeend", html);
     const added = itemsBox(list).lastElementChild;
     focusFirst(added);
+    injectLogoPlacers();   // neu hinzugefügte Spiele bekommen ihren „Logo platzieren“-Button
   }
 
   function addBlock(blocks) {
@@ -297,6 +298,7 @@
     body.insertBefore(wrap, body.firstChild);
   }
   injectEyesPlacer();
+  injectLogoPlacers();
 
   // ---- Countdown-Datum: warnen, wenn es in der Vergangenheit liegt ----
   (function countdownDateWarn() {
@@ -390,6 +392,83 @@
       ov.remove();
     });
     ov.addEventListener("click", (ev) => { if (ev.target === ov || ev.target.closest("[data-ep-close]")) ov.remove(); });
+  }
+
+  // ---- Game-Logo im Hero frei platzieren ----
+  function injectLogoPlacers() {
+    document.querySelectorAll('input[name$="[logoPos][x]"]').forEach((xin) => {
+      const body = xin.closest(".object-body");
+      if (!body || body.querySelector("[data-logo-edit]")) return;
+      const wrap = document.createElement("div");
+      wrap.className = "field";
+      wrap.innerHTML = `<button type="button" class="btn-primary" data-logo-edit>🖼️ Logo platzieren</button>
+        <p class="hint">Öffnet eine Hero-Vorschau – zieh das Logo an die gewünschte Stelle. „Standard“ stellt unten links wieder her.</p>`;
+      body.insertBefore(wrap, body.firstChild);
+    });
+  }
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-logo-edit]");
+    if (btn) openLogoPicker(btn.closest("[data-item]") || document);
+  });
+  function openLogoPicker(scope) {
+    const q = (sel) => scope.querySelector(sel);
+    const fx = q('input[name$="[logoPos][x]"]'), fy = q('input[name$="[logoPos][y]"]');
+    const fscale = q('input[name$="[logoScale]"]');
+    const logoIn = q('input[name$="[logo]"]'), coverIn = q('input[name$="[cover]"]');
+    if (!fx || !fy) return;
+    const src = logoIn && logoIn.value.trim() ? logoIn.value.split("#")[0] : "";
+    if (!src) { alert("Bitte zuerst ein Logo hochladen oder auswählen."); return; }
+    const cover = coverIn && coverIn.value.trim() ? coverIn.value.split("#")[0] : "";
+    const clamp = (v) => Math.min(100, Math.max(0, Math.round(v)));
+    const valid = (el, d) => (el && el.value !== "" && !isNaN(+el.value)) ? clamp(+el.value) : d;
+    const st = { x: valid(fx, 12), y: valid(fy, 82), scale: (fscale && +fscale.value) || 100 };
+    const ov = document.createElement("div");
+    ov.id = "media-picker";
+    ov.innerHTML = `<div class="mp-box" style="max-width:680px"><div class="mp-head"><span>Logo im Hero platzieren</span>
+        <button type="button" class="kb-modal-x" data-lp-close aria-label="Schließen">✕</button></div>
+      <div style="padding:1rem">
+        <p class="muted" style="margin:0 0 .7rem;font-size:.85rem">Zieh das Logo an die gewünschte Stelle (oder klick hin). Größe per Regler. Die Vorschau entspricht ungefähr der Live-Ansicht.</p>
+        <div class="logo-stage" data-lp-stage${cover ? ` style="background-image:url('${cover.replace(/"/g, "%22")}')"` : ""}>
+          <img class="logo-ghost" data-lp-ghost src="${src}" alt="" draggable="false">
+        </div>
+        <label class="ep-size">Logo-Größe <input type="range" min="40" max="260" value="${st.scale}" data-lp-size> <span data-lp-sizeval>${st.scale}%</span></label>
+        <div class="kb-cardform-foot" style="margin-top:1rem"><button type="button" class="btn-primary" data-lp-save>Übernehmen</button>
+          <button type="button" class="btn-add" data-lp-reset>Standard (unten links)</button></div>
+      </div></div>`;
+    document.body.appendChild(ov);
+    const stage = ov.querySelector("[data-lp-stage]");
+    const ghost = ov.querySelector("[data-lp-ghost]");
+    const sizeIn = ov.querySelector("[data-lp-size]"), sizeVal = ov.querySelector("[data-lp-sizeval]");
+    const render = () => {
+      ghost.style.left = st.x + "%"; ghost.style.top = st.y + "%";
+      ghost.style.height = (20 * st.scale / 100) + "%";
+      sizeVal.textContent = st.scale + "%";
+    };
+    render();
+    let drag = false;
+    const toPct = (ev) => {
+      const r = stage.getBoundingClientRect();
+      st.x = clamp(((ev.clientX - r.left) / r.width) * 100);
+      st.y = clamp(((ev.clientY - r.top) / r.height) * 100);
+      render();
+    };
+    ghost.addEventListener("pointerdown", (ev) => { ev.preventDefault(); drag = true; });
+    stage.addEventListener("pointermove", (ev) => { if (drag) toPct(ev); });
+    window.addEventListener("pointerup", () => { drag = false; });
+    stage.addEventListener("click", (ev) => { if (ev.target !== ghost) toPct(ev); });
+    sizeIn.addEventListener("input", () => { st.scale = +sizeIn.value; render(); });
+    ov.querySelector("[data-lp-reset]").addEventListener("click", () => {
+      fx.value = ""; fy.value = "";
+      [fx, fy].forEach(i => i.dispatchEvent(new Event("input", { bubbles: true })));
+      ov.remove();
+    });
+    ov.querySelector("[data-lp-save]").addEventListener("click", () => {
+      fx.value = st.x; fy.value = st.y;
+      if (fscale) fscale.value = st.scale;
+      [fx, fy, fscale].forEach(i => i && i.dispatchEvent(new Event("input", { bubbles: true })));
+      ov.remove();
+    });
+    ov.addEventListener("click", (ev) => { if (ev.target === ov || ev.target.closest("[data-lp-close]")) ov.remove(); });
   }
 
   // ---- Markdown-Editor: Toolbar + Live-Vorschau ----
