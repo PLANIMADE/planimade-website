@@ -212,7 +212,7 @@ return [
         ['name'=>'coverAlt','label'=>'Cover – Alt-Text','widget'=>'string','hint'=>'Bildbeschreibung für SEO & Screenreader. Leer = Spieltitel.'],
         ['name'=>'logo','label'=>'Logo (transparent)','widget'=>'image','hint'=>'Transparentes PNG, ca. 800×400 px – wird im Hero statt des Titels gezeigt.'],
         ['name'=>'logoScale','label'=>'Logo-Größe (%)','widget'=>'number','default'=>100,'hint'=>'100 = Standard. Wirkt auf Hero & Startseiten-Card. z. B. 60 (kleiner) oder 160 (größer).'],
-        ['name'=>'logoPos','label'=>'Logo-Position im Hero','widget'=>'object','hint'=>'Leer = Standard (unten links). Tipp: „🖼️ Logo platzieren“ öffnet eine Vorschau zum Ziehen. Oder X/Y in % eintragen.','fields'=>[
+        ['name'=>'logoPos','label'=>'Logo-Position im Hero (Desktop)','widget'=>'object','hint'=>'Gilt nur für große Bildschirme. Auf dem Handy steht das Logo immer im Standard (unten links), damit es nicht überlappt. Tipp: „🖼️ Logo platzieren“ öffnet eine Vorschau zum Ziehen.','fields'=>[
           ['name'=>'x','label'=>'X (%)','widget'=>'number','hint'=>'0 = links … 100 = rechts. Leer lassen = Standard.'],
           ['name'=>'y','label'=>'Y (%)','widget'=>'number','hint'=>'0 = oben … 100 = unten.'],
         ]],
@@ -222,6 +222,7 @@ return [
           'hero'=>['label'=>'Hero (Kopfbereich)','fields'=>[
             ['name'=>'tagline','label'=>'Tagline (überschreibt Standard)','widget'=>'text'],
             ['name'=>'background','label'=>'Hintergrundbild','widget'=>'image','hint'=>'Querformat, ca. 2000×1200 px (JPG/WebP).'],
+            ['name'=>'backgroundMobile','label'=>'Hintergrundbild – Mobil (optional)','widget'=>'image','hint'=>'Hochformat für Handys, ca. 1080×1600 px. Leer = das normale Hintergrundbild wird verwendet.'],
             ['name'=>'video','label'=>'Hintergrund-Video (mp4)','widget'=>'file'],
             ['name'=>'poster','label'=>'Video-Vorschaubild','widget'=>'image','hint'=>'Querformat 16:9, ca. 1600×900 px.'],
             ['name'=>'ctaLabel','label'=>'Button-Text','widget'=>'string','default'=>'Auf Steam wishlisten'],

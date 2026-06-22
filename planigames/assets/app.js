@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "48";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "49";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
@@ -1156,21 +1156,33 @@
     }
     function blockHero(b, g) {
         const bg = b.background || g.cover;
+        const bgMobile = b.backgroundMobile || "";
         const ls = logoScale(g);
-        const media = b.video
-            ? `<video class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline ${b.poster ? `poster="${esc(b.poster)}"` : ""}><source src="${esc(b.video)}"></video>`
-            : (bg ? `<img src="${esc(bg)}" alt="" style="object-position:${focusPos(bg)}" class="absolute inset-0 w-full h-full object-cover">`
-                  : `<div class="absolute inset-0 grid-lines"></div>`);
+        let media;
+        if (b.video) {
+            media = `<video class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline ${b.poster ? `poster="${esc(b.poster)}"` : ""}><source src="${esc(b.video)}"></video>`;
+        } else if (bg) {
+            // Eigenes Mobil-Bild (Hochformat) via <picture>, sonst das normale Bild für alle.
+            media = bgMobile
+                ? `<picture class="absolute inset-0 w-full h-full block">
+                       <source media="(max-width: 767px)" srcset="${esc(bgMobile)}">
+                       <img src="${esc(bg)}" alt="" style="object-position:${focusPos(bg)}" class="w-full h-full object-cover">
+                   </picture>`
+                : `<img src="${esc(bg)}" alt="" style="object-position:${focusPos(bg)}" class="absolute inset-0 w-full h-full object-cover">`;
+        } else {
+            media = `<div class="absolute inset-0 grid-lines"></div>`;
+        }
         const pos = g.logo ? logoPosOf(g) : null;
-        // Frei platziertes Logo (absolut über dem Hero); blockiert keine Klicks.
+        // Logo im Textfluss (Standard bzw. immer auf dem Handy, damit es nicht überlappt).
+        const inlineLogo = (cls) => g.logo
+            ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-6 object-contain object-left reveal ${cls}" style="height:${Math.round(150 * ls)}px;width:auto;max-width:92vw">`
+            : `<h1 class="font-display text-6xl md:text-8xl font-extrabold text-white mb-6 reveal-on ${cls}"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`;
+        // Frei platziertes Logo nur auf großen Bildschirmen (absolut, blockiert keine Klicks).
         const floatLogo = pos
-            ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="absolute object-contain pointer-events-none reveal z-[2]" style="left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);height:clamp(${Math.round(64 * ls)}px, ${(18 * ls).toFixed(1)}vh, ${Math.round(150 * ls)}px);width:auto;max-width:80vw">`
+            ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="hidden md:block absolute object-contain pointer-events-none reveal z-[2]" style="left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);height:clamp(${Math.round(64 * ls)}px, ${(18 * ls).toFixed(1)}vh, ${Math.round(150 * ls)}px);width:auto;max-width:80vw">`
             : "";
-        // Logo im Textfluss nur, wenn keine freie Position gesetzt ist.
-        const inlineTitle = pos
-            ? ""
-            : (g.logo ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-6 object-contain object-left reveal" style="height:${Math.round(150 * ls)}px;width:auto;max-width:92vw">`
-                      : `<h1 class="font-display text-6xl md:text-8xl font-extrabold text-white mb-6 reveal-on"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`);
+        // Bei gesetzter Desktop-Position: Inline-Logo nur auf dem Handy. Sonst immer.
+        const inlineTitle = pos ? inlineLogo("md:hidden") : inlineLogo("");
         return `
         <section class="relative min-h-[88vh] flex items-end overflow-hidden">
             ${media}
