@@ -1435,7 +1435,9 @@ function pg_render_field($f, $val, $name, $pathKey){
       $field = '<select name="' . pg_h($name) . '">' . $opts . '</select>';
       break;
     case 'color':
-      $hex = preg_match('/^#[0-9a-fA-F]{6}$/', (string)$val) ? $val : ($f['default'] ?? '#ff7d1a');
+      // Swatch zeigt Wert, sonst Default, sonst Orange – der Textwert (gespeichert) darf aber leer bleiben.
+      $hex = preg_match('/^#[0-9a-fA-F]{6}$/', (string)$val) ? $val
+           : (preg_match('/^#[0-9a-fA-F]{6}$/', (string)($f['default'] ?? '')) ? $f['default'] : '#ff7d1a');
       $field = '<span class="colorrow"><input type="color" value="' . pg_h($hex) . '" oninput="this.nextElementSibling.value=this.value">'
              . '<input type="text" name="' . pg_h($name) . '" value="' . pg_h($val) . '" class="colorhex" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value))this.previousElementSibling.value=this.value"></span>';
       break;

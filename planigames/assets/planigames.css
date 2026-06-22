@@ -13,6 +13,7 @@
     --accent: #ff7d1a;          /* Orange       */
     --accent-2: #e6a015;        /* dunkles Gold  */
     --accent-3: #ffa53d;        /* helles Orange */
+    --accent-ink: #ffffff;      /* Schriftfarbe auf Akzent-Buttons – wird bei hellem Akzent dunkel (JS) */
     --bg: #050505;              /* (fast) Schwarz, neutral */
 }
 
@@ -244,8 +245,8 @@ body.fx-particles-only .glow-blob { display: none; }
 
 /* Akzent-Button */
 .btn-accent {
-    background: linear-gradient(110deg, var(--accent), var(--accent-3));
-    color: #fff; box-shadow: 0 10px 40px -10px color-mix(in srgb, var(--accent) 70%, transparent);
+    background: linear-gradient(110deg, var(--accent), var(--accent-2));
+    color: var(--accent-ink); box-shadow: 0 10px 40px -10px color-mix(in srgb, var(--accent) 70%, transparent);
 }
 .btn-ghost { border: 1px solid rgba(255,255,255,0.18); }
 .btn-ghost:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.04); }

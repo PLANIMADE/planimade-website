@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "45";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "46";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
@@ -272,9 +272,16 @@
             const drift = rnd(-60, 60);                 // px seitliche Drift
             const op = rnd(0.25, 0.7).toFixed(2);
             html += `<span class="fx-p" style="left:${left.toFixed(2)}%;width:${size.toFixed(1)}px;height:${size.toFixed(1)}px;`
-                  + `--fx-c:${color};--dur:${dur.toFixed(1)}s;--delay:${delay.toFixed(1)}s;--dx:${drift.toFixed(0)}px;--o:${op}"></span>`;
+                  + `--dur:${dur.toFixed(1)}s;--delay:${delay.toFixed(1)}s;--dx:${drift.toFixed(0)}px;--o:${op}"></span>`;
         }
+        // Farbe zentral am Layer setzen, damit Game-Seiten sie per --fx-c überschreiben können
+        layer.style.setProperty("--fx-c", color);
         layer.innerHTML = html;
+    }
+    /* Partikelfarbe live umfärben (Game-/Lore-Seiten). Leerer Wert = Studio-Standard behalten. */
+    function setParticleColor(color) {
+        const layer = $("#fx-layer");
+        if (layer && color) layer.style.setProperty("--fx-c", color);
     }
 
     /* ---------- Cookie-/Consent-Banner ---------- */
@@ -555,14 +562,27 @@
         const up = (c) => Math.round(c + (255 - c) * amt).toString(16).padStart(2, "0");
         return "#" + up(ch(0)) + up(ch(2)) + up(ch(4));
     }
+    // Wahrgenommene Helligkeit (YIQ, 0..255) – für adaptive Schriftfarbe
+    function hexBrightness(hex) {
+        const m = String(hex).trim().replace("#", "").match(/^([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if (!m) return 0;
+        let h = m[1]; if (h.length === 3) h = h.split("").map(c => c + c).join("");
+        const r = parseInt(h.substr(0, 2), 16), g = parseInt(h.substr(2, 2), 16), b = parseInt(h.substr(4, 2), 16);
+        return (r * 299 + g * 587 + b * 114) / 1000;
+    }
     function applyAccent(hex, hex2) {
         const st = document.documentElement.style;
+        const c1 = hex || "#ff7d1a";
+        const c2 = hex2 || c1;
         if (hex) {
             st.setProperty("--accent", hex);
             // --accent-3 (helleres Geschwister) MUSS mitziehen, sonst bleibt hier Orange stehen
             st.setProperty("--accent-3", lightenHex(hex, 0.28));
         }
         if (hex2) st.setProperty("--accent-2", hex2);
+        // Adaptive Schriftfarbe: heller Verlauf (z. B. weiße Buttons) -> dunkle Schrift
+        const bright = (hexBrightness(c1) + hexBrightness(c2)) / 2;
+        st.setProperty("--accent-ink", bright > 176 ? "#1a0d00" : "#ffffff");
     }
 
     const STATUS = {
@@ -1037,6 +1057,7 @@
         if (!g) { root.innerHTML = notFound(t("nf_text")); return; }
 
         applyAccent(g.accent || "#8b5cf6", g.accent2 || "#22d3ee");
+        setParticleColor(g.particleColor || g.accent);   // Partikel an die Spielwelt anpassen
         document.title = `${g.title} — PLANIGAMES`;
 
         const blocks = Array.isArray(g.blocks) ? g.blocks : [];
@@ -1723,6 +1744,7 @@
             return;
         }
         applyAccent(g.accent || "#8b5cf6", g.accent2 || "#22d3ee");   // an das Spiel anpassen
+        setParticleColor(g.particleColor || g.accent);
         document.title = (d.title || g.title) + " — PLANIGAMES";
         const scenes = (Array.isArray(d.scenes) ? d.scenes : []).filter(s => s && (s.heading || s.text || s.image));
         const back = `<a href="game.php?slug=${esc(g.slug)}" class="lore-back">← ${esc(g.title)}</a>`;
