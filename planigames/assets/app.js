@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "49";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "50";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
@@ -1174,8 +1174,9 @@
         }
         const pos = g.logo ? logoPosOf(g) : null;
         // Logo im Textfluss (Standard bzw. immer auf dem Handy, damit es nicht überlappt).
+        // Auf dem Handy mittig -> bündig mit dem ebenfalls zentrierten Text.
         const inlineLogo = (cls) => g.logo
-            ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-6 object-contain object-left reveal ${cls}" style="height:${Math.round(150 * ls)}px;width:auto;max-width:92vw">`
+            ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-6 object-contain object-center md:object-left mx-auto md:mx-0 reveal ${cls}" style="height:${Math.round(150 * ls)}px;width:auto;max-width:100%">`
             : `<h1 class="font-display text-6xl md:text-8xl font-extrabold text-white mb-6 reveal-on ${cls}"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`;
         // Frei platziertes Logo nur auf großen Bildschirmen (absolut, blockiert keine Klicks).
         const floatLogo = pos
@@ -1189,11 +1190,11 @@
             <div class="absolute inset-0" style="background:linear-gradient(to top, var(--bg) 4%, color-mix(in srgb, var(--accent) 18%, transparent) 55%, rgba(0,0,0,.35))"></div>
             <div class="absolute inset-0 bg-black/30"></div>
             ${floatLogo}
-            <div class="relative max-w-6xl mx-auto w-full px-6 pb-16 md:pb-24">
-                <div class="mb-6 reveal-on">${statusBadge(g.status)}</div>
+            <div class="relative max-w-6xl mx-auto w-full px-6 pb-16 md:pb-24 text-center md:text-left">
+                <div class="mb-6 reveal-on flex justify-center md:justify-start">${statusBadge(g.status)}</div>
                 ${inlineTitle}
-                <p class="text-xl md:text-2xl text-zinc-200 max-w-2xl mb-9 reveal">${esc(b.tagline || g.tagline || "")}</p>
-                <div class="flex flex-wrap gap-3 reveal">
+                <p class="text-xl md:text-2xl text-zinc-200 max-w-2xl mx-auto md:mx-0 mb-9 reveal">${esc(b.tagline || g.tagline || "")}</p>
+                <div class="flex flex-wrap justify-center md:justify-start gap-3 reveal">
                     ${g.wishlistUrl ? `<a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold">${esc(b.ctaLabel || t("wishlist"))}</a>` : ""}
                     ${b.trailerUrl ? `<a href="${esc(b.trailerUrl)}" target="_blank" rel="noopener" class="btn-ghost magnetic px-8 py-4 rounded-full font-semibold inline-flex items-center gap-2">▶ ${LANG === "en" ? "Watch trailer" : "Trailer ansehen"}</a>` : ""}
                 </div>
