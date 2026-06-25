@@ -233,10 +233,26 @@
         lastTotal = c.total;
       } catch {}
     }
-    setInterval(pollNotifs, 30000);
+    pollNotifs();                 // sofort beim Start: zeigt neue Mails direkt an (ohne Reload)
+    setInterval(pollNotifs, 20000);
     // bei Rückkehr zum Tab sofort aktualisieren
     document.addEventListener("visibilitychange", () => { if (!document.hidden) pollNotifs(); });
   }
+
+  // ---- Board-Karten-Bild: Datei-Feedback (Highlight + Dateiname) ----
+  document.addEventListener("change", (e) => {
+    const inp = e.target;
+    if (!(inp instanceof HTMLInputElement) || inp.type !== "file" || inp.name !== "cardimg") return;
+    const lbl = inp.closest("label");
+    if (!lbl) return;
+    const has = inp.files && inp.files.length > 0;
+    lbl.classList.toggle("has-file", has);
+    if (lbl.classList.contains("kb-img-pick")) {
+      let tag = lbl.parentElement.querySelector(".kb-img-name");
+      if (!tag) { tag = document.createElement("span"); tag.className = "kb-img-name"; lbl.insertAdjacentElement("afterend", tag); }
+      tag.textContent = has ? "📎 " + inp.files[0].name : "";
+    }
+  });
 
   // ---- Bild-Fokuspunkt (Bildausschnitt für Cover) ----
   document.addEventListener("click", (e) => {

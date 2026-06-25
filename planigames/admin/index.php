@@ -25,7 +25,7 @@ if ($action === 'upload') {
 if ($action === 'notif_counts') {
   header('Content-Type: application/json');
   if (!pg_logged_in()) { http_response_code(403); exit('{"error":"Nicht eingeloggt"}'); }
-  $n = pg_notifications();
+  $n = pg_notifications(true);   // Mail live vom IMAP (gedrosselt) -> neue Mails ohne Reload
   echo json_encode(['counts' => $n, 'notes' => pg_notif_notes($n)], JSON_UNESCAPED_UNICODE);
   exit;
 }
@@ -211,6 +211,7 @@ if (!pg_logged_in()) {
         if (!$okCode) { $okBackup = pg_backup_code_consume($u, $code); if ($okBackup) pg_user_update($u['email'], ['totp_backup' => $u['totp_backup']]); }
         if ($okCode || $okBackup) {
           pg_login_clear(); unset($_SESSION['pg_2fa']); session_regenerate_id(true); pg_login_user($u);
+          if (!empty($_POST['trust_device'])) pg_trusted_remember($u['email']);   // Gerät merken
           pg_log_activity('login', ($u['email'] ?? '') . ($okBackup ? ' · Backup-Code' : ' · 2FA'));
           header('Location: index.php'); exit;
         }
@@ -219,7 +220,12 @@ if (!pg_logged_in()) {
     } else {
       // Erster Schritt: E-Mail + Passwort
       $u = pg_user_check(trim($_POST['email'] ?? ''), $_POST['pw'] ?? '');
-      if ($u && pg_user_has_2fa($u)) {
+      if ($u && pg_user_has_2fa($u) && pg_trusted_current($u)) {
+        // Vertrautes Gerät -> zweiten Faktor überspringen (Passwort war ja korrekt)
+        pg_login_clear(); session_regenerate_id(true); pg_login_user($u);
+        pg_log_activity('login', ($u['email'] ?? '') . ' · vertrautes Gerät');
+        header('Location: index.php'); exit;
+      } elseif ($u && pg_user_has_2fa($u)) {
         $_SESSION['pg_2fa'] = ['email' => $u['email'], 'time' => time()]; $stage = '2fa';
       } elseif ($u) {
         pg_login_clear(); session_regenerate_id(true); pg_login_user($u);
@@ -240,6 +246,7 @@ if (!pg_logged_in()) {
     if ($err) echo '<p class="err">' . pg_h($err) . '</p>';
     echo '<form method="post"><input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '"><input type="hidden" name="twofa" value="1">';
     echo '<input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 \-]*" maxlength="9" placeholder="123 456" required autofocus class="otp-input">';
+    echo '<label class="trust-row"><input type="checkbox" name="trust_device" value="1"> Diesem Gerät vertrauen (30 Tage) – kein Code beim nächsten Mal</label>';
     echo '<button class="btn-primary" type="submit">Anmelden</button></form>';
     echo '<p class="muted" style="margin-top:1rem;font-size:.82rem">Kein Zugriff auf die App? Gib einen deiner <b>Wiederherstellungscodes</b> ein.</p>';
     echo '<p style="margin-top:.6rem"><a class="muted" style="font-size:.82rem" href="index.php?cancel=1">← Andere Anmeldung</a></p>';
@@ -892,7 +899,7 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
       $title = trim((string) ($_POST['title'] ?? ''));
       if ($title !== '') {
         $board['boards'][$bi]['columns'][$ci]['cards'][] = ['id' => pg_board_id('card'), 'title' => $title, 'text' => '', 'color' => '',
-          'due' => '', 'game' => $board['boards'][$bi]['game'] ?? '', 'priority' => '', 'assignee' => '', 'labels' => [], 'checklist' => [], 'comments' => [], 'archived' => false, 'created' => date('c')];
+          'due' => '', 'game' => $board['boards'][$bi]['game'] ?? '', 'priority' => '', 'assignee' => '', 'labels' => [], 'checklist' => [], 'comments' => [], 'image' => pg_store_upload('cardimg'), 'archived' => false, 'created' => date('c')];
         pg_board_save($board);
       }
     } elseif (isset($_POST['board_edit_card'])) {
@@ -916,6 +923,10 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
           $card['assignee'] = array_key_exists($as, pg_board_assignees()) ? $as : '';
           $card['labels'] = $mkLabels($_POST['labels'] ?? '');
           $card['checklist'] = $chk;
+          // Bild: neues hochgeladenes ersetzt, "entfernen" leert, sonst bleibt es.
+          $newImg = pg_store_upload('cardimg');
+          if ($newImg !== '') $card['image'] = $newImg;
+          elseif (!empty($_POST['img_remove'])) $card['image'] = '';
           if ($newCmt !== '') {
             $card['comments'] = (array) ($card['comments'] ?? []);
             $card['comments'][] = ['author' => pg_current_email(), 'text' => mb_substr($newCmt, 0, 1000), 'date' => date('c')];
@@ -977,11 +988,18 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
     $h .= '<div class="kb-card-top">' . (!$archiveView ? '<span class="kb-grip" data-kb-grip title="Ziehen">⠿</span>' : '');
     if ($assignee !== '') $h .= '<span class="kb-avatar" title="' . pg_h($assignees[$assignee] ?? $assignee) . '">' . pg_h(pg_board_initials($assignees[$assignee] ?? $assignee)) . '</span>';
     $h .= '<details class="kb-cardedit"><summary title="Bearbeiten">✎</summary>'
-        . '<form method="post" class="kb-cardform"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="card" value="' . pg_h($card['id']) . '"><input type="hidden" name="board" value="' . pg_h($curId) . '">'
+        . '<form method="post" class="kb-cardform" enctype="multipart/form-data"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="card" value="' . pg_h($card['id']) . '"><input type="hidden" name="board" value="' . pg_h($curId) . '">'
         . ($archiveView ? '<input type="hidden" name="ret_archive" value="1">' : '')
         . '<div class="kb-modal-head"><span>Karte bearbeiten</span><button type="button" class="kb-modal-x" data-kb-close aria-label="Schließen">✕</button></div>'
         . '<label class="ml">Titel</label><input type="text" name="title" value="' . pg_h($card['title'] ?? '') . '" required>'
-        . '<label class="ml">Notiz</label><textarea name="text" rows="2">' . pg_h($card['text'] ?? '') . '</textarea>'
+        . '<label class="ml">Notiz</label><textarea name="text" rows="2">' . pg_h($card['text'] ?? '') . '</textarea>';
+    // Bild anhängen / ersetzen / entfernen
+    $cimg = trim((string) ($card['image'] ?? ''));
+    $h .= '<label class="ml">Bild</label><div class="kb-imgfield">';
+    if ($cimg !== '') $h .= '<img class="kb-img-prev" src="' . pg_h($cimg) . '" alt="">'
+        . '<label class="kb-img-rm"><input type="checkbox" name="img_remove" value="1"> Bild entfernen</label>';
+    $h .= '<label class="btn-add kb-img-pick">' . ($cimg !== '' ? '🖼️ Bild ersetzen' : '🖼️ Bild anhängen') . '<input type="file" name="cardimg" accept="image/*" hidden></label>'
+        . '</div>'
         . '<div class="kb-form-row"><div><label class="ml">Priorität</label><select name="priority">';
     foreach ($prios as $val => $lbl) $h .= '<option value="' . pg_h($val) . '"' . ($val === $prio ? ' selected' : '') . '>' . pg_h($lbl) . '</option>';
     $h .= '</select></div><div><label class="ml">Zuständig</label><select name="assignee">';
@@ -1018,6 +1036,7 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
     $h .= '<button class="btn-danger sm" name="board_del_card" value="1" onclick="return confirm(\'Karte endgültig löschen?\')">Löschen</button>';
     $h .= '</div></form></details></div>';
     // Vorderseite
+    if (trim((string) ($card['image'] ?? '')) !== '') $h .= '<img class="kb-card-img" src="' . pg_h($card['image']) . '" alt="" loading="lazy">';
     $h .= '<div class="kb-card-title">' . pg_h($card['title'] ?? '') . '</div>';
     if ($prio !== '' || $labels) {
       $h .= '<div class="kb-labels">';
@@ -1190,8 +1209,10 @@ if (($_GET['view'] ?? '') === 'board' || array_intersect($pg_board_posts, array_
     echo '<div class="kb-cards" data-kb-cards>';
     foreach ($c['cards'] as $card) { if (!empty($card['archived'])) continue; echo $renderCard($card); }
     echo '</div>';
-    echo '<form method="post" class="kb-add"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="board" value="' . pg_h($curId) . '"><input type="hidden" name="col" value="' . $cid . '">'
-       . '<input type="text" name="title" placeholder="+ Karte hinzufügen" autocomplete="off"><button class="btn-add" name="board_add_card" value="1">+</button></form>';
+    echo '<form method="post" class="kb-add" enctype="multipart/form-data"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="board" value="' . pg_h($curId) . '"><input type="hidden" name="col" value="' . $cid . '">'
+       . '<input type="text" name="title" placeholder="+ Karte hinzufügen" autocomplete="off">'
+       . '<label class="kb-add-img" title="Bild anhängen (optional)">📎<input type="file" name="cardimg" accept="image/*" hidden></label>'
+       . '<button class="btn-add" name="board_add_card" value="1">+</button></form>';
     echo '</div>';
   }
   echo '<div class="kb-col kb-col-new"><form method="post" class="kb-addcol"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="board" value="' . pg_h($curId) . '">'

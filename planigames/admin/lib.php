@@ -124,6 +124,21 @@ function pg_mail_unread_cached(){
 function pg_mail_unread_store($count){
   pg_save_json(PG_MAIL_UNREAD_FILE, ['count' => max(0, (int) $count), 'time' => time()]);
 }
+// Live-Ungelesen vom IMAP holen (gedrosselt: höchstens alle $maxAge Sekunden, sonst Cache).
+// Dadurch zeigt die Glocke neue Mails ohne Inbox-Besuch / ohne Seiten-Reload.
+function pg_mail_unread_live($maxAge = 20){
+  $c = pg_load_json(PG_MAIL_UNREAD_FILE);
+  $age = is_array($c) ? (time() - (int) ($c['time'] ?? 0)) : PHP_INT_MAX;
+  if ($age < $maxAge && is_array($c)) return max(0, (int) ($c['count'] ?? 0));   // frisch genug
+  if (!pg_imap_available() || !pg_mail_configured_recv()) return pg_mail_unread_cached();
+  $mbox = pg_imap_connect('INBOX');
+  if (!$mbox) return pg_mail_unread_cached();
+  $unseen = @imap_search($mbox, 'UNSEEN');
+  @imap_close($mbox);
+  $n = is_array($unseen) ? count($unseen) : 0;
+  pg_mail_unread_store($n);
+  return $n;
+}
 
 /* ---------------- Benachrichtigungen (Allrounder) ---------------- */
 // neue Newsletter-Anmeldungen der letzten $days Tage
@@ -160,8 +175,8 @@ function pg_keys_stats(){
 }
 
 // Sammelt alle Zähler; $total = handlungsrelevante (Mail + Kontakt + Kommentare)
-function pg_notifications(){
-  $mail     = pg_can('mail') ? pg_mail_unread_cached() : 0;
+function pg_notifications($liveMail = false){
+  $mail     = pg_can('mail') ? ($liveMail ? pg_mail_unread_live() : pg_mail_unread_cached()) : 0;
   $contacts = pg_can('contacts') ? pg_contacts_unread() : 0;
   $comments = pg_comments_pending();
   $subs     = pg_can('subscribers') ? pg_subscribers_recent(7) : 0;
@@ -401,6 +416,46 @@ function pg_backup_code_consume(&$user, $input){
   return false;
 }
 function pg_user_has_2fa($u){ return !empty($u['totp_enabled']) && !empty($u['totp']); }
+
+/* ---------------- Vertraute Geräte (2FA überspringen) ----------------
+   Nur nach erfolgreicher 2FA-Anmeldung setzbar. Das Cookie ersetzt NICHT
+   das Passwort – es überspringt nur den zweiten Faktor auf diesem Gerät. */
+const PG_TRUST_COOKIE = 'pg_trust';
+function pg_trusted_prune($list){
+  $now = time();
+  return array_values(array_filter((array) $list, fn($d) => is_array($d) && (int) ($d['exp'] ?? 0) > $now));
+}
+// Gerät merken: Zufallstoken erzeugen, Hash beim User speichern, Cookie setzen.
+function pg_trusted_remember($email, $days = 30){
+  $u = pg_user_find($email); if (!$u) return;
+  $token = bin2hex(random_bytes(32));
+  $exp = time() + $days * 86400;
+  $list = pg_trusted_prune($u['trusted'] ?? []);
+  $list[] = ['hash' => hash('sha256', $token), 'exp' => $exp, 'created' => date('c'),
+             'ua' => mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 120)];
+  if (count($list) > 10) $list = array_slice($list, -10);   // höchstens 10 Geräte je Konto
+  pg_user_update($email, ['trusted' => $list]);
+  $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+  setcookie(PG_TRUST_COOKIE, $email . ':' . $token, [
+    'expires' => $exp, 'path' => '/admin/', 'secure' => $secure, 'httponly' => true, 'samesite' => 'Lax']);
+}
+// Ist DIESES Gerät für genau diesen User vertraut? (Cookie gültig & nicht abgelaufen)
+function pg_trusted_current($u){
+  if (empty($u) || !is_array($u)) return false;
+  $raw = (string) ($_COOKIE[PG_TRUST_COOKIE] ?? '');
+  $pos = strrpos($raw, ':'); if ($pos === false) return false;
+  $email = substr($raw, 0, $pos); $token = substr($raw, $pos + 1);
+  if ($token === '' || strcasecmp($email, $u['email'] ?? '') !== 0) return false;
+  $hash = hash('sha256', $token);
+  foreach (pg_trusted_prune($u['trusted'] ?? []) as $d) {
+    if (hash_equals((string) ($d['hash'] ?? ''), $hash)) return true;
+  }
+  return false;
+}
+// Vertrauen dieses Geräts widerrufen (Cookie löschen; der gespeicherte Hash läuft ohnehin ab).
+function pg_trusted_forget_current(){
+  setcookie(PG_TRUST_COOKIE, '', ['expires' => time() - 3600, 'path' => '/admin/']);
+}
 
 /* ---------------- Aktivitätsprotokoll ---------------- */
 const PG_ACTIVITY_FILE = __DIR__ . '/../data/activity.json';
@@ -993,11 +1048,11 @@ function pg_view_head($title){
      . '<meta name="mobile-web-app-capable" content="yes">'
      . '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">'
      . '<meta name="apple-mobile-web-app-title" content="' . pg_h($appName) . '">'
-     . '<link rel="stylesheet" href="assets/admin.css?v=57"></head><body>';
+     . '<link rel="stylesheet" href="assets/admin.css?v=58"></head><body>';
 }
 function pg_view_foot(){
   echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
-  echo '<script src="assets/admin.js?v=57"></script></body></html>';
+  echo '<script src="assets/admin.js?v=58"></script></body></html>';
 }
 function pg_view_topbar($SCHEMA, $active){
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
@@ -1293,6 +1348,23 @@ function pg_slugify($s){
 }
 
 /* ---------------- Datei-Upload ---------------- */
+/* Datei aus einem normalen (Nicht-AJAX) Formular nach media/ speichern.
+   Gibt den /media-Pfad zurück, '' wenn nichts/ungültig. Bei $imagesOnly nur Bilder. */
+function pg_store_upload($key, $imagesOnly = true){
+  if (empty($_FILES[$key]) || ($_FILES[$key]['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) return '';
+  $f = $_FILES[$key];
+  $ext = strtolower(pathinfo($f['name'], PATHINFO_EXTENSION));
+  $imgExt = ['jpg','jpeg','png','webp','gif','svg','avif'];
+  $allowed = $imagesOnly ? $imgExt : PG_UPLOAD_EXT;
+  if (!in_array($ext, $allowed, true)) return '';
+  $base = pg_slugify(pathinfo($f['name'], PATHINFO_FILENAME)) ?: 'bild';
+  if (!is_dir(PG_MEDIA_DIR)) @mkdir(PG_MEDIA_DIR, 0775, true);
+  $name = $base . '.' . $ext; $i = 1;
+  while (is_file(PG_MEDIA_DIR . '/' . $name)) { $name = $base . '-' . (++$i) . '.' . $ext; }
+  if (!move_uploaded_file($f['tmp_name'], PG_MEDIA_DIR . '/' . $name)) return '';
+  pg_optimize_image(PG_MEDIA_DIR . '/' . $name, $ext);
+  return '/media/' . $name;
+}
 function pg_handle_upload(){
   header('Content-Type: application/json');
   if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
