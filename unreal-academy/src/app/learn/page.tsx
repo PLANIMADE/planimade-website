@@ -4,6 +4,7 @@ import Link from "next/link";
 import { tracks } from "@/data/missions";
 import { useProgress } from "@/features/progression/local";
 import { StatBar } from "@/features/progression/StatBar";
+import { DailyBanner } from "@/features/daily/DailyBanner";
 import { BottomNav } from "@/components/BottomNav";
 import type { MissionType } from "@/features/missions/types";
 
@@ -38,6 +39,8 @@ export default function LearnPage() {
           </Link>
           <StatBar />
         </header>
+
+        <DailyBanner />
 
         {tracks.map((track) => {
           const done = track.missions.filter((m) => completed[m.id]).length;

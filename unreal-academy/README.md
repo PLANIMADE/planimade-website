@@ -12,13 +12,14 @@ XP/Streaks/Rängen, Skill-Trees und missionsbasiertem Lernen.
 |---|---|---|
 | **Phase 1** | Architektur, Datenmodelle, Tech-Stack, UX, Gamification, Simulator-Design | ✅ → [`docs/PHASE-1-ARCHITECTURE.md`](docs/PHASE-1-ARCHITECTURE.md) |
 | **Phase 2** | MVP-Scope (3 Pfade, 24 Missionen, Simulator, Daily Challenge) | ✅ → [`docs/PHASE-2-MVP.md`](docs/PHASE-2-MVP.md) |
-| **Phase 3** | Technische Umsetzung (Setup → Engine → Simulator → Mission Player → Progression → Content) | 🚧 läuft — Setup ✅ · Graph-Engine ✅ · Simulator ✅ · Mission Player ✅ · Progression (XP/Streak/Ränge/Badges) ✅ · Content 3 Pfade / 24 Missionen ✅ |
+| **Phase 3** | Technische Umsetzung (Setup → Engine → Simulator → Mission Player → Progression → Content → Daily) | 🚧 läuft — Setup ✅ · Graph-Engine ✅ · Simulator ✅ · Mission Player ✅ · Progression (XP/Streak/Ränge/Badges) ✅ · Content 3 Pfade / 24 Missionen ✅ · Daily Challenge ✅ |
 
 ### Spielbar (lokaler Stand)
 
 - `/` — Landing → Einstieg in die Lernkarte
 - `/learn` — vertikale Lernkarte über **3 Pfade & 24 Missionen** (A „Blueprint Basics", B „Gameplay Systems", C „Debugging Lab") mit XP, Streak & Sternen (lokal gespeichert)
 - `/mission/[id]` — Mission Player: Step-Sequenz (concept · build · debug · quiz · boss) mit verhaltensbasierter Bewertung, XP/Streak/Rang-Up & neuen Badges im Ergebnis-Screen
+- `/daily` — Daily Challenge: täglich rotierende Bau-/Debug-Mission mit **+50 % XP** (deterministisch, 1×/Tag einlösbar)
 - `/profile` — Rang-Fortschritt, Streak, Abzeichen-Galerie & Pfad-Fortschritt
 - `/sandbox` — freier Blueprint-Simulator (Tür-Mission)
 
@@ -26,7 +27,7 @@ Gamification: 5 Ränge (XP-Schwellen), Tages-Streak mit Flamme, 5 Badges (Erster
 
 Alle 24 Missionen sind testabgesichert: Jeder Bau-/Debug-Startgraph schlägt zunächst fehl, und für jede existiert eine Referenzlösung, die den Grader besteht (64 Tests gesamt).
 
-**Nächste Schritte:** Daily Challenge · Supabase-Auth/Sync · Onboarding & Mobile-Politur.
+**Nächste Schritte:** Supabase-Auth/Sync · Onboarding („Wähle dein Ziel") & Mobile-Politur.
 
 **Nächste Schritte:** Content-Seed Pfade B & C · Daily Challenge · Supabase-Auth/Sync · Onboarding & Mobile-Politur.
 

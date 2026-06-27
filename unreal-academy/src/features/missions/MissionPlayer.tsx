@@ -4,9 +4,11 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { getNextMission } from "@/data/missions";
 import {
+  claimDaily,
   recordCompletion,
   type CompletionResult,
 } from "@/features/progression/local";
+import { DAILY_BONUS } from "@/features/daily/daily";
 import { ResultScreen } from "./ResultScreen";
 import { ConceptStepView } from "./steps/ConceptStepView";
 import { QuizStepView } from "./steps/QuizStepView";
@@ -24,12 +26,21 @@ function starsFor(mistakes: number): number {
  * Mission Player — führt durch die Step-Sequenz einer Mission.
  * concept → build/debug/quiz → … → Ergebnis-Screen mit XP.
  */
-export function MissionPlayer({ mission }: { mission: Mission }) {
+export function MissionPlayer({
+  mission,
+  daily = false,
+}: {
+  mission: Mission;
+  /** Im Daily-Modus gibt es zusätzlich den +50 %-Tagesbonus (1×/Tag). */
+  daily?: boolean;
+}) {
   const [index, setIndex] = useState(0);
   const [solved, setSolved] = useState(false);
   const [mistakes, setMistakes] = useState(0);
   const [finished, setFinished] = useState(false);
   const [result, setResult] = useState<CompletionResult | null>(null);
+  const [dailyBonus, setDailyBonus] = useState(0);
+  const [finalXp, setFinalXp] = useState(0);
 
   const step = mission.steps[index];
   const isLast = index === mission.steps.length - 1;
@@ -52,11 +63,24 @@ export function MissionPlayer({ mission }: { mission: Mission }) {
       return;
     }
     const stars = starsFor(mistakes);
-    setResult(
-      recordCompletion(mission.id, stars, earned.total, earned.firstTry),
+    const completion = recordCompletion(
+      mission.id,
+      stars,
+      earned.total,
+      earned.firstTry,
     );
+    setResult(completion);
+
+    // Daily-Bonus (einmal pro Tag) zusätzlich einlösen.
+    let total = completion.progress.xp;
+    if (daily) {
+      const claim = claimDaily(Math.round(earned.base * DAILY_BONUS));
+      setDailyBonus(claim.bonus);
+      total = claim.progress.xp;
+    }
+    setFinalXp(total);
     setFinished(true);
-  }, [isLast, mistakes, mission.id, earned]);
+  }, [isLast, mistakes, mission.id, earned, daily]);
 
   const restart = useCallback(() => {
     setIndex(0);
@@ -71,13 +95,14 @@ export function MissionPlayer({ mission }: { mission: Mission }) {
         mission={mission}
         stars={starsFor(mistakes)}
         earnedXp={earned.total}
-        totalXp={result.progress.xp}
+        dailyBonus={dailyBonus}
+        totalXp={finalXp}
         firstTry={earned.firstTry}
         streak={result.progress.streak.count}
         rankedUp={result.rankedUp}
         rankTitle={result.rank.rank.title}
         newBadges={result.newBadges}
-        nextMission={getNextMission(mission.id) ?? null}
+        nextMission={daily ? null : getNextMission(mission.id) ?? null}
         onRetry={restart}
       />
     );

@@ -9,6 +9,7 @@ export function ResultScreen({
   mission,
   stars,
   earnedXp,
+  dailyBonus = 0,
   totalXp,
   firstTry,
   streak,
@@ -21,6 +22,7 @@ export function ResultScreen({
   mission: Mission;
   stars: number;
   earnedXp: number;
+  dailyBonus?: number;
   totalXp: number;
   firstTry: boolean;
   streak: number;
@@ -64,6 +66,12 @@ export function ResultScreen({
       {firstTry && (
         <div className="rounded-full border border-success/40 bg-success/10 px-4 py-1.5 text-xs font-medium text-success">
           ⚡ Erst-Versuch-Bonus (+20 %)
+        </div>
+      )}
+
+      {dailyBonus > 0 && (
+        <div className="animate-xp-pop rounded-full border border-streak/40 bg-streak/10 px-4 py-1.5 text-xs font-medium text-streak">
+          🔥 Daily Challenge +{dailyBonus} XP (+50 %)
         </div>
       )}
 

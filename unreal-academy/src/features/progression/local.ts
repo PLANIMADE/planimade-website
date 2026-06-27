@@ -6,6 +6,7 @@ import type { Mission } from "@/features/missions/types";
 import {
   advanceStreak,
   computeRank,
+  dayStr,
   evaluateBadges,
   getBadge,
   type BadgeDef,
@@ -32,6 +33,8 @@ export interface LocalProgress {
   streak: Streak;
   /** IDs verdienter Badges. */
   badges: string[];
+  /** Tag (YYYY-MM-DD), an dem die Daily Challenge zuletzt eingelöst wurde. */
+  dailyDoneDay: string | null;
 }
 
 const EMPTY: LocalProgress = {
@@ -40,6 +43,7 @@ const EMPTY: LocalProgress = {
   firstTry: [],
   streak: { count: 0, lastDay: null },
   badges: [],
+  dailyDoneDay: null,
 };
 
 function isBrowser(): boolean {
@@ -58,6 +62,7 @@ function readRaw(): LocalProgress {
       firstTry: p.firstTry ?? [],
       streak: p.streak ?? { count: 0, lastDay: null },
       badges: p.badges ?? [],
+      dailyDoneDay: p.dailyDoneDay ?? null,
     };
   } catch {
     return EMPTY;
@@ -153,6 +158,7 @@ export function recordCompletion(
     firstTry: [...prev.firstTry],
     streak: advanceStreak(prev.streak),
     badges: [...prev.badges],
+    dailyDoneDay: prev.dailyDoneDay,
   };
 
   const prevStars = prev.completed[missionId] ?? 0;
@@ -194,4 +200,31 @@ export function recordCompletion(
 
 export function isCompleted(missionId: string, p?: LocalProgress): boolean {
   return (p ?? readRaw()).completed[missionId] !== undefined;
+}
+
+/** Wurde die Daily Challenge heute bereits eingelöst? */
+export function isDailyDone(p?: LocalProgress, today: string = dayStr()): boolean {
+  return (p ?? readRaw()).dailyDoneDay === today;
+}
+
+export interface DailyClaim {
+  progress: LocalProgress;
+  /** Wurde der Bonus jetzt gutgeschrieben (false, wenn heute schon eingelöst)? */
+  claimed: boolean;
+  bonus: number;
+}
+
+/** Löst den Daily-Bonus ein — höchstens einmal pro Tag. Reaktiv. */
+export function claimDaily(bonusXp: number, today: string = dayStr()): DailyClaim {
+  const prev = readRaw();
+  if (prev.dailyDoneDay === today) {
+    return { progress: prev, claimed: false, bonus: 0 };
+  }
+  const next: LocalProgress = {
+    ...prev,
+    xp: prev.xp + bonusXp,
+    dailyDoneDay: today,
+  };
+  write(next);
+  return { progress: next, claimed: true, bonus: bonusXp };
 }
