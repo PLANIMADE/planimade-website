@@ -1,15 +1,15 @@
 import Link from "next/link";
 
 /**
- * Provisorische Startseite – bestätigt, dass Setup & Design-System laufen.
- * Wird in Phase 3 / Schritt 2+ durch Onboarding + Learn Map ersetzt.
+ * Startseite / Landing. Führt in die Lernkarte (Pfad A spielbar).
+ * Onboarding („Wähle dein Ziel“) folgt im Progression-/Politur-Schritt.
  */
 export default function HomePage() {
   return (
     <main className="bp-grid relative flex min-h-dvh flex-col items-center justify-center px-6 text-center">
       <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-surface/70 px-4 py-1.5 text-xs font-medium text-muted">
         <span className="h-2 w-2 animate-pin-glow rounded-full bg-accent" />
-        Phase 3 · Schritt 1 — Projekt-Setup läuft
+        Pfad A spielbar — Mission Player live
       </span>
 
       <h1 className="max-w-2xl bg-gradient-to-br from-text to-accent bg-clip-text text-4xl font-extrabold leading-tight text-transparent sm:text-6xl">
@@ -42,15 +42,22 @@ export default function HomePage() {
 
       <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
         <Link
-          href="/sandbox"
+          href="/learn"
           className="rounded-xl bg-accent px-6 py-3 font-semibold text-bg shadow-glow transition hover:brightness-110"
         >
-          ▶ Simulator testen — die Tür-Mission
+          ▶ Loslegen — Pfad „Blueprint Basics“
         </Link>
-        <span className="text-xs text-muted">
-          XP · Streaks · Skill-Trees — kommen in den nächsten Schritten
-        </span>
+        <Link
+          href="/sandbox"
+          className="rounded-xl border border-border bg-surface px-6 py-3 text-sm text-muted transition hover:text-text"
+        >
+          Freier Simulator
+        </Link>
       </div>
+
+      <span className="mt-6 text-xs text-muted">
+        XP &amp; Sterne · Streaks · Skill-Trees — kommen in den nächsten Schritten
+      </span>
     </main>
   );
 }

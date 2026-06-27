@@ -12,7 +12,16 @@ XP/Streaks/Rängen, Skill-Trees und missionsbasiertem Lernen.
 |---|---|---|
 | **Phase 1** | Architektur, Datenmodelle, Tech-Stack, UX, Gamification, Simulator-Design | ✅ → [`docs/PHASE-1-ARCHITECTURE.md`](docs/PHASE-1-ARCHITECTURE.md) |
 | **Phase 2** | MVP-Scope (3 Pfade, 24 Missionen, Simulator, Daily Challenge) | ✅ → [`docs/PHASE-2-MVP.md`](docs/PHASE-2-MVP.md) |
-| **Phase 3** | Technische Umsetzung (Setup → Engine → Simulator → Backend → Progression) | 🚧 läuft — Schritt 1 (Projekt-Setup) ✅ |
+| **Phase 3** | Technische Umsetzung (Setup → Engine → Simulator → Mission Player → Progression) | 🚧 läuft — Setup ✅ · Graph-Engine ✅ · Simulator ✅ · Mission Player + Pfad A ✅ |
+
+### Spielbar (lokaler Stand)
+
+- `/` — Landing → Einstieg in die Lernkarte
+- `/learn` — vertikale Lernkarte (Pfad A „Blueprint Basics", 8 Missionen) mit XP & Sternen (lokal gespeichert)
+- `/mission/[id]` — Mission Player: Step-Sequenz (concept · build · debug · quiz · boss) mit verhaltensbasierter Bewertung & Ergebnis-Screen
+- `/sandbox` — freier Blueprint-Simulator (Tür-Mission)
+
+**Nächste Schritte:** volle Progression (Streak, Ränge, Badges, Supabase-Sync) · Content-Seed Pfade B & C · Daily Challenge · Onboarding & Mobile-Politur.
 
 ## Lokal starten
 
