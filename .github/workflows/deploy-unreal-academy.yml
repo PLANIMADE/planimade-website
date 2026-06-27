@@ -4,7 +4,7 @@ name: Deploy Unreal Academy (GitHub Pages)
 # auf GitHub Pages → https://<owner>.github.io/planimade-website/
 on:
   push:
-    branches: [claude/unreal-duolingo-platform-t1o4cm]
+    branches: [main]
     paths:
       - "unreal-academy/**"
       - ".github/workflows/deploy-unreal-academy.yml"
