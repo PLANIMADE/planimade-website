@@ -42,10 +42,10 @@ export default function HomePage() {
 
       <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
         <Link
-          href="/"
+          href="/sandbox"
           className="rounded-xl bg-accent px-6 py-3 font-semibold text-bg shadow-glow transition hover:brightness-110"
         >
-          ▶ Bald: Erste Mission
+          ▶ Simulator testen — die Tür-Mission
         </Link>
         <span className="text-xs text-muted">
           XP · Streaks · Skill-Trees — kommen in den nächsten Schritten
