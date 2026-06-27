@@ -20,22 +20,132 @@ function builderStep(id: string): BuilderStep {
   return step;
 }
 
-/** Klont einen Graphen und ergänzt Nodes/Edges (= „die Lösung bauen"). */
-function withSolution(
+/**
+ * Wendet eine „Reparatur"/„Lösung" auf den Startgraphen an: Kanten entfernen,
+ * Knoten/Kanten hinzufügen, Knoten-Daten (Operator, Literal) setzen.
+ */
+function fix(
   base: BPGraph,
-  add: { nodes?: BPGraph["nodes"]; edges?: BPGraph["edges"] },
+  opts: {
+    removeEdges?: string[];
+    nodes?: BPGraph["nodes"];
+    edges?: BPGraph["edges"];
+    setData?: Record<string, Record<string, unknown>>;
+  },
 ): BPGraph {
-  return {
-    nodes: [...base.nodes, ...(add.nodes ?? [])],
-    edges: [...base.edges, ...(add.edges ?? [])],
-    variables: base.variables,
-  };
+  const remove = new Set(opts.removeEdges ?? []);
+  const nodes = base.nodes
+    .map((n) =>
+      opts.setData?.[n.id]
+        ? { ...n, data: { ...(n.data ?? {}), ...opts.setData[n.id] } }
+        : n,
+    )
+    .concat(opts.nodes ?? []);
+  const edges = base.edges
+    .filter((e) => !remove.has(e.id))
+    .concat(opts.edges ?? []);
+  return { nodes, edges, variables: base.variables };
 }
+
+/** Referenzlösung pro Mission-ID (eine korrekte Lösung von vielen möglichen). */
+const solutions: Record<string, (g: BPGraph) => BPGraph> = {
+  // Pfad A
+  A2: (g) => fix(g, { edges: [edge("ev", "then", "print", "in")] }),
+  A4: (g) => fix(g, { edges: [edge("br", "true", "door", "in")] }),
+  A6: (g) =>
+    fix(g, {
+      nodes: [node("light", "action.toggleLight")],
+      edges: [edge("ev", "then", "light", "in")],
+    }),
+  A7: (g) => fix(g, { edges: [edge("get", "value", "br", "condition")] }),
+  A8: (g) =>
+    fix(g, {
+      nodes: [
+        node("br", "flow.branch"),
+        node("door", "action.openDoor"),
+        node("print", "action.print"),
+      ],
+      edges: [
+        edge("ev", "then", "br", "in"),
+        edge("get", "value", "br", "condition"),
+        edge("br", "true", "door", "in"),
+        edge("br", "false", "print", "in"),
+      ],
+    }),
+
+  // Pfad B
+  B2: (g) => fix(g, { edges: [edge("ev", "then", "set", "in")] }),
+  B4: (g) =>
+    fix(g, { setData: { cmp: { op: "<=" } }, edges: [edge("br", "true", "dead", "in")] }),
+  B5: (g) =>
+    fix(g, {
+      nodes: [node("litB", "literal.int", { value: -10 })],
+      edges: [edge("litB", "value", "add", "b")],
+    }),
+  B6: (g) =>
+    fix(g, { removeEdges: ["dbug"], edges: [edge("getH", "value", "cmp", "a")] }),
+  B7: (g) =>
+    fix(g, {
+      setData: { cmp: { op: ">=" } },
+      nodes: [node("litB", "literal.int", { value: 3 })],
+      edges: [edge("litB", "value", "cmp", "b"), edge("br", "true", "door", "in")],
+    }),
+  B8: (g) =>
+    fix(g, {
+      nodes: [
+        node("cmp", "math.compare", { op: "<=" }),
+        node("br", "flow.branch"),
+        node("dead", "action.setDead"),
+        node("print", "action.print"),
+      ],
+      edges: [
+        edge("get", "value", "cmp", "a"),
+        edge("cmp", "result", "br", "condition"),
+        edge("ev", "then", "br", "in"),
+        edge("br", "true", "dead", "in"),
+        edge("br", "false", "print", "in"),
+      ],
+    }),
+
+  // Pfad C
+  C2: (g) =>
+    fix(g, {
+      removeEdges: ["ebug"],
+      nodes: [node("br", "flow.branch")],
+      edges: [
+        edge("ev", "then", "br", "in"),
+        edge("get", "value", "br", "condition"),
+        edge("br", "true", "door", "in"),
+      ],
+    }),
+  C3: (g) =>
+    fix(g, { removeEdges: ["ebug"], edges: [edge("ev", "then", "light", "in")] }),
+  C4: (g) =>
+    fix(g, {
+      removeEdges: ["btrue", "bfalse"],
+      edges: [edge("br", "true", "door", "in"), edge("br", "false", "print", "in")],
+    }),
+  C5: (g) =>
+    fix(g, { removeEdges: ["dbug"], edges: [edge("get", "value", "add", "a")] }),
+  C7: (g) => fix(g, { setData: { cmp: { op: ">=" } } }),
+  C8: (g) =>
+    fix(g, {
+      setData: { cmp: { op: "<=" } },
+      edges: [
+        edge("cmp", "result", "br", "condition"),
+        edge("br", "true", "dead", "in"),
+      ],
+    }),
+};
 
 describe("Missions – Struktur", () => {
   it("hat eindeutige IDs", () => {
     const ids = allMissions.map((m) => m.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("hat 24 Missionen über 3 Pfade", () => {
+    expect(allMissions).toHaveLength(24);
   });
 
   it("Quiz-Antworten zeigen auf gültige Optionen", () => {
@@ -49,71 +159,33 @@ describe("Missions – Struktur", () => {
     }
   });
 
-  it("getNextMission verkettet den Pfad und endet sauber", () => {
+  it("getNextMission verkettet die Pfade und endet sauber", () => {
     expect(getNextMission("A1")?.id).toBe("A2");
-    expect(getNextMission("A8")).toBeUndefined();
+    expect(getNextMission("A8")?.id).toBe("B1");
+    expect(getNextMission("C8")).toBeUndefined();
   });
 });
 
-describe("Missions – Bau-/Debug-Missionen sind lösbar", () => {
-  it("A2: BeginPlay → Print", () => {
-    const step = builderStep("A2");
-    expect(gradeGraph(step.initialGraph, step.grader).passed).toBe(false);
-
-    const solved = withSolution(step.initialGraph, {
-      edges: [edge("ev", "then", "print", "in")],
+describe("Missions – jeder Bau-/Debug-Startgraph schlägt zunächst fehl", () => {
+  for (const m of allMissions) {
+    const step = m.steps[0];
+    if (step.kind !== "build" && step.kind !== "debug") continue;
+    it(`${m.id}: Startgraph besteht den Grader NICHT`, () => {
+      expect(gradeGraph(step.initialGraph, step.grader).passed).toBe(false);
     });
-    expect(gradeGraph(solved, step.grader).passed).toBe(true);
-  });
+  }
+});
 
-  it("A4: true → Open Door", () => {
-    const step = builderStep("A4");
-    expect(gradeGraph(step.initialGraph, step.grader).passed).toBe(false);
-
-    const solved = withSolution(step.initialGraph, {
-      edges: [edge("br", "true", "door", "in")],
+describe("Missions – Referenzlösung besteht den Grader", () => {
+  for (const m of allMissions) {
+    const step = m.steps[0];
+    if (step.kind !== "build" && step.kind !== "debug") continue;
+    const solve = solutions[m.id];
+    it(`${m.id}: hat eine lösbare Referenzlösung`, () => {
+      expect(solve, `Referenzlösung für ${m.id} fehlt`).toBeDefined();
+      const solved = solve(step.initialGraph);
+      const result = gradeGraph(solved, step.grader);
+      expect(result.passed, JSON.stringify(result.cases)).toBe(true);
     });
-    expect(gradeGraph(solved, step.grader).passed).toBe(true);
-  });
-
-  it("A6: Toggle Light beim Start", () => {
-    const step = builderStep("A6");
-    expect(gradeGraph(step.initialGraph, step.grader).passed).toBe(false);
-
-    const solved = withSolution(step.initialGraph, {
-      nodes: [node("light", "action.toggleLight")],
-      edges: [edge("ev", "then", "light", "in")],
-    });
-    expect(gradeGraph(solved, step.grader).passed).toBe(true);
-  });
-
-  it("A7 (debug): Condition verbinden", () => {
-    const step = builderStep("A7");
-    expect(gradeGraph(step.initialGraph, step.grader).passed).toBe(false);
-
-    const solved = withSolution(step.initialGraph, {
-      edges: [edge("get", "value", "br", "condition")],
-    });
-    expect(gradeGraph(solved, step.grader).passed).toBe(true);
-  });
-
-  it("A8 (boss): Tür oder Absage", () => {
-    const step = builderStep("A8");
-    expect(gradeGraph(step.initialGraph, step.grader).passed).toBe(false);
-
-    const solved = withSolution(step.initialGraph, {
-      nodes: [
-        node("br", "flow.branch"),
-        node("door", "action.openDoor"),
-        node("print", "action.print"),
-      ],
-      edges: [
-        edge("ev", "then", "br", "in"),
-        edge("get", "value", "br", "condition"),
-        edge("br", "true", "door", "in"),
-        edge("br", "false", "print", "in"),
-      ],
-    });
-    expect(gradeGraph(solved, step.grader).passed).toBe(true);
-  });
+  }
 });
