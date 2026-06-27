@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { tracks } from "@/data/missions";
-import {
-  loadProgress,
-  type LocalProgress,
-} from "@/features/progression/local";
+import { useProgress } from "@/features/progression/local";
+import { StatBar } from "@/features/progression/StatBar";
+import { BottomNav } from "@/components/BottomNav";
 import type { MissionType } from "@/features/missions/types";
 
 const typeIcon: Record<MissionType, string> = {
@@ -27,25 +25,18 @@ const typeLabel: Record<MissionType, string> = {
 
 export default function LearnPage() {
   // Fortschritt erst nach Mount lesen (localStorage ist client-only).
-  const [progress, setProgress] = useState<LocalProgress | null>(null);
-  useEffect(() => setProgress(loadProgress()), []);
-
-  const completed = progress?.completed ?? {};
-  const totalXp = progress?.xp ?? 0;
+  const progress = useProgress();
+  const completed = progress.completed;
 
   return (
     <main className="bp-grid min-h-dvh px-4 pb-24 pt-6">
       <div className="mx-auto max-w-md">
-        {/* Kopf: XP + zurück */}
+        {/* Kopf: zurück + Status (XP, Streak) */}
         <header className="mb-8 flex items-center justify-between">
           <Link href="/" className="text-sm text-muted hover:text-text">
             ← Start
           </Link>
-          <div className="flex items-center gap-1.5 rounded-full border border-border bg-surface/70 px-3 py-1.5 text-sm">
-            <span className="text-xp">★</span>
-            <span className="font-semibold text-text">{totalXp}</span>
-            <span className="text-xs text-muted">XP</span>
-          </div>
+          <StatBar />
         </header>
 
         {tracks.map((track) => {
@@ -127,6 +118,8 @@ export default function LearnPage() {
           Weitere Pfade — Gameplay Systems &amp; Debugging Lab — folgen.
         </p>
       </div>
+
+      <BottomNav />
     </main>
   );
 }

@@ -1,15 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import type { BadgeDef } from "@/features/progression/progression";
 import type { Mission } from "./types";
 
-/** Abschluss-Screen einer Mission: Sterne, XP, Erst-Versuch-Bonus, Weiter. */
+/** Abschluss-Screen einer Mission: Sterne, XP, Streak, Rang, Badges, Weiter. */
 export function ResultScreen({
   mission,
   stars,
   earnedXp,
   totalXp,
   firstTry,
+  streak,
+  rankedUp,
+  rankTitle,
+  newBadges,
   nextMission,
   onRetry,
 }: {
@@ -18,6 +23,10 @@ export function ResultScreen({
   earnedXp: number;
   totalXp: number;
   firstTry: boolean;
+  streak: number;
+  rankedUp: boolean;
+  rankTitle: string;
+  newBadges: BadgeDef[];
   nextMission: Mission | null;
   onRetry: () => void;
 }) {
@@ -58,8 +67,43 @@ export function ResultScreen({
         </div>
       )}
 
-      <div className="text-sm text-muted">
-        Gesamt: <span className="font-semibold text-text">{totalXp} XP</span>
+      {/* Rang-Aufstieg */}
+      {rankedUp && (
+        <div className="animate-xp-pop rounded-xl border border-accent/50 bg-accent/10 px-5 py-2.5 text-sm font-semibold text-accent">
+          ⬆ Neuer Rang: {rankTitle}
+        </div>
+      )}
+
+      {/* Neue Badges */}
+      {newBadges.length > 0 && (
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-xs uppercase tracking-wider text-muted">
+            Neues Abzeichen
+          </span>
+          <div className="flex flex-wrap justify-center gap-2">
+            {newBadges.map((b) => (
+              <span
+                key={b.id}
+                className="animate-xp-pop inline-flex items-center gap-1.5 rounded-full border border-xp/40 bg-xp/10 px-3 py-1.5 text-xs font-medium text-text"
+              >
+                <span aria-hidden>{b.icon}</span> {b.title}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-4 text-sm text-muted">
+        <span>
+          Gesamt: <span className="font-semibold text-text">{totalXp} XP</span>
+        </span>
+        {streak > 0 && (
+          <span className="inline-flex items-center gap-1">
+            <span className="text-streak" aria-hidden>🔥</span>
+            <span className="font-semibold text-text">{streak}</span>
+            {streak === 1 ? "Tag" : "Tage"}
+          </span>
+        )}
       </div>
 
       <div className="mt-2 flex w-full flex-col gap-2.5">

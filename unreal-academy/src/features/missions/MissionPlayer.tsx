@@ -3,7 +3,10 @@
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { getNextMission } from "@/data/missions";
-import { recordCompletion } from "@/features/progression/local";
+import {
+  recordCompletion,
+  type CompletionResult,
+} from "@/features/progression/local";
 import { ResultScreen } from "./ResultScreen";
 import { ConceptStepView } from "./steps/ConceptStepView";
 import { QuizStepView } from "./steps/QuizStepView";
@@ -26,7 +29,7 @@ export function MissionPlayer({ mission }: { mission: Mission }) {
   const [solved, setSolved] = useState(false);
   const [mistakes, setMistakes] = useState(0);
   const [finished, setFinished] = useState(false);
-  const [finalTotalXp, setFinalTotalXp] = useState(0);
+  const [result, setResult] = useState<CompletionResult | null>(null);
 
   const step = mission.steps[index];
   const isLast = index === mission.steps.length - 1;
@@ -49,13 +52,9 @@ export function MissionPlayer({ mission }: { mission: Mission }) {
       return;
     }
     const stars = starsFor(mistakes);
-    const progress = recordCompletion(
-      mission.id,
-      stars,
-      earned.total,
-      earned.firstTry,
+    setResult(
+      recordCompletion(mission.id, stars, earned.total, earned.firstTry),
     );
-    setFinalTotalXp(progress.xp);
     setFinished(true);
   }, [isLast, mistakes, mission.id, earned]);
 
@@ -66,14 +65,18 @@ export function MissionPlayer({ mission }: { mission: Mission }) {
     setFinished(false);
   }, []);
 
-  if (finished) {
+  if (finished && result) {
     return (
       <ResultScreen
         mission={mission}
         stars={starsFor(mistakes)}
         earnedXp={earned.total}
-        totalXp={finalTotalXp}
+        totalXp={result.progress.xp}
         firstTry={earned.firstTry}
+        streak={result.progress.streak.count}
+        rankedUp={result.rankedUp}
+        rankTitle={result.rank.rank.title}
+        newBadges={result.newBadges}
         nextMission={getNextMission(mission.id) ?? null}
         onRetry={restart}
       />
