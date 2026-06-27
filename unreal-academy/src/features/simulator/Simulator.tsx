@@ -72,6 +72,7 @@ function SimulatorInner({ initialGraph, allowedNodes, onRun }: SimulatorProps) {
   const [actions, setActions] = useState<EmittedAction[]>([]);
   const [hasRun, setHasRun] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   /** Verbindung validieren: Exec nur mit Exec, Daten nur mit Daten. */
   const isValidConnection = useCallback(
@@ -176,6 +177,11 @@ function SimulatorInner({ initialGraph, allowedNodes, onRun }: SimulatorProps) {
           isValidConnection={isValidConnection}
           nodeTypes={nodeTypes}
           fitView
+          minZoom={0.3}
+          maxZoom={2}
+          zoomOnPinch
+          zoomOnDoubleClick={false}
+          panOnScroll={false}
           proOptions={{ hideAttribution: true }}
         >
           <Background variant={BackgroundVariant.Dots} gap={24} color="rgb(var(--border))" />
@@ -205,10 +211,43 @@ function SimulatorInner({ initialGraph, allowedNodes, onRun }: SimulatorProps) {
           )}
         </div>
 
-        {/* Mobile-Palette als Bottom-Sheet-Stub */}
-        <div className="absolute inset-x-0 bottom-0 flex gap-2 overflow-x-auto border-t border-border bg-surface/90 p-2 lg:hidden">
-          <Palette onAdd={addNode} allowed={allowedNodes} />
-        </div>
+        {/* Mobile: Palette als aufklappbares Bottom-Sheet */}
+        <button
+          onClick={() => setPaletteOpen(true)}
+          className="absolute bottom-3 right-3 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-bg shadow-glow transition hover:brightness-110 lg:hidden"
+        >
+          ＋ Nodes
+        </button>
+
+        {paletteOpen && (
+          <div className="absolute inset-0 z-10 flex flex-col justify-end lg:hidden">
+            {/* Abdunkler */}
+            <button
+              aria-label="Schließen"
+              onClick={() => setPaletteOpen(false)}
+              className="absolute inset-0 bg-bg/60"
+            />
+            <div className="relative max-h-[60%] overflow-auto rounded-t-2xl border-t border-border bg-surface p-4 shadow-node">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-sm font-semibold text-text">Node hinzufügen</span>
+                <button
+                  onClick={() => setPaletteOpen(false)}
+                  className="text-muted transition hover:text-text"
+                  aria-label="Schließen"
+                >
+                  ✕
+                </button>
+              </div>
+              <Palette
+                onAdd={(spec) => {
+                  addNode(spec);
+                  setPaletteOpen(false);
+                }}
+                allowed={allowedNodes}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bühne */}

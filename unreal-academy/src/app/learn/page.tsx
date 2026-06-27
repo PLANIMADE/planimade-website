@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { tracks } from "@/data/missions";
 import { useProgress } from "@/features/progression/local";
 import { StatBar } from "@/features/progression/StatBar";
@@ -28,6 +30,12 @@ export default function LearnPage() {
   // Fortschritt erst nach Mount lesen (localStorage ist client-only).
   const progress = useProgress();
   const completed = progress.completed;
+  const router = useRouter();
+
+  // Neue Nutzer zuerst durchs Onboarding („Wähle dein Ziel") schicken.
+  useEffect(() => {
+    if (!progress.onboarded) router.replace("/onboarding");
+  }, [progress.onboarded, router]);
 
   return (
     <main className="bp-grid min-h-dvh px-4 pb-24 pt-6">
@@ -48,7 +56,14 @@ export default function LearnPage() {
           return (
             <section key={track.id} className="mb-10">
               <div className="mb-4">
-                <h1 className="text-xl font-extrabold text-text">{track.title}</h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl font-extrabold text-text">{track.title}</h1>
+                  {progress.goal === track.id && (
+                    <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-accent">
+                      Dein Ziel
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-muted">{track.subtitle}</p>
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-border">
                   <div

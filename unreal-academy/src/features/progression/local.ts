@@ -35,6 +35,10 @@ export interface LocalProgress {
   badges: string[];
   /** Tag (YYYY-MM-DD), an dem die Daily Challenge zuletzt eingelöst wurde. */
   dailyDoneDay: string | null;
+  /** Hat der Nutzer das Onboarding („Wähle dein Ziel") abgeschlossen? */
+  onboarded: boolean;
+  /** Gewählter Start-Pfad (Track-ID) oder null (Gast/„erst stöbern"). */
+  goal: string | null;
 }
 
 const EMPTY: LocalProgress = {
@@ -44,6 +48,8 @@ const EMPTY: LocalProgress = {
   streak: { count: 0, lastDay: null },
   badges: [],
   dailyDoneDay: null,
+  onboarded: false,
+  goal: null,
 };
 
 function isBrowser(): boolean {
@@ -63,6 +69,8 @@ function readRaw(): LocalProgress {
       streak: p.streak ?? { count: 0, lastDay: null },
       badges: p.badges ?? [],
       dailyDoneDay: p.dailyDoneDay ?? null,
+      onboarded: p.onboarded ?? false,
+      goal: p.goal ?? null,
     };
   } catch {
     return EMPTY;
@@ -159,6 +167,8 @@ export function recordCompletion(
     streak: advanceStreak(prev.streak),
     badges: [...prev.badges],
     dailyDoneDay: prev.dailyDoneDay,
+    onboarded: prev.onboarded,
+    goal: prev.goal,
   };
 
   const prevStars = prev.completed[missionId] ?? 0;
@@ -205,6 +215,13 @@ export function isCompleted(missionId: string, p?: LocalProgress): boolean {
 /** Wurde die Daily Challenge heute bereits eingelöst? */
 export function isDailyDone(p?: LocalProgress, today: string = dayStr()): boolean {
   return (p ?? readRaw()).dailyDoneDay === today;
+}
+
+/** Schließt das Onboarding ab und merkt sich das gewählte Ziel (Track-ID). */
+export function setOnboarding(goal: string | null): LocalProgress {
+  const next: LocalProgress = { ...readRaw(), onboarded: true, goal };
+  write(next);
+  return next;
 }
 
 export interface DailyClaim {
