@@ -11,7 +11,7 @@ XP/Streaks/Rängen, Skill-Trees und missionsbasiertem Lernen.
 | Phase | Inhalt | Stand |
 |---|---|---|
 | **Phase 1** | Architektur, Datenmodelle, Tech-Stack, UX, Gamification, Simulator-Design | ✅ → [`docs/PHASE-1-ARCHITECTURE.md`](docs/PHASE-1-ARCHITECTURE.md) |
-| **Phase 2** | MVP-Scope (3 Pfade, 20–30 Missionen, Simulator, Daily Challenge) | ⏳ geplant |
+| **Phase 2** | MVP-Scope (3 Pfade, 24 Missionen, Simulator, Daily Challenge) | ✅ → [`docs/PHASE-2-MVP.md`](docs/PHASE-2-MVP.md) |
 | **Phase 3** | Technische Umsetzung (Setup → Engine → Simulator → Backend → Progression) | ⏳ ausstehend |
 
 ## Tech-Stack (Kurzfassung)
