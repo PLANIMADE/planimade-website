@@ -56,22 +56,26 @@ function isBrowser(): boolean {
   return typeof window !== "undefined" && !!window.localStorage;
 }
 
+/** Füllt einen (Teil-)Datensatz mit Defaults zu einem vollständigen Stand auf. */
+export function normalizeProgress(p: Partial<LocalProgress>): LocalProgress {
+  return {
+    xp: p.xp ?? 0,
+    completed: p.completed ?? {},
+    firstTry: p.firstTry ?? [],
+    streak: p.streak ?? { count: 0, lastDay: null },
+    badges: p.badges ?? [],
+    dailyDoneDay: p.dailyDoneDay ?? null,
+    onboarded: p.onboarded ?? false,
+    goal: p.goal ?? null,
+  };
+}
+
 function readRaw(): LocalProgress {
   if (!isBrowser()) return EMPTY;
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return EMPTY;
-    const p = JSON.parse(raw) as Partial<LocalProgress>;
-    return {
-      xp: p.xp ?? 0,
-      completed: p.completed ?? {},
-      firstTry: p.firstTry ?? [],
-      streak: p.streak ?? { count: 0, lastDay: null },
-      badges: p.badges ?? [],
-      dailyDoneDay: p.dailyDoneDay ?? null,
-      onboarded: p.onboarded ?? false,
-      goal: p.goal ?? null,
-    };
+    return normalizeProgress(JSON.parse(raw) as Partial<LocalProgress>);
   } catch {
     return EMPTY;
   }
@@ -129,6 +133,16 @@ export function useProgress(): LocalProgress {
 /** Einmaliges, nicht-reaktives Lesen (z.B. außerhalb von React). */
 export function loadProgress(): LocalProgress {
   return readRaw();
+}
+
+/** Abonniert Store-Änderungen (für den Cloud-Sync außerhalb von React). */
+export function subscribeProgress(listener: () => void): () => void {
+  return subscribe(listener);
+}
+
+/** Ersetzt den gesamten Stand (z.B. nach dem Merge mit der Cloud). Reaktiv. */
+export function replaceProgress(p: LocalProgress): void {
+  write(p);
 }
 
 // ── Mutationen ───────────────────────────────────────────────────────────────

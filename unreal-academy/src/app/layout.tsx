@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
+import { AuthSyncProvider } from "@/features/auth/AuthSync";
 
 export const metadata: Metadata = {
   title: "Unreal Academy — Duolingo für Unreal Engine",
@@ -21,7 +22,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="de">
-      <body className="min-h-dvh">{children}</body>
+      <body className="min-h-dvh">
+        <AuthSyncProvider>{children}</AuthSyncProvider>
+      </body>
     </html>
   );
 }

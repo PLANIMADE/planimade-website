@@ -8,6 +8,7 @@ import {
   computeRank,
   isStreakAlive,
 } from "@/features/progression/progression";
+import { AuthPanel } from "@/features/auth/AuthPanel";
 import { BottomNav } from "@/components/BottomNav";
 
 export default function ProfilePage() {
@@ -47,6 +48,11 @@ export default function ProfilePage() {
               ? `Noch ${rank.toNext} XP bis „${rank.next.title}"`
               : "Höchster Rang erreicht 🏆"}
           </div>
+        </section>
+
+        {/* Konto / Cloud-Sync */}
+        <section className="mb-6">
+          <AuthPanel />
         </section>
 
         {/* Kennzahlen */}

@@ -12,7 +12,7 @@ XP/Streaks/Rängen, Skill-Trees und missionsbasiertem Lernen.
 |---|---|---|
 | **Phase 1** | Architektur, Datenmodelle, Tech-Stack, UX, Gamification, Simulator-Design | ✅ → [`docs/PHASE-1-ARCHITECTURE.md`](docs/PHASE-1-ARCHITECTURE.md) |
 | **Phase 2** | MVP-Scope (3 Pfade, 24 Missionen, Simulator, Daily Challenge) | ✅ → [`docs/PHASE-2-MVP.md`](docs/PHASE-2-MVP.md) |
-| **Phase 3** | Technische Umsetzung (Setup → Engine → Simulator → Mission Player → Progression → Content → Daily → Onboarding) | 🚧 läuft — Setup ✅ · Graph-Engine ✅ · Simulator ✅ · Mission Player ✅ · Progression (XP/Streak/Ränge/Badges) ✅ · Content 3 Pfade / 24 Missionen ✅ · Daily Challenge ✅ · Onboarding & Mobile-Politur ✅ |
+| **Phase 3** | Technische Umsetzung (Setup → Engine → Simulator → Mission Player → Progression → Content → Daily → Onboarding → Cloud-Sync) | ✅ — Setup · Graph-Engine · Simulator · Mission Player · Progression (XP/Streak/Ränge/Badges) · Content 3 Pfade / 24 Missionen · Daily Challenge · Onboarding & Mobile-Politur · Supabase-Auth & Cloud-Sync (optional) |
 
 ### Spielbar (lokaler Stand)
 
@@ -21,18 +21,26 @@ XP/Streaks/Rängen, Skill-Trees und missionsbasiertem Lernen.
 - `/learn` — vertikale Lernkarte über **3 Pfade & 24 Missionen** (A „Blueprint Basics", B „Gameplay Systems", C „Debugging Lab") mit XP, Streak & Sternen (lokal gespeichert)
 - `/mission/[id]` — Mission Player: Step-Sequenz (concept · build · debug · quiz · boss) mit verhaltensbasierter Bewertung, XP/Streak/Rang-Up & neuen Badges im Ergebnis-Screen
 - `/daily` — Daily Challenge: täglich rotierende Bau-/Debug-Mission mit **+50 % XP** (deterministisch, 1×/Tag einlösbar)
-- `/profile` — Rang-Fortschritt, Streak, Abzeichen-Galerie & Pfad-Fortschritt
+- `/profile` — Rang-Fortschritt, Streak, Abzeichen-Galerie, Pfad-Fortschritt & Konto/Cloud-Sync
 - `/sandbox` — freier Blueprint-Simulator (Tür-Mission)
 
-Gamification: 5 Ränge (XP-Schwellen), Tages-Streak mit Flamme, 5 Badges (Erster Blueprint, Bug-Jäger, 3-Tage-Streak, Erst-Versuch-Profi, Pfad-Meister). Persistenz lokal (Gast/Offline); Supabase-Sync folgt.
+Gamification: 5 Ränge (XP-Schwellen), Tages-Streak mit Flamme, 5 Badges (Erster Blueprint, Bug-Jäger, 3-Tage-Streak, Erst-Versuch-Profi, Pfad-Meister). Persistenz lokal (Gast/Offline), optional Cloud-Sync.
 
-Alle 24 Missionen sind testabgesichert: Jeder Bau-/Debug-Startgraph schlägt zunächst fehl, und für jede existiert eine Referenzlösung, die den Grader besteht (64 Tests gesamt).
+Alle 24 Missionen sind testabgesichert: Jeder Bau-/Debug-Startgraph schlägt zunächst fehl, und für jede existiert eine Referenzlösung, die den Grader besteht (73 Tests gesamt).
 
 Mobile: Simulator mit Pinch-Zoom und aufklappbarer Node-Palette (Bottom-Sheet), Bottom-Nav (Lernen · Täglich · Profil).
 
-**Nächste Schritte:** Supabase-Auth/Sync (echtes Konto + Cloud-Speicher statt nur lokal).
+## Cloud-Sync aktivieren (optional)
 
-**Nächste Schritte:** Content-Seed Pfade B & C · Daily Challenge · Supabase-Auth/Sync · Onboarding & Mobile-Politur.
+Ohne Konfiguration läuft alles lokal (Gast-Modus). Für Konten & geräteübergreifenden Sync:
+
+1. Kostenloses Projekt auf [supabase.com](https://supabase.com) anlegen.
+2. `supabase/schema.sql` im **SQL-Editor** des Projekts ausführen (Tabelle `profiles` + RLS).
+3. Unter **Authentication → Providers** den **Email**-Provider (Magic Link) aktivieren.
+4. `.env.local.example` zu `.env.local` kopieren und `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Project Settings → API) eintragen.
+5. `npm run dev` — auf `/profile` per E-Mail anmelden. Der bisherige Gast-Fortschritt wird beim ersten Login **verlustfrei mit der Cloud verschmolzen**.
+
+**Nächste Schritte:** Sandbox-Editor (Speichern/Teilen) · Skill-Tree-Visualisierung · weitere Pfade (Intermediate-Themen).
 
 ## Lokal starten
 
