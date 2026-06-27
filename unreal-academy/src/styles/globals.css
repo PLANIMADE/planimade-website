@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Unreal Academy – Design Tokens (Sci-Fi / Unreal Look)
+ * Single Source of Truth. Werte als "R G B" Tripel für Tailwind <alpha-value>.
+ * Dark-First: :root IST das dunkle Theme.
+ */
+:root {
+  /* UI-Flächen */
+  --bg: 8 10 16; /* tiefes Blauschwarz */
+  --surface: 16 19 28;
+  --surface-2: 24 28 40;
+  --border: 40 46 64;
+  --text: 232 236 245;
+  --muted: 140 150 170;
+
+  /* Akzente */
+  --accent: 64 156 255; /* Unreal-Blau */
+  --accent-2: 158 92 255; /* Violett */
+  --success: 46 204 113;
+  --danger: 235 87 87;
+  --xp: 255 196 64; /* Gold */
+  --streak: 255 122 48; /* Flammen-Orange */
+
+  /* Blueprint-Pin-Farben (an Unreal angelehnt) */
+  --pin-exec: 240 240 245; /* weiß */
+  --pin-bool: 220 60 60; /* rot */
+  --pin-int: 64 220 200; /* türkis */
+  --pin-float: 120 220 90; /* grün */
+  --pin-string: 240 80 200; /* magenta */
+  --pin-object: 70 150 255; /* blau */
+
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+}
+
+* {
+  border-color: rgb(var(--border));
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgb(var(--accent) / 0.08), transparent 60%),
+    rgb(var(--bg));
+  color: rgb(var(--text));
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtiles Grid wie ein Blueprint-Canvas (dekorativ) */
+.bp-grid {
+  background-image:
+    linear-gradient(rgb(var(--border) / 0.25) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--border) / 0.25) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

@@ -12,7 +12,17 @@ XP/Streaks/Rängen, Skill-Trees und missionsbasiertem Lernen.
 |---|---|---|
 | **Phase 1** | Architektur, Datenmodelle, Tech-Stack, UX, Gamification, Simulator-Design | ✅ → [`docs/PHASE-1-ARCHITECTURE.md`](docs/PHASE-1-ARCHITECTURE.md) |
 | **Phase 2** | MVP-Scope (3 Pfade, 24 Missionen, Simulator, Daily Challenge) | ✅ → [`docs/PHASE-2-MVP.md`](docs/PHASE-2-MVP.md) |
-| **Phase 3** | Technische Umsetzung (Setup → Engine → Simulator → Backend → Progression) | ⏳ ausstehend |
+| **Phase 3** | Technische Umsetzung (Setup → Engine → Simulator → Backend → Progression) | 🚧 läuft — Schritt 1 (Projekt-Setup) ✅ |
+
+## Lokal starten
+
+```bash
+cd unreal-academy
+npm install
+npm run dev      # http://localhost:3000
+```
+
+Weitere Skripte: `npm run build`, `npm run typecheck`, `npm run lint`, `npm test`.
 
 ## Tech-Stack (Kurzfassung)
 
