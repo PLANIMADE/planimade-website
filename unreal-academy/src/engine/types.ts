@@ -66,6 +66,12 @@ export interface NodeSpec {
   pure?: (ctx: NodeContext) => Record<string, BPValue>;
   /** Exec-Nodes: Seiteneffekte + Wahl des nächsten Exec-Out-Pins. */
   exec?: (ctx: NodeContext) => ExecResult;
+  /**
+   * Schleifen-/Steuer-Nodes (z.B. ForLoop): steuern selbst, wie oft welcher
+   * Exec-Out-Pin feuert. `run(pin)` führt den an diesem Ausgang hängenden Zweig
+   * sofort aus. Ist `loop` gesetzt, ersetzt es die normale exec-Auswertung.
+   */
+  loop?: (ctx: NodeContext, run: (execOutPin: string) => void) => void;
 }
 
 /** Eine Node-Instanz im Graphen. */

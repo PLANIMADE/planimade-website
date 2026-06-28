@@ -873,6 +873,304 @@ const missionsC: Mission[] = [
   },
 ];
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Pfad D — „Fortgeschritten" (neue Bausteine: ForLoop, AND/OR, Sub/Clamp, DoOnce)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const missionsD: Mission[] = [
+  {
+    id: "D1",
+    trackId: "D",
+    title: "Schleifen & mehr",
+    type: "concept",
+    xp: 10,
+    steps: [
+      {
+        kind: "concept",
+        title: "Etwas mehrmals tun",
+        visual: "flow",
+        body: [
+          "Bisher lief jeder Ablauf einmal durch. Mit einer Schleife (ForLoop) wiederholst du einen Teil — z.B. 10 Münzen vergeben, ohne 10 Nodes zu bauen.",
+          "Der ForLoop läuft von First bis Last und feuert für jeden Schritt den loop-Zweig; danach einmal completed. Den aktuellen Schritt liefert der Index-Ausgang.",
+          "Dazu kommen neue Werkzeuge: UND/ODER für mehrere Bedingungen, Subtrahieren/Multiplizieren und Clamp, das Werte in Grenzen hält.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "D2",
+    trackId: "D",
+    title: "Drei mal hallo",
+    type: "build",
+    xp: 30,
+    steps: [
+      {
+        kind: "build",
+        title: "ForLoop → Print",
+        brief:
+          "Der ForLoop läuft von 0 bis 2 (drei Schritte). Verbinde seinen loop-Ausgang mit Print String, damit dreimal ausgegeben wird.",
+        goal: "Print String wird dreimal ausgelöst.",
+        initialGraph: {
+          nodes: [
+            { id: "ev", type: "event.beginPlay", position: { x: 20, y: 40 } },
+            { id: "last", type: "literal.int", position: { x: 20, y: 220 }, data: { value: 2 } },
+            { id: "fl", type: "flow.forLoop", position: { x: 280, y: 60 } },
+            { id: "pr", type: "action.print", position: { x: 580, y: 40 } },
+          ],
+          edges: [
+            { id: "e1", source: "ev", sourceHandle: "then", target: "fl", targetHandle: "in" },
+            { id: "d1", source: "last", sourceHandle: "value", target: "fl", targetHandle: "last" },
+            // Fehlt: fl.loop -> pr.in
+          ],
+          variables: [],
+        },
+        allowedNodes: ["event.beginPlay", "flow.forLoop", "action.print", "literal.int"],
+        grader: {
+          cases: [
+            { name: "Dreimal ausgeben", expect: { actions: ["Print", "Print", "Print"] } },
+          ],
+        },
+        hint: "Ziehe vom loop-Ausgang des ForLoop zum Eingang von Print String.",
+      },
+    ],
+  },
+  {
+    id: "D3",
+    trackId: "D",
+    title: "Münzen in der Schleife",
+    type: "build",
+    xp: 35,
+    steps: [
+      {
+        kind: "build",
+        title: "Pro Schritt +1",
+        brief:
+          "Der ForLoop läuft fünf Schritte (0 bis 4) und das Rechenwerk addiert +1 auf Score. Verbinde den loop-Ausgang mit „Set Score“, damit pro Schritt hochgezählt wird.",
+        goal: "Score steigt um 5 (ein Punkt pro Schleifenschritt).",
+        initialGraph: {
+          nodes: [
+            { id: "ev", type: "event.beginPlay", position: { x: 20, y: 40 } },
+            { id: "last", type: "literal.int", position: { x: 20, y: 200 }, data: { value: 4 } },
+            { id: "fl", type: "flow.forLoop", position: { x: 260, y: 60 } },
+            { id: "get", type: "var.get", position: { x: 260, y: 280 }, data: { varName: "Score" } },
+            { id: "one", type: "literal.int", position: { x: 260, y: 380 }, data: { value: 1 } },
+            { id: "add", type: "math.add", position: { x: 520, y: 300 } },
+            { id: "set", type: "var.set", position: { x: 780, y: 80 }, data: { varName: "Score" } },
+          ],
+          edges: [
+            { id: "e1", source: "ev", sourceHandle: "then", target: "fl", targetHandle: "in" },
+            { id: "d1", source: "last", sourceHandle: "value", target: "fl", targetHandle: "last" },
+            { id: "d2", source: "get", sourceHandle: "value", target: "add", targetHandle: "a" },
+            { id: "d3", source: "one", sourceHandle: "value", target: "add", targetHandle: "b" },
+            { id: "d4", source: "add", sourceHandle: "sum", target: "set", targetHandle: "value" },
+            // Fehlt: fl.loop -> set.in
+          ],
+          variables: [{ name: "Score", type: "int", default: 0 }],
+        },
+        allowedNodes: ["event.beginPlay", "flow.forLoop", "var.get", "var.set", "math.add", "literal.int"],
+        grader: {
+          cases: [
+            { name: "0 → 5", given: { Score: 0 }, expect: { variables: { Score: 5 } } },
+            { name: "10 → 15", given: { Score: 10 }, expect: { variables: { Score: 15 } } },
+          ],
+        },
+        hint: "Verbinde den loop-Ausgang des ForLoop mit dem Eingang von „Set Score“.",
+      },
+    ],
+  },
+  {
+    id: "D4",
+    trackId: "D",
+    title: "UND & ODER",
+    type: "concept",
+    xp: 10,
+    steps: [
+      {
+        kind: "concept",
+        title: "Mehrere Bedingungen",
+        visual: "pins",
+        body: [
+          "Oft hängt etwas an mehreren Bedingungen. UND ist nur wahr, wenn beide Eingänge wahr sind — ODER schon, wenn einer wahr ist.",
+          "Beispiel: Die Tür öffnet nur, wenn du den Schlüssel hast UND der Schalter an ist. Beides zusammen führst du mit einem AND-Node in den Branch.",
+          "So baust du Regeln wie „Schlüssel und Strom“ oder „Premium oder Gutschein“.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "D5",
+    trackId: "D",
+    title: "Doppelte Sicherung",
+    type: "build",
+    xp: 40,
+    steps: [
+      {
+        kind: "build",
+        title: "HasKey UND SwitchOn",
+        brief:
+          "Die Tür soll nur aufgehen, wenn HasKey UND SwitchOn wahr sind. Füge einen AND-Node hinzu, verbinde beide Variablen damit und das Ergebnis mit der Branch-Condition.",
+        goal: "Tür öffnet nur bei HasKey = true UND SwitchOn = true.",
+        initialGraph: {
+          nodes: [
+            { id: "ev", type: "event.beginPlay", position: { x: 20, y: 40 } },
+            { id: "getK", type: "var.get", position: { x: 20, y: 200 }, data: { varName: "HasKey" } },
+            { id: "getS", type: "var.get", position: { x: 20, y: 320 }, data: { varName: "SwitchOn" } },
+            { id: "br", type: "flow.branch", position: { x: 420, y: 60 } },
+            { id: "door", type: "action.openDoor", position: { x: 700, y: 40 } },
+          ],
+          edges: [
+            { id: "e1", source: "ev", sourceHandle: "then", target: "br", targetHandle: "in" },
+            { id: "e2", source: "br", sourceHandle: "true", target: "door", targetHandle: "in" },
+            // Fehlt: AND-Node + Verkabelung zur Condition
+          ],
+          variables: [
+            { name: "HasKey", type: "bool", default: true },
+            { name: "SwitchOn", type: "bool", default: true },
+          ],
+        },
+        allowedNodes: ["event.beginPlay", "var.get", "logic.and", "flow.branch", "action.openDoor"],
+        grader: {
+          cases: [
+            { name: "Beides an → offen", given: { HasKey: true, SwitchOn: true }, expect: { actions: ["OpenDoor"] } },
+            { name: "Schalter aus → zu", given: { HasKey: true, SwitchOn: false }, expect: { actions: [] } },
+            { name: "Kein Schlüssel → zu", given: { HasKey: false, SwitchOn: true }, expect: { actions: [] } },
+          ],
+        },
+        hint: "+ AND. Get HasKey → A, Get SwitchOn → B, AND.Out → Branch.Condition.",
+      },
+    ],
+  },
+  {
+    id: "D6",
+    trackId: "D",
+    title: "Schaden mit Clamp",
+    type: "build",
+    xp: 40,
+    steps: [
+      {
+        kind: "build",
+        title: "Health nie unter 0",
+        brief:
+          "Health soll um 30 sinken, aber nie unter 0 fallen. Füge einen Clamp-Node ein (Min 0) und schleife das Ergebnis von Subtract durch Clamp in „Set Health“.",
+        goal: "Health = max(0, Health − 30).",
+        initialGraph: {
+          nodes: [
+            { id: "ev", type: "event.beginPlay", position: { x: 20, y: 40 } },
+            { id: "get", type: "var.get", position: { x: 20, y: 200 }, data: { varName: "Health" } },
+            { id: "dmg", type: "literal.int", position: { x: 20, y: 320 }, data: { value: 30 } },
+            { id: "sub", type: "math.sub", position: { x: 300, y: 240 } },
+            { id: "set", type: "var.set", position: { x: 640, y: 80 }, data: { varName: "Health" } },
+          ],
+          edges: [
+            { id: "e1", source: "ev", sourceHandle: "then", target: "set", targetHandle: "in" },
+            { id: "d1", source: "get", sourceHandle: "value", target: "sub", targetHandle: "a" },
+            { id: "d2", source: "dmg", sourceHandle: "value", target: "sub", targetHandle: "b" },
+            // BUG/fehlt: ohne Clamp wird Health negativ
+            { id: "dbad", source: "sub", sourceHandle: "diff", target: "set", targetHandle: "value" },
+          ],
+          variables: [{ name: "Health", type: "int", default: 100 }],
+        },
+        allowedNodes: ["event.beginPlay", "var.get", "var.set", "math.sub", "math.clamp", "literal.int"],
+        grader: {
+          cases: [
+            { name: "20 → 0 (geclamped)", given: { Health: 20 }, expect: { variables: { Health: 0 } } },
+            { name: "50 → 20", given: { Health: 50 }, expect: { variables: { Health: 20 } } },
+            { name: "100 → 70", given: { Health: 100 }, expect: { variables: { Health: 70 } } },
+          ],
+        },
+        hint: "+ Clamp. Subtract.Diff → Clamp.Value, Clamp.Result → Set Health (die alte direkte Verbindung ersetzen).",
+      },
+    ],
+  },
+  {
+    id: "D7",
+    trackId: "D",
+    title: "Nur einmal!",
+    type: "debug",
+    xp: 35,
+    steps: [
+      {
+        kind: "debug",
+        title: "Mehrfach-Auslösung stoppen",
+        brief:
+          "Die Schleife löst die Belohnung dreimal aus — sie soll aber nur einmal kommen. Baue „Do Once“ dazwischen, sodass nur der erste Durchlauf durchkommt.",
+        goal: "Print String wird trotz Schleife nur einmal ausgelöst.",
+        initialGraph: {
+          nodes: [
+            { id: "ev", type: "event.beginPlay", position: { x: 20, y: 40 } },
+            { id: "last", type: "literal.int", position: { x: 20, y: 220 }, data: { value: 2 } },
+            { id: "fl", type: "flow.forLoop", position: { x: 280, y: 60 } },
+            { id: "pr", type: "action.print", position: { x: 620, y: 40 } },
+          ],
+          edges: [
+            { id: "e1", source: "ev", sourceHandle: "then", target: "fl", targetHandle: "in" },
+            { id: "d1", source: "last", sourceHandle: "value", target: "fl", targetHandle: "last" },
+            // BUG: feuert pro Schleifenschritt
+            { id: "ebad", source: "fl", sourceHandle: "loop", target: "pr", targetHandle: "in" },
+          ],
+          variables: [],
+        },
+        allowedNodes: ["event.beginPlay", "flow.forLoop", "flow.doOnce", "action.print", "literal.int"],
+        grader: {
+          cases: [{ name: "Nur einmal", expect: { actions: ["Print"] } }],
+        },
+        hint: "+ Do Once. ForLoop.loop → DoOnce.in, DoOnce.then → Print (die direkte Verbindung ersetzen).",
+      },
+    ],
+  },
+  {
+    id: "D8",
+    trackId: "D",
+    title: "Prüfung: Der Tresor",
+    type: "boss",
+    xp: 60,
+    steps: [
+      {
+        kind: "build",
+        title: "Schlüssel UND genug Münzen",
+        brief:
+          "Der Tresor öffnet nur, wenn HasKey wahr ist UND Coins >= 3. Sonst „Print String“ (Absage). Baue Compare (>= 3), AND und den Branch. BeginPlay, Get HasKey und Get Coins liegen bereit.",
+        goal: "HasKey UND Coins >= 3 → Open Door, sonst Print String.",
+        initialGraph: {
+          nodes: [
+            { id: "ev", type: "event.beginPlay", position: { x: 20, y: 40 } },
+            { id: "getK", type: "var.get", position: { x: 20, y: 200 }, data: { varName: "HasKey" } },
+            { id: "getC", type: "var.get", position: { x: 20, y: 320 }, data: { varName: "Coins" } },
+            { id: "br", type: "flow.branch", position: { x: 560, y: 60 } },
+            { id: "door", type: "action.openDoor", position: { x: 820, y: 20 } },
+            { id: "print", type: "action.print", position: { x: 820, y: 180 } },
+          ],
+          edges: [
+            { id: "e1", source: "ev", sourceHandle: "then", target: "br", targetHandle: "in" },
+          ],
+          variables: [
+            { name: "HasKey", type: "bool", default: true },
+            { name: "Coins", type: "int", default: 0 },
+          ],
+        },
+        allowedNodes: [
+          "event.beginPlay",
+          "var.get",
+          "math.compare",
+          "logic.and",
+          "flow.branch",
+          "action.openDoor",
+          "action.print",
+          "literal.int",
+        ],
+        grader: {
+          cases: [
+            { name: "Schlüssel + 3 Münzen → offen", given: { HasKey: true, Coins: 3 }, expect: { actions: ["OpenDoor"] } },
+            { name: "Zu wenig Münzen → Absage", given: { HasKey: true, Coins: 2 }, expect: { actions: ["Print"] } },
+            { name: "Kein Schlüssel → Absage", given: { HasKey: false, Coins: 5 }, expect: { actions: ["Print"] } },
+          ],
+        },
+        hint: "Compare (Coins >= 3) → AND mit HasKey → Branch.Condition. true → Open Door, false → Print String.",
+      },
+    ],
+  },
+];
+
 export const trackA: Track = {
   id: "A",
   title: "Blueprint Basics",
@@ -894,7 +1192,14 @@ export const trackC: Track = {
   missions: missionsC,
 };
 
-export const tracks: Track[] = [trackA, trackB, trackC];
+export const trackD: Track = {
+  id: "D",
+  title: "Fortgeschritten",
+  subtitle: "Schleifen, UND/ODER, Clamp & Do Once",
+  missions: missionsD,
+};
+
+export const tracks: Track[] = [trackA, trackB, trackC, trackD];
 
 /** Flache Liste aller Missionen (für Routing per ID). */
 export const allMissions: Mission[] = tracks.flatMap((t) => t.missions);

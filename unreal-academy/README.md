@@ -12,13 +12,13 @@ XP/Streaks/Rängen, Skill-Trees und missionsbasiertem Lernen.
 |---|---|---|
 | **Phase 1** | Architektur, Datenmodelle, Tech-Stack, UX, Gamification, Simulator-Design | ✅ → [`docs/PHASE-1-ARCHITECTURE.md`](docs/PHASE-1-ARCHITECTURE.md) |
 | **Phase 2** | MVP-Scope (3 Pfade, 24 Missionen, Simulator, Daily Challenge) | ✅ → [`docs/PHASE-2-MVP.md`](docs/PHASE-2-MVP.md) |
-| **Phase 3** | Technische Umsetzung (Setup → Engine → Simulator → Mission Player → Progression → Content → Daily → Onboarding → Cloud-Sync) | ✅ — Setup · Graph-Engine · Simulator · Mission Player · Progression (XP/Streak/Ränge/Badges) · Content 3 Pfade / 24 Missionen · Daily Challenge · Onboarding & Mobile-Politur · Supabase-Auth & Cloud-Sync (optional) |
+| **Phase 3** | Technische Umsetzung (Setup → Engine → Simulator → Mission Player → Progression → Content → Daily → Onboarding → Cloud-Sync) | ✅ — Setup · Graph-Engine · Simulator · Mission Player · Progression (XP/Streak/Ränge/Badges) · Content 4 Pfade / 32 Missionen · Daily Challenge · Onboarding & Mobile-Politur · Supabase-Auth & Cloud-Sync (optional) · Intermediate-Mechaniken (ForLoop, Logik, Clamp …) |
 
 ### Spielbar (lokaler Stand)
 
 - `/` — Landing → Einstieg in die Lernkarte
 - `/onboarding` — „Wähle dein Ziel": Pfad-Auswahl beim ersten Start (neue Nutzer werden automatisch hierher geleitet)
-- `/learn` — vertikale Lernkarte über **3 Pfade & 24 Missionen** (A „Blueprint Basics", B „Gameplay Systems", C „Debugging Lab") mit XP, Streak & Sternen (lokal gespeichert)
+- `/learn` — vertikale Lernkarte über **4 Pfade & 32 Missionen** (A „Blueprint Basics", B „Gameplay Systems", C „Debugging Lab", D „Fortgeschritten") mit XP, Streak & Sternen (lokal gespeichert)
 - `/mission/[id]` — Mission Player: Step-Sequenz (concept · build · debug · quiz · boss) mit verhaltensbasierter Bewertung, XP/Streak/Rang-Up & neuen Badges im Ergebnis-Screen
 - `/daily` — Daily Challenge: täglich rotierende Bau-/Debug-Mission mit **+50 % XP** (deterministisch, 1×/Tag einlösbar)
 - `/profile` — Rang-Fortschritt, Streak, Abzeichen-Galerie, Pfad-Fortschritt & Konto/Cloud-Sync
@@ -26,7 +26,9 @@ XP/Streaks/Rängen, Skill-Trees und missionsbasiertem Lernen.
 
 Gamification: 5 Ränge (XP-Schwellen), Tages-Streak mit Flamme, 5 Badges (Erster Blueprint, Bug-Jäger, 3-Tage-Streak, Erst-Versuch-Profi, Pfad-Meister). Persistenz lokal (Gast/Offline), optional Cloud-Sync.
 
-Alle 24 Missionen sind testabgesichert: Jeder Bau-/Debug-Startgraph schlägt zunächst fehl, und für jede existiert eine Referenzlösung, die den Grader besteht (73 Tests gesamt).
+Simulator-Bausteine (~23 Node-Typen): Events, Branch/Sequence/Gate, **ForLoop**, **DoOnce**, Variablen & Literale, Compare, Add/**Sub**/**Mul**/**Clamp**, **AND/OR**/NOT sowie sichtbare Aktionen (Tür, Licht, Print, SetDead).
+
+Alle 32 Missionen sind testabgesichert: Jeder Bau-/Debug-Startgraph schlägt zunächst fehl, und für jede existiert eine Referenzlösung, die den Grader besteht (92 Tests gesamt).
 
 Mobile: Simulator mit Pinch-Zoom und aufklappbarer Node-Palette (Bottom-Sheet), Bottom-Nav (Lernen · Täglich · Profil).
 

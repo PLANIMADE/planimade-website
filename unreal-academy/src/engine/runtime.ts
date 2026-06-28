@@ -129,6 +129,22 @@ export function runGraph(
     }
 
     const ctx = makeContext(node, enteredPin, new Set());
+
+    // Schleifen-/Steuer-Nodes treiben ihren Ablauf selbst (z.B. ForLoop).
+    if (spec.loop) {
+      trace.push({ order: trace.length, nodeId });
+      const run = (outPin: string) => {
+        for (const edge of graph.edges.filter(
+          (e) => e.source === nodeId && e.sourceHandle === outPin,
+        )) {
+          firedEdges.push(edge.id);
+          runExec(edge.target, edge.targetHandle);
+        }
+      };
+      spec.loop(ctx, run);
+      return;
+    }
+
     const result = spec.exec ? spec.exec(ctx) : null;
     const outPins = result == null ? [] : Array.isArray(result) ? result : [result];
 

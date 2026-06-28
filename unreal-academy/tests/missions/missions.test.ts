@@ -136,6 +136,54 @@ const solutions: Record<string, (g: BPGraph) => BPGraph> = {
         edge("br", "true", "dead", "in"),
       ],
     }),
+
+  // Pfad D
+  D2: (g) => fix(g, { edges: [edge("fl", "loop", "pr", "in")] }),
+  D3: (g) => fix(g, { edges: [edge("fl", "loop", "set", "in")] }),
+  D5: (g) =>
+    fix(g, {
+      nodes: [node("and", "logic.and")],
+      edges: [
+        edge("getK", "value", "and", "a"),
+        edge("getS", "value", "and", "b"),
+        edge("and", "out", "br", "condition"),
+      ],
+    }),
+  D6: (g) =>
+    fix(g, {
+      removeEdges: ["dbad"],
+      nodes: [node("clamp", "math.clamp")],
+      edges: [
+        edge("sub", "diff", "clamp", "value"),
+        edge("clamp", "result", "set", "value"),
+      ],
+    }),
+  D7: (g) =>
+    fix(g, {
+      removeEdges: ["ebad"],
+      nodes: [node("once", "flow.doOnce")],
+      edges: [
+        edge("fl", "loop", "once", "in"),
+        edge("once", "then", "pr", "in"),
+      ],
+    }),
+  D8: (g) =>
+    fix(g, {
+      nodes: [
+        node("cmp", "math.compare", { op: ">=" }),
+        node("lit3", "literal.int", { value: 3 }),
+        node("and", "logic.and"),
+      ],
+      edges: [
+        edge("getC", "value", "cmp", "a"),
+        edge("lit3", "value", "cmp", "b"),
+        edge("getK", "value", "and", "a"),
+        edge("cmp", "result", "and", "b"),
+        edge("and", "out", "br", "condition"),
+        edge("br", "true", "door", "in"),
+        edge("br", "false", "print", "in"),
+      ],
+    }),
 };
 
 describe("Missions – Struktur", () => {
@@ -144,8 +192,8 @@ describe("Missions – Struktur", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("hat 24 Missionen über 3 Pfade", () => {
-    expect(allMissions).toHaveLength(24);
+  it("hat 32 Missionen über 4 Pfade", () => {
+    expect(allMissions).toHaveLength(32);
   });
 
   it("Quiz-Antworten zeigen auf gültige Optionen", () => {
@@ -162,7 +210,8 @@ describe("Missions – Struktur", () => {
   it("getNextMission verkettet die Pfade und endet sauber", () => {
     expect(getNextMission("A1")?.id).toBe("A2");
     expect(getNextMission("A8")?.id).toBe("B1");
-    expect(getNextMission("C8")).toBeUndefined();
+    expect(getNextMission("C8")?.id).toBe("D1");
+    expect(getNextMission("D8")).toBeUndefined();
   });
 });
 
