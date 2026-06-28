@@ -29,3 +29,6 @@ yarn-error.log*
 
 # testing
 /coverage
+
+# Generiert (siehe scripts/gen-manifest.mjs)
+/public/manifest.webmanifest

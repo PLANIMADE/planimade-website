@@ -9,6 +9,7 @@ import {
   type CompletionResult,
 } from "@/features/progression/local";
 import { DAILY_BONUS } from "@/features/daily/daily";
+import { playSound } from "@/features/sound/sound";
 import { ResultScreen } from "./ResultScreen";
 import { ConceptStepView } from "./steps/ConceptStepView";
 import { QuizStepView } from "./steps/QuizStepView";
@@ -80,6 +81,7 @@ export function MissionPlayer({
     }
     setFinalXp(total);
     setFinished(true);
+    playSound("complete");
   }, [isLast, mistakes, mission.id, earned, daily]);
 
   const restart = useCallback(() => {

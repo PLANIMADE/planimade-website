@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/cn";
+import { playSound } from "@/features/sound/sound";
 import type { QuizStep } from "../types";
 
 /** Multiple-Choice-Step: eine Antwort wählen, sofortiges Feedback. */
@@ -20,8 +21,13 @@ export function QuizStepView({
   const choose = (i: number) => {
     if (solved) return; // bereits korrekt – sperren
     setPicked(i);
-    if (i === step.answer) onSolved();
-    else onWrong();
+    if (i === step.answer) {
+      playSound("success");
+      onSolved();
+    } else {
+      playSound("wrong");
+      onWrong();
+    }
   };
 
   return (

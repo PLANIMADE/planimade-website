@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { gradeGraph, type BPGraph, type GraderResult } from "@/engine";
 import { Simulator } from "@/features/simulator/Simulator";
+import { playSound } from "@/features/sound/sound";
 import type { BuilderStep } from "../types";
 
 /**
@@ -29,8 +30,10 @@ export function BuilderStepView({
       setResult(r);
       if (r.passed && !solved) {
         setSolved(true);
+        playSound("success");
         onSolved();
       } else if (!r.passed) {
+        playSound("wrong");
         onWrong();
         if (step.hint) setShowHint(true);
       }

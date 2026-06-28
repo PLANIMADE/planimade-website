@@ -4,7 +4,9 @@
   "private": true,
   "description": "Duolingo für Unreal Engine – spielerische, interaktive Lernplattform.",
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/gen-manifest.mjs && next dev",
+    "gen:manifest": "node scripts/gen-manifest.mjs",
+    "prebuild": "node scripts/gen-manifest.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

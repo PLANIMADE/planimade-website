@@ -30,7 +30,9 @@ Simulator-Bausteine (~23 Node-Typen): Events, Branch/Sequence/Gate, **ForLoop**,
 
 Alle 40 Missionen sind testabgesichert: Jeder Bau-/Debug-Startgraph schlägt zunächst fehl, und für jede existiert eine Referenzlösung, die den Grader besteht (104 Tests gesamt).
 
-Mobile: Simulator mit Pinch-Zoom und aufklappbarer Node-Palette (Bottom-Sheet), Bottom-Nav (Lernen · Täglich · Profil).
+Mobile & App: Simulator mit Pinch-Zoom und aufklappbarer Node-Palette (Bottom-Sheet), Bottom-Nav (Lernen · Täglich · Profil). **PWA** — installierbar auf dem Homescreen, **offline** nutzbar (Service Worker, network-first) und dezente **Sound-Effekte** (abschaltbar im Profil).
+
+> Hinweis: `public/manifest.webmanifest` wird beim Build generiert (`scripts/gen-manifest.mjs`, basePath-bewusst) und ist daher nicht eingecheckt.
 
 ## Cloud-Sync aktivieren (optional)
 

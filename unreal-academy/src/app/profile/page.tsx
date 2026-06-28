@@ -9,6 +9,7 @@ import {
   isStreakAlive,
 } from "@/features/progression/progression";
 import { AuthPanel } from "@/features/auth/AuthPanel";
+import { SoundToggle } from "@/features/sound/SoundToggle";
 import { BottomNav } from "@/components/BottomNav";
 
 export default function ProfilePage() {
@@ -51,8 +52,9 @@ export default function ProfilePage() {
         </section>
 
         {/* Konto / Cloud-Sync */}
-        <section className="mb-6">
+        <section className="mb-6 flex flex-col gap-3">
           <AuthPanel />
+          <SoundToggle />
         </section>
 
         {/* Kennzahlen */}
