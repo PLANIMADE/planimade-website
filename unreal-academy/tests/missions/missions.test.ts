@@ -184,6 +184,50 @@ const solutions: Record<string, (g: BPGraph) => BPGraph> = {
         edge("br", "false", "print", "in"),
       ],
     }),
+
+  // Pfad E
+  E2: (g) => fix(g, { edges: [edge("mul", "product", "set", "value")] }),
+  E3: (g) => fix(g, { edges: [edge("fl", "loop", "beep", "in")] }),
+  E5: (g) =>
+    fix(g, {
+      nodes: [node("and", "logic.and")],
+      edges: [
+        edge("getR", "value", "and", "a"),
+        edge("getA", "value", "and", "b"),
+        edge("and", "out", "br", "condition"),
+        edge("br", "true", "dead", "in"),
+        edge("br", "false", "patrol", "in"),
+      ],
+    }),
+  E6: (g) =>
+    fix(g, {
+      removeEdges: ["dset"],
+      nodes: [node("clamp", "math.clamp")],
+      edges: [
+        edge("add", "sum", "clamp", "value"),
+        edge("clamp", "result", "set", "value"),
+      ],
+    }),
+  E7: (g) => fix(g, { setData: { first: { value: 1 } } }),
+  E8: (g) =>
+    fix(g, {
+      nodes: [
+        node("mul", "math.mul"),
+        node("cmp", "math.compare", { op: ">=" }),
+        node("and", "logic.and"),
+      ],
+      edges: [
+        edge("getC", "value", "mul", "a"),
+        edge("lit10", "value", "mul", "b"),
+        edge("mul", "product", "cmp", "a"),
+        edge("lit50", "value", "cmp", "b"),
+        edge("getK", "value", "and", "a"),
+        edge("cmp", "result", "and", "b"),
+        edge("and", "out", "br", "condition"),
+        edge("br", "true", "door", "in"),
+        edge("br", "false", "print", "in"),
+      ],
+    }),
 };
 
 describe("Missions – Struktur", () => {
@@ -192,8 +236,8 @@ describe("Missions – Struktur", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("hat 32 Missionen über 4 Pfade", () => {
-    expect(allMissions).toHaveLength(32);
+  it("hat 40 Missionen über 5 Pfade", () => {
+    expect(allMissions).toHaveLength(40);
   });
 
   it("Quiz-Antworten zeigen auf gültige Optionen", () => {
@@ -211,7 +255,8 @@ describe("Missions – Struktur", () => {
     expect(getNextMission("A1")?.id).toBe("A2");
     expect(getNextMission("A8")?.id).toBe("B1");
     expect(getNextMission("C8")?.id).toBe("D1");
-    expect(getNextMission("D8")).toBeUndefined();
+    expect(getNextMission("D8")?.id).toBe("E1");
+    expect(getNextMission("E8")).toBeUndefined();
   });
 });
 

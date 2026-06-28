@@ -1171,6 +1171,323 @@ const missionsD: Mission[] = [
   },
 ];
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Pfad E — „Mini-Spiele" (Systeme kombinieren: Score, Timer/Schleifen, Gegner)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const missionsE: Mission[] = [
+  {
+    id: "E1",
+    trackId: "E",
+    title: "Spiele sind Systeme",
+    type: "concept",
+    xp: 10,
+    steps: [
+      {
+        kind: "concept",
+        title: "Aus Bausteinen wird ein Spiel",
+        visual: "flow",
+        body: [
+          "Ein Mini-Spiel ist nichts Magisches — es ist eine Handvoll Regeln, die zusammenspielen: Punkte zählen, eine Zeit ablaufen lassen, einen Gegner reagieren lassen.",
+          "In diesem Pfad kombinierst du alles Gelernte: Schleifen, Rechnen (× und Clamp) und Logik (UND/ODER), um echte Spielmechaniken zu bauen.",
+          "Am Ende baust du eine kleine Schatzkammer, die nur bei genug Punkten UND dem richtigen Schlüssel aufgeht.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "E2",
+    trackId: "E",
+    title: "Punktejagd",
+    type: "build",
+    xp: 30,
+    steps: [
+      {
+        kind: "build",
+        title: "Punkte = Treffer × 10",
+        brief:
+          "Jeder Treffer ist 10 Punkte wert. Das Multiply rechnet Hits × 10 schon aus — verbinde sein Ergebnis mit „Set Score“.",
+        goal: "Score = Hits × 10.",
+        initialGraph: {
+          nodes: [
+            { id: "ev", type: "event.beginPlay", position: { x: 20, y: 40 } },
+            { id: "get", type: "var.get", position: { x: 20, y: 200 }, data: { varName: "Hits" } },
+            { id: "lit10", type: "literal.int", position: { x: 20, y: 320 }, data: { value: 10 } },
+            { id: "mul", type: "math.mul", position: { x: 300, y: 240 } },
+            { id: "set", type: "var.set", position: { x: 620, y: 80 }, data: { varName: "Score" } },
+          ],
+          edges: [
+            { id: "e1", source: "ev", sourceHandle: "then", target: "set", targetHandle: "in" },
+            { id: "d1", source: "get", sourceHandle: "value", target: "mul", targetHandle: "a" },
+            { id: "d2", source: "lit10", sourceHandle: "value", target: "mul", targetHandle: "b" },
+            // Fehlt: mul.product -> set.value
+          ],
+          variables: [
+            { name: "Hits", type: "int", default: 0 },
+            { name: "Score", type: "int", default: 0 },
+          ],
+        },
+        allowedNodes: ["event.beginPlay", "var.get", "var.set", "math.mul", "literal.int"],
+        grader: {
+          cases: [
+            { name: "3 Treffer → 30", given: { Hits: 3 }, expect: { variables: { Score: 30 } } },
+            { name: "7 Treffer → 70", given: { Hits: 7 }, expect: { variables: { Score: 70 } } },
+            { name: "0 Treffer → 0", given: { Hits: 0 }, expect: { variables: { Score: 0 } } },
+          ],
+        },
+        hint: "Ziehe vom Product-Ausgang des Multiply zum Value-Eingang von „Set Score“.",
+      },
+    ],
+  },
+  {
+    id: "E3",
+    trackId: "E",
+    title: "Countdown",
+    type: "build",
+    xp: 35,
+    steps: [
+      {
+        kind: "build",
+        title: "Ein Piep pro Sekunde",
+        brief:
+          "Der ForLoop läuft von 1 bis Seconds — also einmal pro Sekunde. Verbinde den loop-Ausgang mit Print String, damit es pro Sekunde piept.",
+        goal: "Print String feuert genau Seconds-mal.",
+        initialGraph: {
+          nodes: [
+            { id: "ev", type: "event.beginPlay", position: { x: 20, y: 40 } },
+            { id: "first", type: "literal.int", position: { x: 20, y: 200 }, data: { value: 1 } },
+            { id: "getS", type: "var.get", position: { x: 20, y: 320 }, data: { varName: "Seconds" } },
+            { id: "fl", type: "flow.forLoop", position: { x: 300, y: 60 } },
+            { id: "beep", type: "action.print", position: { x: 620, y: 40 } },
+          ],
+          edges: [
+            { id: "e1", source: "ev", sourceHandle: "then", target: "fl", targetHandle: "in" },
+            { id: "d1", source: "first", sourceHandle: "value", target: "fl", targetHandle: "first" },
+            { id: "d2", source: "getS", sourceHandle: "value", target: "fl", targetHandle: "last" },
+            // Fehlt: fl.loop -> beep.in
+          ],
+          variables: [{ name: "Seconds", type: "int", default: 0 }],
+        },
+        allowedNodes: ["event.beginPlay", "var.get", "flow.forLoop", "action.print", "literal.int"],
+        grader: {
+          cases: [
+            { name: "3 Sekunden → 3 Pieptöne", given: { Seconds: 3 }, expect: { actions: ["Print", "Print", "Print"] } },
+            { name: "1 Sekunde → 1 Piepton", given: { Seconds: 1 }, expect: { actions: ["Print"] } },
+            { name: "0 Sekunden → still", given: { Seconds: 0 }, expect: { actions: [] } },
+          ],
+        },
+        hint: "Verbinde den loop-Ausgang des ForLoop mit dem Eingang von Print String.",
+      },
+    ],
+  },
+  {
+    id: "E4",
+    trackId: "E",
+    title: "Gegner denken in Regeln",
+    type: "concept",
+    xp: 10,
+    steps: [
+      {
+        kind: "concept",
+        title: "Wenn … dann greift er an",
+        visual: "pins",
+        body: [
+          "Ein Gegner „entscheidet“ nicht wirklich — er folgt Regeln, die du baust. Z.B.: Wenn der Spieler in Reichweite ist UND der Gegner wach ist, dann greift er an.",
+          "Genau das setzt du mit AND + Branch um: Beide Bedingungen müssen wahr sein, sonst macht der Gegner etwas anderes (z.B. patrouillieren).",
+          "Als Nächstes baust du diese Angriffslogik selbst.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "E5",
+    trackId: "E",
+    title: "Der Gegner greift an",
+    type: "build",
+    xp: 40,
+    steps: [
+      {
+        kind: "build",
+        title: "In Reichweite UND wach",
+        brief:
+          "Der Gegner greift nur an (Set Dead), wenn PlayerInRange UND EnemyAwake wahr sind. Sonst patrouilliert er (Print String). Baue AND + Branch.",
+        goal: "Beide wahr → Set Dead, sonst Print String.",
+        initialGraph: {
+          nodes: [
+            { id: "ev", type: "event.beginPlay", position: { x: 20, y: 40 } },
+            { id: "getR", type: "var.get", position: { x: 20, y: 200 }, data: { varName: "PlayerInRange" } },
+            { id: "getA", type: "var.get", position: { x: 20, y: 320 }, data: { varName: "EnemyAwake" } },
+            { id: "br", type: "flow.branch", position: { x: 460, y: 60 } },
+            { id: "dead", type: "action.setDead", position: { x: 740, y: 20 } },
+            { id: "patrol", type: "action.print", position: { x: 740, y: 180 } },
+          ],
+          edges: [
+            { id: "e1", source: "ev", sourceHandle: "then", target: "br", targetHandle: "in" },
+            // Fehlt: AND + Branch-Zweige
+          ],
+          variables: [
+            { name: "PlayerInRange", type: "bool", default: true },
+            { name: "EnemyAwake", type: "bool", default: true },
+          ],
+        },
+        allowedNodes: ["event.beginPlay", "var.get", "logic.and", "flow.branch", "action.setDead", "action.print"],
+        grader: {
+          cases: [
+            { name: "Reichweite + wach → Angriff", given: { PlayerInRange: true, EnemyAwake: true }, expect: { actions: ["SetDead"] } },
+            { name: "Schläft → Patrouille", given: { PlayerInRange: true, EnemyAwake: false }, expect: { actions: ["Print"] } },
+            { name: "Außer Reichweite → Patrouille", given: { PlayerInRange: false, EnemyAwake: true }, expect: { actions: ["Print"] } },
+          ],
+        },
+        hint: "AND: PlayerInRange & EnemyAwake → Branch.Condition. true → Set Dead, false → Print String.",
+      },
+    ],
+  },
+  {
+    id: "E6",
+    trackId: "E",
+    title: "Heiltrank mit Limit",
+    type: "build",
+    xp: 40,
+    steps: [
+      {
+        kind: "build",
+        title: "Heilen, aber max. 100",
+        brief:
+          "Health steigt um Potions × 10, darf aber nie über 100. Das Rechenwerk addiert schon — füge einen Clamp (Max 100) ein, bevor es in „Set Health“ geht.",
+        goal: "Health = min(100, Health + Potions × 10).",
+        initialGraph: {
+          nodes: [
+            { id: "ev", type: "event.beginPlay", position: { x: 20, y: 40 } },
+            { id: "getH", type: "var.get", position: { x: 20, y: 180 }, data: { varName: "Health" } },
+            { id: "getP", type: "var.get", position: { x: 20, y: 300 }, data: { varName: "Potions" } },
+            { id: "lit10", type: "literal.int", position: { x: 20, y: 420 }, data: { value: 10 } },
+            { id: "mul", type: "math.mul", position: { x: 280, y: 340 } },
+            { id: "add", type: "math.add", position: { x: 520, y: 240 } },
+            { id: "set", type: "var.set", position: { x: 820, y: 80 }, data: { varName: "Health" } },
+          ],
+          edges: [
+            { id: "e1", source: "ev", sourceHandle: "then", target: "set", targetHandle: "in" },
+            { id: "d1", source: "getP", sourceHandle: "value", target: "mul", targetHandle: "a" },
+            { id: "d2", source: "lit10", sourceHandle: "value", target: "mul", targetHandle: "b" },
+            { id: "d3", source: "getH", sourceHandle: "value", target: "add", targetHandle: "a" },
+            { id: "d4", source: "mul", sourceHandle: "product", target: "add", targetHandle: "b" },
+            // BUG/fehlt: ohne Clamp kann Health über 100 steigen
+            { id: "dset", source: "add", sourceHandle: "sum", target: "set", targetHandle: "value" },
+          ],
+          variables: [
+            { name: "Health", type: "int", default: 0 },
+            { name: "Potions", type: "int", default: 0 },
+          ],
+        },
+        allowedNodes: ["event.beginPlay", "var.get", "var.set", "math.mul", "math.add", "math.clamp", "literal.int"],
+        grader: {
+          cases: [
+            { name: "50 + 3 Tränke → 80", given: { Health: 50, Potions: 3 }, expect: { variables: { Health: 80 } } },
+            { name: "80 + 5 Tränke → 100 (Limit)", given: { Health: 80, Potions: 5 }, expect: { variables: { Health: 100 } } },
+            { name: "0 + 0 → 0", given: { Health: 0, Potions: 0 }, expect: { variables: { Health: 0 } } },
+          ],
+        },
+        hint: "+ Clamp (Max 100). Add.Sum → Clamp.Value, Clamp.Result → Set Health (die direkte Verbindung ersetzen).",
+      },
+    ],
+  },
+  {
+    id: "E7",
+    trackId: "E",
+    title: "Zu viele Gegner",
+    type: "debug",
+    xp: 35,
+    steps: [
+      {
+        kind: "debug",
+        title: "Off-by-one in der Schleife",
+        brief:
+          "Es sollen genau „Count“ Gegner erscheinen — es ist aber immer einer zu viel. Schau dir den Start-Index (First) des ForLoop an und korrigiere ihn.",
+        goal: "Print String feuert genau Count-mal.",
+        initialGraph: {
+          nodes: [
+            { id: "ev", type: "event.beginPlay", position: { x: 20, y: 40 } },
+            { id: "first", type: "literal.int", position: { x: 20, y: 200 }, data: { value: 0 } },
+            { id: "getC", type: "var.get", position: { x: 20, y: 320 }, data: { varName: "Count" } },
+            { id: "fl", type: "flow.forLoop", position: { x: 300, y: 60 } },
+            { id: "spawn", type: "action.print", position: { x: 620, y: 40 } },
+          ],
+          edges: [
+            { id: "e1", source: "ev", sourceHandle: "then", target: "fl", targetHandle: "in" },
+            { id: "d1", source: "first", sourceHandle: "value", target: "fl", targetHandle: "first" },
+            { id: "d2", source: "getC", sourceHandle: "value", target: "fl", targetHandle: "last" },
+            { id: "e2", source: "fl", sourceHandle: "loop", target: "spawn", targetHandle: "in" },
+          ],
+          variables: [{ name: "Count", type: "int", default: 0 }],
+        },
+        allowedNodes: ["event.beginPlay", "var.get", "flow.forLoop", "action.print", "literal.int"],
+        grader: {
+          cases: [
+            { name: "3 Gegner", given: { Count: 3 }, expect: { actions: ["Print", "Print", "Print"] } },
+            { name: "1 Gegner", given: { Count: 1 }, expect: { actions: ["Print"] } },
+            { name: "0 Gegner", given: { Count: 0 }, expect: { actions: [] } },
+          ],
+        },
+        hint: "First steht auf 0 → bei Last = Count ergibt das Count+1 Durchläufe. Stelle First auf 1.",
+      },
+    ],
+  },
+  {
+    id: "E8",
+    trackId: "E",
+    title: "Prüfung: Die Schatzkammer",
+    type: "boss",
+    xp: 65,
+    steps: [
+      {
+        kind: "build",
+        title: "Genug Punkte UND Schlüssel",
+        brief:
+          "Die Schatzkammer öffnet nur, wenn Coins × 10 mindestens 50 ergibt UND HasKey wahr ist. Sonst „Print String“. Baue Multiply, Compare (>= 50) und AND. Die Literale 10 und 50 liegen bereit.",
+        goal: "Coins × 10 >= 50 UND HasKey → Open Door, sonst Print String.",
+        initialGraph: {
+          nodes: [
+            { id: "ev", type: "event.beginPlay", position: { x: 20, y: 40 } },
+            { id: "getC", type: "var.get", position: { x: 20, y: 180 }, data: { varName: "Coins" } },
+            { id: "getK", type: "var.get", position: { x: 20, y: 300 }, data: { varName: "HasKey" } },
+            { id: "lit10", type: "literal.int", position: { x: 20, y: 420 }, data: { value: 10 } },
+            { id: "lit50", type: "literal.int", position: { x: 20, y: 520 }, data: { value: 50 } },
+            { id: "br", type: "flow.branch", position: { x: 640, y: 60 } },
+            { id: "door", type: "action.openDoor", position: { x: 900, y: 20 } },
+            { id: "print", type: "action.print", position: { x: 900, y: 180 } },
+          ],
+          edges: [
+            { id: "e1", source: "ev", sourceHandle: "then", target: "br", targetHandle: "in" },
+          ],
+          variables: [
+            { name: "Coins", type: "int", default: 0 },
+            { name: "HasKey", type: "bool", default: true },
+          ],
+        },
+        allowedNodes: [
+          "event.beginPlay",
+          "var.get",
+          "math.mul",
+          "math.compare",
+          "logic.and",
+          "flow.branch",
+          "action.openDoor",
+          "action.print",
+          "literal.int",
+        ],
+        grader: {
+          cases: [
+            { name: "5 Münzen + Schlüssel → offen", given: { Coins: 5, HasKey: true }, expect: { actions: ["OpenDoor"] } },
+            { name: "Genug Punkte, kein Schlüssel → Absage", given: { Coins: 5, HasKey: false }, expect: { actions: ["Print"] } },
+            { name: "Zu wenig Münzen → Absage", given: { Coins: 3, HasKey: true }, expect: { actions: ["Print"] } },
+          ],
+        },
+        hint: "Multiply (Coins × 10) → Compare (>= 50). AND mit HasKey → Branch.Condition. true → Open Door, false → Print String.",
+      },
+    ],
+  },
+];
+
 export const trackA: Track = {
   id: "A",
   title: "Blueprint Basics",
@@ -1199,7 +1516,14 @@ export const trackD: Track = {
   missions: missionsD,
 };
 
-export const tracks: Track[] = [trackA, trackB, trackC, trackD];
+export const trackE: Track = {
+  id: "E",
+  title: "Mini-Spiele",
+  subtitle: "Score, Timer & Gegner-Logik bauen",
+  missions: missionsE,
+};
+
+export const tracks: Track[] = [trackA, trackB, trackC, trackD, trackE];
 
 /** Flache Liste aller Missionen (für Routing per ID). */
 export const allMissions: Mission[] = tracks.flatMap((t) => t.missions);
