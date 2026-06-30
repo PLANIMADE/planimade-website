@@ -14,6 +14,7 @@ import { ResultScreen } from "./ResultScreen";
 import { ConceptStepView } from "./steps/ConceptStepView";
 import { QuizStepView } from "./steps/QuizStepView";
 import { BuilderStepView } from "./steps/BuilderStepView";
+import { BridgeStepView } from "./steps/BridgeStepView";
 import { STEP_XP, type Mission } from "./types";
 
 /** Berechnet Sterne aus der Fehlerzahl über die ganze Mission. */
@@ -160,6 +161,9 @@ export function MissionPlayer({
             onSolved={onSolved}
             onWrong={onWrong}
           />
+        )}
+        {step.kind === "bridge" && (
+          <BridgeStepView key={index} step={step} onSolved={onSolved} />
         )}
       </main>
 

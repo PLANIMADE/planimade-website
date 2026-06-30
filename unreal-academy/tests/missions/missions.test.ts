@@ -251,6 +251,17 @@ describe("Missions – Struktur", () => {
     }
   });
 
+  it("Bridge-Steps haben Anleitung und Ergebnis", () => {
+    for (const m of allMissions) {
+      for (const s of m.steps) {
+        if (s.kind === "bridge") {
+          expect(s.steps.length).toBeGreaterThan(0);
+          expect(s.result.length).toBeGreaterThan(0);
+        }
+      }
+    }
+  });
+
   it("getNextMission verkettet die Pfade und endet sauber", () => {
     expect(getNextMission("A1")?.id).toBe("A2");
     expect(getNextMission("A8")?.id).toBe("B1");

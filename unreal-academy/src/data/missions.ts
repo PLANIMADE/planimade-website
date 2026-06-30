@@ -115,6 +115,21 @@ const missionsA: Mission[] = [
         },
         hint: "Ziehe vom weißen ▷-Ausgang von BeginPlay zum weißen ▷-Eingang von Print String.",
       },
+      {
+        kind: "bridge",
+        title: "BeginPlay → Print String im echten Editor",
+        intro:
+          "Jetzt dieselbe Mini-Logik in der echten Unreal Engine: beim Start eine Nachricht ausgeben.",
+        steps: [
+          "Im Content Browser: Rechtsklick → Blueprint Class → Actor. Nenne ihn BP_Hallo und öffne ihn per Doppelklick.",
+          "Im Event Graph siehst du den Knoten „Event BeginPlay“. Zieh von seinem weißen Ausgangs-Pin (▷) nach rechts und lass die Maus im leeren Bereich los.",
+          "Tippe „Print String“ und drücke Enter — der Knoten verbindet sich automatisch mit BeginPlay.",
+          "Schreib in das Feld „In String“ einen Text, z. B. Hallo Unreal.",
+          "Oben links Compile, dann Save. Zieh BP_Hallo in die Szene und drücke Play (Alt+P).",
+        ],
+        result:
+          "Oben links im Viewport erscheint kurz deine Nachricht — derselbe BeginPlay→Print-Fluss, den du im Simulator gebaut hast.",
+      },
     ],
   },
   {
@@ -158,6 +173,22 @@ const missionsA: Mission[] = [
           ],
         },
         hint: "Der true-Ausgang des Branch muss zum Ablauf-Eingang von Open Door führen.",
+      },
+      {
+        kind: "bridge",
+        title: "Die Schlüssel-Tür im echten Editor",
+        intro:
+          "Baue die Entscheidung mit einer echten Bool-Variable und einem Branch nach. (Print String ist hier der sichtbare Platzhalter fürs Türöffnen.)",
+        steps: [
+          "Neuer Blueprint Actor BP_Tuer, per Doppelklick öffnen.",
+          "Links im Panel „My Blueprint“ bei Variables auf das +. Nenne die Variable HasKey, Typ Boolean.",
+          "Klicke Compile. Wähle HasKey und setze den Default-Wert (Haken) auf true.",
+          "Zieh HasKey in den Graph und wähle „Get“.",
+          "Zieh von „Event BeginPlay“ nach rechts → tippe „Branch“. Verbinde HasKey mit dem Condition-Eingang.",
+          "Vom „True“-Ausgang des Branch → „Print String“ mit Text Tür offen. Compile, Save, in die Szene ziehen, Play.",
+        ],
+        result:
+          "Mit HasKey = true erscheint „Tür offen“. Setzt du den Default auf false und drückst Play, passiert nichts — genau wie im Simulator.",
       },
     ],
   },
@@ -262,6 +293,21 @@ const missionsA: Mission[] = [
           ],
         },
         hint: "Branch (Condition = HasKey): true → Open Door, false → Print String.",
+      },
+      {
+        kind: "bridge",
+        title: "Das Zutritts-System im echten Editor",
+        intro:
+          "Die komplette Wenn/Sonst-Entscheidung in der echten Unreal Engine — mit beiden Branch-Zweigen.",
+        steps: [
+          "Öffne (oder baue) BP_Tuer mit der Bool-Variable HasKey wie in Mission A4.",
+          "Zieh von „Event BeginPlay“ → „Branch“. Verbinde Get HasKey mit dem Condition-Eingang.",
+          "Vom „True“-Ausgang → „Print String“ mit Text Tür offen.",
+          "Vom „False“-Ausgang → ein zweites „Print String“ mit Text Zutritt verweigert.",
+          "Compile, Save, Play — einmal mit HasKey = true, einmal mit false.",
+        ],
+        result:
+          "true → „Tür offen“, false → „Zutritt verweigert“. Du hast eine vollständige Verzweigung im echten Editor gebaut — das Herz fast jeder Spiellogik.",
       },
     ],
   },

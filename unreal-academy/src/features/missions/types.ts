@@ -12,7 +12,7 @@ import type { GraderSpec } from "@/engine";
  * die App auch offline / als Gast spielbar (siehe Phase-2-MVP, Abschnitt 7).
  */
 
-export type StepKind = "concept" | "build" | "debug" | "quiz";
+export type StepKind = "concept" | "build" | "debug" | "quiz" | "bridge";
 
 /** Lese-/Erklär-Step: Text, kein Bauen. Gilt nach „Verstanden" als gelöst. */
 export interface ConceptStep {
@@ -58,7 +58,22 @@ export interface QuizStep {
   explain?: string;
 }
 
-export type MissionStep = ConceptStep | BuilderStep | QuizStep;
+/**
+ * Brücke zum echten Editor: Schritt-für-Schritt-Anleitung „Bau das jetzt in der
+ * echten Unreal Engine nach". Der entscheidende Schritt zur Selbstständigkeit.
+ */
+export interface BridgeStep {
+  kind: "bridge";
+  title: string;
+  /** Kurze Einleitung: was du gleich im echten Editor baust. */
+  intro: string;
+  /** Nummerierte Editor-Schritte. */
+  steps: string[];
+  /** Was du danach sehen/erreichen solltest. */
+  result: string;
+}
+
+export type MissionStep = ConceptStep | BuilderStep | QuizStep | BridgeStep;
 
 /** Übergeordnetes Label einer Mission (steuert Icon/Akzent auf der Karte). */
 export type MissionType = "concept" | "build" | "debug" | "quiz" | "boss";
@@ -88,4 +103,5 @@ export const STEP_XP: Record<StepKind, number> = {
   quiz: 10,
   build: 15,
   debug: 15,
+  bridge: 15,
 };
