@@ -553,6 +553,13 @@ body{
   white-space:pre;
 }
 .codebox .copy-float{position:absolute;top:8px;right:8px}
+.viewtoggle{display:flex;gap:6px;margin-bottom:8px}
+.graphbox{
+  border:1px solid var(--node-border-soft);border-radius:5px;overflow:hidden;
+  background:#161619;--ueb-height:420px;
+}
+.graphbox .graph-note{padding:12px;font-size:12px;color:var(--ink-faint)}
+.graph-hint{font-size:11.5px;color:var(--ink-faint);margin-top:6px}
 .modal-foot{display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 18px}
 .modal-foot .spacer{flex:1}
 
@@ -763,10 +770,16 @@ body{
       </div>
       <div>
         <div class="section-label">Paste-Code</div>
-        <div class="codebox">
+        <div class="viewtoggle">
+          <button class="btn small primary" id="detail-view-code">Code</button>
+          <button class="btn small" id="detail-view-graph">Graph</button>
+        </div>
+        <div class="codebox" id="detail-codebox">
           <pre id="detail-code"></pre>
           <button class="btn small primary copy-float" id="detail-copy-float">Kopieren</button>
         </div>
+        <div class="graphbox" id="detail-graph" style="display:none"></div>
+        <div class="graph-hint" id="detail-graph-hint" style="display:none">Rechtsklick ziehen: verschieben · Strg + Mausrad: zoomen</div>
       </div>
     </div>
     <div class="modal-foot">
@@ -995,8 +1008,90 @@ $("search").addEventListener("input", e=>{ searchTerm = e.target.value.trim().to
 $("btn-new").addEventListener("click", ()=>openForm(null));
 $("btn-empty-new").addEventListener("click", ()=>openForm(null));
 
+/* ================= Graph-Ansicht (ueblueprint, MIT) =================
+   Rendert den UE-Paste-Code als interaktiven Node-Graphen – wie auf
+   blueprintue.com. Die Bibliothek wird erst beim ersten Öffnen geladen. */
+let uebLoading = null;
+function loadUeb(){
+  if (!uebLoading){
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "assets/ueblueprint/css/ueb-style.min.css";
+    document.head.appendChild(link);
+    uebLoading = import("./assets/ueblueprint/ueblueprint.js");
+  }
+  return uebLoading;
+}
+const escHtml = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+async function renderGraph(container, code){
+  container.innerHTML = '<div class="graph-note">Graph wird geladen…</div>';
+  try {
+    await loadUeb();
+    // Deklarativ einfügen – createElement scheitert an den Custom-Element-Attributen
+    container.innerHTML = "<ueb-blueprint><template>" + escHtml(code) + "</template></ueb-blueprint>";
+    const bp = container.querySelector("ueb-blueprint");
+    // Nach dem Aufbau einpassen: Zoom so wählen, dass der ganze Graph in die Box
+    // passt, dann den Inhalt mittig scrollen (Paste passiert asynchron).
+    const bounds = ()=>{
+      const rs = [...bp.querySelectorAll("ueb-node")].map(n=>n.getBoundingClientRect());
+      if (!rs.length) return null;
+      return {
+        minX: Math.min(...rs.map(r=>r.left)),  maxX: Math.max(...rs.map(r=>r.right)),
+        minY: Math.min(...rs.map(r=>r.top)),   maxY: Math.max(...rs.map(r=>r.bottom))
+      };
+    };
+    const sleep = ms => new Promise(r=>setTimeout(r, ms));
+    const fit = async ()=>{ try {
+      let b1 = bounds();
+      if (!b1) return;
+      const box = bp.getBoundingClientRect();
+      const scale = bp.getScale ? bp.getScale() : 1;
+      const needW = (b1.maxX-b1.minX)/scale + 120, needH = (b1.maxY-b1.minY)/scale + 120;
+      const target = Math.min(box.width/needW, box.height/needH, 1);
+      // Diskrete Zoom-Stufen der Bibliothek (0 = 1:1, abwärts bis -12)
+      const SCALES = [[0,1],[-1,.875],[-2,.75],[-3,.675],[-4,.5],[-5,.375],[-6,.333333],[-7,.3],[-8,.266666],[-9,.233333],[-10,.2],[-11,.166666],[-12,.133333]];
+      let zi = -12;
+      for (const [i,s] of SCALES){ if (s <= target){ zi = i; break; } }
+      if (bp.setZoom) bp.setZoom(zi);
+      // Zentrieren über die reaktiven translate-Properties: verschiebt das Grid
+      // direkt (Graph-Einheiten = Bildschirm-Pixel / Skalierung) – kein Scroll-Clamping.
+      for (let i = 0; i < 4; i++){
+        await sleep(160);
+        const b2 = bounds(); if (!b2) break;
+        const box2 = bp.getBoundingClientRect();
+        const dx = (box2.left+box2.width/2) - (b2.minX+b2.maxX)/2;
+        const dy = (box2.top+box2.height/2) - (b2.minY+b2.maxY)/2;
+        if (Math.abs(dx) < 12 && Math.abs(dy) < 12) break;
+        const s2 = bp.getScale ? bp.getScale() : 1;
+        bp.translateX += dx / s2;
+        bp.translateY += dy / s2;
+      }
+    } catch(e){} };
+    setTimeout(fit, 500);
+  } catch(err){
+    container.innerHTML = '<div class="graph-note">Graph-Ansicht konnte nicht geladen werden: ' + esc(err.message) + "</div>";
+  }
+}
+
 /* ================= Detail ================= */
 let detailId = null;
+function setDetailView(mode){
+  $("detail-codebox").style.display = mode === "code" ? "" : "none";
+  $("detail-graph").style.display = mode === "graph" ? "" : "none";
+  $("detail-graph-hint").style.display = mode === "graph" ? "" : "none";
+  $("detail-view-code").classList.toggle("primary", mode === "code");
+  $("detail-view-graph").classList.toggle("primary", mode === "graph");
+  if (mode === "graph"){
+    const bp = library.find(x=>x.id===detailId);
+    const box = $("detail-graph");
+    if (bp && box.dataset.renderedFor !== detailId){
+      box.dataset.renderedFor = detailId;
+      renderGraph(box, bp.code || "");
+    }
+  }
+}
+$("detail-view-code").addEventListener("click", ()=>setDetailView("code"));
+$("detail-view-graph").addEventListener("click", ()=>setDetailView("graph"));
 function openDetail(id){
   const bp = library.find(x=>x.id===id);
   if (!bp) return;
@@ -1021,6 +1116,10 @@ function openDetail(id){
   $("detail-setup-block").style.display = bp.setup ? "" : "none";
   $("detail-setup").textContent = bp.setup || "";
   $("detail-code").textContent = bp.code || "";
+  // Ansicht zurücksetzen – Graph wird erst bei Klick (neu) gerendert
+  $("detail-graph").innerHTML = "";
+  $("detail-graph").dataset.renderedFor = "";
+  setDetailView("code");
   $("detail-wrap").classList.remove("hidden");
 }
 function closeDetail(){ $("detail-wrap").classList.add("hidden"); detailId = null; }
@@ -1235,16 +1334,35 @@ function showGenResult(prompt){
     ${genParsed.setup ? `<div style="margin-top:14px"><div class="section-label">Setup</div><div class="setup-text">${esc(genParsed.setup)}</div></div>` : ""}
     <div style="margin-top:14px">
       <div class="section-label">Paste-Code (${genParsed.code.length.toLocaleString("de-DE")} Zeichen)</div>
-      <div class="codebox">
+      <div class="viewtoggle">
+        <button class="btn small primary" id="gen-view-code">Code</button>
+        <button class="btn small" id="gen-view-graph">Graph</button>
+      </div>
+      <div class="codebox" id="gen-codebox">
         <pre>${esc(genParsed.code)}</pre>
         <button class="btn small primary copy-float" id="gen-copy">Kopieren</button>
       </div>
+      <div class="graphbox" id="gen-graph" style="display:none"></div>
+      <div class="graph-hint" id="gen-graph-hint" style="display:none">Rechtsklick ziehen: verschieben · Strg + Mausrad: zoomen</div>
     </div>`;
   $("gen-result").style.display = "";
   $("gen-copy").addEventListener("click", async ()=>{
     const ok = await copyText(genParsed.code);
     toast(ok ? "Kopiert" : "Kopieren fehlgeschlagen", !ok);
   });
+  const setGenView = (mode)=>{
+    $("gen-codebox").style.display = mode==="code" ? "" : "none";
+    $("gen-graph").style.display = mode==="graph" ? "" : "none";
+    $("gen-graph-hint").style.display = mode==="graph" ? "" : "none";
+    $("gen-view-code").classList.toggle("primary", mode==="code");
+    $("gen-view-graph").classList.toggle("primary", mode==="graph");
+    if (mode==="graph" && !$("gen-graph").dataset.rendered){
+      $("gen-graph").dataset.rendered = "1";
+      renderGraph($("gen-graph"), genParsed.code);
+    }
+  };
+  $("gen-view-code").addEventListener("click", ()=>setGenView("code"));
+  $("gen-view-graph").addEventListener("click", ()=>setGenView("graph"));
   $("gen-result").scrollIntoView({ behavior:"smooth", block:"start" });
 }
 
