@@ -1087,6 +1087,7 @@ function pg_view_topbar($SCHEMA, $active){
   // Gruppe „System" – Medien, Statistik, Papierkorb + Owner-Werkzeuge
   $system = [];
   $system[] = ['index.php?view=board', '🗂️ Planungs-Board', 0];
+  $system[] = ['vault.php', '🧩 Blueprint Vault', 0];
   $system[] = ['index.php?view=search', '🔎 Suche', 0];
   $system[] = ['index.php?view=media', '🖼️ Medien-Bibliothek', 0];
   $system[] = ['index.php?view=stats', '📊 Statistik', 0];
