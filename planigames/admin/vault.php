@@ -20,7 +20,22 @@ if (pg_logged_in() && !pg_current_user()) { $_SESSION = []; session_destroy(); }
 define('PG_VAULT_FILE',   PG_DATA_DIR . '/blueprint_vault.php');
 define('PG_VAULT_BACKUP', PG_DATA_DIR . '/blueprint_vault.backup.php');
 define('PG_VAULT_GUARD',  "<?php exit; ?>\n");
-define('PG_VAULT_MODELS', ['claude-sonnet-4-6', 'claude-opus-4-8']);
+/* Verfügbare Generator-Modelle: id => [Label, Provider].
+   Die Gemini-Liste lässt sich in data/vault_config.php überschreiben
+   ('gemini_models' => ['modell-id' => 'Label', …]) – falls Google die
+   Modell-IDs ändert, ist kein Code-Update nötig. */
+function pg_vault_models(){
+  $cfg = pg_vault_config();
+  $models = [
+    'claude-sonnet-4-6' => ['label' => 'Claude Sonnet 4.6 (schnell)',   'provider' => 'anthropic'],
+    'claude-opus-4-8'   => ['label' => 'Claude Opus 4.8 (gründlich)',   'provider' => 'anthropic'],
+  ];
+  $gem = (is_array($cfg['gemini_models']) && $cfg['gemini_models'] !== [])
+    ? $cfg['gemini_models']
+    : ['gemini-3-pro-preview' => 'Gemini 3 Pro', 'gemini-2.5-flash' => 'Gemini 2.5 Flash'];
+  foreach ($gem as $id => $label) $models[(string) $id] = ['label' => (string) $label, 'provider' => 'gemini'];
+  return $models;
+}
 
 /* System-Prompt der Generierung – unverändert aus dem Prototyp, jetzt NUR server-seitig. */
 define('PG_VAULT_SYSTEM_PROMPT', <<<'PGVAULTSYS'
@@ -54,10 +69,12 @@ function pg_vault_config(){
   $file = PG_DATA_DIR . '/vault_config.php';
   $c = is_file($file) ? (include $file) : [];
   return (is_array($c) ? $c : []) + [
-    'api_key'    => '',      // Anthropic API-Key (sk-ant-…)
-    'stream'     => true,    // true = SSE-Streaming, false = kompletter Request mit Spinner
-    'max_tokens' => 32000,
-    'timeout'    => 300,     // Sekunden für den Anthropic-Request
+    'api_key'        => '',    // Anthropic API-Key (sk-ant-…)
+    'gemini_api_key' => '',    // Google Gemini API-Key (aistudio.google.com/apikey)
+    'gemini_models'  => [],    // leer = eingebaute Standard-Modelle (siehe pg_vault_models)
+    'stream'         => true,  // true = SSE-Streaming, false = kompletter Request mit Spinner
+    'max_tokens'     => 32000,
+    'timeout'        => 300,   // Sekunden für den KI-Request
   ];
 }
 
@@ -234,37 +251,76 @@ if ($action !== '') {
       $in = pg_vault_input();
       $prompt = trim((string) ($in['prompt'] ?? ''));
       $model = (string) ($in['model'] ?? '');
-      if ($cfg['api_key'] === '') pg_vault_json(['error' => 'Auf dem Server ist kein API-Key hinterlegt (data/vault_config.php).'], 500);
       if ($prompt === '') pg_vault_json(['error' => 'Prompt fehlt.'], 400);
-      if (!in_array($model, PG_VAULT_MODELS, true)) $model = PG_VAULT_MODELS[0];
+      $models = pg_vault_models();
+      if (!isset($models[$model])) $model = array_key_first($models);
+      $provider = $models[$model]['provider'];
+      $key = $provider === 'gemini' ? $cfg['gemini_api_key'] : $cfg['api_key'];
+      if ($key === '') {
+        $name = $provider === 'gemini' ? 'Gemini' : 'Anthropic';
+        pg_vault_json(['error' => 'Für ' . $name . ' ist kein API-Key auf dem Server hinterlegt (data/vault_config.php).'], 500);
+      }
       if (!function_exists('curl_init')) pg_vault_json(['error' => 'curl-Extension fehlt auf dem Server.'], 500);
 
-      $payload = [
-        'model'       => $model,
-        'max_tokens'  => (int) $cfg['max_tokens'],
-        'temperature' => 0.2,
-        'system'      => PG_VAULT_SYSTEM_PROMPT,
-        'messages'    => [['role' => 'user', 'content' => $prompt]],
-      ];
+      $stream = !empty($cfg['stream']);
+      if ($provider === 'gemini') {
+        // Google Generative Language API (v1beta) – SSE via ?alt=sse
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model)
+             . ($stream ? ':streamGenerateContent?alt=sse' : ':generateContent');
+        $headers = ['content-type: application/json', 'x-goog-api-key: ' . $key];
+        $payload = [
+          'system_instruction' => ['parts' => [['text' => PG_VAULT_SYSTEM_PROMPT]]],
+          'contents'           => [['role' => 'user', 'parts' => [['text' => $prompt]]]],
+          'generationConfig'   => ['temperature' => 0.2, 'maxOutputTokens' => (int) $cfg['max_tokens']],
+        ];
+      } else {
+        $url = 'https://api.anthropic.com/v1/messages';
+        $headers = ['content-type: application/json', 'x-api-key: ' . $key, 'anthropic-version: 2023-06-01'];
+        $payload = [
+          'model'       => $model,
+          'max_tokens'  => (int) $cfg['max_tokens'],
+          'temperature' => 0.2,
+          'system'      => PG_VAULT_SYSTEM_PROMPT,
+          'messages'    => [['role' => 'user', 'content' => $prompt]],
+        ];
+        if ($stream) $payload['stream'] = true;
+      }
       @set_time_limit(0);
+      // Fehlermeldung aus der Provider-Antwort ziehen (beide nutzen error.message)
+      $errMsg = function ($body, $status) {
+        $j = json_decode((string) $body, true);
+        return $j['error']['message'] ?? ('HTTP ' . $status);
+      };
 
-      $headers = [
-        'content-type: application/json',
-        'x-api-key: ' . $cfg['api_key'],
-        'anthropic-version: 2023-06-01',
-      ];
-
-      if (!empty($cfg['stream'])) {
-        /* ---- SSE-Passthrough: Anthropic-Stream 1:1 an den Browser ---- */
-        $payload['stream'] = true;
+      if ($stream) {
+        /* ---- SSE an den Browser. Anthropic: 1:1-Passthrough. Gemini: die
+           Chunks werden zeilenweise in Anthropic-kompatible Events übersetzt
+           (content_block_delta), damit der Client nur EIN Format kennt. ---- */
         while (ob_get_level()) ob_end_clean();
         @ini_set('zlib.output_compression', '0');
         header('Content-Type: text/event-stream; charset=UTF-8');
         header('Cache-Control: no-cache');
         header('X-Accel-Buffering: no');
 
-        $status = 0; $errBuf = '';
-        $ch = curl_init('https://api.anthropic.com/v1/messages');
+        $status = 0; $errBuf = ''; $lineBuf = '';
+        $emitDelta = function ($text) {
+          if ($text === '') return;
+          echo 'data: ' . json_encode(['type' => 'content_block_delta', 'delta' => ['text' => $text]], JSON_UNESCAPED_UNICODE) . "\n\n";
+          flush();
+        };
+        // Eine SSE-Zeile von Gemini in Text übersetzen und weiterreichen
+        $geminiLine = function ($line) use ($emitDelta) {
+          $line = trim($line);
+          if ($line === '' || strpos($line, 'data:') !== 0) return;
+          $j = json_decode(trim(substr($line, 5)), true);
+          if (!is_array($j)) return;
+          $text = '';
+          foreach ((array) ($j['candidates'][0]['content']['parts'] ?? []) as $part) {
+            $text .= (string) ($part['text'] ?? '');
+          }
+          $emitDelta($text);
+        };
+        $ch = curl_init($url);
         curl_setopt_array($ch, [
           CURLOPT_POST           => true,
           CURLOPT_HTTPHEADER     => $headers,
@@ -275,10 +331,18 @@ if ($action !== '') {
             if (!$status) { $code = (int) curl_getinfo($c, CURLINFO_RESPONSE_CODE); if ($code) $status = $code; }
             return strlen($h);
           },
-          CURLOPT_WRITEFUNCTION  => function ($c, $chunk) use (&$status, &$errBuf) {
+          CURLOPT_WRITEFUNCTION  => function ($c, $chunk) use (&$status, &$errBuf, &$lineBuf, $provider, $geminiLine) {
             if ($status !== 200) { $errBuf .= $chunk; return strlen($chunk); }   // Fehler-Body sammeln
-            echo $chunk;
-            flush();
+            if ($provider === 'gemini') {
+              $lineBuf .= $chunk;
+              while (($nl = strpos($lineBuf, "\n")) !== false) {
+                $geminiLine(substr($lineBuf, 0, $nl));
+                $lineBuf = substr($lineBuf, $nl + 1);
+              }
+            } else {
+              echo $chunk;
+              flush();
+            }
             if (connection_aborted()) return -1;    // Browser hat abgebrochen -> Upstream-Request beenden
             return strlen($chunk);
           },
@@ -286,11 +350,10 @@ if ($action !== '') {
         curl_exec($ch);
         $curlErr = curl_error($ch);
         curl_close($ch);
+        if ($provider === 'gemini' && $status === 200 && $lineBuf !== '') $geminiLine($lineBuf);   // Rest ohne \n
         // Fehler als SSE-Event im Format, das der Client ohnehin versteht (type:"error")
         if ($status !== 0 && $status !== 200) {
-          $j = json_decode($errBuf, true);
-          $msg = $j['error']['message'] ?? ('HTTP ' . $status);
-          echo 'data: ' . json_encode(['type' => 'error', 'error' => ['message' => $msg]], JSON_UNESCAPED_UNICODE) . "\n\n";
+          echo 'data: ' . json_encode(['type' => 'error', 'error' => ['message' => $errMsg($errBuf, $status)]], JSON_UNESCAPED_UNICODE) . "\n\n";
           flush();
         } elseif ($curlErr && !connection_aborted()) {
           echo 'data: ' . json_encode(['type' => 'error', 'error' => ['message' => 'Verbindungsfehler: ' . $curlErr]], JSON_UNESCAPED_UNICODE) . "\n\n";
@@ -300,7 +363,7 @@ if ($action !== '') {
       }
 
       /* ---- Non-Streaming-Fallback: kompletter Request, Antwort als JSON ---- */
-      $ch = curl_init('https://api.anthropic.com/v1/messages');
+      $ch = curl_init($url);
       curl_setopt_array($ch, [
         CURLOPT_POST           => true,
         CURLOPT_HTTPHEADER     => $headers,
@@ -316,12 +379,20 @@ if ($action !== '') {
       if ($resp === false) pg_vault_json(['error' => 'Verbindungsfehler: ' . $curlErr], 502);
       $j = json_decode((string) $resp, true);
       if ($status !== 200) {
-        $msg = $j['error']['message'] ?? ('HTTP ' . $status);
-        pg_vault_json(['error' => $msg], ($status >= 400 && $status < 600) ? $status : 502);
+        pg_vault_json(['error' => $errMsg($resp, $status)], ($status >= 400 && $status < 600) ? $status : 502);
       }
       $full = '';
-      foreach ((array) ($j['content'] ?? []) as $block) {
-        if (($block['type'] ?? '') === 'text') $full .= (string) ($block['text'] ?? '');
+      if ($provider === 'gemini') {
+        foreach ((array) ($j['candidates'][0]['content']['parts'] ?? []) as $part) {
+          $full .= (string) ($part['text'] ?? '');
+        }
+        if ($full === '' && !empty($j['promptFeedback']['blockReason'])) {
+          pg_vault_json(['error' => 'Gemini hat die Anfrage blockiert: ' . $j['promptFeedback']['blockReason']], 502);
+        }
+      } else {
+        foreach ((array) ($j['content'] ?? []) as $block) {
+          if (($block['type'] ?? '') === 'text') $full .= (string) ($block['text'] ?? '');
+        }
       }
       pg_vault_json(['text' => $full]);
     }
@@ -337,9 +408,31 @@ if ($action !== '') {
 if (!pg_logged_in()) { header('Location: index.php'); exit; }
 
 $vaultCfg = pg_vault_config();
-$vaultHasKey = $vaultCfg['api_key'] !== '';
+$vaultModels = pg_vault_models();
+$vaultKeys = [
+  'anthropic' => $vaultCfg['api_key'] !== '',
+  'gemini'    => $vaultCfg['gemini_api_key'] !== '',
+];
+$vaultHasKey = in_array(true, $vaultKeys, true);   // mindestens ein Provider nutzbar
 $vaultStream = !empty($vaultCfg['stream']);
 $vaultCsrf = pg_csrf();
+
+/* Modell-<select> mit Provider-Gruppen; Modelle ohne Server-Key sind deaktiviert. */
+function pg_vault_model_options($models, $keys){
+  $groups = ['anthropic' => ['Claude', []], 'gemini' => ['Gemini', []]];
+  foreach ($models as $id => $m) $groups[$m['provider']][1][] = [$id, $m['label']];
+  $h = '';
+  foreach ($groups as $prov => [$label, $opts]) {
+    if (!$opts) continue;
+    $h .= '<optgroup label="' . pg_h($label) . ($keys[$prov] ? '' : ' – kein Key hinterlegt') . '">';
+    foreach ($opts as [$id, $olabel]) {
+      $h .= '<option value="' . pg_h($id) . '"' . ($keys[$prov] ? '' : ' disabled') . '>' . pg_h($olabel) . '</option>';
+    }
+    $h .= '</optgroup>';
+  }
+  return $h;
+}
+$vaultModelOptions = pg_vault_model_options($vaultModels, $vaultKeys);
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -670,9 +763,9 @@ body{
   <section class="view hidden" id="view-gen">
     <div class="gen-layout">
       <div class="notice warn" id="gen-no-key" style="display:none">
-        Auf dem Server ist noch kein Anthropic API-Key hinterlegt. Kopiere
+        Auf dem Server ist noch kein API-Key hinterlegt (Anthropic oder Gemini). Kopiere
         <strong>admin/vault_config.example.php</strong> nach <strong>data/vault_config.php</strong>
-        und trag dort den Key ein. Die Bibliothek funktioniert auch ohne.
+        und trag dort mindestens einen Key ein. Die Bibliothek funktioniert auch ohne.
       </div>
       <div class="panel">
         <h2>Blueprint generieren</h2>
@@ -682,10 +775,7 @@ body{
           <div class="hint">Je konkreter, desto besser. Eigene Blueprint-Klassen nur mit exaktem Asset-Pfad erwähnen (z.B. /Game/Custom/Wizard_character/BP_Wizard), sonst bleibt der Code auf Engine-Klassen.</div>
         </div>
         <div class="gen-bar">
-          <select id="gen-model" aria-label="Modell">
-            <option value="claude-sonnet-4-6">Sonnet 4.6 (schnell)</option>
-            <option value="claude-opus-4-8">Opus 4.8 (gründlich)</option>
-          </select>
+          <select id="gen-model" aria-label="Modell"><?php echo $vaultModelOptions; ?></select>
           <button class="btn primary" id="btn-generate">Generieren</button>
           <button class="btn ghost" id="btn-gen-cancel" style="display:none">Abbrechen</button>
         </div>
@@ -714,25 +804,24 @@ body{
   <section class="view hidden" id="view-settings">
     <div class="settings-layout">
       <div class="panel">
-        <h2>Anthropic API</h2>
+        <h2>KI-Anbieter</h2>
         <div class="notice">
-          Der API-Key liegt sicher auf dem Server (<strong>data/vault_config.php</strong>) und
-          taucht nie im Browser auf. Status:
-          <?php echo $vaultHasKey ? '<strong style="color:#9ee06a">Key hinterlegt ✓</strong>' : '<strong style="color:#ff8a86">kein Key hinterlegt</strong>'; ?> ·
+          Die API-Keys liegen sicher auf dem Server (<strong>data/vault_config.php</strong>) und
+          tauchen nie im Browser auf.<br>
+          Anthropic (Claude): <?php echo $vaultKeys['anthropic'] ? '<strong style="color:#9ee06a">Key hinterlegt ✓</strong>' : '<strong style="color:#ff8a86">kein Key</strong>'; ?> ·
+          Google (Gemini): <?php echo $vaultKeys['gemini'] ? '<strong style="color:#9ee06a">Key hinterlegt ✓</strong>' : '<strong style="color:#ff8a86">kein Key</strong>'; ?> ·
           Modus: <strong><?php echo $vaultStream ? 'Streaming (live)' : 'Komplett-Antwort (Spinner)'; ?></strong>
         </div>
         <div class="field">
           <label for="set-model">Standard-Modell</label>
-          <select id="set-model">
-            <option value="claude-sonnet-4-6">Sonnet 4.6</option>
-            <option value="claude-opus-4-8">Opus 4.8</option>
-          </select>
+          <select id="set-model"><?php echo $vaultModelOptions; ?></select>
         </div>
         <button class="btn primary" id="btn-save-settings">Einstellungen speichern</button>
         <div class="notice">
-          Key erstellen: <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> ·
+          Keys erstellen: <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> (Claude) ·
+          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (Gemini) ·
           API-Doku: <a href="https://docs.claude.com" target="_blank" rel="noopener">docs.claude.com</a>.
-          Die API wird nach Nutzung abgerechnet, unabhängig vom Claude.ai-Abo.
+          Beide APIs werden nach Nutzung abgerechnet, unabhängig von Chat-Abos.
         </div>
       </div>
       <div class="panel">
@@ -844,6 +933,9 @@ body{
 const CSRF = <?php echo json_encode($vaultCsrf); ?>;
 const VAULT_STREAM = <?php echo $vaultStream ? 'true' : 'false'; ?>;
 const VAULT_HAS_KEY = <?php echo $vaultHasKey ? 'true' : 'false'; ?>;
+const VAULT_KEYS = <?php echo json_encode($vaultKeys); ?>;
+const VAULT_MODEL_PROVIDERS = <?php echo json_encode(array_map(fn($m) => $m['provider'], $vaultModels)); ?>;
+const PROVIDER_NAMES = { anthropic: "Anthropic", gemini: "Gemini" };
 
 /* ================= Konstanten ================= */
 const CATS = {
@@ -1214,6 +1306,8 @@ function setGenBusy(busy){
 $("btn-generate").addEventListener("click", async ()=>{
   const prompt = $("gen-prompt").value.trim();
   if (!VAULT_HAS_KEY){ toast("Kein API-Key auf dem Server – siehe Einstellungen", true); return; }
+  const prov = VAULT_MODEL_PROVIDERS[$("gen-model").value];
+  if (prov && !VAULT_KEYS[prov]){ toast("Für " + (PROVIDER_NAMES[prov] || prov) + " ist kein API-Key hinterlegt – anderes Modell wählen", true); return; }
   if (!prompt){ toast("Beschreib erst, was der Blueprint machen soll", true); return; }
 
   const out = $("gen-out");
@@ -1390,8 +1484,15 @@ $("btn-gen-save").addEventListener("click", async ()=>{
 
 /* ================= Einstellungen ================= */
 function renderSettings(){
-  $("set-model").value = settings.model || "claude-sonnet-4-6";
-  $("gen-model").value = settings.model || "claude-sonnet-4-6";
+  // Gespeichertes Modell wählen – fällt auf das erste nutzbare zurück, wenn es
+  // nicht (mehr) existiert oder dem Provider der Key fehlt.
+  const pick = (sel, want)=>{
+    const opts = [...sel.options];
+    const o = opts.find(x=>x.value===want && !x.disabled) || opts.find(x=>!x.disabled) || opts[0];
+    if (o) sel.value = o.value;
+  };
+  pick($("set-model"), settings.model || "claude-sonnet-4-6");
+  pick($("gen-model"), settings.model || "claude-sonnet-4-6");
 }
 $("btn-save-settings").addEventListener("click", ()=>{
   settings.model = $("set-model").value;
