@@ -2,5 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
+Disallow: /lebenslauf/
 
 Sitemap: https://dominic-majewski.de/sitemap.xml

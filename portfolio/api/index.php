@@ -113,7 +113,26 @@ $router->get('projects/{slug}', static function (string $slug) use ($projects, $
     Http::json(['project' => $project]);
 });
 
-$router->get('settings', static function () use ($settings): void {
+$router->get('settings', static function () use ($settings, $auth): void {
+    $data = $settings->all();
+
+    // Bewerbungsdaten (Anschrift, Telefon, Geburtsjahr, Kurzprofil) haben in
+    // einer offenen Antwort nichts verloren – sie gehören nur dir.
+    if ($auth->user() === null) {
+        unset($data['cv']);
+    }
+
+    Http::json(['settings' => $data]);
+});
+
+/**
+ * Alles, was der Bewerbungs-Lebenslauf braucht – nur für dich.
+ *
+ * Die Seite /lebenslauf/ ist zwar statisch ausgeliefert, bleibt ohne diese
+ * Antwort aber leer: Ohne Login gibt es hier 401 und damit kein Dokument.
+ */
+$router->get('cv', static function () use ($settings, $auth): void {
+    $auth->requireUser();
     Http::json(['settings' => $settings->all()]);
 });
 

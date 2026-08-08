@@ -551,58 +551,107 @@ html.no-js .line-mask > span {
 
 /* ==========================================================================
    Bewerbungs-Lebenslauf (/lebenslauf/)
-   Nüchternes Dokumentenlayout: links der Zeitraum, rechts die Station.
-   Am Bildschirm liegt das Blatt auf der Seite, im Druck füllt es die A4-Seite.
+
+   Zweispaltig wie eine moderne Bewerbungsmappe: links Kontakt, Sprachen und
+   Kenntnisse auf getönter Fläche, rechts Profil und Werdegang. Typografie,
+   Akzentfarbe und Mono-Labels stammen aus demselben Design-System wie die
+   Website – das Dokument soll erkennbar zum Portfolio gehören.
    ========================================================================== */
 
 .cv-sheet {
-  width: min(100% - 2 * var(--gutter), 52rem);
-  margin: 3rem auto 6rem;
-  padding: clamp(2rem, 5vw, 3.5rem);
+  /* Proportionen eines A4-Blatts, damit der Bildschirm zeigt, was gedruckt wird. */
+  width: min(100% - 2 * var(--gutter), 56rem);
+  margin: 2.5rem auto 5rem;
   background: var(--bg-elevated);
   border: 1px solid var(--line);
-  border-radius: 1rem;
+  border-radius: 1.25rem;
+  overflow: hidden;
   font-size: 0.9375rem;
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
-.cv-header {
+.cv-head {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 2rem;
-  padding-bottom: 1.75rem;
-  border-bottom: 2px solid var(--text);
+  align-items: center;
+  gap: 1.25rem;
+  padding: clamp(2rem, 4vw, 3rem);
+  padding-bottom: clamp(1.5rem, 3vw, 2rem);
+  border-bottom: 3px solid var(--accent);
 }
 
-.cv-kicker {
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+.cv-mark {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  flex-shrink: 0;
+  border-radius: 0.75rem;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  letter-spacing: -0.02em;
 }
 
 .cv-name {
-  margin-top: 0.5rem;
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-size: clamp(1.75rem, 4vw, 2.6rem);
   font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  text-transform: uppercase;
   color: var(--text);
 }
 
 .cv-role {
   margin-top: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--text-muted);
 }
 
+.cv-columns {
+  display: grid;
+  grid-template-columns: 16.5rem 1fr;
+  align-items: start;
+}
+
+.cv-aside {
+  padding: clamp(1.75rem, 3vw, 2.25rem);
+  /* Getönte Spalte in der Akzentfarbe – dezent genug fürs Papier. */
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  border-right: 1px solid var(--line);
+  align-self: stretch;
+}
+
+.cv-aside-block + .cv-aside-block {
+  margin-top: 1.75rem;
+}
+
+.cv-aside-title,
+.cv-section-title {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cv-aside-title::after,
+.cv-section-title::after {
+  content: '';
+  display: block;
+  width: 1.75rem;
+  height: 2px;
+  margin-top: 0.5rem;
+  background: var(--accent);
+}
+
 .cv-photo {
-  flex-shrink: 0;
-  width: clamp(6rem, 14vw, 8.5rem);
+  margin-bottom: 1.75rem;
   overflow: hidden;
-  border-radius: 0.5rem;
-  border: 1px solid var(--line);
+  border-radius: 0.75rem;
 }
 
 .cv-photo img {
@@ -612,66 +661,102 @@ html.no-js .line-mask > span {
   object-fit: cover;
 }
 
-.cv-details {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: 0.75rem 2rem;
-  margin: 1.5rem 0 0;
+.cv-contact {
+  margin-top: 0.9rem;
 }
 
-.cv-detail dt {
-  font-family: var(--font-mono);
+.cv-contact-row + .cv-contact-row {
+  margin-top: 0.7rem;
+}
+
+.cv-contact-row dt {
   font-size: 0.625rem;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
 
-.cv-detail dd {
-  margin: 0.2rem 0 0;
-  color: var(--text);
-}
-
-.cv-section {
-  margin-top: 2.5rem;
-}
-
-.cv-section-title {
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--line-strong);
+.cv-contact-row dd {
+  margin: 0.1rem 0 0;
   font-size: 0.8125rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  color: var(--text);
+  /* Lange Adressen dürfen umbrechen, aber erst wenn es nicht anders geht –
+     `anywhere` verhindert, dass eine E-Mail über den Rand hinausläuft. */
+  overflow-wrap: anywhere;
+  hyphens: none;
+}
+
+/* E-Mail-Adressen sind der längste Einzelwert – etwas kleiner gesetzt
+   passen sie meist ohne Umbruch in die Spalte. */
+.cv-contact-row:first-child dd {
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.cv-skill-group + .cv-skill-group {
+  margin-top: 1.1rem;
+}
+
+.cv-skill-group-title {
+  margin-top: 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--text);
 }
 
-.cv-profile {
-  margin-top: 1rem;
+.cv-skills {
+  margin-top: 0.4rem;
+}
+
+.cv-skill {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+  font-size: 0.8125rem;
   color: var(--text-muted);
 }
 
-.cv-entries {
-  margin-top: 1.25rem;
+.cv-skill-level {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.cv-main {
+  padding: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+.cv-section + .cv-section {
+  margin-top: 2rem;
+}
+
+.cv-profile {
+  margin-top: 0.9rem;
+  color: var(--text-muted);
 }
 
 .cv-entry {
   display: grid;
-  grid-template-columns: 10rem 1fr;
-  gap: 1.5rem;
-  padding: 0.85rem 0;
-  border-bottom: 1px solid var(--line);
+  grid-template-columns: 7.5rem 1fr;
+  gap: 1.25rem;
+  padding: 0.9rem 0;
 }
 
-.cv-entry:last-child {
-  border-bottom: 0;
+.cv-entry + .cv-entry {
+  border-top: 1px solid var(--line);
 }
 
 .cv-entry-period {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
-  padding-top: 0.15rem;
+  padding-top: 0.2rem;
 }
 
 .cv-entry-title {
@@ -680,39 +765,53 @@ html.no-js .line-mask > span {
 }
 
 .cv-entry-meta {
-  margin-top: 0.15rem;
-  font-size: 0.875rem;
-  color: var(--text-muted);
+  margin-top: 0.1rem;
+  font-size: 0.8125rem;
+  color: var(--accent);
 }
 
 .cv-entry-text {
   margin-top: 0.4rem;
+  font-size: 0.875rem;
   color: var(--text-muted);
-}
-
-.cv-entry-tags,
-.cv-level {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--text-faint);
 }
 
 .cv-entry-tags {
   margin-top: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text-faint);
 }
 
 .cv-footer {
-  margin-top: 3rem;
-  padding-top: 1rem;
+  padding: 1rem clamp(1.75rem, 3vw, 2.5rem) 1.5rem;
   border-top: 1px solid var(--line);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
-@media (max-width: 640px) {
+/* Schalter „Farbe aus": rein schwarzweiß, etwa für Kopien oder strenge Häuser. */
+.cv-sheet.cv-mono {
+  --accent: #1a1a1f;
+}
+
+.cv-sheet.cv-mono .cv-aside {
+  background: color-mix(in srgb, #000 5%, var(--surface));
+}
+
+@media (max-width: 720px) {
+  .cv-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .cv-aside {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
   .cv-entry {
     grid-template-columns: 1fr;
-    gap: 0.35rem;
+    gap: 0.25rem;
   }
 }
 
@@ -846,33 +945,128 @@ html.no-js .line-mask > span {
     width: 100%;
     max-width: none;
     margin: 0;
-    padding: 0;
     border: 0;
     border-radius: 0;
     background: #fff;
-    font-size: 10pt;
+    font-size: 9.5pt;
+    line-height: 1.45;
+  }
+
+  /* Die allgemeine Druckansicht setzt alles auf Schwarzweiß – der Lebenslauf
+     soll seine Farbe behalten, damit das Dokument zum Portfolio passt.
+     Deshalb hier die Akzentfarbe gezielt zurückholen. */
+  .cv-sheet {
+    --accent: #7c3aed;
+    --surface: #ffffff;
+  }
+
+  .cv-sheet.cv-mono {
+    --accent: #1a1a1f;
+  }
+
+  /* Ohne diese Angabe wirft der Browser Hintergrundflächen beim Drucken weg. */
+  .cv-head,
+  .cv-mark,
+  .cv-aside,
+  .cv-aside-title::after,
+  .cv-section-title::after {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .cv-head {
+    padding: 0 0 3mm;
+    border-bottom-width: 2pt;
   }
 
   .cv-name {
-    font-size: 20pt !important;
+    font-size: 19pt !important;
   }
 
-  .cv-section {
-    margin-top: 7mm;
+  .cv-columns {
+    grid-template-columns: 56mm 1fr;
+    /* Die getönte Spalte über mehrere Seiten laufen zu lassen sieht auf Papier
+       unruhig aus – der Inhalt bleibt zusammen, der Rest fließt weiter. */
+    align-items: start;
+  }
+
+  /* Die allgemeinen Druckregeln oben geben jedem <section> einen dicken
+     Abstand nach unten. Im Lebenslauf sind die Abschnitte aber eng gesetzt –
+     sonst wächst das Dokument grundlos über die Seite hinaus. */
+  .cv-sheet section {
+    padding-bottom: 0 !important;
     break-inside: auto;
   }
 
-  .cv-section-title {
+  .cv-aside {
+    padding: 4mm;
+    border-right: 0.5pt solid #ddd;
+  }
+
+  /* Etwas dichter setzen, damit ein normaler Lebenslauf auf eine Seite passt. */
+  .cv-aside-block + .cv-aside-block {
+    margin-top: 4mm;
+  }
+
+  /* Kleine Blöcke dürfen nicht mitten durchgeschnitten werden – die große
+     Seitenspalte dagegen schon, sonst rutscht sie als Ganzes auf Seite zwei. */
+  .cv-aside-block,
+  .cv-skill-group {
+    break-inside: avoid;
+  }
+
+  .cv-skill {
+    padding: 0.4mm 0;
+    font-size: 8pt;
+  }
+
+  .cv-skill-group + .cv-skill-group {
+    margin-top: 3mm;
+  }
+
+  .cv-skill-group-title {
+    margin-top: 1.5mm;
+  }
+
+  .cv-contact-row + .cv-contact-row {
+    margin-top: 2mm;
+  }
+
+  .cv-contact-row dd,
+  .cv-contact-row:first-child dd {
+    font-size: 8pt;
+  }
+
+  .cv-photo {
+    margin-bottom: 4mm;
+  }
+
+  .cv-main {
+    padding: 5mm 0 5mm 6mm;
+  }
+
+  .cv-section + .cv-section {
+    margin-top: 6mm;
+  }
+
+  .cv-section-title,
+  .cv-aside-title {
     break-after: avoid;
   }
 
   .cv-entry {
     break-inside: avoid;
-    padding: 2.5mm 0;
+    padding: 2.2mm 0;
+    grid-template-columns: 24mm 1fr;
+    gap: 5mm;
+  }
+
+  .cv-footer {
+    padding: 3mm 0 0;
   }
 
   .cv-photo {
-    border-color: #ccc;
+    border-radius: 2mm;
   }
 }
 

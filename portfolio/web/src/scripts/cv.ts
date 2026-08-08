@@ -1,12 +1,15 @@
 /**
- * Füllt den Bewerbungs-Lebenslauf mit den Daten aus dem Dashboard.
+ * Bewerbungs-Lebenslauf.
  *
- * Aufbau bewusst klassisch-tabellarisch: links der Zeitraum, rechts die
- * Station. Das ist die Form, die Personalabteilungen in Sekunden erfassen –
- * und die sich sauber auf A4 drucken lässt.
+ * Holt die Daten von `/api/cv` – die Route verlangt einen Login. Kommt 401
+ * zurück, erscheint statt des Dokuments ein Hinweis: Der Lebenslauf enthält
+ * Anschrift und Geburtsjahr und geht niemanden sonst etwas an.
+ *
+ * Aufbau zweispaltig: links Kontakt, Sprachen und Kenntnisse, rechts Profil
+ * und Werdegang. Die Schnellschalter oben wirken nur auf den aktuellen
+ * Ausdruck – die dauerhaften Vorgaben stehen im Dashboard.
  */
 
-import { fetchSettings } from '../lib/api';
 import type { ExpertiseItem, Settings, TimelineEntry } from '../lib/types';
 
 /** Kenntnisstufe in Worte fassen – Balken haben in einer Bewerbung nichts verloren. */
@@ -26,11 +29,11 @@ function escapeHtml(value: string): string {
 }
 
 function entryMarkup(entry: TimelineEntry): string {
-  const meta = [entry.org, entry.location].filter(Boolean).join(', ');
+  const meta = [entry.org, entry.location].filter(Boolean).join(' · ');
 
   return `
     <div class="cv-entry">
-      <div class="cv-entry-period">${escapeHtml(entry.period)}</div>
+      <p class="cv-entry-period">${escapeHtml(entry.period)}</p>
       <div class="cv-entry-body">
         <p class="cv-entry-title">${escapeHtml(entry.title)}</p>
         ${meta ? `<p class="cv-entry-meta">${escapeHtml(meta)}</p>` : ''}
@@ -49,8 +52,6 @@ function fillTimeline(settings: Settings, type: TimelineEntry['type']): void {
   const container = document.querySelector<HTMLElement>(`[data-cv-entries="${type}"]`);
   if (!block || !container) return;
 
-  // Projekte lassen sich im Dashboard abschalten – eine Bewerbung als
-  // Angestellter braucht sie oft nicht.
   if (type === 'project' && !settings.cv.includeProjects) {
     block.remove();
     return;
@@ -76,7 +77,6 @@ function fillExpertise(settings: Settings): void {
     return;
   }
 
-  // Nach Bereich gruppieren – eine lange Aufzählung liest niemand.
   const groups = new Map<string, ExpertiseItem[]>();
   settings.expertise
     .filter((item) => item.name.trim() !== '')
@@ -88,13 +88,19 @@ function fillExpertise(settings: Settings): void {
   container.innerHTML = [...groups.entries()]
     .map(
       ([group, items]) => `
-      <div class="cv-entry">
-        <div class="cv-entry-period">${escapeHtml(group)}</div>
-        <div class="cv-entry-body">
-          <p class="cv-entry-text">
-            ${items.map((item) => `${escapeHtml(item.name)} <span class="cv-level">(${levelLabel(item.level)})</span>`).join(' · ')}
-          </p>
-        </div>
+      <div class="cv-skill-group">
+        <p class="cv-skill-group-title">${escapeHtml(group)}</p>
+        <ul class="cv-skills">
+          ${items
+            .map(
+              (item) => `
+            <li class="cv-skill">
+              <span>${escapeHtml(item.name)}</span>
+              <span class="cv-skill-level">${levelLabel(item.level)}</span>
+            </li>`,
+            )
+            .join('')}
+        </ul>
       </div>`,
     )
     .join('');
@@ -116,9 +122,9 @@ function fillLanguages(settings: Settings): void {
   container.innerHTML = languages
     .map(
       (language) => `
-      <div class="cv-entry">
-        <div class="cv-entry-period">${escapeHtml(language.name)}</div>
-        <div class="cv-entry-body"><p class="cv-entry-text">${escapeHtml(language.level)}</p></div>
+      <div class="cv-contact-row">
+        <dt>${escapeHtml(language.name)}</dt>
+        <dd>${escapeHtml(language.level)}</dd>
       </div>`,
     )
     .join('');
@@ -130,7 +136,6 @@ function fillDetails(settings: Settings): void {
   const container = document.querySelector<HTMLElement>('[data-cv-details]');
   if (!container) return;
 
-  // Kontaktdaten stehen immer drin, dazu die frei gepflegten Angaben.
   const rows: Array<[string, string]> = [
     ['E-Mail', settings.email],
     ...settings.cv.details
@@ -146,7 +151,7 @@ function fillDetails(settings: Settings): void {
     .filter(([, value]) => value.trim() !== '')
     .map(
       ([label, value]) => `
-      <div class="cv-detail">
+      <div class="cv-contact-row">
         <dt>${escapeHtml(label)}</dt>
         <dd>${escapeHtml(value)}</dd>
       </div>`,
@@ -160,21 +165,67 @@ function fillPhoto(settings: Settings): void {
   if (!figure || !image) return;
 
   const portrait = settings.portrait?.image;
-  if (!settings.cv.includePhoto || !portrait) {
+  if (!portrait) {
     figure.remove();
     return;
   }
 
-  image.src = portrait.thumbUrl ?? portrait.url;
+  image.src = portrait.url;
   image.alt = `Porträt von ${settings.name}`;
-  figure.hidden = false;
+  figure.hidden = !settings.cv.includePhoto;
+}
+
+/** Schnellschalter: wirken nur auf diesen einen Export. */
+function wireToggles(sheet: HTMLElement): void {
+  const apply = (name: string, on: boolean): void => {
+    if (name === 'photo') {
+      const photo = document.querySelector<HTMLElement>('[data-cv-photo]');
+      if (photo) photo.hidden = !on;
+    }
+    if (name === 'projects') {
+      const block = document.querySelector<HTMLElement>('[data-cv-block="project"]');
+      if (block) block.hidden = !on;
+    }
+    if (name === 'color') {
+      sheet.classList.toggle('cv-mono', !on);
+    }
+  };
+
+  document.querySelectorAll<HTMLInputElement>('[data-cv-toggle]').forEach((input) => {
+    const name = input.dataset.cvToggle ?? '';
+
+    // Startzustand an das anpassen, was tatsächlich sichtbar ist.
+    if (name === 'photo') {
+      input.checked = document.querySelector<HTMLElement>('[data-cv-photo]')?.hidden === false;
+    }
+    if (name === 'projects') {
+      input.checked = document.querySelector<HTMLElement>('[data-cv-block="project"]')?.hidden === false;
+    }
+
+    input.addEventListener('change', () => apply(name, input.checked));
+  });
 }
 
 export async function initCv(): Promise<void> {
-  if (!document.querySelector('[data-cv]')) return;
+  const root = document.querySelector<HTMLElement>('[data-cv]');
+  if (!root) return;
 
-  const settings = await fetchSettings().catch(() => null);
-  if (!settings) return;
+  const locked = root.querySelector<HTMLElement>('[data-cv-locked]');
+  const content = root.querySelector<HTMLElement>('[data-cv-content]');
+  if (!locked || !content) return;
+
+  const response = await fetch('/api/cv', {
+    headers: { Accept: 'application/json' },
+    credentials: 'same-origin',
+  }).catch(() => null);
+
+  if (!response || !response.ok) {
+    locked.hidden = false;
+    return;
+  }
+
+  const settings = ((await response.json()) as { settings: Settings }).settings;
+  content.hidden = false;
 
   document.querySelectorAll<HTMLElement>('[data-name]').forEach((el) => (el.textContent = settings.name));
   document.querySelectorAll<HTMLElement>('[data-role]').forEach((el) => (el.textContent = settings.role));
@@ -207,6 +258,12 @@ export async function initCv(): Promise<void> {
       footer.textContent = text;
       footer.hidden = false;
     }
+  }
+
+  const sheet = document.querySelector<HTMLElement>('[data-cv-sheet]');
+  if (sheet) {
+    // Akzentfarbe des Dokuments folgt der Website.
+    wireToggles(sheet);
   }
 
   document.querySelectorAll<HTMLButtonElement>('[data-print]').forEach((button) => {

@@ -83,6 +83,14 @@ export default function Layout({ children }: { children: ReactNode }) {
 
         <div className="space-y-3 border-t border-line p-4">
           <a
+            href="/lebenslauf/"
+            target="_blank"
+            rel="noopener"
+            className="flex items-center gap-2 text-xs text-muted transition-colors hover:text-ink"
+          >
+            Lebenslauf öffnen ↗
+          </a>
+          <a
             href="/"
             target="_blank"
             rel="noopener"

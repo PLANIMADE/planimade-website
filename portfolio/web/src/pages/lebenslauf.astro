@@ -2,90 +2,127 @@
 import Base from '../layouts/Base.astro';
 
 /**
- * Bewerbungs-Lebenslauf im klassischen tabellarischen Aufbau.
+ * Bewerbungs-Lebenslauf – nur für den eingeloggten Betreiber.
  *
- * Bewusst eine eigene Seite und nicht die Druckansicht von „Über mich":
- * Eine Bewerbung braucht andere Angaben (Anschrift, Geburtsjahr, Kurzprofil)
- * und ein nüchternes Layout – während die Portfolio-Seite werben darf.
+ * Die Seite selbst ist statisch, ihre Daten kommen aus `/api/cv` und die
+ * Route verlangt einen Login. Ohne Anmeldung bleibt hier nur ein Hinweis:
+ * Anschrift, Telefon und Geburtsjahr sollen niemand anderen etwas angehen.
  *
- * Die Daten kommen aus demselben Dashboard, sind also immer aktuell.
- * Über „Als PDF speichern" erzeugt der Browser daraus ein sauberes A4-Dokument.
+ * Layout: zweispaltig wie eine moderne Bewerbungsmappe – links Kontakt,
+ * Sprachen und Kenntnisse, rechts Profil und Werdegang. Typografie und
+ * Akzentfarbe stammen aus demselben Design-System wie die Website.
  */
 ---
 
-<Base
-  title="Lebenslauf – Dominic Majewski"
-  description="Tabellarischer Lebenslauf von Dominic Majewski."
-  noindex={true}
->
-  <div data-cv class="cv-page">
-    <!-- Bildschirm-Leiste: im Ausdruck ausgeblendet -->
-    <div class="no-print container-page pt-[calc(var(--nav-height)+2.5rem)]">
-      <div
-        class="surface-card flex flex-wrap items-center justify-between gap-4 p-5"
-        data-reveal
-      >
-        <p class="text-sm text-muted">
-          Dieser Lebenslauf zieht seine Angaben aus dem Dashboard – er ist also nie veraltet.
+<Base title="Lebenslauf – Dominic Majewski" description="Persönlicher Lebenslauf." noindex={true} bare={true}>
+  <div data-cv>
+    {/* Sperrbildschirm für alle, die nicht eingeloggt sind */}
+    <section data-cv-locked hidden class="container-page grid min-h-screen place-items-center py-20">
+      <div class="surface-card max-w-md p-10 text-center">
+        <span class="mx-auto grid h-12 w-12 place-items-center rounded-xl border border-line-strong text-base font-bold tracking-tight">
+          DM
+        </span>
+        <h1 class="mt-6 text-lg font-semibold tracking-tight text-ink">Nur für dich</h1>
+        <p class="mt-3 text-sm leading-relaxed text-muted">
+          Dieser Lebenslauf enthält persönliche Angaben und ist deshalb nicht öffentlich.
+          Melde dich im Dashboard an, dann erscheint er hier.
         </p>
-        <button
-          type="button"
-          data-print
-          data-cursor="hover"
-          class="shrink-0 rounded-full bg-ink px-6 py-3 text-sm font-semibold text-bg"
-        >
-          Als PDF speichern
-        </button>
+        <a href="/admin/" class="btn mt-8 inline-block rounded-full bg-ink px-7 py-3.5 text-sm font-semibold text-bg">
+          Zum Dashboard
+        </a>
+        <a href="/" class="link-underline mt-6 block text-xs text-faint">Zurück zur Website</a>
       </div>
-    </div>
+    </section>
 
-    <!-- Das eigentliche Dokument -->
-    <article class="cv-sheet">
-      <header class="cv-header">
-        <div class="cv-header-text">
-          <p class="cv-kicker">Lebenslauf</p>
-          <h1 class="cv-name" data-name>Dominic Majewski</h1>
-          <p class="cv-role" data-role>3D Artist · Motion Designer</p>
+    <div data-cv-content hidden>
+      {/* Werkzeugleiste – erscheint nur am Bildschirm, nie im Ausdruck */}
+      <div class="no-print sticky top-0 z-30 border-b border-line bg-bg/85 backdrop-blur">
+        <div class="container-page flex flex-wrap items-center gap-4 py-4">
+          <a href="/admin/#/einstellungen" class="label-mono transition-colors hover:text-ink">← Dashboard</a>
+
+          <div class="ml-auto flex flex-wrap items-center gap-4">
+            <label class="flex cursor-pointer items-center gap-2 text-xs text-muted">
+              <input type="checkbox" data-cv-toggle="photo" class="accent-[var(--accent)]" checked />
+              Foto
+            </label>
+            <label class="flex cursor-pointer items-center gap-2 text-xs text-muted">
+              <input type="checkbox" data-cv-toggle="projects" class="accent-[var(--accent)]" checked />
+              Projekte
+            </label>
+            <label class="flex cursor-pointer items-center gap-2 text-xs text-muted">
+              <input type="checkbox" data-cv-toggle="color" class="accent-[var(--accent)]" checked />
+              Farbe
+            </label>
+
+            <button
+              type="button"
+              data-print
+              data-cursor="hover"
+              class="rounded-full bg-ink px-6 py-2.5 text-sm font-semibold text-bg"
+            >
+              Als PDF speichern
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Das Dokument -->
+      <article class="cv-sheet" data-cv-sheet>
+        <header class="cv-head">
+          <span class="cv-mark" aria-hidden="true">DM</span>
+          <div class="cv-head-text">
+            <h1 class="cv-name" data-name>Dominic Majewski</h1>
+            <p class="cv-role" data-role>3D Artist · Motion Designer</p>
+          </div>
+        </header>
+
+        <div class="cv-columns">
+          <aside class="cv-aside">
+            <figure class="cv-photo" data-cv-photo hidden>
+              <img data-cv-photo-image alt="" />
+            </figure>
+
+            <section class="cv-aside-block">
+              <h2 class="cv-aside-title">Kontakt</h2>
+              <dl class="cv-contact" data-cv-details></dl>
+            </section>
+
+            <section class="cv-aside-block" data-cv-block="languages" hidden>
+              <h2 class="cv-aside-title">Sprachen</h2>
+              <dl class="cv-contact" data-cv-languages></dl>
+            </section>
+
+            <section class="cv-aside-block" data-cv-block="expertise" hidden>
+              <h2 class="cv-aside-title">Kenntnisse</h2>
+              <div data-cv-expertise></div>
+            </section>
+          </aside>
+
+          <div class="cv-main">
+            <section class="cv-section" data-cv-profile-block hidden>
+              <h2 class="cv-section-title">Kurzprofil</h2>
+              <p class="cv-profile" data-cv-profile></p>
+            </section>
+
+            <section class="cv-section" data-cv-block="work" hidden>
+              <h2 class="cv-section-title">Berufserfahrung</h2>
+              <div data-cv-entries="work"></div>
+            </section>
+
+            <section class="cv-section" data-cv-block="education" hidden>
+              <h2 class="cv-section-title">Ausbildung</h2>
+              <div data-cv-entries="education"></div>
+            </section>
+
+            <section class="cv-section" data-cv-block="project" hidden>
+              <h2 class="cv-section-title">Projekte</h2>
+              <div data-cv-entries="project"></div>
+            </section>
+          </div>
         </div>
 
-        <figure class="cv-photo" data-cv-photo hidden>
-          <img data-cv-photo-image alt="" />
-        </figure>
-      </header>
-
-      <dl class="cv-details" data-cv-details></dl>
-
-      <section class="cv-section" data-cv-profile-block hidden>
-        <h2 class="cv-section-title">Kurzprofil</h2>
-        <p class="cv-profile" data-cv-profile></p>
-      </section>
-
-      <section class="cv-section" data-cv-block="work" hidden>
-        <h2 class="cv-section-title">Berufserfahrung</h2>
-        <div class="cv-entries" data-cv-entries="work"></div>
-      </section>
-
-      <section class="cv-section" data-cv-block="education" hidden>
-        <h2 class="cv-section-title">Ausbildung</h2>
-        <div class="cv-entries" data-cv-entries="education"></div>
-      </section>
-
-      <section class="cv-section" data-cv-block="project" hidden>
-        <h2 class="cv-section-title">Projekte</h2>
-        <div class="cv-entries" data-cv-entries="project"></div>
-      </section>
-
-      <section class="cv-section" data-cv-block="expertise" hidden>
-        <h2 class="cv-section-title">Kenntnisse</h2>
-        <div class="cv-entries" data-cv-expertise></div>
-      </section>
-
-      <section class="cv-section" data-cv-block="languages" hidden>
-        <h2 class="cv-section-title">Sprachen</h2>
-        <div class="cv-entries" data-cv-languages></div>
-      </section>
-
-      <p class="cv-footer" data-cv-footer hidden></p>
-    </article>
+        <p class="cv-footer" data-cv-footer hidden></p>
+      </article>
+    </div>
   </div>
 </Base>
