@@ -1,0 +1,462 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   Design-System — „Cinematic Dark"
+   Ein einziger Ort für Farben, Typo und Bewegung. Alle Komponenten greifen
+   nur auf diese Tokens zu; ein Wert hier ändert die ganze Seite.
+   ========================================================================== */
+
+:root {
+  /* Flächen */
+  --bg: #05050a;
+  --bg-elevated: #0b0b12;
+  --surface: #101018;
+  --surface-hover: #16161f;
+  --line: rgb(255 255 255 / 8%);
+  --line-strong: rgb(255 255 255 / 16%);
+
+  /* Text */
+  --text: #ededf2;
+  --text-muted: #8a8a99;
+  --text-faint: #55555f;
+
+  /* Akzente */
+  --accent: #a855f7;
+  --accent-soft: #c084fc;
+  --accent-deep: #7c3aed;
+  --signal: #38bdf8;
+  --warn: #f97316;
+
+  /* Statusfarben (Verfügbarkeit, Formular-Rückmeldungen) */
+  --state-ok: #34d399;
+  --state-warn: #fbbf24;
+  --state-bad: #fb7185;
+
+  /* Bewegung */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+  --dur-fast: 220ms;
+  --dur-base: 420ms;
+  --dur-slow: 900ms;
+
+  /* Layout */
+  --gutter: clamp(1.25rem, 4vw, 5rem);
+  --nav-height: 4.5rem;
+
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  --bg: #f2f1ee;
+  --bg-elevated: #fbfaf8;
+  --surface: #ffffff;
+  --surface-hover: #f5f4f1;
+  --line: rgb(10 10 15 / 10%);
+  --line-strong: rgb(10 10 15 / 22%);
+
+  --text: #0a0a0f;
+  --text-muted: #5b5b66;
+  --text-faint: #9a9aa5;
+
+  --accent: #7c3aed;
+  --accent-soft: #9333ea;
+  --accent-deep: #5b21b6;
+  --signal: #0284c7;
+
+  --state-ok: #047857;
+  --state-warn: #b45309;
+  --state-bad: #be123c;
+
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-elevated: var(--bg-elevated);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-deep: var(--accent-deep);
+  --color-signal: var(--signal);
+
+  --font-display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', monospace;
+
+  --ease-expo: var(--ease-out-expo);
+}
+
+/* ========================================================================== */
+
+@layer base {
+  * {
+    min-width: 0;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    /* Lenis übernimmt das Scrollen – dann kein doppeltes Smoothing. */
+    &.lenis {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    font-synthesis-weight: none;
+    overflow-x: clip;
+    overscroll-behavior-y: none;
+    transition:
+      background-color var(--dur-base) var(--ease-out-expo),
+      color var(--dur-base) var(--ease-out-expo);
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Eigener Cursor ersetzt den System-Cursor nur auf Geräten mit Maus. */
+  @media (pointer: fine) {
+    html[data-cursor='custom'],
+    html[data-cursor='custom'] a,
+    html[data-cursor='custom'] button,
+    html[data-cursor='custom'] [role='button'] {
+      cursor: none;
+    }
+  }
+
+  /* Scrollbar dezent an das Farbschema anpassen */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+    border-radius: 99px;
+    border: 3px solid var(--bg);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+  }
+}
+
+/* ==========================================================================
+   Wiederkehrende Bausteine
+   ========================================================================== */
+
+@utility container-page {
+  width: 100%;
+  margin-inline: auto;
+  max-width: 96rem;
+  padding-inline: var(--gutter);
+}
+
+/* Überschriften im Portfolio-Maßstab: skalieren stufenlos mit dem Viewport. */
+@utility display-xl {
+  font-size: clamp(2.75rem, 11vw, 12rem);
+  line-height: 0.86;
+  letter-spacing: -0.045em;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+@utility display-lg {
+  font-size: clamp(2.25rem, 7vw, 6rem);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+@utility display-md {
+  font-size: clamp(1.75rem, 4vw, 3.25rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+@utility label-mono {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+@utility text-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--line-strong);
+  transition: all var(--dur-slow) var(--ease-out-expo);
+}
+
+@utility surface-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+}
+
+/* Filmkorn – liegt als fixierte Ebene über der Seite. */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.045;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+[data-theme='light'] .grain {
+  opacity: 0.03;
+  mix-blend-mode: multiply;
+}
+
+/* Weiches Leuchten hinter Sektionen */
+.glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* Einblend-Animation: GSAP setzt data-revealed, CSS macht den Rest sichtbar,
+   damit Inhalte auch ohne JavaScript lesbar bleiben. */
+[data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 1.75rem, 0);
+  transition:
+    opacity var(--dur-slow) var(--ease-out-expo),
+    transform var(--dur-slow) var(--ease-out-expo);
+}
+
+[data-reveal].is-visible,
+html.no-js [data-reveal] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Zeilenweises Einblenden von Überschriften */
+.line-mask {
+  display: block;
+  overflow: hidden;
+}
+.line-mask > span {
+  display: block;
+  transform: translate3d(0, 110%, 0);
+  transition: transform 1s var(--ease-out-expo);
+}
+.line-mask.is-visible > span,
+html.no-js .line-mask > span {
+  transform: none;
+}
+
+/* Endlos-Laufband */
+@keyframes marquee-x {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-x var(--marquee-duration, 32s) linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+/* Magnetische Buttons + Link-Unterstreichung */
+.link-underline {
+  position: relative;
+  display: inline-block;
+}
+.link-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--dur-base) var(--ease-out-expo);
+}
+.link-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Eigener Cursor */
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 70;
+  pointer-events: none;
+  will-change: transform;
+  mix-blend-mode: difference;
+}
+.cursor-dot {
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #fff;
+}
+.cursor-ring {
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: 50%;
+  transition:
+    width var(--dur-fast) var(--ease-out-expo),
+    height var(--dur-fast) var(--ease-out-expo),
+    background-color var(--dur-fast) var(--ease-out-expo),
+    border-color var(--dur-fast) var(--ease-out-expo);
+}
+.cursor-ring[data-state='hover'] {
+  width: 68px;
+  height: 68px;
+  margin: -34px 0 0 -34px;
+  background: rgb(255 255 255 / 12%);
+}
+.cursor-ring[data-state='view'] {
+  width: 92px;
+  height: 92px;
+  margin: -46px 0 0 -46px;
+  background: rgb(255 255 255 / 90%);
+  border-color: transparent;
+}
+.cursor-label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 71;
+  pointer-events: none;
+  translate: -50% -50%;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #000;
+  opacity: 0;
+  transition: opacity var(--dur-fast) linear;
+}
+.cursor-label.is-visible {
+  opacity: 1;
+}
+
+/* Formatierter Fließtext der Case-Studies */
+.prose-case {
+  font-size: clamp(1rem, 1.1vw, 1.125rem);
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+.prose-case h2 {
+  margin: 3rem 0 1rem;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.prose-case h3 {
+  margin: 2rem 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.prose-case p + p {
+  margin-top: 1.25rem;
+}
+.prose-case ul,
+.prose-case ol {
+  margin: 1.25rem 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+.prose-case li + li {
+  margin-top: 0.5rem;
+}
+.prose-case a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-case strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.prose-case blockquote {
+  margin: 2rem 0;
+  padding-left: 1.5rem;
+  border-left: 2px solid var(--accent);
+  font-size: 1.25rem;
+  color: var(--text);
+}
+.prose-case code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--surface);
+  padding: 0.125em 0.375em;
+  border-radius: 0.25rem;
+}
+
+/* ==========================================================================
+   Barrierefreiheit: Wer weniger Bewegung möchte, bekommt weniger Bewegung.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+  .line-mask > span {
+    transform: none;
+  }
+  .cursor-dot,
+  .cursor-ring,
+  .cursor-label {
+    display: none;
+  }
+}

@@ -1,0 +1,100 @@
+---
+import '@fontsource-variable/archivo';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/global.css';
+
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import CommandPalette from '../components/CommandPalette.astro';
+import Cursor from '../components/Cursor.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  noindex?: boolean;
+  /** Kopfzeile über dem Inhalt ausblenden (z. B. für die 404-Seite). */
+  bare?: boolean;
+}
+
+const {
+  title,
+  description = 'Portfolio von Dominic Majewski – 3D-Renderings in Blender, Echtzeit-Szenen in Unreal Engine 5, cinematischer Schnitt und handgeschriebene Websites.',
+  image = '/og-default.jpg',
+  noindex = false,
+  bare = false,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://dominic-majewski.de');
+const ogImage = new URL(image, Astro.site ?? 'https://dominic-majewski.de');
+---
+
+<!doctype html>
+<html lang="de" data-theme="dark" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical.href} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Dominic Majewski" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage.href} />
+    <meta property="og:locale" content="de_DE" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <meta name="theme-color" content="#05050a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f2f1ee" media="(prefers-color-scheme: light)" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap.xml" />
+
+    {/* Läuft vor dem ersten Paint – verhindert das Aufblitzen des falschen Themes. */}
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        root.classList.remove('no-js');
+        try {
+          var stored = localStorage.getItem('dm-theme');
+          var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+          root.dataset.theme = stored || (prefersLight ? 'light' : 'dark');
+          if (localStorage.getItem('dm-cursor') !== 'off' && window.matchMedia('(pointer: fine)').matches) {
+            root.dataset.cursor = 'custom';
+          }
+        } catch (error) {
+          root.dataset.theme = 'dark';
+        }
+      })();
+    </script>
+  </head>
+
+  <body class="relative">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-white"
+    >
+      Zum Inhalt springen
+    </a>
+
+    <div class="grain" aria-hidden="true"></div>
+    <Cursor />
+
+    {!bare && <Nav />}
+
+    <main id="main">
+      <slot />
+    </main>
+
+    {!bare && <Footer />}
+    <CommandPalette />
+
+    <script>
+      import '../scripts/main';
+    </script>
+  </body>
+</html>

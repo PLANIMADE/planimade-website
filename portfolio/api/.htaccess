@@ -1,0 +1,18 @@
+# Alle API-Anfragen laufen über den Front-Controller.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /api/
+
+    # Existierende Dateien/Ordner direkt ausliefern (z. B. nichts – aber sicher ist sicher)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# Kein Verzeichnis-Listing
+Options -Indexes
+
+# Quell- und Konfigurationsdateien niemals ausliefern
+<FilesMatch "\.(env\.php|example\.php|sqlite|sqlite-wal|sqlite-shm|log|md)$">
+    Require all denied
+</FilesMatch>

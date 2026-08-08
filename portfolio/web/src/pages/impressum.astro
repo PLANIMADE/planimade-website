@@ -1,0 +1,76 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="Impressum – Dominic Majewski"
+  description="Impressum und Anbieterkennzeichnung nach § 5 DDG."
+  noindex={true}
+>
+  <section class="container-page max-w-3xl pt-[calc(var(--nav-height)+5rem)] pb-28">
+    <h1 class="display-md text-ink">Impressum</h1>
+
+    <div class="prose-case mt-12">
+      <h2>Angaben gemäß § 5 DDG</h2>
+      <p>
+        <span data-legal-company>Dominic Majewski</span><br />
+        <span data-legal-street></span><br />
+        <span data-legal-city></span>
+      </p>
+
+      <h2>Kontakt</h2>
+      <p>
+        E-Mail: <span data-legal-email></span><br />
+        Telefon: <span data-legal-phone></span>
+      </p>
+
+      <h2>Umsatzsteuer-Identifikationsnummer</h2>
+      <p><span data-legal-vat></span></p>
+
+      <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
+      <p>
+        <span data-legal-company>Dominic Majewski</span><br />
+        <span data-legal-street></span><br />
+        <span data-legal-city></span>
+      </p>
+
+      <h2>Streitschlichtung</h2>
+      <p>
+        Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung bereit:
+        <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener noreferrer"
+          >ec.europa.eu/consumers/odr</a
+        >. Ich bin nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer
+        Verbraucherschlichtungsstelle teilzunehmen.
+      </p>
+
+      <h2>Haftung für Inhalte</h2>
+      <p>
+        Als Diensteanbieter bin ich gemäß § 7 Abs. 1 DDG für eigene Inhalte auf diesen Seiten nach den
+        allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 DDG bin ich als Diensteanbieter jedoch
+        nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach
+        Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
+      </p>
+
+      <h2>Haftung für Links</h2>
+      <p>
+        Dieses Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte ich keinen
+        Einfluss habe. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter
+        verantwortlich. Zum Zeitpunkt der Verlinkung waren keine rechtswidrigen Inhalte erkennbar.
+      </p>
+
+      <h2>Urheberrecht</h2>
+      <p>
+        Die auf dieser Website gezeigten Arbeiten, Texte und Medien unterliegen dem deutschen
+        Urheberrecht. Eine Vervielfältigung oder Verwendung – auch in Teilen – bedarf der vorherigen
+        schriftlichen Zustimmung.
+      </p>
+    </div>
+
+    <p class="mt-16 rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 text-xs leading-relaxed text-amber-200/80">
+      <strong>Hinweis für dich:</strong> Die Felder oben (Anschrift, Telefon, USt-IdNr.) werden aus dem
+      Dashboard unter „Einstellungen → Rechtliches" gefüllt. Bitte vor dem Livegang vollständig
+      ausfüllen – eine unvollständige Anbieterkennzeichnung ist in Deutschland abmahnfähig. Diese Vorlage
+      ersetzt keine Rechtsberatung.
+    </p>
+  </section>
+</Base>

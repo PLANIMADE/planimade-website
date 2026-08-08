@@ -1,0 +1,113 @@
+---
+import Base from '../layouts/Base.astro';
+
+const budgets = ['Noch offen', 'unter 2.500 €', '2.500 – 7.500 €', '7.500 – 20.000 €', 'über 20.000 €'];
+const fieldClass =
+  'w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-sm text-ink transition-colors duration-300 placeholder:text-faint focus:border-accent focus:outline-none aria-[invalid=true]:border-rose-500/70';
+---
+
+<Base
+  title="Kontakt – Dominic Majewski"
+  description="Projektanfrage an Dominic Majewski: 3D, Motion Design, Videoschnitt oder Webentwicklung. Antwort in der Regel innerhalb von 24 Stunden."
+>
+  <section class="container-page pt-[calc(var(--nav-height)+5rem)] pb-28">
+    <div class="grid gap-16 lg:grid-cols-[1fr_1.1fr] lg:gap-24">
+      <div>
+        <p class="label-mono flex items-center gap-3" data-reveal>
+          <span class="inline-block h-px w-8 bg-accent"></span>
+          Kontakt
+        </p>
+
+        <h1 class="display-lg mt-6 text-ink line-mask">
+          <span>Erzähl mir<br />von deinem Projekt.</span>
+        </h1>
+
+        <p class="mt-8 max-w-md text-base leading-relaxed text-muted" data-reveal data-reveal-delay="100">
+          Je konkreter, desto besser – aber eine grobe Idee reicht völlig für den Anfang. Ich melde
+          mich in der Regel innerhalb von 24 Stunden mit einer ehrlichen Einschätzung.
+        </p>
+
+        <div class="mt-12 space-y-8" data-reveal data-reveal-delay="160">
+          <div>
+            <p class="label-mono">Direkt schreiben</p>
+            <a href="#" data-mail-link data-cursor="hover" class="link-underline mt-2 block font-mono text-sm text-ink">…</a>
+          </div>
+          <div>
+            <p class="label-mono">Status</p>
+            <div
+              data-availability
+              class="mt-3 inline-flex items-center gap-2.5 rounded-full border border-line px-4 py-2 opacity-0 transition-opacity duration-700"
+            >
+              <span data-availability-dot class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+              <span data-availability-label class="text-xs font-medium text-emerald-300"></span>
+              <span class="h-3 w-px bg-line-strong"></span>
+              <span data-availability-detail class="text-xs text-muted"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form data-contact-form class="surface-card p-8 sm:p-10" novalidate data-reveal data-reveal-delay="80">
+        <div class="grid gap-6 sm:grid-cols-2">
+          <div class="sm:col-span-1">
+            <label for="name" class="label-mono mb-2 block">Name *</label>
+            <input id="name" name="name" type="text" required autocomplete="name" class={fieldClass} placeholder="Vor- und Nachname" />
+            <p data-error-for="name" class="mt-1.5 text-xs text-rose-400"></p>
+          </div>
+
+          <div class="sm:col-span-1">
+            <label for="email" class="label-mono mb-2 block">E-Mail *</label>
+            <input id="email" name="email" type="email" required autocomplete="email" class={fieldClass} placeholder="du@firma.de" />
+            <p data-error-for="email" class="mt-1.5 text-xs text-rose-400"></p>
+          </div>
+
+          <div class="sm:col-span-1">
+            <label for="subject" class="label-mono mb-2 block">Worum geht es?</label>
+            <input id="subject" name="subject" type="text" class={fieldClass} placeholder="z. B. Produktfilm" />
+          </div>
+
+          <div class="sm:col-span-1">
+            <label for="budget" class="label-mono mb-2 block">Budgetrahmen</label>
+            <select id="budget" name="budget" class={fieldClass}>
+              {budgets.map((budget) => <option value={budget}>{budget}</option>)}
+            </select>
+          </div>
+
+          <div class="sm:col-span-2">
+            <label for="message" class="label-mono mb-2 block">Nachricht *</label>
+            <textarea
+              id="message"
+              name="message"
+              rows="6"
+              required
+              class={fieldClass}
+              placeholder="Was möchtest du erreichen? Gibt es einen Zeitrahmen?"></textarea>
+            <p data-error-for="message" class="mt-1.5 text-xs text-rose-400"></p>
+          </div>
+        </div>
+
+        {/* Spam-Falle: für Menschen unsichtbar, für Bots verlockend. */}
+        <div class="absolute h-0 w-0 overflow-hidden" aria-hidden="true">
+          <label for="website">Website (bitte frei lassen)</label>
+          <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <div class="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="submit"
+            data-cursor="hover"
+            class="rounded-full bg-accent px-8 py-4 text-sm font-semibold text-white transition-colors duration-300 hover:bg-accent-deep disabled:opacity-60"
+          >
+            Anfrage senden
+          </button>
+          <p data-form-feedback class="text-sm" role="status" aria-live="polite"></p>
+        </div>
+
+        <p class="mt-6 text-xs leading-relaxed text-faint">
+          Mit dem Absenden werden deine Angaben zur Bearbeitung der Anfrage gespeichert. Details in der
+          <a href="/datenschutz/" class="underline underline-offset-2 hover:text-ink">Datenschutzerklärung</a>.
+        </p>
+      </form>
+    </div>
+  </section>
+</Base>

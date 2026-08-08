@@ -1,0 +1,35 @@
+---
+import Base from '../../layouts/Base.astro';
+
+/**
+ * Nur für den lokalen Dev-Server.
+ *
+ * In Produktion beantwortet PHP `/work/<slug>` (siehe .htaccess im Root und
+ * api/src/Pages.php) – deshalb erzeugt der Build hier bewusst keine Dateien.
+ * Ohne diese Route wäre eine Case-Study lokal nicht aufrufbar.
+ */
+export async function getStaticPaths() {
+  if (!import.meta.env.DEV) return [];
+
+  try {
+    const response = await fetch('http://127.0.0.1:8787/api/projects');
+    const data = (await response.json()) as { projects: Array<{ slug: string }> };
+
+    return data.projects.map((project) => ({ params: { slug: project.slug } }));
+  } catch {
+    // PHP-Server läuft nicht – dann eben keine Detailseiten im Dev-Modus.
+    return [];
+  }
+}
+---
+
+<Base
+  title="Case Study – Dominic Majewski"
+  description="Projektdetails aus dem Portfolio von Dominic Majewski."
+>
+  <div data-project-root>
+    <div class="container-page grid min-h-[60vh] place-items-center py-40">
+      <p class="label-mono animate-pulse">Projekt wird geladen …</p>
+    </div>
+  </div>
+</Base>

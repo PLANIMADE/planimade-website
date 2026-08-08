@@ -1,0 +1,3 @@
+# Datenbank und Logs sind niemals über das Web erreichbar.
+Require all denied
+Options -Indexes

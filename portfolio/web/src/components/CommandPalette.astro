@@ -1,0 +1,47 @@
+---
+/**
+ * Schnellnavigation per ⌘K / Strg+K.
+ * Durchsucht Seiten, Projekte (live aus der API) und bietet direkte Aktionen
+ * wie Theme wechseln oder E-Mail kopieren.
+ */
+---
+
+<div
+  data-command-root
+  class="pointer-events-none fixed inset-0 z-[80] flex items-start justify-center px-4 pt-[12vh] opacity-0 transition-opacity duration-300"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Schnellsuche"
+  hidden
+>
+  <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-command-backdrop></div>
+
+  <div
+    data-command-panel
+    class="relative w-full max-w-xl origin-top translate-y-2 scale-[0.98] overflow-hidden rounded-2xl border border-line-strong bg-elevated shadow-2xl transition-transform duration-300"
+  >
+    <div class="flex items-center gap-3 border-b border-line px-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="h-4 w-4 shrink-0 text-faint">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="m20 20-3.5-3.5" stroke-linecap="round"></path>
+      </svg>
+      <input
+        type="text"
+        data-command-input
+        placeholder="Projekt, Seite oder Aktion suchen…"
+        class="w-full bg-transparent py-4 text-sm text-ink placeholder:text-faint focus:outline-none"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <kbd class="hidden rounded border border-line px-1.5 py-0.5 font-mono text-[0.625rem] text-faint sm:block">ESC</kbd>
+    </div>
+
+    <ul data-command-list class="max-h-[50vh] overflow-y-auto p-2" role="listbox"></ul>
+
+    <div class="flex items-center gap-4 border-t border-line px-5 py-3 font-mono text-[0.625rem] text-faint">
+      <span>↑↓ Navigieren</span>
+      <span>↵ Öffnen</span>
+      <span class="ml-auto">Dominic Majewski</span>
+    </div>
+  </div>
+</div>

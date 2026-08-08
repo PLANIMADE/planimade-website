@@ -1,0 +1,22 @@
+---
+import Base from '../../layouts/Base.astro';
+
+/**
+ * Hülle für alle Case-Studies.
+ *
+ * Live wird diese Datei von PHP für `/work/<slug>` ausgeliefert – inklusive
+ * eingesetzter Meta-Tags und Projektdaten (siehe api/src/Pages.php).
+ * Im Dev-Server lädt das Skript die Daten anhand des Slugs nach.
+ */
+---
+
+<Base
+  title="Case Study – Dominic Majewski"
+  description="Projektdetails aus dem Portfolio von Dominic Majewski."
+>
+  <div data-project-root>
+    <div class="container-page grid min-h-[60vh] place-items-center py-40">
+      <p class="label-mono animate-pulse">Projekt wird geladen …</p>
+    </div>
+  </div>
+</Base>

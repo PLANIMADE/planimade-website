@@ -1,0 +1,134 @@
+---
+const links = [
+  { href: '/work/', label: 'Arbeiten' },
+  { href: '/about/', label: 'Über mich' },
+  { href: '/contact/', label: 'Kontakt' },
+];
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+---
+
+<header
+  id="site-nav"
+  class="fixed inset-x-0 top-0 z-50 transition-[background-color,backdrop-filter,border-color] duration-500"
+  data-nav
+>
+  <div
+    class="container-page flex items-center justify-between gap-6"
+    style="height: var(--nav-height)"
+  >
+    <a href="/" class="group flex items-center gap-3" aria-label="Zur Startseite" data-cursor="hover">
+      <span
+        class="grid h-9 w-9 place-items-center rounded-lg border border-line-strong font-display text-sm font-black tracking-tighter transition-colors duration-300 group-hover:border-accent group-hover:text-accent"
+      >
+        DM
+      </span>
+      <span class="hidden text-sm font-semibold tracking-tight sm:block">Dominic Majewski</span>
+    </a>
+
+    <nav class="hidden items-center gap-8 md:flex" aria-label="Hauptnavigation">
+      {
+        links.map((link) => (
+          <a
+            href={link.href}
+            data-cursor="hover"
+            class:list={[
+              'link-underline text-sm font-medium transition-colors duration-300',
+              isActive(link.href) ? 'text-ink' : 'text-muted hover:text-ink',
+            ]}
+          >
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        data-command-open
+        data-cursor="hover"
+        class="hidden items-center gap-2 rounded-full border border-line px-3 py-1.5 text-[0.6875rem] text-muted transition-colors duration-300 hover:border-line-strong hover:text-ink lg:flex"
+        aria-label="Schnellsuche öffnen"
+      >
+        <span class="font-mono tracking-widest">SUCHE</span>
+        <kbd class="rounded border border-line px-1.5 py-0.5 font-mono text-[0.625rem]">⌘K</kbd>
+      </button>
+
+      <button
+        type="button"
+        data-sound-toggle
+        data-cursor="hover"
+        class="grid h-9 w-9 place-items-center rounded-full border border-line text-muted transition-colors duration-300 hover:border-line-strong hover:text-ink"
+        aria-label="Interface-Sounds umschalten"
+        aria-pressed="false"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="h-4 w-4">
+          <path d="M11 5 6 9H3v6h3l5 4V5Z" stroke-linejoin="round"></path>
+          <path data-sound-wave class="opacity-30" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" stroke-linecap="round"></path>
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        data-theme-toggle
+        data-cursor="hover"
+        class="grid h-9 w-9 place-items-center rounded-full border border-line text-muted transition-colors duration-300 hover:border-line-strong hover:text-ink"
+        aria-label="Zwischen hellem und dunklem Design wechseln"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="h-4 w-4">
+          <g data-theme-sun>
+            <circle cx="12" cy="12" r="4"></circle>
+            <path
+              d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6l1.4 1.4m10 10 1.4 1.4m0-12.8-1.4 1.4m-10 10-1.4 1.4"
+              stroke-linecap="round"></path>
+          </g>
+          <path data-theme-moon d="M20 14.5A8.2 8.2 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z" stroke-linejoin="round"></path>
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        data-menu-toggle
+        class="grid h-9 w-9 place-items-center rounded-full border border-line text-ink md:hidden"
+        aria-label="Menü öffnen"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+      >
+        <span class="relative block h-3 w-4">
+          <span
+            data-menu-bar
+            class="absolute inset-x-0 top-0 h-px bg-current transition-transform duration-300"></span>
+          <span
+            data-menu-bar
+            class="absolute inset-x-0 bottom-0 h-px bg-current transition-transform duration-300"></span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <div class="h-px w-full origin-left scale-x-0 bg-accent" data-scroll-progress aria-hidden="true"></div>
+</header>
+
+<!-- Vollflächiges Menü für Touch-Geräte -->
+<div
+  id="mobile-menu"
+  data-menu-panel
+  class="pointer-events-none fixed inset-0 z-40 flex flex-col justify-center bg-bg/95 px-8 opacity-0 backdrop-blur-xl transition-opacity duration-500 md:hidden"
+>
+  <nav class="flex flex-col gap-2" aria-label="Mobile Navigation">
+    {
+      links.map((link, index) => (
+        <a
+          href={link.href}
+          class="display-md py-2 text-ink transition-colors duration-300 hover:text-accent"
+          style={`transition-delay:${index * 60}ms`}
+        >
+          {link.label}
+        </a>
+      ))
+    }
+  </nav>
+  <p class="label-mono mt-10">Dominic Majewski · Portfolio</p>
+</div>

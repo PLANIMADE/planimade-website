@@ -1,0 +1,36 @@
+---
+interface Props {
+  label: string;
+  title: string;
+  lead?: string;
+  /** Zusatz-Link rechts neben der Überschrift */
+  action?: { href: string; label: string };
+  class?: string;
+}
+
+const { label, title, lead, action, class: className = '' } = Astro.props;
+---
+
+<div class:list={['flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between', className]}>
+  <div class="max-w-2xl">
+    <p class="label-mono flex items-center gap-3" data-reveal>
+      <span class="inline-block h-px w-8 bg-accent"></span>
+      {label}
+    </p>
+    <h2 class="display-lg mt-6 text-ink line-mask"><span>{title}</span></h2>
+    {lead && <p class="mt-6 text-base leading-relaxed text-muted" data-reveal data-reveal-delay="120">{lead}</p>}
+  </div>
+
+  {
+    action && (
+      <a
+        href={action.href}
+        data-cursor="hover"
+        data-reveal
+        class="link-underline shrink-0 font-mono text-xs uppercase tracking-[0.2em] text-ink"
+      >
+        {action.label} ↗
+      </a>
+    )
+  }
+</div>

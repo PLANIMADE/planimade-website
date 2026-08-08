@@ -1,0 +1,61 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="relative mt-32 overflow-hidden border-t border-line">
+  <div class="glow -top-40 left-1/4 h-96 w-96" style="background: var(--accent)"></div>
+
+  <div class="container-page relative py-20">
+    <div class="grid gap-12 md:grid-cols-[1.5fr_1fr_1fr]">
+      <div>
+        <a
+          href="/contact/"
+          data-cursor="hover"
+          class="display-md inline-block text-ink transition-colors duration-500 hover:text-accent"
+        >
+          Projekt<br />besprechen
+          <span class="ml-1 inline-block transition-transform duration-500 group-hover:translate-x-2">↗</span>
+        </a>
+        <p class="mt-6 max-w-sm text-sm leading-relaxed text-muted">
+          Erzähl mir kurz, woran du arbeitest. Ich melde mich in der Regel innerhalb von 24 Stunden –
+          auch wenn ich gerade keine Kapazität habe.
+        </p>
+        <a
+          href="#"
+          data-mail-link
+          data-cursor="hover"
+          class="link-underline mt-6 inline-block font-mono text-sm text-ink"
+          aria-label="E-Mail schreiben">…</a
+        >
+      </div>
+
+      <div>
+        <p class="label-mono mb-5">Navigation</p>
+        <ul class="space-y-2.5 text-sm">
+          <li><a href="/" class="text-muted transition-colors hover:text-ink">Start</a></li>
+          <li><a href="/work/" class="text-muted transition-colors hover:text-ink">Arbeiten</a></li>
+          <li><a href="/about/" class="text-muted transition-colors hover:text-ink">Über mich</a></li>
+          <li><a href="/contact/" class="text-muted transition-colors hover:text-ink">Kontakt</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <p class="label-mono mb-5">Woanders</p>
+        <ul class="space-y-2.5 text-sm" data-socials>
+          <li class="text-faint">…</li>
+        </ul>
+      </div>
+    </div>
+
+    <div
+      class="mt-16 flex flex-col gap-4 border-t border-line pt-8 text-xs text-faint sm:flex-row sm:items-center sm:justify-between"
+    >
+      <p>© {year} Dominic Majewski. Alle Rechte vorbehalten.</p>
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <a href="/impressum/" class="transition-colors hover:text-ink">Impressum</a>
+        <a href="/datenschutz/" class="transition-colors hover:text-ink">Datenschutz</a>
+        <span class="font-mono">Handgebaut mit Astro &amp; PHP</span>
+      </div>
+    </div>
+  </div>
+</footer>

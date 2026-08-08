@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Seite nicht gefunden – Dominic Majewski" description="Diese Seite existiert nicht." noindex={true}>
+  <section class="container-page grid min-h-[80svh] place-items-center py-32 text-center">
+    <div>
+      <p class="label-mono">Fehler 404</p>
+      <h1 class="display-xl mt-6 text-outline hover:text-ink">404</h1>
+      <p class="mx-auto mt-8 max-w-md text-base text-muted">
+        Diese Seite existiert nicht (mehr). Vielleicht hilft ein Blick in die Arbeiten – oder du
+        drückst <kbd class="rounded border border-line px-1.5 py-0.5 font-mono text-xs">⌘K</kbd> und
+        suchst direkt.
+      </p>
+
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
+        <a href="/" data-cursor="hover" class="rounded-full bg-ink px-7 py-3.5 text-sm font-semibold text-bg">
+          Zur Startseite
+        </a>
+        <a href="/work/" data-cursor="hover" class="link-underline text-sm text-muted">Alle Arbeiten</a>
+      </div>
+    </div>
+  </section>
+</Base>

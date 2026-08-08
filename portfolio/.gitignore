@@ -1,0 +1,21 @@
+# Abhängigkeiten
+node_modules/
+
+# Build-Ausgaben
+web/dist/
+web/.astro/
+admin/dist/
+deploy/
+
+# Lokale Konfiguration & Daten (niemals ins Repo!)
+api/.env.php
+api/storage/*
+!api/storage/.htaccess
+uploads/
+
+# Betriebssystem / Editor
+.DS_Store
+Thumbs.db
+*.local
+.vscode/
+.idea/

@@ -1,0 +1,13 @@
+---
+/**
+ * Eigener Mauszeiger: kleiner Punkt (folgt exakt) plus Ring (folgt verzögert).
+ * Wird nur auf Zeigegeräten mit feiner Auflösung eingeblendet und respektiert
+ * `prefers-reduced-motion`.
+ */
+---
+
+<div data-cursor-root aria-hidden="true" class="pointer-events-none">
+  <div class="cursor-dot" data-cursor-dot></div>
+  <div class="cursor-ring" data-cursor-ring data-state="default"></div>
+  <span class="cursor-label" data-cursor-label></span>
+</div>

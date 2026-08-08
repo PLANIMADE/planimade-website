@@ -1,0 +1,19 @@
+{
+  "name": "dominic-majewski-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Portfolio von Dominic Majewski – Astro-Frontend, PHP-API und eigenes Dashboard.",
+  "scripts": {
+    "setup": "npm --prefix web install && npm --prefix admin install",
+    "dev:api": "php -S 127.0.0.1:8787 -t . api/router.dev.php",
+    "dev:web": "npm --prefix web run dev",
+    "dev:admin": "npm --prefix admin run dev",
+    "build": "npm run build:web && npm run build:admin && node scripts/assemble.mjs",
+    "build:web": "npm --prefix web run build",
+    "build:admin": "npm --prefix admin run build",
+    "assemble": "node scripts/assemble.mjs",
+    "check": "npm --prefix web run check && npm --prefix admin run typecheck",
+    "install:local": "php api/scripts/setup.php"
+  }
+}
