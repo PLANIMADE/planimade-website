@@ -6,7 +6,7 @@ interface Props {
   label: string;
   hint?: string;
   value: MediaItem | null;
-  kind?: 'image' | 'video' | 'model';
+  kind?: 'image' | 'video' | 'model' | 'document';
   onChange: (item: MediaItem | null) => void;
 }
 
@@ -29,7 +29,7 @@ export default function MediaField({ label, hint, value, kind = 'image', onChang
               <img src={value.thumbUrl ?? value.url} alt="" className="h-full w-full object-cover" />
             ) : (
               <span className="grid h-full w-full place-items-center font-mono text-[0.625rem] text-faint">
-                {value.kind === 'video' ? '▶ VIDEO' : '◈ 3D'}
+                {value.kind === 'video' ? '▶ VIDEO' : value.kind === 'document' ? '▤ PDF' : '◈ 3D'}
               </span>
             )
           ) : (

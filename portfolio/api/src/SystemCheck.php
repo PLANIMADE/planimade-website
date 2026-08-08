@@ -25,6 +25,7 @@ final class SystemCheck
                 $this->extension('gd', 'Bildbearbeitung (GD)', 'Ohne GD gibt es keine verkleinerten Bilder und keine Vorschaubilder.'),
                 $this->webp(),
                 $this->fonts(),
+                $this->pdfPreview(),
                 $this->writable($this->config['uploads_path'], 'Upload-Ordner beschreibbar'),
                 $this->writable($this->config['storage_path'], 'Datenbank-Ordner beschreibbar'),
                 $this->uploadLimit(),
@@ -107,6 +108,18 @@ final class SystemCheck
             $ok ? 'ok' : 'warn',
             $ok ? 'vorhanden' : 'fehlen',
             $ok ? null : 'Ohne die Dateien in api/assets/ entstehen keine eigenen Vorschaubilder pro Projekt.'
+        );
+    }
+
+    private function pdfPreview(): array
+    {
+        $ok = class_exists('\Imagick');
+
+        return $this->result(
+            'PDF-Seitenvorschau',
+            $ok ? 'ok' : 'warn',
+            $ok ? 'möglich' : 'nicht möglich',
+            $ok ? null : 'Hochgeladene PDFs bekommen kein Vorschaubild der ersten Seite, sondern eine schlichte Kachel. Alles andere funktioniert normal.'
         );
     }
 

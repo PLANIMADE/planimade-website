@@ -302,6 +302,43 @@
   }
 }
 
+/* ==========================================================================
+   Papieroptik
+   Für Print- und Grafikarbeiten: Das Motiv wird vollständig gezeigt statt
+   formatfüllend beschnitten – wie ein Blatt, das auf einer Fläche liegt.
+   ========================================================================== */
+.paper-stage {
+  display: grid;
+  place-items: center;
+  padding: clamp(1.25rem, 4%, 3.5rem);
+  /* Sehr dezent in der Projektfarbe eingefärbt, damit die Fläche nicht tot wirkt. */
+  background:
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--card-accent, var(--accent)) 14%, transparent), transparent 70%),
+    var(--bg-elevated);
+}
+
+.paper-sheet {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 12%),
+    0 18px 48px -16px rgb(0 0 0 / 45%);
+  transition: transform 1s var(--ease-out-expo);
+}
+
+[data-theme='light'] .paper-sheet {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 8%),
+    0 16px 40px -18px rgb(0 0 0 / 28%);
+}
+
+.group:hover .paper-sheet {
+  transform: translateY(-4px);
+}
+
 /* Filmkorn – liegt als fixierte Ebene über der Seite. */
 .grain {
   position: fixed;

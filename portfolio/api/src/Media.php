@@ -74,7 +74,11 @@ final class Media
         @chmod($absolute, 0644);
 
         [$width, $height] = $this->dimensions($absolute, $kind);
-        $thumb = $kind === 'image' ? $this->makeThumbnail($absolute, $targetDir, $filename, $mime) : null;
+        $thumb = match ($kind) {
+            'image' => $this->makeThumbnail($absolute, $targetDir, $filename, $mime),
+            'document' => $this->makePdfPreview($absolute, $targetDir, $filename),
+            default => null,
+        };
         $variants = $kind === 'image' ? $this->makeVariants($absolute, $targetDir, $filename, $mime, $relativeDir) : [];
 
         $id = $this->db->insert('media', [
@@ -187,6 +191,7 @@ final class Media
             'mov' => 'video/quicktime',
             'glb' => 'model/gltf-binary',
             'gltf' => 'model/gltf+json',
+            'pdf' => 'application/pdf',
             default => 'application/octet-stream',
         };
     }
@@ -204,8 +209,46 @@ final class Media
         if (in_array($extension, ['glb', 'gltf'], true)) {
             return 'model';
         }
+        if ($extension === 'pdf' || in_array($mime, $this->config['allowed_document_types'] ?? [], true)) {
+            return 'document';
+        }
 
         return null;
+    }
+
+    /**
+     * Erzeugt aus der ersten PDF-Seite ein Vorschaubild.
+     *
+     * Braucht die Imagick-Erweiterung samt Ghostscript. Beides ist auf
+     * Shared Hosting nicht garantiert – fehlt es, bekommt das Dokument in der
+     * Mediathek eine schlichte Kachel statt einer Seitenvorschau. Der
+     * Systemcheck zeigt an, ob es auf diesem Server geht.
+     */
+    private function makePdfPreview(string $absolute, string $targetDir, string $filename): ?string
+    {
+        if (!class_exists('\Imagick')) {
+            return null;
+        }
+
+        try {
+            $pdf = new \Imagick();
+            $pdf->setResolution(150, 150);
+            $pdf->readImage($absolute . '[0]');
+            $pdf->setImageBackgroundColor('white');
+            $pdf = $pdf->flattenImages();
+            $pdf->setImageFormat('jpeg');
+            $pdf->setImageCompressionQuality(86);
+            $pdf->thumbnailImage(1200, 0);
+
+            $name = pathinfo($filename, PATHINFO_FILENAME) . '-seite1.jpg';
+            $pdf->writeImage($targetDir . '/' . $name);
+            $pdf->clear();
+
+            return $name;
+        } catch (\Throwable) {
+            // Kaputtes oder passwortgeschütztes PDF: einfach ohne Vorschau ablegen.
+            return null;
+        }
     }
 
     private function extensionFor(string $filename, string $mime): string

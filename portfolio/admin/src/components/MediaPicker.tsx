@@ -3,7 +3,7 @@ import { api, formatBytes, type MediaItem } from '../lib/api';
 import { useToast } from '../lib/toast';
 
 interface Props {
-  kind?: 'image' | 'video' | 'model';
+  kind?: 'image' | 'video' | 'model' | 'document';
   onSelect: (item: MediaItem) => void;
   onClose: () => void;
   title?: string;
@@ -85,7 +85,9 @@ export default function MediaPicker({ kind, onSelect, onClose, title = 'Medium a
                 ? 'video/*'
                 : kind === 'model'
                   ? '.glb,.gltf'
-                  : 'image/*,video/*,.glb,.gltf'
+                  : kind === 'document'
+                    ? '.pdf'
+                    : 'image/*,video/*,.glb,.gltf,.pdf'
           }
           onChange={(event) => void upload(event.target.files)}
         />
@@ -123,7 +125,7 @@ export default function MediaPicker({ kind, onSelect, onClose, title = 'Medium a
                         />
                       ) : (
                         <span className="grid h-full w-full place-items-center font-mono text-[0.625rem] text-faint">
-                          {item.kind === 'video' ? '▶ VIDEO' : '◈ 3D'}
+                          {item.kind === 'video' ? '▶ VIDEO' : item.kind === 'document' ? '▤ PDF' : '◈ 3D'}
                         </span>
                       )}
                     </span>

@@ -7,6 +7,7 @@ const FILTERS = [
   { value: 'image', label: 'Bilder' },
   { value: 'video', label: 'Videos' },
   { value: 'model', label: '3D-Modelle' },
+  { value: 'document', label: 'PDFs' },
 ] as const;
 
 export default function MediaLibrary() {
@@ -107,7 +108,7 @@ export default function MediaLibrary() {
         type="file"
         multiple
         hidden
-        accept="image/*,video/*,.glb,.gltf"
+        accept="image/*,video/*,.glb,.gltf,.pdf"
         onChange={(event) => void upload(event.target.files)}
       />
 
@@ -155,7 +156,7 @@ export default function MediaLibrary() {
                       />
                     ) : (
                       <span className="grid h-full w-full place-items-center font-mono text-xs text-faint">
-                        {item.kind === 'video' ? '▶ VIDEO' : '◈ 3D'}
+                        {item.kind === 'video' ? '▶ VIDEO' : item.kind === 'document' ? '▤ PDF' : '◈ 3D'}
                       </span>
                     )}
                   </span>

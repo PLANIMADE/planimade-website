@@ -41,6 +41,8 @@ $defaults = [
     'allowed_image_types' => ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif', 'image/svg+xml'],
     'allowed_video_types' => ['video/mp4', 'video/webm', 'video/quicktime'],
     'allowed_model_types' => ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream'],
+    // Dokumente für Print-Arbeiten (Broschüren, Booklets) zum Ansehen und Herunterladen.
+    'allowed_document_types' => ['application/pdf'],
     'thumb_width' => 640,
     // Breiten, in denen Bilder zusätzlich abgelegt werden (für srcset).
     // Größere Stufen als das Original werden übersprungen.

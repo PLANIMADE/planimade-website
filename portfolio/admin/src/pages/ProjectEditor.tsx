@@ -22,6 +22,9 @@ type Draft = {
   tags: string;
   links: Array<{ label: string; url: string }>;
   metrics: Array<{ label: string; value: string }>;
+  palette: Array<{ name: string; hex: string }>;
+  display: 'cover' | 'contain';
+  cardFormat: 'landscape' | 'square' | 'portrait';
   cover: MediaItem | null;
   preview: MediaItem | null;
   model: MediaItem | null;
@@ -47,6 +50,9 @@ const EMPTY: Draft = {
   tags: '',
   links: [],
   metrics: [],
+  palette: [],
+  display: 'cover',
+  cardFormat: 'landscape',
   cover: null,
   preview: null,
   model: null,
@@ -75,6 +81,9 @@ function toDraft(project: Project): Draft {
     tags: project.tags.join(', '),
     links: project.links,
     metrics: project.metrics,
+    palette: project.palette,
+    display: project.display,
+    cardFormat: project.cardFormat,
     cover: project.cover,
     preview: project.preview,
     model: project.model,
@@ -159,6 +168,9 @@ export default function ProjectEditor() {
       tags: splitList(draft.tags),
       links: draft.links.filter((link) => link.label !== '' && link.url !== ''),
       metrics: draft.metrics.filter((metric) => metric.label !== ''),
+      palette: draft.palette.filter((color) => color.hex.trim() !== ''),
+      display: draft.display,
+      cardFormat: draft.cardFormat,
       coverId: draft.cover?.id ?? null,
       previewId: draft.preview?.id ?? null,
       modelId: draft.model?.id ?? null,
@@ -440,6 +452,15 @@ export default function ProjectEditor() {
           />
 
           <RepeatableSection
+            title="Farbpalette"
+            hint="Für Branding- und Grafikarbeiten. Erscheint als anklickbare Farbfelder auf der Projektseite – etwa „Signalrot“ und „#E15028“."
+            rows={draft.palette}
+            fields={['name', 'hex'] as const}
+            placeholders={['Bezeichnung', '#E15028'] as const}
+            onChange={(rows) => set('palette', rows as Draft['palette'])}
+          />
+
+          <RepeatableSection
             title="Links"
             hint="Weiterführende Links, z. B. zur Live-Seite oder zum ArtStation-Beitrag."
             rows={draft.links}
@@ -565,6 +586,59 @@ export default function ProjectEditor() {
                 onChange={(event) => set('tags', event.target.value)}
                 placeholder="Produktfilm, 3D"
               />
+            </div>
+          </section>
+
+          <section className="panel space-y-4 p-5">
+            <h2 className="text-sm font-semibold">Darstellung</h2>
+            <p className="text-[0.6875rem] leading-relaxed text-faint">
+              Wichtig für Print- und Grafikarbeiten: Ein Plakat im Hochformat soll nicht auf
+              Breitbild beschnitten werden.
+            </p>
+
+            <div className="space-y-2">
+              {(
+                [
+                  ['cover', 'Formatfüllend', 'Bild füllt die Fläche, Ränder werden beschnitten'],
+                  ['contain', 'Vollständig zeigen', 'Ganzes Motiv auf ruhiger Fläche, wie ein Blatt'],
+                ] as const
+              ).map(([value, label, hint]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => set('display', value)}
+                  className={`w-full rounded-lg border p-3 text-left transition-colors ${
+                    draft.display === value ? 'border-accent bg-accent/10' : 'border-line hover:border-line-strong'
+                  }`}
+                >
+                  <span className="block text-xs">{label}</span>
+                  <span className="mt-0.5 block text-[0.625rem] leading-relaxed text-faint">{hint}</span>
+                </button>
+              ))}
+            </div>
+
+            <div>
+              <label className="label">Kachelformat im Raster</label>
+              <div className="grid grid-cols-3 gap-2">
+                {(
+                  [
+                    ['landscape', 'Quer'],
+                    ['square', 'Quadrat'],
+                    ['portrait', 'Hoch'],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => set('cardFormat', value)}
+                    className={`rounded-lg border px-2 py-2 text-xs transition-colors ${
+                      draft.cardFormat === value ? 'border-accent bg-accent/10 text-ink' : 'border-line text-muted'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </section>
 

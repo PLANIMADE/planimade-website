@@ -286,6 +286,21 @@ final class Database
                 ALTER TABLE projects ADD COLUMN deleted_at TEXT;
                 CREATE INDEX idx_projects_deleted ON projects(deleted_at);
             SQL,
+
+            /*
+             * Print- und Grafikarbeiten brauchen andere Bildformate als
+             * Bewegtbild: Ein Plakat im Hochformat darf nicht auf 16:9
+             * beschnitten werden.
+             *
+             *  display     – 'cover' (formatfüllend) oder 'contain' (ganz zeigen)
+             *  card_format – Seitenverhältnis der Kachel im Raster
+             *  palette     – Farbfelder für Branding-Projekte
+             */
+            '013_projects_presentation' => <<<'SQL'
+                ALTER TABLE projects ADD COLUMN display TEXT NOT NULL DEFAULT 'cover';
+                ALTER TABLE projects ADD COLUMN card_format TEXT NOT NULL DEFAULT 'landscape';
+                ALTER TABLE projects ADD COLUMN palette TEXT NOT NULL DEFAULT '[]';
+            SQL,
         ];
     }
 }

@@ -8,7 +8,7 @@ export interface MediaItem {
   srcset: string | null;
   filename: string;
   mime: string;
-  kind: 'image' | 'video' | 'model';
+  kind: 'image' | 'video' | 'model' | 'document';
   size: number;
   width: number | null;
   height: number | null;
@@ -47,7 +47,12 @@ export interface Project {
   tags: string[];
   links: ProjectLink[];
   metrics: Metric[];
+  /** Farbfelder für Branding-Arbeiten */
+  palette: Array<{ name: string; hex: string }>;
   accent: string;
+  /** 'cover' = formatfüllend beschnitten, 'contain' = vollständig gezeigt */
+  display: 'cover' | 'contain';
+  cardFormat: 'landscape' | 'square' | 'portrait';
   status: 'draft' | 'published';
   featured: boolean;
   position: number;

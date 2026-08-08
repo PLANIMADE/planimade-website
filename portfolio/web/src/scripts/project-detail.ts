@@ -58,6 +58,11 @@ function galleryMarkup(project: Project): string {
             const sizes = item.layout === 'half' ? '(max-width: 768px) 100vw, 45vw' : '(max-width: 768px) 100vw, 90vw';
             const alt = escapeHtml(item.media.alt || item.caption || project.title);
 
+            // PDFs bekommen eine eigene Kachel mit Download statt Lightbox.
+            if (item.media.kind === 'document') {
+              return `<div class="${span}" data-reveal>${documentMarkup(item.media, item.caption)}</div>`;
+            }
+
             const media =
               item.media.kind === 'video'
                 ? `<video src="${escapeHtml(item.media.url)}" controls playsinline preload="metadata" class="h-full w-full object-cover"></video>`
@@ -86,6 +91,75 @@ function galleryMarkup(project: Project): string {
           .join('')}
       </div>
     </section>`;
+}
+
+/**
+ * Farbfelder für Branding-Arbeiten.
+ * Ein Klick kopiert den Hex-Wert – praktisch, wenn jemand die Palette
+ * übernehmen oder prüfen will.
+ */
+function paletteMarkup(project: Project): string {
+  const colors = project.palette.filter((entry) => /^#?[0-9a-f]{3,8}$/i.test(entry.hex.trim()));
+  if (colors.length === 0) return '';
+
+  return `
+    <section class="container-page mt-24" data-reveal>
+      <p class="label-mono mb-5">Farbpalette — zum Kopieren anklicken</p>
+      <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        ${colors
+          .map((color) => {
+            const hex = color.hex.trim().startsWith('#') ? color.hex.trim() : `#${color.hex.trim()}`;
+
+            return `
+            <li>
+              <button
+                type="button"
+                data-copy-color="${escapeHtml(hex)}"
+                data-cursor="hover"
+                class="group w-full overflow-hidden rounded-xl border border-line text-left transition-colors hover:border-line-strong"
+              >
+                <span class="block h-24 w-full" style="background: ${escapeHtml(hex)}"></span>
+                <span class="block px-3 py-2.5">
+                  <span class="block truncate text-sm text-ink">${escapeHtml(color.name || hex)}</span>
+                  <span class="block font-mono text-[0.625rem] uppercase text-faint">${escapeHtml(hex)}</span>
+                </span>
+              </button>
+            </li>`;
+          })
+          .join('')}
+      </ul>
+    </section>`;
+}
+
+/** Kachel für ein PDF: Seitenvorschau, falls vorhanden – sonst schlichtes Feld. */
+function documentMarkup(media: Project['gallery'][number]['media'], caption: string): string {
+  const preview = media.thumbUrl;
+
+  return `
+    <a
+      href="${escapeHtml(media.url)}"
+      target="_blank"
+      rel="noopener"
+      data-cursor="hover"
+      class="group block overflow-hidden rounded-2xl border border-line bg-elevated transition-colors hover:border-line-strong"
+    >
+      ${
+        preview
+          ? `<span class="paper-stage block aspect-[3/4] w-full">
+               <img src="${escapeHtml(preview)}" alt="${escapeHtml(media.alt || caption)}" loading="lazy" class="paper-sheet">
+             </span>`
+          : `<span class="grid aspect-[3/4] w-full place-items-center bg-surface">
+               <span class="font-mono text-xs tracking-[0.2em] text-faint">PDF</span>
+             </span>`
+      }
+      <span class="flex items-center justify-between gap-3 px-4 py-3">
+        <span class="min-w-0">
+          <span class="block truncate text-sm text-ink">${escapeHtml(caption || media.filename)}</span>
+          <span class="block font-mono text-[0.625rem] text-faint">PDF · ${Math.round(media.size / 1024 / 1024 * 10) / 10} MB</span>
+        </span>
+        <span class="shrink-0 text-ink transition-transform duration-500 group-hover:translate-y-0.5">↓</span>
+      </span>
+    </a>`;
 }
 
 /**
@@ -243,18 +317,27 @@ export async function initProjectDetail(): Promise<void> {
   root.style.setProperty('--card-accent', project.accent);
 
   const cover = project.cover;
+  const contain = project.display === 'contain';
+
+  // Hochformate dürfen nicht auf 16:9 beschnitten werden – bei „vollständig
+  // zeigen" bekommt das Bild deshalb ein höheres Feld und liegt darin wie ein
+  // Blatt auf einer Fläche.
+  const heroAspect = contain ? 'aspect-[4/3] sm:aspect-[16/10]' : 'aspect-[16/9]';
+
   // `view-transition-name` verbindet dieses Bild mit der angeklickten Kachel
   // auf der Übersicht – der Browser lässt es beim Seitenwechsel hineinwachsen.
-  const heroMedia = cover
+  const heroImage = cover
     ? `<img
          src="${escapeHtml(cover.url)}"
          ${cover.srcset ? `srcset="${escapeHtml(cover.srcset)}" sizes="90vw"` : ''}
          alt="${escapeHtml(cover.alt || project.title)}"
-         class="h-full w-full object-cover"
+         class="${contain ? 'paper-sheet' : 'h-full w-full object-cover'}"
          style="view-transition-name: project-hero"
          fetchpriority="high" decoding="async"
        >`
     : '<div class="h-full w-full bg-surface"></div>';
+
+  const heroMedia = contain && cover ? `<div class="paper-stage h-full w-full">${heroImage}</div>` : heroImage;
 
   root.innerHTML = `
     <article>
@@ -269,7 +352,7 @@ export async function initProjectDetail(): Promise<void> {
         </div>
 
         <div class="container-page relative mt-14">
-          <div class="aspect-[16/9] overflow-hidden rounded-3xl border border-line bg-elevated">${heroMedia}</div>
+          <div class="${heroAspect} overflow-hidden rounded-3xl border border-line bg-elevated">${heroMedia}</div>
         </div>
       </header>
 
@@ -309,6 +392,7 @@ export async function initProjectDetail(): Promise<void> {
           : ''
       }
 
+      ${paletteMarkup(project)}
       ${galleryMarkup(project)}
 
       <div data-next-slot></div>
@@ -364,6 +448,24 @@ export async function initProjectDetail(): Promise<void> {
       });
     }
   }
+
+  // Farbwert in die Zwischenablage – mit kurzer Rückmeldung im Knopf selbst.
+  root.querySelectorAll<HTMLButtonElement>('[data-copy-color]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const hex = button.dataset.copyColor ?? '';
+      const label = button.querySelector<HTMLElement>('span > span:last-child');
+      if (!label) return;
+
+      const original = label.textContent;
+      void navigator.clipboard?.writeText(hex).then(
+        () => {
+          label.textContent = 'Kopiert';
+          window.setTimeout(() => (label.textContent = original), 1400);
+        },
+        () => undefined,
+      );
+    });
+  });
 
   initLightbox(root);
 

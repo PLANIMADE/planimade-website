@@ -73,6 +73,10 @@ Veröffentlichen: **[DEPLOY-ALL-INKL.md](DEPLOY-ALL-INKL.md)**
 - **Case-Studies** mit Markdown-Text, Kennzahlen, Bildstrecke mit Lightbox,
   Vorher/Nachher-Vergleich, drehbarem 3D-Modell (GLB) und einem
   „Nächstes Projekt"-Block samt Pfeiltasten-Navigation
+- **Auch für Print und Grafik**: Pro Projekt wählbar, ob das Titelbild
+  formatfüllend beschnitten oder vollständig gezeigt wird (Papieroptik mit
+  Schattenwurf), dazu Kachelformat quer/quadratisch/hochkant, PDF-Anhänge zum
+  Herunterladen und anklickbare Farbpaletten für Branding-Arbeiten
 - **Responsive Bildgrößen**: Jedes Bild liegt in 400/800/1600 px als WebP vor,
   ausgeliefert per `srcset` – auf dem Handy lädt niemand ein 4K-Rendering
 - **Command-Palette** (⌘K / Strg+K) über Seiten, Projekte und Aktionen

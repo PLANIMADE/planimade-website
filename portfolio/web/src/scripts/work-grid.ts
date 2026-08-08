@@ -17,29 +17,57 @@ function escapeHtml(value: string): string {
   return div.innerHTML;
 }
 
+/** Seitenverhältnis der Kachel – Plakate sollen als Plakat erscheinen. */
+const CARD_ASPECT: Record<string, string> = {
+  landscape: 'aspect-[4/3]',
+  square: 'aspect-square',
+  portrait: 'aspect-[3/4]',
+};
+
 function cardMarkup(project: Project, index: number, size: 'large' | 'normal'): string {
   const cover = project.cover;
   const preview = project.preview;
-  const aspect = size === 'large' ? 'aspect-[16/10]' : 'aspect-[4/3]';
+  const contain = project.display === 'contain';
+
+  // Großformatige Kacheln bleiben quer, außer das Projekt wünscht ausdrücklich
+  // ein anderes Format – sonst reißt ein Hochformat die Startseite auseinander.
+  const aspect =
+    size === 'large' && project.cardFormat === 'landscape'
+      ? 'aspect-[16/10]'
+      : (CARD_ASPECT[project.cardFormat] ?? CARD_ASPECT.landscape);
+
   const meta = [project.category, project.year].filter(Boolean).join(' · ');
 
   // `sizes` sagt dem Browser, wie breit das Bild tatsächlich dargestellt wird –
   // ohne diese Angabe lädt er immer die größte Variante.
   const sizes = size === 'large' ? '(max-width: 768px) 100vw, 66vw' : '(max-width: 768px) 100vw, 45vw';
+  const source = cover
+    ? `src="${escapeHtml(cover.thumbUrl ?? cover.url)}" ${cover.srcset ? `srcset="${escapeHtml(cover.srcset)}" sizes="${sizes}"` : ''}`
+    : '';
 
-  const visual = cover
-    ? `<img
-         data-cover
-         src="${escapeHtml(cover.thumbUrl ?? cover.url)}"
-         ${cover.srcset ? `srcset="${escapeHtml(cover.srcset)}" sizes="${sizes}"` : ''}
-         alt="${escapeHtml(cover.alt || project.title)}"
-         loading="${index < 2 ? 'eager' : 'lazy'}"
-         decoding="async"
-         class="h-full w-full object-cover transition-transform duration-[1.2s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
-       >`
-    : `<div class="grid h-full w-full place-items-center bg-surface">
+  const visual = !cover
+    ? `<div class="grid h-full w-full place-items-center bg-surface">
          <span class="font-mono text-xs tracking-[0.3em] text-faint">OHNE VORSCHAUBILD</span>
-       </div>`;
+       </div>`
+    : contain
+      ? `<div class="paper-stage h-full w-full">
+           <img
+             data-cover
+             ${source}
+             alt="${escapeHtml(cover.alt || project.title)}"
+             loading="${index < 2 ? 'eager' : 'lazy'}"
+             decoding="async"
+             class="paper-sheet"
+           >
+         </div>`
+      : `<img
+           data-cover
+           ${source}
+           alt="${escapeHtml(cover.alt || project.title)}"
+           loading="${index < 2 ? 'eager' : 'lazy'}"
+           decoding="async"
+           class="h-full w-full object-cover transition-transform duration-[1.2s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+         >`;
 
   const video = preview
     ? `<video
@@ -71,7 +99,13 @@ function cardMarkup(project: Project, index: number, size: 'large' | 'normal'): 
         <div class="relative ${aspect} overflow-hidden rounded-2xl border border-line bg-elevated">
           ${visual}
           ${video}
-          <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent opacity-70 transition-opacity duration-500 group-hover:opacity-90"></div>
+          ${
+            // Bei „vollständig zeigen" würde eine dunkle Überblendung das
+            // Papier grau waschen – dort steht der Titel darunter.
+            contain
+              ? ''
+              : `<div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent opacity-70 transition-opacity duration-500 group-hover:opacity-90"></div>`
+          }
           <div
             class="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
             style="box-shadow: inset 0 0 0 1px var(--card-accent), 0 24px 60px -24px var(--card-accent)"
@@ -79,21 +113,37 @@ function cardMarkup(project: Project, index: number, size: 'large' | 'normal'): 
 
           ${
             project.featured
-              ? '<span class="absolute left-4 top-4 rounded-full border border-white/25 bg-black/40 px-2.5 py-1 font-mono text-[0.5625rem] uppercase tracking-[0.2em] text-white/90 backdrop-blur">Highlight</span>'
+              ? `<span class="absolute left-4 top-4 rounded-full px-2.5 py-1 font-mono text-[0.5625rem] uppercase tracking-[0.2em] backdrop-blur ${
+                  contain
+                    ? 'border border-line-strong bg-bg/70 text-ink'
+                    : 'border border-white/25 bg-black/40 text-white/90'
+                }">Highlight</span>`
               : ''
           }
 
-          <div class="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-            <h3 class="${size === 'large' ? 'text-2xl sm:text-4xl' : 'text-xl sm:text-2xl'} font-bold tracking-tight text-white">
-              ${escapeHtml(project.title)}
-            </h3>
-            ${project.subtitle ? `<p class="mt-1.5 max-w-lg text-sm text-white/65">${escapeHtml(project.subtitle)}</p>` : ''}
-          </div>
+          ${
+            contain
+              ? ''
+              : `<div class="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+                   <h3 class="${size === 'large' ? 'text-2xl sm:text-4xl' : 'text-xl sm:text-2xl'} font-bold tracking-tight text-white">
+                     ${escapeHtml(project.title)}
+                   </h3>
+                   ${project.subtitle ? `<p class="mt-1.5 max-w-lg text-sm text-white/65">${escapeHtml(project.subtitle)}</p>` : ''}
+                 </div>`
+          }
         </div>
 
         <div class="mt-4 flex items-start justify-between gap-4">
-          <div>
-            <p class="label-mono">${escapeHtml(meta)}</p>
+          <div class="min-w-0">
+            ${
+              contain
+                ? `<h3 class="${size === 'large' ? 'text-2xl sm:text-3xl' : 'text-xl'} font-bold tracking-tight text-ink">
+                     ${escapeHtml(project.title)}
+                   </h3>
+                   ${project.subtitle ? `<p class="mt-1 text-sm text-muted">${escapeHtml(project.subtitle)}</p>` : ''}
+                   <p class="label-mono mt-3">${escapeHtml(meta)}</p>`
+                : `<p class="label-mono">${escapeHtml(meta)}</p>`
+            }
             <p class="mt-2 flex flex-wrap gap-1.5">
               ${project.tools
                 .slice(0, 4)

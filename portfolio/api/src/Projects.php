@@ -12,12 +12,12 @@ namespace App;
  */
 final class Projects
 {
-    private const JSON_FIELDS = ['tools', 'tags', 'links', 'metrics'];
+    private const JSON_FIELDS = ['tools', 'tags', 'links', 'metrics', 'palette'];
 
     private const WRITABLE = [
         'title', 'subtitle', 'summary', 'body', 'category', 'client', 'role',
         'year', 'accent', 'status', 'featured', 'cover_id', 'preview_id',
-        'model_id', 'before_id', 'after_id',
+        'model_id', 'before_id', 'after_id', 'display', 'card_format',
     ];
 
     public function __construct(private Database $db, private array $config) {}
@@ -229,6 +229,7 @@ final class Projects
             'body' => 'body', 'category' => 'category', 'client' => 'client',
             'role' => 'role', 'year' => 'year', 'accent' => 'accent',
             'status' => 'status', 'featured' => 'featured',
+            'display' => 'display', 'cardFormat' => 'card_format',
             'coverId' => 'cover_id', 'previewId' => 'preview_id',
             'modelId' => 'model_id', 'beforeId' => 'before_id', 'afterId' => 'after_id',
         ];
@@ -244,6 +245,8 @@ final class Projects
                 'year' => $value === null || $value === '' ? null : (int) $value,
                 'featured' => (int) (bool) $value,
                 'status' => in_array($value, ['draft', 'published'], true) ? $value : 'draft',
+                'display' => in_array($value, ['cover', 'contain'], true) ? $value : 'cover',
+                'card_format' => in_array($value, ['landscape', 'square', 'portrait'], true) ? $value : 'landscape',
                 'cover_id', 'preview_id', 'model_id', 'before_id', 'after_id' => $value === null || $value === '' ? null : (int) $value,
                 default => is_string($value) ? trim($value) : (string) $value,
             };
@@ -351,7 +354,11 @@ final class Projects
             'tags' => $this->decodeJson($row['tags']),
             'links' => $this->decodeJson($row['links']),
             'metrics' => $this->decodeJson($row['metrics']),
+            'palette' => $this->decodeJson($row['palette'] ?? '[]'),
             'accent' => $row['accent'],
+            // Wie das Titelbild gezeigt wird: formatfüllend oder vollständig.
+            'display' => $row['display'] ?? 'cover',
+            'cardFormat' => $row['card_format'] ?? 'landscape',
             'status' => $row['status'],
             'featured' => (bool) $row['featured'],
             'position' => (int) $row['position'],
