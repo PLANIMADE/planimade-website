@@ -841,6 +841,12 @@ html.no-js .line-mask > span {
   color: var(--text-faint);
 }
 
+/* Die Domain einer E-Mail bleibt zusammen: Sonst bricht der Browser an
+   einem Bindestrich darin um, statt an der einzig sinnvollen Stelle – dem @. */
+.cv-mail-domain {
+  white-space: nowrap;
+}
+
 .cv-contact-row dd,
 .cv-facts-row dd {
   margin: 0.15rem 0 0;
@@ -852,14 +858,6 @@ html.no-js .line-mask > span {
      „…@gma / il.com" auf dem Blatt. */
   overflow-wrap: break-word;
   hyphens: none;
-}
-
-/* E-Mail-Adressen sind der längste Einzelwert. `--fit` setzt das Skript:
-   Es verkleinert die Zeile so weit, bis sie ohne Umbruch in die Spalte
-   passt – höchstens auf drei Viertel. */
-.cv-contact-row:first-child dd {
-  font-size: calc(0.75rem * var(--fit, 1));
-  line-height: 1.4;
 }
 
 .cv-main {
@@ -1434,18 +1432,6 @@ html.no-js .line-mask > span {
   .cv-contact-row dd,
   .cv-facts-row dd {
     font-size: 7.5pt;
-  }
-
-  /* Auf Papier ist die Spaltenbreite fest – dann darf auch die Größe fest
-     sein. Die Anpassung per `--fit` gilt nur am Bildschirm: Sie müsste beim
-     Drucken neu rechnen, aber `beforeprint` feuert vor dem Umbruch auf das
-     Seitenformat und würde die Fensterbreite messen. */
-  .cv-contact-row:first-child dd {
-    font-size: 7pt;
-    /* Das Skript setzt für den Bildschirm `nowrap` als Inline-Angabe. Eine
-       sehr lange Adresse soll auf dem schmaleren Blatt trotzdem umbrechen
-       dürfen, statt über den Rand zu laufen. */
-    white-space: normal !important;
   }
 
   .cv-main {

@@ -111,13 +111,27 @@ function fillExpertise(settings: Settings): void {
 }
 
 /**
- * Erlaubt einen Zeilenumbruch hinter „@" und „/", indem dort ein unsichtbares
- * Trennzeichen steht. Ohne das bricht der Browser eine lange E-Mail mitten im
- * Wort um – „…@gma / il.com" sieht auf Papier falsch aus. Punkte bleiben
- * bewusst außen vor, sonst landet „com" allein in der nächsten Zeile.
+ * Bereitet einen Wert für die schmale Spalte auf.
+ *
+ * Bei E-Mail-Adressen ist die einzige sinnvolle Umbruchstelle vor dem „@":
+ * Passt die Adresse nicht in eine Zeile, steht die Domain dann vollständig
+ * in der zweiten. Damit der Browser diese Stelle auch nimmt, wird die Domain
+ * unteilbar gesetzt – sonst bricht er lieber an einem Bindestrich darin um,
+ * weil das die erste Zeile besser füllt („…design@sehr-" / „lange.de").
+ *
+ * Der lokale Teil bleibt als Notausgang teilbar: Ist er allein schon breiter
+ * als die Spalte, ist ein Umbruch darin besser als ein Überlauf.
  */
-function softBreaks(value: string): string {
-  return value.replace(/([@/])/g, '$1​');
+function valueMarkup(value: string): string {
+  const at = value.lastIndexOf('@');
+  if (at === -1) {
+    return escapeHtml(value).replace(/\//g, '/​');
+  }
+
+  const lokal = escapeHtml(value.slice(0, at));
+  const domain = escapeHtml(value.slice(at));
+
+  return `${lokal}​<span class="cv-mail-domain">${domain}</span>`;
 }
 
 /** Zeilen für die schmale Spalte – Beschriftung oben, Wert darunter. */
@@ -128,7 +142,7 @@ function rowsMarkup(rows: Array<[string, string]>, rowClass: string): string {
       ([label, value]) => `
       <div class="${rowClass}">
         <dt>${escapeHtml(label)}</dt>
-        <dd>${escapeHtml(softBreaks(value))}</dd>
+        <dd>${valueMarkup(value)}</dd>
       </div>`,
     )
     .join('');
@@ -171,30 +185,6 @@ function fillFacts(settings: Settings): void {
   block.hidden = false;
 }
 
-/**
- * Die E-Mail ist der längste Einzelwert und passt selten in die schmale
- * Spalte. Statt sie umbrechen zu lassen, wird sie so weit verkleinert, bis
- * sie in eine Zeile passt – bis auf drei Viertel der Ausgangsgröße. Erst
- * wenn selbst das nicht reicht, greift der Umbruch hinter dem @.
- *
- * Gesetzt wird nur ein Faktor; die Ausgangsgröße rechnet das Stylesheet je
- * Medium selbst. Eine feste Pixelgröße von hier aus würde die kleinere
- * Druckgröße überschreiben.
- */
-function fitEmail(dd: HTMLElement): void {
-  dd.style.removeProperty('--fit');
-  dd.style.whiteSpace = 'nowrap';
-
-  for (const faktor of [1, 0.94, 0.88, 0.82, 0.76]) {
-    dd.style.setProperty('--fit', String(faktor));
-    if (dd.scrollWidth <= dd.clientWidth) return;
-  }
-
-  // Passt selbst verkleinert nicht – dann lieber umbrechen als überlaufen.
-  dd.style.removeProperty('--fit');
-  dd.style.whiteSpace = '';
-}
-
 function fillDetails(settings: Settings): void {
   const container = document.querySelector<HTMLElement>('[data-cv-details]');
   if (!container) return;
@@ -211,15 +201,6 @@ function fillDetails(settings: Settings): void {
   }
 
   container.innerHTML = rowsMarkup(rows, 'cv-contact-row');
-
-  const email = container.querySelector<HTMLElement>('.cv-contact-row:first-child dd');
-  if (email) {
-    fitEmail(email);
-    window.addEventListener('resize', () => fitEmail(email));
-    // Kein `beforeprint`: Das Ereignis feuert, bevor der Browser auf das
-    // Seitenformat umbricht – gemessen würde also die Fensterbreite. Für den
-    // Druck steht die Größe deshalb fest im Stylesheet.
-  }
 }
 
 function fillPhoto(settings: Settings): void {
