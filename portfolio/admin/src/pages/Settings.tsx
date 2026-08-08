@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { api, type Settings, type TimelineEntry } from '../lib/api';
 import { useToast } from '../lib/toast';
 import MediaField from '../components/MediaField';
+import { TEXT_GROUPS } from '../lib/text-schema';
 
 const TABS = [
   { id: 'profil', label: 'Profil' },
   { id: 'startseite', label: 'Startseite' },
   { id: 'lebenslauf', label: 'Lebenslauf' },
   { id: 'inhalte', label: 'Fähigkeiten & Ablauf' },
+  { id: 'texte', label: 'Texte' },
   { id: 'seo', label: 'SEO' },
   { id: 'rechtliches', label: 'Rechtliches' },
   { id: 'konto', label: 'Konto' },
@@ -109,6 +111,35 @@ export default function SettingsPage() {
               <p className="mt-1 text-[0.6875rem] text-faint">
                 Leerzeile = neuer Absatz. Erscheint auf Startseite und „Über mich".
               </p>
+            </div>
+          </section>
+
+          <section className="panel space-y-5 p-6">
+            <h2 className="text-sm font-semibold">Porträtbild</h2>
+            <p className="text-[0.6875rem] leading-relaxed text-faint">
+              Erscheint auf der Seite „Über mich" neben deinem Lebenslauf und im Ausdruck. Hochformat
+              wirkt am besten (etwa 4:5).
+            </p>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <MediaField
+                label="Bild"
+                hint="Ohne Bild bleibt die Stelle einfach leer."
+                value={settings.portrait.image}
+                onChange={(item) => set('portrait', { ...settings.portrait, image: item, mediaId: item?.id ?? null })}
+              />
+              <div>
+                <label className="label" htmlFor="portrait-caption">
+                  Bildunterschrift (optional)
+                </label>
+                <input
+                  id="portrait-caption"
+                  className="field"
+                  value={settings.portrait.caption}
+                  placeholder="z. B. Foto: Vorname Nachname"
+                  onChange={(event) => set('portrait', { ...settings.portrait, caption: event.target.value })}
+                />
+              </div>
             </div>
           </section>
 
@@ -812,6 +843,54 @@ export default function SettingsPage() {
               </div>
             ))}
           </section>
+        </div>
+      )}
+
+      {tab === 'texte' && (
+        <div className="space-y-6">
+          <p className="rounded-lg border border-line bg-panel p-4 text-xs leading-relaxed text-muted">
+            Hier stehen alle festen Beschriftungen der Website – Überschriften, Einleitungen,
+            Knöpfe. Ein leeres Feld bedeutet: Es bleibt beim ursprünglichen Text. Du kannst also
+            nichts kaputt machen.
+          </p>
+
+          {TEXT_GROUPS.map((group) => (
+            <section key={group.title} className="panel space-y-4 p-6">
+              <div>
+                <h2 className="text-sm font-semibold">{group.title}</h2>
+                {group.hint && <p className="mt-1 text-[0.6875rem] leading-relaxed text-faint">{group.hint}</p>}
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                {group.fields.map((field) => (
+                  <div key={field.key} className={field.long ? 'sm:col-span-2' : ''}>
+                    <label className="label" htmlFor={field.key}>
+                      {field.label}
+                    </label>
+                    {field.long ? (
+                      <textarea
+                        id={field.key}
+                        className="field min-h-20 resize-y"
+                        value={settings.texts[field.key] ?? ''}
+                        onChange={(event) =>
+                          set('texts', { ...settings.texts, [field.key]: event.target.value })
+                        }
+                      />
+                    ) : (
+                      <input
+                        id={field.key}
+                        className="field"
+                        value={settings.texts[field.key] ?? ''}
+                        onChange={(event) =>
+                          set('texts', { ...settings.texts, [field.key]: event.target.value })
+                        }
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       )}
 

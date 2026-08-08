@@ -144,6 +144,8 @@ export interface Settings {
   intro: string;
   appearance: { defaultTheme: 'light' | 'dark' | 'system' };
   hero: HeroSettings;
+  portrait: { mediaId: number | null; caption: string; image: MediaItem | null };
+  texts: Record<string, string>;
   expertise: ExpertiseItem[];
   resume: Resume;
   availability: { visible: boolean; status: 'open' | 'limited' | 'closed'; label: string; detail: string };

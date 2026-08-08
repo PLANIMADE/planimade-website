@@ -25,6 +25,7 @@ portfolio/
 | **PHP + SQLite** | Läuft auf jedem all-inkl-Paket. Keine Datenbank einzurichten, ein Backup ist ein Dateidownload. |
 | **Kein Composer, kein Framework** | Das Backend ist reines PHP – ein FTP-Upload genügt, nichts kann „veralten". |
 | **Case-Studies über PHP** | `/work/<slug>` liefert PHP mit passenden Meta-Tags aus. Google und Link-Vorschauen sehen echte Inhalte, obwohl die Seite statisch gebaut ist. |
+| **Texte per `data-text`** | Jeder feste Text steht im HTML und wird beim Laden durch den gepflegten Wert ersetzt. Ohne JavaScript oder ohne API bleibt die Seite vollständig lesbar. |
 | **Selbst gehostete Schriften** | Keine Verbindung zu Google Fonts – in Deutschland auch rechtlich der ruhigere Weg. |
 
 ---
@@ -93,8 +94,12 @@ Veröffentlichen: **[DEPLOY-ALL-INKL.md](DEPLOY-ALL-INKL.md)**
 - **Posteingang** für Kontaktanfragen inklusive Status und Direktantwort
 - **Kundenstimmen** pflegen
 - **Einstellungen**: Farbschema-Vorgabe, Kopfbereich (Showreel/Typo),
-  Profiltexte, Lebenslauf mit Zeitstrahl und Kompetenzen, Fähigkeiten, Ablauf,
-  Social-Links, SEO, Impressumsdaten
+  Profiltexte, Porträtbild, Lebenslauf mit Zeitstrahl und Kompetenzen,
+  Fähigkeiten, Ablauf, Social-Links, SEO, Impressumsdaten
+- **Textkatalog**: Sämtliche festen Beschriftungen der Website – Überschriften,
+  Einleitungen, Knöpfe, Spaltentitel – stehen unter „Einstellungen → Texte".
+  Bleibt ein Feld leer, gilt der im Build hinterlegte Standardtext; eine
+  versehentlich geleerte Eingabe kann die Seite also nicht ausräumen.
 - **Systemcheck**: prüft PHP-Version, Bildbibliothek, Schreibrechte, Upload-Limits
   und HTTPS; verschickt auf Knopfdruck eine Testmail und holt fehlende
   Bildgrößen oder Vorschaubilder nach

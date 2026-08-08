@@ -22,38 +22,75 @@ final class Settings
 
         foreach ($rows as $row) {
             $decoded = json_decode((string) $row['value'], true);
-            $out[$row['key']] = $decoded === null && $row['value'] !== 'null' ? $row['value'] : $decoded;
+            $value = $decoded === null && $row['value'] !== 'null' ? $row['value'] : $decoded;
+
+            $out[$row['key']] = is_array($value) && isset($out[$row['key']]) && is_array($out[$row['key']])
+                ? self::mergeDeep($out[$row['key']], $value)
+                : $value;
         }
 
         // Gespeichert werden nur Medien-IDs; das Frontend braucht fertige URLs.
-        $out['hero'] = $this->resolveHeroMedia($out['hero'] ?? []);
+        $out['hero'] = $this->resolveMedia($out['hero'] ?? [], ['mediaId' => 'video', 'posterId' => 'poster']);
+        $out['portrait'] = $this->resolveMedia($out['portrait'] ?? [], ['mediaId' => 'image']);
 
         return $out;
     }
 
-    /** Ergänzt zur Video- und Poster-ID die vollständigen Mediendaten. */
-    private function resolveHeroMedia(array $hero): array
+    /**
+     * Ersetzt Medien-IDs durch die vollständigen Mediendaten.
+     *
+     * @param array<string, string> $map ID-Feld → Zielfeld
+     */
+    private function resolveMedia(array $group, array $map): array
     {
-        $hero['video'] = null;
-        $hero['poster'] = null;
-
-        if (!isset($this->config['uploads_url'])) {
-            return $hero;
+        foreach ($map as $target) {
+            $group[$target] = null;
         }
 
-        $ids = array_filter([
-            'video' => $hero['mediaId'] ?? null,
-            'poster' => $hero['posterId'] ?? null,
-        ]);
+        if (!isset($this->config['uploads_url'])) {
+            return $group;
+        }
 
-        foreach ($ids as $key => $id) {
+        foreach ($map as $idField => $target) {
+            $id = $group[$idField] ?? null;
+            if (empty($id)) {
+                continue;
+            }
+
             $row = $this->db->first('SELECT * FROM media WHERE id = ?', [(int) $id]);
             if ($row !== null) {
-                $hero[$key] = Media::present($row, $this->config);
+                $group[$target] = Media::present($row, $this->config);
             }
         }
 
-        return $hero;
+        return $group;
+    }
+
+    /**
+     * Führt gespeicherte Werte mit den Standardwerten zusammen.
+     *
+     * Wichtig für zwei Fälle:
+     *  – Ein Teil-Speichern (etwa nur ein Text) darf die übrigen Felder
+     *    derselben Gruppe nicht löschen.
+     *  – Kommen bei einem Update neue Felder dazu, erscheinen sie auch bei
+     *    bestehenden Installationen mit ihrem Standardwert.
+     *
+     * Nummerierte Listen (Projekte, Sprachen, Social-Links …) werden dagegen
+     * komplett ersetzt – sonst ließe sich kein Eintrag mehr löschen.
+     */
+    private static function mergeDeep(array $defaults, array $stored): array
+    {
+        if (array_is_list($stored)) {
+            return $stored;
+        }
+
+        foreach ($stored as $key => $value) {
+            $defaults[$key] = is_array($value) && isset($defaults[$key]) && is_array($defaults[$key])
+                ? self::mergeDeep($defaults[$key], $value)
+                : $value;
+        }
+
+        return $defaults;
     }
 
     public function get(string $key, mixed $default = null): mixed
@@ -77,6 +114,9 @@ final class Settings
             // werden nur die IDs, alles andere kommt beim Lesen dazu.
             if ($key === 'hero' && is_array($value)) {
                 unset($value['video'], $value['poster']);
+            }
+            if ($key === 'portrait' && is_array($value)) {
+                unset($value['image']);
             }
             $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: 'null';
             $this->db->run(
@@ -153,6 +193,93 @@ final class Settings
             // behält seine Wahl – diese Werte gelten nur beim ersten Besuch.
             'appearance' => [
                 'defaultTheme' => 'light',
+            ],
+
+            // Porträtbild für die Lebenslauf-Seite.
+            'portrait' => [
+                'mediaId' => null,
+                'caption' => '',
+            ],
+
+            /**
+             * Alle festen Texte der Website.
+             *
+             * Der Schlüssel steht im HTML als `data-text="…"`. Ist ein Wert
+             * leer, bleibt der im Build hinterlegte Standardtext stehen – die
+             * Seite kann also nie durch eine leere Eingabe kaputtgehen.
+             */
+            'texts' => [
+                // Startseite
+                'home.hero.button' => 'Arbeiten ansehen',
+                'home.hero.scroll' => 'Scrollen',
+                'home.intro.label' => 'Kurz vorgestellt',
+                'home.intro.headline' => 'Zwischen Viewport, Sequencer und Schnittfenster.',
+                'home.stats.1.value' => '8+',
+                'home.stats.1.label' => 'Jahre Praxis',
+                'home.stats.2.value' => '4',
+                'home.stats.2.label' => 'Disziplinen',
+                'home.stats.3.value' => '24 h',
+                'home.stats.3.label' => 'Antwortzeit',
+                'home.work.label' => 'Ausgewählte Arbeiten',
+                'home.work.headline' => 'Projekte, die geblieben sind',
+                'home.work.lead' => 'Eine Auswahl aus 3D, Echtzeit und Bewegtbild. Fahre über eine Karte für die Vorschau, klicke für die ganze Geschichte dahinter.',
+                'home.work.action' => 'Alle Projekte',
+                'home.skills.label' => 'Was ich mache',
+                'home.skills.headline' => 'Vier Disziplinen, ein Ergebnis',
+                'home.skills.lead' => 'Weil alles aus einer Hand kommt, muss niemand zwischen Gewerken übersetzen – und der Look bleibt vom ersten bis zum letzten Frame derselbe.',
+                'home.process.label' => 'Ablauf',
+                'home.process.headline' => 'Wie ein Projekt läuft',
+                'home.testimonials.label' => 'Rückmeldungen',
+                'home.testimonials.headline' => 'Was Kund:innen sagen',
+                'home.cta.label' => 'Nächster Schritt',
+                'home.cta.headline' => 'Lass uns etwas bauen.',
+                'home.cta.lead' => 'Ob fertiges Briefing oder erste vage Idee – schreib mir, was du vorhast. Der Rest ergibt sich im Gespräch.',
+                'home.cta.button' => 'Projekt anfragen',
+
+                // Arbeiten
+                'work.label' => 'Portfolio',
+                'work.headline' => 'Alles, was bisher entstanden ist.',
+                'work.lead' => 'Filtere nach Disziplin oder scroll dich einfach durch. Jedes Projekt hat eine eigene Seite mit Hintergrund, Werkzeugen und Ergebnis.',
+
+                // Über mich
+                'about.label' => 'Lebenslauf',
+                'about.print' => 'Als PDF speichern',
+                'about.aside.location' => 'Standort',
+                'about.aside.status' => 'Status',
+                'about.aside.languages' => 'Sprachen',
+                'about.aside.contact' => 'Erreichbar',
+                'about.aside.elsewhere' => 'Woanders',
+                'about.timeline.label' => 'Werdegang',
+                'about.timeline.headline' => 'Stationen',
+                'about.timeline.lead' => 'Beruflicher Weg, Ausbildung und größere Projekte – filterbar nach Art.',
+                'about.expertise.label' => 'Kompetenzen',
+                'about.expertise.headline' => 'Womit ich täglich arbeite',
+                'about.expertise.lead' => 'Selbsteinschätzung – Balken sagen weniger als Projekte, aber sie ordnen ein.',
+                'about.skills.label' => 'Disziplinen',
+                'about.skills.headline' => 'Vier Disziplinen',
+                'about.process.label' => 'Ablauf',
+                'about.process.headline' => 'Wie ich arbeite',
+                'about.cta.label' => 'Zusammenarbeit',
+                'about.cta.headline' => 'Klingt passend?',
+                'about.cta.button' => 'Kontakt aufnehmen',
+
+                // Kontakt
+                'contact.label' => 'Kontakt',
+                'contact.headline' => 'Erzähl mir von deinem Projekt.',
+                'contact.lead' => 'Je konkreter, desto besser – aber eine grobe Idee reicht völlig für den Anfang. Ich melde mich in der Regel innerhalb von 24 Stunden mit einer ehrlichen Einschätzung.',
+                'contact.direct' => 'Direkt schreiben',
+                'contact.form.button' => 'Anfrage senden',
+
+                // Fußzeile
+                'footer.headline' => 'Projekt besprechen',
+                'footer.lead' => 'Erzähl mir kurz, woran du arbeitest. Ich melde mich in der Regel innerhalb von 24 Stunden – auch wenn ich gerade keine Kapazität habe.',
+                'footer.nav' => 'Navigation',
+                'footer.elsewhere' => 'Woanders',
+
+                // Fehlerseite
+                'notFound.headline' => '404',
+                'notFound.lead' => 'Diese Seite existiert nicht (mehr). Vielleicht hilft ein Blick in die Arbeiten.',
+                'notFound.button' => 'Zur Startseite',
             ],
 
             // Kopfbereich der Startseite: große Typografie oder Showreel.

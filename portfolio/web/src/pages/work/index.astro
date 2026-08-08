@@ -9,16 +9,15 @@ import Base from '../../layouts/Base.astro';
   <section class="container-page pt-[calc(var(--nav-height)+5rem)]">
     <p class="label-mono flex items-center gap-3" data-reveal>
       <span class="inline-block h-px w-8 bg-accent"></span>
-      Portfolio
+      <span data-text="work.label">Portfolio</span>
     </p>
 
     <h1 class="display-lg mt-6 max-w-4xl text-ink line-mask">
-      <span>Alles, was bisher entstanden ist.</span>
+      <span data-text="work.headline">Alles, was bisher entstanden ist.</span>
     </h1>
 
     <p class="mt-6 max-w-xl text-base leading-relaxed text-muted" data-reveal data-reveal-delay="100">
-      Filtere nach Disziplin oder scroll dich einfach durch. Jedes Projekt hat eine eigene Seite mit
-      Hintergrund, Werkzeugen und Ergebnis.
+      <span data-text="work.lead">Filtere nach Disziplin oder scroll dich einfach durch. Jedes Projekt hat eine eigene Seite mit Hintergrund, Werkzeugen und Ergebnis.</span>
     </p>
 
     <div data-work-filters class="mt-12 flex flex-wrap gap-2" role="group" aria-label="Projekte filtern"></div>

@@ -14,7 +14,7 @@ import SectionHeading from '../components/SectionHeading.astro';
         <div class="max-w-2xl">
           <p class="label-mono flex items-center gap-3" data-reveal>
             <span class="inline-block h-px w-8 bg-accent"></span>
-            Lebenslauf
+            <span data-text="about.label">Lebenslauf</span>
           </p>
 
           <h1 class="display-lg mt-6 text-ink line-mask">
@@ -36,7 +36,7 @@ import SectionHeading from '../components/SectionHeading.astro';
             <path d="M7 9V4h10v5M7 19h10v-5H7v5Z" stroke-linejoin="round"></path>
             <path d="M7 14H4V9h16v5h-3" stroke-linejoin="round"></path>
           </svg>
-          Als PDF speichern
+          <span data-text="about.print">Als PDF speichern</span>
         </button>
       </div>
 
@@ -51,13 +51,21 @@ import SectionHeading from '../components/SectionHeading.astro';
         </div>
 
         <aside class="space-y-8" data-reveal data-reveal-delay="100">
+          {/* Porträt – erscheint nur, wenn im Dashboard ein Bild hinterlegt ist. */}
+          <figure data-portrait class="hidden">
+            <div class="overflow-hidden rounded-2xl border border-line bg-elevated">
+              <img data-portrait-image alt="" class="aspect-[4/5] w-full object-cover" loading="lazy" decoding="async" />
+            </div>
+            <figcaption data-portrait-caption class="mt-3 font-mono text-xs text-faint"></figcaption>
+          </figure>
+
           <div>
-            <p class="label-mono">Standort</p>
+            <p class="label-mono" data-text="about.aside.location">Standort</p>
             <p class="mt-2 text-sm text-ink" data-location>Deutschland · remote weltweit</p>
           </div>
 
           <div data-availability-block>
-            <p class="label-mono">Status</p>
+            <p class="label-mono" data-text="about.aside.status">Status</p>
             <div
               data-availability
               class="mt-3 inline-flex items-center gap-2.5 rounded-full border border-line px-4 py-2 opacity-0 transition-opacity duration-700"
@@ -69,17 +77,17 @@ import SectionHeading from '../components/SectionHeading.astro';
           </div>
 
           <div data-languages-block>
-            <p class="label-mono">Sprachen</p>
+            <p class="label-mono" data-text="about.aside.languages">Sprachen</p>
             <ul class="mt-3 space-y-2" data-languages></ul>
           </div>
 
           <div>
-            <p class="label-mono">Erreichbar</p>
+            <p class="label-mono" data-text="about.aside.contact">Erreichbar</p>
             <a href="#" data-mail-link data-cursor="hover" class="link-underline mt-2 block font-mono text-sm text-ink">…</a>
           </div>
 
           <div class="no-print">
-            <p class="label-mono">Woanders</p>
+            <p class="label-mono" data-text="about.aside.elsewhere">Woanders</p>
             <ul class="mt-3 space-y-2 text-sm" data-socials><li class="text-faint">…</li></ul>
           </div>
         </aside>
@@ -92,6 +100,7 @@ import SectionHeading from '../components/SectionHeading.astro';
         label="Werdegang"
         title="Stationen"
         lead="Beruflicher Weg, Ausbildung und größere Projekte – filterbar nach Art."
+        keys={{ label: 'about.timeline.label', title: 'about.timeline.headline', lead: 'about.timeline.lead' }}
       />
 
       <div data-timeline-filters class="no-print mt-10 flex flex-wrap gap-2" role="group" aria-label="Zeitstrahl filtern"></div>
@@ -105,6 +114,7 @@ import SectionHeading from '../components/SectionHeading.astro';
         label="Kompetenzen"
         title="Womit ich täglich arbeite"
         lead="Selbsteinschätzung – Balken sagen weniger als Projekte, aber sie ordnen ein."
+        keys={{ label: 'about.expertise.label', title: 'about.expertise.headline', lead: 'about.expertise.lead' }}
       />
 
       <div data-expertise class="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3"></div>
@@ -116,13 +126,18 @@ import SectionHeading from '../components/SectionHeading.astro';
         label="Disziplinen"
         title="Vier Disziplinen"
         lead="Weil alles aus einer Hand kommt, muss niemand zwischen Gewerken übersetzen."
+        keys={{ label: 'about.skills.label', title: 'about.skills.headline' }}
       />
       <div data-skills class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"></div>
     </section>
 
     <!-- ========================================================== PROZESS -->
     <section class="container-page pb-24 no-print" id="ablauf">
-      <SectionHeading label="Ablauf" title="Wie ich arbeite" />
+      <SectionHeading
+        label="Ablauf"
+        title="Wie ich arbeite"
+        keys={{ label: 'about.process.label', title: 'about.process.headline' }}
+      />
       <ol data-process class="mt-12 border-b border-line"></ol>
     </section>
 
@@ -130,8 +145,8 @@ import SectionHeading from '../components/SectionHeading.astro';
     <section class="container-page pb-16 no-print">
       <div class="surface-card flex flex-col items-start justify-between gap-8 p-10 sm:flex-row sm:items-center">
         <div>
-          <p class="label-mono">Zusammenarbeit</p>
-          <p class="display-md mt-3 text-ink">Klingt passend?</p>
+          <p class="label-mono" data-text="about.cta.label">Zusammenarbeit</p>
+          <p class="display-md mt-3 text-ink" data-text="about.cta.headline">Klingt passend?</p>
         </div>
         <a
           href="/contact/"
@@ -139,7 +154,7 @@ import SectionHeading from '../components/SectionHeading.astro';
           data-cursor="hover"
           class="shrink-0 rounded-full bg-ink px-8 py-4 text-sm font-semibold text-bg"
         >
-          <span data-magnetic-inner class="block">Kontakt aufnehmen</span>
+          <span data-magnetic-inner class="block" data-text="about.cta.button">Kontakt aufnehmen</span>
         </a>
       </div>
     </section>

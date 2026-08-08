@@ -69,7 +69,7 @@ const marqueeItems = [
             class="group inline-flex items-center gap-3 rounded-full bg-ink px-7 py-4 text-sm font-semibold text-bg"
           >
             <span data-magnetic-inner class="flex items-center gap-3">
-              Arbeiten ansehen
+              <span data-text="home.hero.button">Arbeiten ansehen</span>
               <span class="transition-transform duration-500 group-hover:translate-x-1">→</span>
             </span>
           </a>
@@ -79,7 +79,7 @@ const marqueeItems = [
 
     <div class="container-page relative z-10 pb-8" aria-hidden="true">
       <div class="flex items-center gap-3 text-faint">
-        <span class="font-mono text-[0.625rem] tracking-[0.3em]">SCROLLEN</span>
+        <span class="font-mono text-[0.625rem] tracking-[0.3em]" data-text="home.hero.scroll">Scrollen</span>
         <span class="h-px w-16 origin-left animate-pulse bg-current"></span>
       </div>
     </div>
@@ -93,23 +93,23 @@ const marqueeItems = [
 
     <div class="relative grid gap-16 lg:grid-cols-[1fr_1.15fr] lg:gap-24">
       <div>
-        <p class="label-mono" data-reveal>Kurz vorgestellt</p>
+        <p class="label-mono" data-reveal data-text="home.intro.label">Kurz vorgestellt</p>
         <h2 class="display-md mt-6 text-ink line-mask">
-          <span>Zwischen Viewport,<br />Sequencer und Schnittfenster.</span>
+          <span data-text="home.intro.headline">Zwischen Viewport, Sequencer und Schnittfenster.</span>
         </h2>
 
         <div class="mt-10 flex flex-wrap gap-x-10 gap-y-6" data-reveal data-reveal-delay="120">
           <div>
-            <p class="text-3xl font-bold tracking-tight text-ink">8+</p>
-            <p class="label-mono mt-1">Jahre Praxis</p>
+            <p class="text-3xl font-bold tracking-tight text-ink" data-text="home.stats.1.value">8+</p>
+            <p class="label-mono mt-1" data-text="home.stats.1.label">Jahre Praxis</p>
           </div>
           <div>
-            <p class="text-3xl font-bold tracking-tight text-ink">4</p>
-            <p class="label-mono mt-1">Disziplinen</p>
+            <p class="text-3xl font-bold tracking-tight text-ink" data-text="home.stats.2.value">4</p>
+            <p class="label-mono mt-1" data-text="home.stats.2.label">Disziplinen</p>
           </div>
           <div>
-            <p class="text-3xl font-bold tracking-tight text-ink">24 h</p>
-            <p class="label-mono mt-1">Antwortzeit</p>
+            <p class="text-3xl font-bold tracking-tight text-ink" data-text="home.stats.3.value">24 h</p>
+            <p class="label-mono mt-1" data-text="home.stats.3.label">Antwortzeit</p>
           </div>
         </div>
       </div>
@@ -131,6 +131,7 @@ const marqueeItems = [
       title="Projekte, die geblieben sind"
       lead="Eine Auswahl aus 3D, Echtzeit und Bewegtbild. Fahre über eine Karte für die Vorschau, klicke für die ganze Geschichte dahinter."
       action={{ href: '/work/', label: 'Alle Projekte' }}
+      keys={{ label: 'home.work.label', title: 'home.work.headline', lead: 'home.work.lead', action: 'home.work.action' }}
     />
 
     <p data-work-status class="hidden py-20 text-center text-sm text-faint"></p>
@@ -143,6 +144,7 @@ const marqueeItems = [
       label="Was ich mache"
       title="Vier Disziplinen, ein Ergebnis"
       lead="Weil alles aus einer Hand kommt, muss niemand zwischen Gewerken übersetzen – und der Look bleibt vom ersten bis zum letzten Frame derselbe."
+      keys={{ label: 'home.skills.label', title: 'home.skills.headline', lead: 'home.skills.lead' }}
     />
 
     <div data-skills class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"></div>
@@ -150,13 +152,21 @@ const marqueeItems = [
 
   <!-- ============================================================ PROZESS -->
   <section class="container-page py-16 sm:py-24" id="ablauf">
-    <SectionHeading label="Ablauf" title="Wie ein Projekt läuft" />
+    <SectionHeading
+      label="Ablauf"
+      title="Wie ein Projekt läuft"
+      keys={{ label: 'home.process.label', title: 'home.process.headline' }}
+    />
     <ol data-process class="mt-14 border-b border-line"></ol>
   </section>
 
   <!-- ======================================================== TESTIMONIALS -->
   <section class="container-page py-28 sm:py-36">
-    <SectionHeading label="Rückmeldungen" title="Was Kund:innen sagen" />
+    <SectionHeading
+      label="Rückmeldungen"
+      title="Was Kund:innen sagen"
+      keys={{ label: 'home.testimonials.label', title: 'home.testimonials.headline' }}
+    />
     <div data-testimonials class="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3"></div>
   </section>
 
@@ -166,13 +176,12 @@ const marqueeItems = [
       <div class="glow left-1/2 top-0 h-80 w-80 -translate-x-1/2" style="background: var(--accent)"></div>
 
       <div class="relative">
-        <p class="label-mono" data-reveal>Nächster Schritt</p>
+        <p class="label-mono" data-reveal data-text="home.cta.label">Nächster Schritt</p>
         <h2 class="display-lg mx-auto mt-6 max-w-3xl text-ink line-mask">
-          <span>Lass uns etwas bauen.</span>
+          <span data-text="home.cta.headline">Lass uns etwas bauen.</span>
         </h2>
         <p class="mx-auto mt-6 max-w-xl text-base text-muted" data-reveal data-reveal-delay="100">
-          Ob fertiges Briefing oder erste vage Idee – schreib mir, was du vorhast. Der Rest ergibt
-          sich im Gespräch.
+          <span data-text="home.cta.lead">Ob fertiges Briefing oder erste vage Idee – schreib mir, was du vorhast. Der Rest ergibt sich im Gespräch.</span>
         </p>
 
         <div class="mt-10 flex flex-wrap items-center justify-center gap-4" data-reveal data-reveal-delay="160">
@@ -182,7 +191,7 @@ const marqueeItems = [
             data-cursor="hover"
             class="rounded-full bg-accent px-8 py-4 text-sm font-semibold text-white"
           >
-            <span data-magnetic-inner class="block">Projekt anfragen</span>
+            <span data-magnetic-inner class="block" data-text="home.cta.button">Projekt anfragen</span>
           </a>
           <a href="#" data-mail-link data-cursor="hover" class="link-underline font-mono text-sm text-muted">…</a>
         </div>

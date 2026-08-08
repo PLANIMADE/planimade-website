@@ -35,6 +35,58 @@ function renderParagraphs(container: HTMLElement, text: string): void {
     });
 }
 
+/**
+ * Ersetzt alle Texte, die im Dashboard gepflegt wurden.
+ *
+ * Im HTML steht jeweils der Standardtext – ist im Dashboard nichts (oder
+ * etwas Leeres) hinterlegt, bleibt er stehen. Dadurch kann eine versehentlich
+ * geleerte Eingabe die Seite nie „ausräumen".
+ */
+function fillTexts(settings: Settings): void {
+  const texts = settings.texts ?? {};
+
+  document.querySelectorAll<HTMLElement>('[data-text]').forEach((element) => {
+    const key = element.dataset.text;
+    if (!key) return;
+
+    const value = texts[key];
+    if (typeof value === 'string' && value.trim() !== '') {
+      element.textContent = value;
+    }
+  });
+}
+
+function fillPortrait(settings: Settings): void {
+  const figure = document.querySelector<HTMLElement>('[data-portrait]');
+  if (!figure) return;
+
+  const portrait = settings.portrait?.image;
+  if (!portrait) {
+    figure.remove();
+    return;
+  }
+
+  const image = figure.querySelector<HTMLImageElement>('[data-portrait-image]');
+  const caption = figure.querySelector<HTMLElement>('[data-portrait-caption]');
+
+  if (image) {
+    image.src = portrait.thumbUrl ?? portrait.url;
+    if (portrait.srcset) {
+      image.srcset = portrait.srcset;
+      image.sizes = '(max-width: 1024px) 100vw, 24rem';
+    }
+    image.alt = portrait.alt || settings.name;
+  }
+
+  if (caption) {
+    const text = settings.portrait.caption.trim();
+    caption.textContent = text;
+    caption.hidden = text === '';
+  }
+
+  figure.classList.remove('hidden');
+}
+
 function fillAvailability(settings: Settings): void {
   // Abgeschaltet: Badge samt Beschriftung restlos entfernen, damit kein
   // leerer Rahmen stehen bleibt.
@@ -202,6 +254,11 @@ export async function initHydration(): Promise<void> {
     document.querySelectorAll<HTMLElement>('[data-availability]').forEach((badge) => badge.remove());
     return;
   }
+
+  // Zuerst die festen Texte – danach überschreiben die spezielleren
+  // Bausteine (Name, Rolle …) gezielt einzelne Stellen.
+  fillTexts(settings);
+  fillPortrait(settings);
 
   setText('[data-name]', settings.name);
 

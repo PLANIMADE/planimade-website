@@ -118,6 +118,9 @@ export interface Settings {
   intro: string;
   appearance: { defaultTheme: 'light' | 'dark' | 'system' };
   hero: HeroSettings;
+  portrait: { mediaId: number | null; caption: string; image: MediaItem | null };
+  /** Schlüssel → Text. Die Schlüssel stehen im HTML als `data-text`. */
+  texts: Record<string, string>;
   expertise: ExpertiseItem[];
   resume: Resume;
   availability: {
