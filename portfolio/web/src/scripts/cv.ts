@@ -214,10 +214,10 @@ function fillDetails(settings: Settings): void {
   const email = container.querySelector<HTMLElement>('.cv-contact-row:first-child dd');
   if (email) {
     fitEmail(email);
-    // Der Druck ist schmaler als das Fenster – also neu rechnen.
-    window.addEventListener('beforeprint', () => fitEmail(email));
-    window.addEventListener('afterprint', () => fitEmail(email));
     window.addEventListener('resize', () => fitEmail(email));
+    // Kein `beforeprint`: Das Ereignis feuert, bevor der Browser auf das
+    // Seitenformat umbricht – gemessen würde also die Fensterbreite. Für den
+    // Druck steht die Größe deshalb fest im Stylesheet.
   }
 }
 
@@ -241,35 +241,30 @@ function fillPhoto(settings: Settings): void {
  * Das Schlagwortband unter dem Kopf zeigt dieselben Wörter wie das Laufband
  * der Startseite – so trägt der Lebenslauf dieselbe Handschrift.
  *
- * Wie viele Begriffe hineinpassen, hängt von der Breite ab: am Bildschirm
- * mehr als auf A4. Statt eine Zahl zu raten, werden Wörter entfernt, bis die
- * Zeile passt – sonst stünde dort ein abgeschnittenes „ECHTZEIT-RENDE…".
+ * Feste Obergrenze statt Messen: Vorher wurde die Liste auf die Fensterbreite
+ * gekürzt, und das Blatt ist im Druck schmaler als jedes übliche Fenster –
+ * die Vorschau zeigte also mehr Wörter als das PDF. Fünf passen in beiden
+ * Medien in eine Zeile; sind die Begriffe lang, bricht das Band um, statt
+ * abgeschnitten zu werden.
  */
-function fitStrip(strip: HTMLElement, words: string[]): void {
-  for (let count = words.length; count > 0; count -= 1) {
-    strip.textContent = words.slice(0, count).join('  /  ');
-    if (strip.scrollWidth <= strip.clientWidth) return;
-  }
-}
+const STRIP_MAX = 5;
 
 function fillStrip(settings: Settings): void {
   const strip = document.querySelector<HTMLElement>('[data-cv-strip]');
   if (!strip) return;
 
-  const words = settings.marquee.map((word) => word.trim()).filter((word) => word !== '');
+  const words = settings.marquee
+    .map((word) => word.trim())
+    .filter((word) => word !== '')
+    .slice(0, STRIP_MAX);
+
   if (words.length === 0) {
     strip.remove();
     return;
   }
 
+  strip.textContent = words.join('  /  ');
   strip.hidden = false;
-  fitStrip(strip, words);
-
-  // Der Druck ist schmaler als das Fenster – also vor dem Druck neu rechnen
-  // und danach wieder auf die Bildschirmbreite zurück.
-  window.addEventListener('beforeprint', () => fitStrip(strip, words));
-  window.addEventListener('afterprint', () => fitStrip(strip, words));
-  window.addEventListener('resize', () => fitStrip(strip, words));
 }
 
 function fillName(settings: Settings): void {

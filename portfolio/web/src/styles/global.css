@@ -780,8 +780,6 @@ html.no-js .line-mask > span {
   font-size: 0.625rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 /* ----------------------------------------------------------------- Körper */
@@ -1344,7 +1342,7 @@ html.no-js .line-mask > span {
   }
 
   .cv-head {
-    padding: 13mm var(--cv-pad) 8mm;
+    padding: 11mm var(--cv-pad) 7mm;
     color: #fff;
     break-inside: avoid;
   }
@@ -1356,11 +1354,10 @@ html.no-js .line-mask > span {
 
   .cv-name {
     margin-top: 6mm;
-    font-size: 32pt;
-  }
-
-  .cv-name-last {
-    -webkit-text-stroke-width: 1pt;
+    /* Am Bildschirm nimmt der Name rund 8,5 % der Blattbreite ein. Mit den
+       alten 32 pt waren es auf A4 nur 5,4 % – der Kopf wirkte dadurch
+       kleinlaut. 42 pt trifft dasselbe Verhältnis. */
+    font-size: 42pt;
   }
 
   .cv-role {
@@ -1381,7 +1378,9 @@ html.no-js .line-mask > span {
   }
 
   .cv-body {
-    grid-template-columns: 54mm 1fr;
+    /* 60 mm statt 54: schmaler passt die E-Mail selbst verkleinert nicht in
+       die Spalte, sondern läuft über den Rand in den Textteil. */
+    grid-template-columns: 60mm 1fr;
     align-items: start;
   }
 
@@ -1422,16 +1421,24 @@ html.no-js .line-mask > span {
     font-size: 8pt;
   }
 
+  /* Auf Papier ist die Spaltenbreite fest – dann darf auch die Größe fest
+     sein. Die Anpassung per `--fit` gilt nur am Bildschirm: Sie müsste beim
+     Drucken neu rechnen, aber `beforeprint` feuert vor dem Umbruch auf das
+     Seitenformat und würde die Fensterbreite messen. */
   .cv-contact-row:first-child dd {
-    font-size: calc(8pt * var(--fit, 1));
+    font-size: 7pt;
+    /* Das Skript setzt für den Bildschirm `nowrap` als Inline-Angabe. Eine
+       sehr lange Adresse soll auf dem schmaleren Blatt trotzdem umbrechen
+       dürfen, statt über den Rand zu laufen. */
+    white-space: normal !important;
   }
 
   .cv-main {
-    padding: 7mm var(--cv-pad) 7mm 7mm;
+    padding: 6mm var(--cv-pad) 6mm 7mm;
   }
 
   .cv-lead {
-    margin-bottom: 6mm;
+    margin-bottom: 5mm;
   }
 
   .cv-profile {
@@ -1442,7 +1449,7 @@ html.no-js .line-mask > span {
   }
 
   .cv-section + .cv-section {
-    margin-top: 5mm;
+    margin-top: 4.5mm;
   }
 
   .cv-section-title {
@@ -1460,7 +1467,7 @@ html.no-js .line-mask > span {
   .cv-entry {
     grid-template-columns: 24mm 1fr;
     gap: 4mm;
-    padding: 2.6mm 0;
+    padding: 2.2mm 0;
     break-inside: avoid;
   }
 
