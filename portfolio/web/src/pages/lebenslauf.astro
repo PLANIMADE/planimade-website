@@ -58,6 +58,11 @@ import Base from '../layouts/Base.astro';
               <input type="checkbox" data-cv-toggle="color" class="accent-[var(--accent)]" checked />
               Farbe
             </label>
+            {/* Nur sinnvoll, solange „Farbe" aus ist – sonst ist das Foto ohnehin bunt. */}
+            <label data-cv-only-mono hidden class="flex cursor-pointer items-center gap-2 text-xs text-muted">
+              <input type="checkbox" data-cv-toggle="photocolor" class="accent-[var(--accent)]" />
+              Foto farbig
+            </label>
             <label class="flex cursor-pointer items-center gap-2 text-xs text-muted">
               <input type="checkbox" data-cv-toggle="dark" class="accent-[var(--accent)]" />
               Dunkles Papier

@@ -170,6 +170,30 @@ function fillFacts(settings: Settings): void {
   block.hidden = false;
 }
 
+/**
+ * Die E-Mail ist der längste Einzelwert und passt selten in die schmale
+ * Spalte. Statt sie umbrechen zu lassen, wird sie so weit verkleinert, bis
+ * sie in eine Zeile passt – bis auf drei Viertel der Ausgangsgröße. Erst
+ * wenn selbst das nicht reicht, greift der Umbruch hinter dem @.
+ *
+ * Gesetzt wird nur ein Faktor; die Ausgangsgröße rechnet das Stylesheet je
+ * Medium selbst. Eine feste Pixelgröße von hier aus würde die kleinere
+ * Druckgröße überschreiben.
+ */
+function fitEmail(dd: HTMLElement): void {
+  dd.style.removeProperty('--fit');
+  dd.style.whiteSpace = 'nowrap';
+
+  for (const faktor of [1, 0.94, 0.88, 0.82, 0.76]) {
+    dd.style.setProperty('--fit', String(faktor));
+    if (dd.scrollWidth <= dd.clientWidth) return;
+  }
+
+  // Passt selbst verkleinert nicht – dann lieber umbrechen als überlaufen.
+  dd.style.removeProperty('--fit');
+  dd.style.whiteSpace = '';
+}
+
 function fillDetails(settings: Settings): void {
   const container = document.querySelector<HTMLElement>('[data-cv-details]');
   if (!container) return;
@@ -186,6 +210,15 @@ function fillDetails(settings: Settings): void {
   }
 
   container.innerHTML = rowsMarkup(rows, 'cv-contact-row');
+
+  const email = container.querySelector<HTMLElement>('.cv-contact-row:first-child dd');
+  if (email) {
+    fitEmail(email);
+    // Der Druck ist schmaler als das Fenster – also neu rechnen.
+    window.addEventListener('beforeprint', () => fitEmail(email));
+    window.addEventListener('afterprint', () => fitEmail(email));
+    window.addEventListener('resize', () => fitEmail(email));
+  }
 }
 
 function fillPhoto(settings: Settings): void {
@@ -289,6 +322,13 @@ function wireToggles(sheet: HTMLElement): void {
     }
     if (name === 'color') {
       sheet.classList.toggle('cv-mono', !on);
+      // „Foto farbig" ergibt nur in der Schwarzweiß-Fassung einen Sinn.
+      document
+        .querySelectorAll<HTMLElement>('[data-cv-only-mono]')
+        .forEach((element) => (element.hidden = on));
+    }
+    if (name === 'photocolor') {
+      sheet.classList.toggle('cv-photo-color', on);
     }
     if (name === 'dark') {
       sheet.classList.toggle('cv-dark', on);
