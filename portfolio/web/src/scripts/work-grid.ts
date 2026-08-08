@@ -84,6 +84,7 @@ function cardMarkup(project: Project, index: number, size: 'large' | 'normal'): 
       class="group relative"
       data-project-card
       data-category="${escapeHtml(project.category.toLowerCase())}"
+      data-category-key="${escapeHtml(categoryKey(project.category))}"
       data-tags="${escapeHtml(project.tags.join(' ').toLowerCase())}"
       data-reveal
       data-reveal-delay="${(index % 3) * 90}"
@@ -200,38 +201,123 @@ function wireTracking(container: HTMLElement): void {
   });
 }
 
-function renderFilters(categories: string[], onChange: (category: string) => void): void {
+/** Kategorie → kurzer Schlüssel für die Adresszeile. */
+function categoryKey(category: string): string {
+  return category
+    .toLowerCase()
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/**
+ * Kategorien zum Anklicken – mehrere gleichzeitig möglich.
+ *
+ * Die Auswahl steht in der Adresszeile (`?kategorie=grafik-layout,motion`),
+ * damit sich eine gefilterte Ansicht verschicken lässt: „hier nur meine
+ * Print-Arbeiten". Beim Aufruf eines solchen Links ist die Auswahl gesetzt.
+ */
+function renderFilters(categories: string[], onChange: (selected: Set<string>) => void): void {
   const container = document.querySelector<HTMLElement>('[data-work-filters]');
   if (!container || categories.length === 0) return;
 
-  const entries = ['Alle', ...categories];
-  container.innerHTML = entries
-    .map(
-      (category, index) => `
-      <button
-        type="button"
-        data-filter="${escapeHtml(index === 0 ? 'all' : category.toLowerCase())}"
-        data-cursor="hover"
-        class="rounded-full border px-4 py-2 text-sm transition-all duration-300 ${
-          index === 0 ? 'border-transparent bg-ink text-bg' : 'border-line text-muted hover:border-line-strong hover:text-ink'
-        }"
-      >${escapeHtml(category)}</button>`,
-    )
-    .join('');
+  const byKey = new Map(categories.map((category) => [categoryKey(category), category]));
+  const selected = new Set<string>();
+
+  // Vorauswahl aus der Adresszeile übernehmen.
+  const params = new URLSearchParams(location.search);
+  (params.get('kategorie') ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter((entry) => byKey.has(entry))
+    .forEach((entry) => selected.add(entry));
+
+  const syncUrl = (): void => {
+    const url = new URL(location.href);
+    url.searchParams.delete('kategorie');
+
+    // Bewusst von Hand zusammengesetzt: `searchParams` würde das Komma als
+    // %2C kodieren, und der Link soll verschickbar und lesbar bleiben.
+    const rest = url.searchParams.toString();
+    const selection = selected.size === 0 ? '' : `kategorie=${[...selected].join(',')}`;
+    url.search = [selection, rest].filter(Boolean).join('&');
+
+    history.replaceState(null, '', url.toString());
+  };
+
+  const paint = (): void => {
+    container.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((button) => {
+      const key = button.dataset.filter ?? '';
+      const active = key === 'all' ? selected.size === 0 : selected.has(key);
+
+      button.setAttribute('aria-pressed', String(active));
+      button.classList.toggle('bg-ink', active);
+      button.classList.toggle('text-bg', active);
+      button.classList.toggle('border-transparent', active);
+      button.classList.toggle('border-line', !active);
+      button.classList.toggle('text-muted', !active);
+    });
+
+    const share = container.querySelector<HTMLButtonElement>('[data-share-selection]');
+    if (share) share.hidden = selected.size === 0;
+  };
+
+  container.innerHTML = `
+    ${['all', ...byKey.keys()]
+      .map((key) => {
+        const label = key === 'all' ? 'Alle' : (byKey.get(key) ?? key);
+
+        return `
+        <button
+          type="button"
+          data-filter="${escapeHtml(key)}"
+          data-cursor="hover"
+          aria-pressed="false"
+          class="rounded-full border border-line px-4 py-2 text-sm text-muted transition-all duration-300 hover:border-line-strong hover:text-ink"
+        >${escapeHtml(label)}</button>`;
+      })
+      .join('')}
+    <button
+      type="button"
+      data-share-selection
+      data-cursor="hover"
+      hidden
+      class="ml-auto rounded-full border border-line px-4 py-2 text-sm text-muted transition-colors duration-300 hover:border-line-strong hover:text-ink"
+    >Auswahl-Link kopieren</button>`;
 
   container.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((button) => {
     button.addEventListener('click', () => {
-      container.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((other) => {
-        const isActive = other === button;
-        other.classList.toggle('bg-ink', isActive);
-        other.classList.toggle('text-bg', isActive);
-        other.classList.toggle('border-transparent', isActive);
-        other.classList.toggle('border-line', !isActive);
-        other.classList.toggle('text-muted', !isActive);
-      });
-      onChange(button.dataset.filter ?? 'all');
+      const key = button.dataset.filter ?? 'all';
+
+      if (key === 'all') {
+        selected.clear();
+      } else if (selected.has(key)) {
+        selected.delete(key);
+      } else {
+        selected.add(key);
+      }
+
+      paint();
+      syncUrl();
+      onChange(selected);
     });
   });
+
+  container.querySelector<HTMLButtonElement>('[data-share-selection]')?.addEventListener('click', (event) => {
+    const button = event.currentTarget as HTMLButtonElement;
+    const original = button.textContent;
+
+    void navigator.clipboard?.writeText(location.href).then(() => {
+      button.textContent = 'Link kopiert';
+      window.setTimeout(() => (button.textContent = original), 1600);
+    });
+  });
+
+  paint();
+  if (selected.size > 0) onChange(selected);
 }
 
 export async function initWorkGrid(): Promise<void> {
@@ -281,21 +367,36 @@ export async function initWorkGrid(): Promise<void> {
   wireTracking(grid);
 
   if (withFilters) {
-    renderFilters(categories, (category) => {
+    const status = document.querySelector<HTMLElement>('[data-filter-status]');
+
+    renderFilters(categories, (selected) => {
+      let visible = 0;
+
       grid.querySelectorAll<HTMLElement>('[data-project-card]').forEach((card) => {
         const wrapper = card.parentElement;
-        const matches = category === 'all' || card.dataset.category === category;
+        const matches = selected.size === 0 || selected.has(card.dataset.categoryKey ?? '');
+        if (matches) visible++;
 
         card.style.transition = 'opacity 320ms var(--ease-out-expo), transform 320ms var(--ease-out-expo)';
         card.style.opacity = matches ? '1' : '0';
         card.style.transform = matches ? 'none' : 'scale(0.97)';
 
         if (wrapper) {
-          window.setTimeout(() => {
-            wrapper.style.display = matches ? '' : 'none';
-          }, matches ? 0 : 300);
+          window.setTimeout(
+            () => {
+              wrapper.style.display = matches ? '' : 'none';
+            },
+            matches ? 0 : 300,
+          );
         }
       });
+
+      if (status) {
+        status.textContent =
+          selected.size === 0
+            ? ''
+            : `${visible} von ${projects.length} Projekten · ${[...selected].length} Kategorie${selected.size === 1 ? '' : 'n'} gewählt`;
+      }
     });
   }
 

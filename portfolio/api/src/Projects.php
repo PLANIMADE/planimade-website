@@ -18,13 +18,40 @@ final class Projects
         'title', 'subtitle', 'summary', 'body', 'category', 'client', 'role',
         'year', 'accent', 'status', 'featured', 'cover_id', 'preview_id',
         'model_id', 'before_id', 'after_id', 'display', 'card_format',
+        'publish_at',
     ];
 
     public function __construct(private Database $db, private array $config) {}
 
+    /**
+     * Schaltet Projekte live, deren Veröffentlichungstermin erreicht ist.
+     *
+     * Läuft beim ersten Lesezugriff eines Requests – ein Cronjob wäre auf
+     * Shared Hosting eine zusätzliche Fehlerquelle, und öfter als beim
+     * nächsten Seitenaufruf muss es niemand wissen.
+     */
+    public function promoteScheduled(): void
+    {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $done = true;
+
+        $now = gmdate('c');
+        $this->db->run(
+            "UPDATE projects
+             SET status = 'published', published_at = COALESCE(published_at, :now), publish_at = NULL
+             WHERE publish_at IS NOT NULL AND publish_at <= :now AND deleted_at IS NULL",
+            ['now' => $now]
+        );
+    }
+
     /** @return array<int, array<string, mixed>> */
     public function list(bool $includeDrafts = false, ?string $category = null, ?int $limit = null): array
     {
+        $this->promoteScheduled();
+
         // Papierkorb-Einträge tauchen in keiner normalen Liste auf.
         $where = ($includeDrafts ? '1 = 1' : "status = 'published'") . ' AND deleted_at IS NULL';
         $params = [];
@@ -49,8 +76,26 @@ final class Projects
         );
     }
 
+    /**
+     * Findet das aktuelle Kürzel zu einem früheren.
+     * Gibt null zurück, wenn es sich nicht um ein altes Kürzel handelt.
+     */
+    public function currentSlugFor(string $oldSlug): ?string
+    {
+        $row = $this->db->first(
+            'SELECT p.slug FROM slug_history h
+             JOIN projects p ON p.id = h.project_id
+             WHERE h.slug = ? AND p.deleted_at IS NULL',
+            [$oldSlug]
+        );
+
+        return $row === null ? null : (string) $row['slug'];
+    }
+
     public function findBySlug(string $slug, bool $includeDrafts = false): ?array
     {
+        $this->promoteScheduled();
+
         $row = $this->db->first('SELECT * FROM projects WHERE slug = ? AND deleted_at IS NULL', [$slug]);
         if ($row === null) {
             return null;
@@ -118,6 +163,18 @@ final class Projects
 
         if (isset($input['slug']) && trim((string) $input['slug']) !== '') {
             $data['slug'] = $this->uniqueSlug((string) $input['slug'], $id);
+
+            // Altes Kürzel merken, damit verschickte Links weiter funktionieren.
+            if ($data['slug'] !== $existing['slug']) {
+                $this->db->run(
+                    'INSERT INTO slug_history (slug, project_id, created_at) VALUES (?, ?, ?)
+                     ON CONFLICT(slug) DO UPDATE SET project_id = excluded.project_id',
+                    [$existing['slug'], $id, gmdate('c')]
+                );
+                // Falls das neue Kürzel selbst mal ein altes war: Eintrag entfernen,
+                // sonst zeigte eine Weiterleitung auf sich selbst.
+                $this->db->run('DELETE FROM slug_history WHERE slug = ?', [$data['slug']]);
+            }
         }
 
         foreach (self::JSON_FIELDS as $field) {
@@ -230,6 +287,7 @@ final class Projects
             'role' => 'role', 'year' => 'year', 'accent' => 'accent',
             'status' => 'status', 'featured' => 'featured',
             'display' => 'display', 'cardFormat' => 'card_format',
+            'publishAt' => 'publish_at',
             'coverId' => 'cover_id', 'previewId' => 'preview_id',
             'modelId' => 'model_id', 'beforeId' => 'before_id', 'afterId' => 'after_id',
         ];
@@ -248,6 +306,8 @@ final class Projects
                 'display' => in_array($value, ['cover', 'contain'], true) ? $value : 'cover',
                 'card_format' => in_array($value, ['landscape', 'square', 'portrait'], true) ? $value : 'landscape',
                 'cover_id', 'preview_id', 'model_id', 'before_id', 'after_id' => $value === null || $value === '' ? null : (int) $value,
+                // Termin kommt als lokale Zeit aus dem Dashboard und wird in UTC abgelegt.
+                'publish_at' => $value === null || $value === '' ? null : gmdate('c', strtotime((string) $value) ?: time()),
                 default => is_string($value) ? trim($value) : (string) $value,
             };
         }
@@ -360,6 +420,7 @@ final class Projects
             'display' => $row['display'] ?? 'cover',
             'cardFormat' => $row['card_format'] ?? 'landscape',
             'status' => $row['status'],
+            'publishAt' => $row['publish_at'] ?? null,
             'featured' => (bool) $row['featured'],
             'position' => (int) $row['position'],
             'views' => (int) $row['views'],

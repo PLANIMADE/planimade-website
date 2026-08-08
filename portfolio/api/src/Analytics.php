@@ -14,7 +14,7 @@ namespace App;
  */
 final class Analytics
 {
-    private const TYPES = ['pageview', 'project_view', 'contact_open', 'showreel_play', 'download'];
+    private const TYPES = ['pageview', 'project_view', 'contact_open', 'showreel_play', 'download', 'scroll_depth'];
 
     public function __construct(private Database $db, private Security $security) {}
 
@@ -33,6 +33,8 @@ final class Analytics
             'device' => in_array($input['device'] ?? '', ['mobile', 'tablet', 'desktop'], true) ? $input['device'] : '',
             'day' => gmdate('Y-m-d'),
             'visitor' => $this->security->visitorHash(),
+            // Nur für die Lesetiefe belegt: 25, 50, 75 oder 100 Prozent.
+            'value' => isset($input['value']) ? max(0, min(100, (int) $input['value'])) : null,
             'created_at' => gmdate('c'),
         ]);
 
@@ -85,8 +87,37 @@ final class Analytics
             [$since]
         );
 
+        // Lesetiefe: Wie viele der Leute, die eine Case-Study geöffnet haben,
+        // sind bis zum Ende gescrollt? Aussagekräftiger als reine Aufrufe.
+        $readDepth = $this->db->all(
+            "SELECT p.id, p.title, p.slug,
+                    COUNT(DISTINCT CASE WHEN a.type = 'project_view' THEN a.visitor END) AS opened,
+                    COUNT(DISTINCT CASE WHEN a.type = 'scroll_depth' AND a.value >= 75 THEN a.visitor END) AS finished
+             FROM projects p
+             LEFT JOIN analytics a ON a.project_id = p.id AND a.day >= ?
+             WHERE p.deleted_at IS NULL
+             GROUP BY p.id
+             HAVING opened > 0
+             ORDER BY opened DESC
+             LIMIT 10",
+            [$since]
+        );
+
         return [
             'range' => ['days' => $days, 'since' => $since],
+            'readDepth' => array_map(static function (array $row): array {
+                $opened = (int) $row['opened'];
+                $finished = (int) $row['finished'];
+
+                return [
+                    'id' => (int) $row['id'],
+                    'title' => $row['title'],
+                    'slug' => $row['slug'],
+                    'opened' => $opened,
+                    'finished' => $finished,
+                    'share' => $opened > 0 ? (int) round($finished / $opened * 100) : 0,
+                ];
+            }, $readDepth),
             'totals' => [
                 'views' => (int) $this->db->value("SELECT COUNT(*) FROM analytics WHERE day >= ? AND type = 'pageview'", [$since]),
                 'visitors' => (int) $this->db->value("SELECT COUNT(DISTINCT visitor) FROM analytics WHERE day >= ? AND type = 'pageview'", [$since]),

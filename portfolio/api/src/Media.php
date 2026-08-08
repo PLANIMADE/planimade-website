@@ -15,10 +15,21 @@ final class Media
     public function __construct(private Database $db, private array $config) {}
 
     /** @return array<int, array<string, mixed>> */
-    public function list(?string $kind = null, int $limit = 200, int $offset = 0): array
+    public function list(?string $kind = null, int $limit = 200, int $offset = 0, bool $missingAltOnly = false): array
     {
-        $where = $kind !== null && $kind !== '' && $kind !== 'all' ? 'WHERE kind = :kind' : '';
-        $params = $where !== '' ? ['kind' => $kind] : [];
+        $conditions = [];
+        $params = [];
+
+        if ($kind !== null && $kind !== '' && $kind !== 'all') {
+            $conditions[] = 'kind = :kind';
+            $params['kind'] = $kind;
+        }
+        if ($missingAltOnly) {
+            // Nur Bilder: Videos und Dokumente brauchen keine Bildbeschreibung.
+            $conditions[] = "kind = 'image' AND (alt IS NULL OR trim(alt) = '')";
+        }
+
+        $where = $conditions === [] ? '' : 'WHERE ' . implode(' AND ', $conditions);
 
         $rows = $this->db->all(
             "SELECT * FROM media {$where} ORDER BY id DESC LIMIT " . max(1, min($limit, 500)) . ' OFFSET ' . max(0, $offset),

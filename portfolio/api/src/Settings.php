@@ -195,6 +195,38 @@ final class Settings
                 'defaultTheme' => 'light',
             ],
 
+            // Laufband unter dem Kopfbereich der Startseite.
+            'marquee' => [
+                'Blender',
+                'Unreal Engine 5',
+                'Cinema-Grading',
+                'Motion Design',
+                'Produktvisualisierung',
+                'Echtzeit-Rendering',
+                'Videoschnitt',
+                'Lookdev',
+            ],
+
+            /**
+             * Bewerbungs-Lebenslauf (/lebenslauf/).
+             *
+             * Nutzt Werdegang, Kompetenzen und Sprachen aus `resume`, ergänzt
+             * um die Angaben, die in eine Bewerbung gehören, aber nichts auf
+             * der öffentlichen Seite verloren haben.
+             */
+            'cv' => [
+                'profile' => '',
+                'includePhoto' => true,
+                'includeProjects' => true,
+                'includeExpertise' => true,
+                'details' => [
+                    ['label' => 'Anschrift', 'value' => ''],
+                    ['label' => 'Telefon', 'value' => ''],
+                    ['label' => 'Geburtsjahr', 'value' => ''],
+                ],
+                'footer' => '',
+            ],
+
             // Porträtbild für die Lebenslauf-Seite.
             'portrait' => [
                 'mediaId' => null,

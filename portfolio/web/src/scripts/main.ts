@@ -41,6 +41,11 @@ async function boot(): Promise<void> {
     initContactForm();
   }
 
+  if (document.querySelector('[data-cv]')) {
+    const { initCv } = await import('./cv');
+    void initCv();
+  }
+
   if (document.querySelector('[data-resume]')) {
     const { initResume } = await import('./resume');
     void initResume();

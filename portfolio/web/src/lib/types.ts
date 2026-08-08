@@ -126,6 +126,16 @@ export interface Settings {
   portrait: { mediaId: number | null; caption: string; image: MediaItem | null };
   /** Schlüssel → Text. Die Schlüssel stehen im HTML als `data-text`. */
   texts: Record<string, string>;
+  /** Wortliste des Laufbands auf der Startseite */
+  marquee: string[];
+  cv: {
+    profile: string;
+    includePhoto: boolean;
+    includeProjects: boolean;
+    includeExpertise: boolean;
+    details: Array<{ label: string; value: string }>;
+    footer: string;
+  };
   expertise: ExpertiseItem[];
   resume: Resume;
   availability: {

@@ -222,7 +222,14 @@ $router->post('projects-reorder', static function () use ($projects, $auth): voi
 
 $router->get('media', static function () use ($media, $auth): void {
     $auth->requireUser();
-    Http::json(['media' => $media->list((string) Http::query('kind', '') ?: null, (int) Http::query('limit', 200), (int) Http::query('offset', 0))]);
+    Http::json([
+        'media' => $media->list(
+            (string) Http::query('kind', '') ?: null,
+            (int) Http::query('limit', 200),
+            (int) Http::query('offset', 0),
+            Http::query('missingAlt') === '1'
+        ),
+    ]);
 });
 
 $router->post('media', static function () use ($media, $auth): void {

@@ -94,6 +94,35 @@ export default function Dashboard() {
             value: `${project.views}`,
           }))}
         />
+        <section className="panel p-6">
+          <h2 className="text-sm font-semibold">Lesetiefe</h2>
+          <p className="mt-1 text-[0.6875rem] leading-relaxed text-faint">
+            Anteil der Besucher, die eine Case-Study bis fast zum Ende gescrollt haben. Sagt mehr
+            über ein Projekt aus als die reine Zahl der Aufrufe.
+          </p>
+
+          {analytics.readDepth.length === 0 ? (
+            <p className="mt-4 text-sm text-faint">Noch keine Daten – wird ab dem ersten Besuch gefüllt.</p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {analytics.readDepth.map((item) => (
+                <li key={item.id}>
+                  <div className="flex items-baseline justify-between gap-3 text-sm">
+                    <span className="min-w-0 truncate text-muted">{item.title}</span>
+                    <span className="shrink-0 font-mono text-xs text-ink">{item.share} %</span>
+                  </div>
+                  <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-panel2">
+                    <div className="h-full rounded-full bg-accent" style={{ width: `${item.share}%` }} />
+                  </div>
+                  <p className="mt-1 text-[0.625rem] text-faint">
+                    {item.finished} von {item.opened} gelesen
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         <ListCard
           title="Beliebteste Seiten"
           empty="Noch keine Aufrufe."

@@ -26,9 +26,8 @@ import SectionHeading from '../components/SectionHeading.astro';
           <p class="print-only mt-2 text-sm" data-print-contact></p>
         </div>
 
-        <button
-          type="button"
-          data-print
+        <a
+          href="/lebenslauf/"
           data-cursor="hover"
           class="no-print inline-flex shrink-0 items-center gap-2.5 rounded-full border border-line px-5 py-3 text-sm text-muted transition-colors duration-300 hover:border-line-strong hover:text-ink"
         >
@@ -36,8 +35,8 @@ import SectionHeading from '../components/SectionHeading.astro';
             <path d="M7 9V4h10v5M7 19h10v-5H7v5Z" stroke-linejoin="round"></path>
             <path d="M7 14H4V9h16v5h-3" stroke-linejoin="round"></path>
           </svg>
-          <span data-text="about.print">Als PDF speichern</span>
-        </button>
+          <span data-text="about.print">Lebenslauf als PDF</span>
+        </a>
       </div>
 
       <dl class="mt-12 grid grid-cols-2 gap-8 border-y border-line py-8 sm:grid-cols-4" data-resume-facts></dl>

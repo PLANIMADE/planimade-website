@@ -301,6 +301,29 @@ final class Database
                 ALTER TABLE projects ADD COLUMN card_format TEXT NOT NULL DEFAULT 'landscape';
                 ALTER TABLE projects ADD COLUMN palette TEXT NOT NULL DEFAULT '[]';
             SQL,
+
+            /*
+             * Frühere URL-Kürzel. Wird ein Projekt umbenannt, bliebe ein
+             * bereits verschickter Link sonst dauerhaft tot – hier steht,
+             * wohin er stattdessen zeigen soll.
+             */
+            '014_slug_history' => <<<'SQL'
+                CREATE TABLE slug_history (
+                    slug       TEXT PRIMARY KEY,
+                    project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                    created_at TEXT NOT NULL
+                );
+            SQL,
+
+            // Veröffentlichung zu einem festgelegten Zeitpunkt.
+            '015_projects_schedule' => <<<'SQL'
+                ALTER TABLE projects ADD COLUMN publish_at TEXT;
+            SQL,
+
+            // Zahlenwert am Ereignis – gebraucht für die Lesetiefe (25/50/75/100 %).
+            '016_analytics_value' => <<<'SQL'
+                ALTER TABLE analytics ADD COLUMN value INTEGER;
+            SQL,
         ];
     }
 }

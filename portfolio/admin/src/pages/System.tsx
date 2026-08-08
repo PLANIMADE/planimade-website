@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, type SystemReport } from '../lib/api';
+import { api, type MediaItem, type SystemReport } from '../lib/api';
 import { useToast } from '../lib/toast';
 
 const STATUS_STYLE: Record<string, { color: string; label: string }> = {
@@ -117,8 +117,12 @@ export default function System() {
           <Info label="Arbeitsspeicher" value={report.info.memoryLimit} />
           <Info label="Zeitlimit" value={`${report.info.maxExecutionTime} s`} />
           <Info label="Ohne kleine Größen" value={String(report.info.imagesWithoutVariants)} />
+          <Info label="Ohne Beschreibung" value={String(report.info.imagesWithoutAlt)} />
+          <Info label="Geplante Projekte" value={String(report.info.scheduledProjects)} />
         </dl>
       </section>
+
+      {report.info.imagesWithoutAlt > 0 && <MissingAltPanel count={report.info.imagesWithoutAlt} />}
 
       <section className="panel space-y-4 p-6">
         <h2 className="text-sm font-semibold">Wartung</h2>
@@ -153,6 +157,92 @@ export default function System() {
         />
       </section>
     </div>
+  );
+}
+
+/**
+ * Bilder ohne Beschreibung – direkt hier ergänzbar.
+ *
+ * Alt-Texte sind das, was Screenreader vorlesen und was in der Bildersuche
+ * landet. Sie fehlen fast immer, weil sie beim Hochladen niemand einträgt.
+ */
+function MissingAltPanel({ count }: { count: number }) {
+  const toast = useToast();
+  const [items, setItems] = useState<MediaItem[]>([]);
+  const [drafts, setDrafts] = useState<Record<number, string>>({});
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+
+    api
+      .mediaWithoutAlt()
+      .then((data) => setItems(data.media))
+      .catch(() => toast('Liste konnte nicht geladen werden.', 'error'));
+  }, [open, toast]);
+
+  const save = async (item: MediaItem) => {
+    const alt = (drafts[item.id] ?? '').trim();
+    if (alt === '') return;
+
+    try {
+      await api.updateMedia(item.id, alt);
+      setItems((current) => current.filter((entry) => entry.id !== item.id));
+      toast('Beschreibung gespeichert');
+    } catch {
+      toast('Konnte nicht gespeichert werden.', 'error');
+    }
+  };
+
+  return (
+    <section className="panel space-y-4 p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold">Bilder ohne Beschreibung</h2>
+          <p className="mt-1 text-[0.6875rem] leading-relaxed text-muted">
+            {count} {count === 1 ? 'Bild hat' : 'Bilder haben'} keinen Alt-Text. Screenreader lesen
+            dann nur den Dateinamen vor, und die Bildersuche findet nichts.
+          </p>
+        </div>
+        <button type="button" onClick={() => setOpen(!open)} className="btn btn-ghost shrink-0 text-xs">
+          {open ? 'Einklappen' : 'Jetzt ergänzen'}
+        </button>
+      </div>
+
+      {open && (
+        <ul className="space-y-2">
+          {items.length === 0 ? (
+            <li className="text-sm text-faint">Alles beschrieben.</li>
+          ) : (
+            items.map((item) => (
+              <li key={item.id} className="flex items-center gap-3 rounded-lg border border-line p-2">
+                <img
+                  src={item.thumbUrl ?? item.url}
+                  alt=""
+                  className="h-12 w-16 shrink-0 rounded border border-line object-cover"
+                  loading="lazy"
+                />
+                <input
+                  className="field flex-1 py-1.5 text-xs"
+                  placeholder="Was ist auf dem Bild zu sehen?"
+                  value={drafts[item.id] ?? ''}
+                  onChange={(event) => setDrafts({ ...drafts, [item.id]: event.target.value })}
+                  onKeyDown={(event) => event.key === 'Enter' && void save(item)}
+                />
+                <button
+                  type="button"
+                  onClick={() => void save(item)}
+                  disabled={(drafts[item.id] ?? '').trim() === ''}
+                  className="btn btn-ghost shrink-0 px-3 py-1.5 text-xs"
+                >
+                  Speichern
+                </button>
+              </li>
+            ))
+          )}
+        </ul>
+      )}
+    </section>
   );
 }
 

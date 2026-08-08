@@ -7,15 +7,41 @@ interface Props {
   onSelect: (item: MediaItem) => void;
   onClose: () => void;
   title?: string;
+  /**
+   * Mehrere Dateien auf einmal übernehmen – etwa für eine Bildstrecke.
+   * Ohne diese Option schließt der Dialog beim ersten Klick.
+   */
+  multiple?: boolean;
 }
 
 /** Modal zum Auswählen oder Hochladen einer Datei. */
-export default function MediaPicker({ kind, onSelect, onClose, title = 'Medium auswählen' }: Props) {
+export default function MediaPicker({ kind, onSelect, onClose, title = 'Medium auswählen', multiple = false }: Props) {
   const toast = useToast();
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [picked, setPicked] = useState<MediaItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Bei Mehrfachauswahl sammelt der Dialog erst und übergibt am Ende alles
+  // auf einmal – in der Reihenfolge, in der angeklickt wurde.
+  const choose = (item: MediaItem): void => {
+    if (!multiple) {
+      onSelect(item);
+      return;
+    }
+
+    setPicked((current) =>
+      current.some((entry) => entry.id === item.id)
+        ? current.filter((entry) => entry.id !== item.id)
+        : [...current, item],
+    );
+  };
+
+  const confirm = (): void => {
+    picked.forEach(onSelect);
+    onClose();
+  };
 
   const load = useCallback(() => {
     setLoading(true);
@@ -67,6 +93,16 @@ export default function MediaPicker({ kind, onSelect, onClose, title = 'Medium a
             >
               {uploading ? 'Lädt hoch …' : '+ Hochladen'}
             </button>
+            {multiple && (
+              <button
+                type="button"
+                onClick={confirm}
+                disabled={picked.length === 0}
+                className="btn btn-primary px-3 py-1.5 text-xs"
+              >
+                {picked.length === 0 ? 'Nichts gewählt' : `${picked.length} übernehmen`}
+              </button>
+            )}
             <button type="button" onClick={onClose} className="btn btn-ghost px-2.5 py-1.5 text-xs">
               ✕
             </button>
@@ -112,9 +148,19 @@ export default function MediaPicker({ kind, onSelect, onClose, title = 'Medium a
                 <li key={item.id}>
                   <button
                     type="button"
-                    onClick={() => onSelect(item)}
-                    className="group w-full overflow-hidden rounded-lg border border-line text-left transition-colors hover:border-accent"
+                    onClick={() => choose(item)}
+                    aria-pressed={picked.some((entry) => entry.id === item.id)}
+                    className={`group relative w-full overflow-hidden rounded-lg border text-left transition-colors ${
+                      picked.some((entry) => entry.id === item.id)
+                        ? 'border-accent ring-1 ring-accent'
+                        : 'border-line hover:border-accent'
+                    }`}
                   >
+                    {multiple && picked.some((entry) => entry.id === item.id) && (
+                      <span className="absolute right-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-full bg-accent text-[0.625rem] font-semibold text-white">
+                        {picked.findIndex((entry) => entry.id === item.id) + 1}
+                      </span>
+                    )}
                     <span className="block aspect-[4/3] bg-panel2">
                       {item.kind === 'image' ? (
                         <img

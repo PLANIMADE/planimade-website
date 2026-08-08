@@ -292,6 +292,49 @@ function factsMarkup(project: Project): string {
     </dl>`;
 }
 
+/**
+ * Misst, wie weit Besucher eine Case-Study lesen.
+ *
+ * Gemeldet werden nur vier Schwellen (25/50/75/100 %) und jede nur einmal –
+ * das reicht für die Frage „hält das Projekt die Aufmerksamkeit?" und
+ * erzeugt keine Datenspur, die über den Besuch hinausgeht.
+ */
+function trackReadingDepth(projectId: number): void {
+  const thresholds = [25, 50, 75, 100];
+  const reported = new Set<number>();
+
+  const check = (): void => {
+    const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+    if (scrollable <= 0) return;
+
+    const percent = Math.min(100, Math.round((window.scrollY / scrollable) * 100));
+
+    thresholds
+      .filter((threshold) => percent >= threshold && !reported.has(threshold))
+      .forEach((threshold) => {
+        reported.add(threshold);
+        track('scroll_depth', { projectId, value: threshold });
+      });
+
+    if (reported.size === thresholds.length) {
+      window.removeEventListener('scroll', onScroll);
+    }
+  };
+
+  // Gedrosselt: Beim Scrollen feuert das Ereignis sonst hundertfach.
+  let waiting = false;
+  const onScroll = (): void => {
+    if (waiting) return;
+    waiting = true;
+    window.setTimeout(() => {
+      waiting = false;
+      check();
+    }, 400);
+  };
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+}
+
 export async function initProjectDetail(): Promise<void> {
   const root = document.querySelector<HTMLElement>('[data-project-root]');
   if (!root) return;
@@ -467,6 +510,7 @@ export async function initProjectDetail(): Promise<void> {
     });
   });
 
+  trackReadingDepth(project.id);
   initLightbox(root);
 
   // Schwergewichte erst laden, wenn das Projekt sie wirklich braucht.

@@ -24,8 +24,19 @@ final class Pages
 
     public function project(string $slug): never
     {
-        $project = $this->projects->findBySlug(Str::slug($slug));
+        $slug = Str::slug($slug);
+        $project = $this->projects->findBySlug($slug);
+
         if ($project === null) {
+            // Vielleicht ein früheres Kürzel: dann dauerhaft weiterleiten,
+            // damit bereits verschickte Links nicht ins Leere laufen.
+            $current = $this->projects->currentSlugFor($slug);
+            if ($current !== null) {
+                http_response_code(301);
+                header('Location: /work/' . rawurlencode($current));
+                exit;
+            }
+
             $this->notFound();
         }
 

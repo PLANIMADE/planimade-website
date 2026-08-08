@@ -79,6 +79,11 @@ Veröffentlichen: **[DEPLOY-ALL-INKL.md](DEPLOY-ALL-INKL.md)**
   Herunterladen und anklickbare Farbpaletten für Branding-Arbeiten
 - **Responsive Bildgrößen**: Jedes Bild liegt in 400/800/1600 px als WebP vor,
   ausgeliefert per `srcset` – auf dem Handy lädt niemand ein 4K-Rendering
+- **Portfolio-Seite mit Kategorienauswahl**: Mehrere Disziplinen gleichzeitig
+  wählbar, die Auswahl steht in der Adresse – ein gefilterter Link lässt sich
+  verschicken („hier nur meine Print-Arbeiten")
+- **Bewerbungs-Lebenslauf** unter `/lebenslauf/`: klassisch tabellarisch,
+  gespeist aus denselben Daten, per Browser-Druck ein sauberes A4-PDF
 - **Command-Palette** (⌘K / Strg+K) über Seiten, Projekte und Aktionen
 - **Hell/Dunkel-Umschalter** – welches Design neue Besucher zuerst sehen,
   legst du im Dashboard fest (Einstellungen → Profil → Darstellung). Die
@@ -93,6 +98,14 @@ Veröffentlichen: **[DEPLOY-ALL-INKL.md](DEPLOY-ALL-INKL.md)**
 
 - Projekte anlegen, bearbeiten, per **Drag & Drop** sortieren, als Entwurf halten
 - **Papierkorb**: Gelöschtes bleibt 30 Tage wiederherstellbar
+- **Veröffentlichung terminieren**: Projekt vorbereiten, Datum setzen, es geht
+  von selbst live
+- **Alte Links bleiben gültig**: Wird das URL-Kürzel eines Projekts geändert,
+  leitet der Server dauerhaft (301) auf die neue Adresse weiter
+- **Lesetiefe**: zeigt, welcher Anteil der Besucher eine Case-Study bis zum
+  Ende scrollt – aussagekräftiger als die reine Zahl der Aufrufe
+- **Fehlende Bildbeschreibungen** werden im Systemcheck aufgelistet und lassen
+  sich dort direkt nachtragen
 - **Medienbibliothek** mit Mehrfach-Upload, Drag & Drop und automatisch
   erzeugten Bildgrößen
 - **Posteingang** für Kontaktanfragen inklusive Status und Direktantwort

@@ -17,7 +17,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { api, type Project } from '../lib/api';
+import { api, formatDate, type Project } from '../lib/api';
 import { useToast } from '../lib/toast';
 
 export default function Projects() {
@@ -173,11 +173,13 @@ function SortableRow({
         className={`hidden shrink-0 rounded-full border px-2.5 py-1 text-[0.625rem] font-medium transition-colors sm:block ${
           project.status === 'published'
             ? 'border-ok/40 text-ok hover:bg-ok/10'
-            : 'border-line text-faint hover:text-ink'
+            : project.publishAt
+              ? 'border-warn/40 text-warn hover:bg-warn/10'
+              : 'border-line text-faint hover:text-ink'
         }`}
-        title="Status umschalten"
+        title={project.publishAt ? `Geplant für ${formatDate(project.publishAt)}` : 'Status umschalten'}
       >
-        {project.status === 'published' ? 'LIVE' : 'ENTWURF'}
+        {project.status === 'published' ? 'LIVE' : project.publishAt ? 'GEPLANT' : 'ENTWURF'}
       </button>
 
       <div className="flex shrink-0 gap-1.5">

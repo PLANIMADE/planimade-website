@@ -331,6 +331,30 @@ export default function SettingsPage() {
             </div>
           </section>
 
+          <section className="panel space-y-4 p-6">
+            <h2 className="text-sm font-semibold">Laufband</h2>
+            <p className="text-[0.6875rem] leading-relaxed text-faint">
+              Die Wortliste, die unter dem Kopfbereich durchläuft. Ein Begriff pro Zeile.
+            </p>
+
+            <textarea
+              className="field min-h-40 resize-y font-mono text-xs leading-relaxed"
+              value={settings.marquee.join('\n')}
+              onChange={(event) =>
+                set(
+                  'marquee',
+                  event.target.value
+                    .split('\n')
+                    .map((entry) => entry.trim())
+                    .filter(Boolean),
+                )
+              }
+            />
+            <p className="text-[0.6875rem] text-faint">
+              {settings.marquee.length} Begriffe · leer lassen blendet das Laufband aus
+            </p>
+          </section>
+
           {settings.hero.mode === 'showreel' && (
             <section className="panel space-y-5 p-6">
               <h2 className="text-sm font-semibold">Showreel</h2>
@@ -382,6 +406,121 @@ export default function SettingsPage() {
 
       {tab === 'lebenslauf' && (
         <div className="space-y-6">
+          <section className="panel space-y-5 p-6">
+            <div>
+              <h2 className="text-sm font-semibold">Bewerbungs-Lebenslauf</h2>
+              <p className="mt-1 text-[0.6875rem] leading-relaxed text-muted">
+                Unter{' '}
+                <a href="/lebenslauf/" target="_blank" rel="noopener" className="text-accent underline">
+                  /lebenslauf/
+                </a>{' '}
+                entsteht daraus ein klassischer tabellarischer Lebenslauf zum Ausdrucken oder als
+                PDF – gespeist aus Werdegang, Kompetenzen und Sprachen weiter unten. Die Seite ist
+                für Suchmaschinen gesperrt.
+              </p>
+            </div>
+
+            <div>
+              <label className="label" htmlFor="cv-profile">
+                Kurzprofil
+              </label>
+              <textarea
+                id="cv-profile"
+                className="field min-h-28 resize-y"
+                value={settings.cv.profile}
+                placeholder="Zwei, drei Sätze für Bewerbungen – nüchterner als der Text auf der Website."
+                onChange={(event) => set('cv', { ...settings.cv, profile: event.target.value })}
+              />
+              <p className="mt-1 text-[0.6875rem] text-faint">
+                Leer lassen: dann wird der erste Absatz deines Vorstellungstexts verwendet.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <p className="label">Kopfdaten</p>
+              {settings.cv.details.map((detail, index) => (
+                <div key={index} className="flex gap-2">
+                  <input
+                    className="field w-44 shrink-0"
+                    value={detail.label}
+                    placeholder="Anschrift"
+                    onChange={(event) => {
+                      const details = [...settings.cv.details];
+                      details[index] = { ...detail, label: event.target.value };
+                      set('cv', { ...settings.cv, details });
+                    }}
+                  />
+                  <input
+                    className="field flex-1"
+                    value={detail.value}
+                    placeholder="Musterstraße 1, 12345 Musterstadt"
+                    onChange={(event) => {
+                      const details = [...settings.cv.details];
+                      details[index] = { ...detail, value: event.target.value };
+                      set('cv', { ...settings.cv, details });
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      set('cv', {
+                        ...settings.cv,
+                        details: settings.cv.details.filter((_, position) => position !== index),
+                      })
+                    }
+                    className="btn btn-danger px-2.5 text-xs"
+                    aria-label="Entfernen"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => set('cv', { ...settings.cv, details: [...settings.cv.details, { label: '', value: '' }] })}
+                className="btn btn-ghost text-xs"
+              >
+                + Angabe
+              </button>
+              <p className="text-[0.6875rem] leading-relaxed text-faint">
+                Leere Angaben erscheinen nicht. E-Mail und Standort kommen automatisch aus dem Profil.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              {(
+                [
+                  ['includePhoto', 'Porträtbild zeigen'],
+                  ['includeProjects', 'Abschnitt „Projekte" zeigen'],
+                  ['includeExpertise', 'Abschnitt „Kenntnisse" zeigen'],
+                ] as const
+              ).map(([key, label]) => (
+                <label key={key} className="flex cursor-pointer items-center gap-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={settings.cv[key]}
+                    onChange={(event) => set('cv', { ...settings.cv, [key]: event.target.checked })}
+                    className="accent-[var(--accent)]"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+
+            <div>
+              <label className="label" htmlFor="cv-footer">
+                Fußzeile (optional)
+              </label>
+              <input
+                id="cv-footer"
+                className="field"
+                value={settings.cv.footer}
+                placeholder="z. B. Musterstadt, Januar 2026"
+                onChange={(event) => set('cv', { ...settings.cv, footer: event.target.value })}
+              />
+            </div>
+          </section>
+
           <section className="panel space-y-4 p-6">
             <h2 className="text-sm font-semibold">Eckdaten</h2>
             <p className="text-[0.6875rem] text-faint">Die Zahlenreihe oben auf der Lebenslauf-Seite.</p>

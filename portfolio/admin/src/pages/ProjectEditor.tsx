@@ -25,6 +25,7 @@ type Draft = {
   palette: Array<{ name: string; hex: string }>;
   display: 'cover' | 'contain';
   cardFormat: 'landscape' | 'square' | 'portrait';
+  publishAt: string;
   cover: MediaItem | null;
   preview: MediaItem | null;
   model: MediaItem | null;
@@ -53,6 +54,7 @@ const EMPTY: Draft = {
   palette: [],
   display: 'cover',
   cardFormat: 'landscape',
+  publishAt: '',
   cover: null,
   preview: null,
   model: null,
@@ -84,6 +86,8 @@ function toDraft(project: Project): Draft {
     palette: project.palette,
     display: project.display,
     cardFormat: project.cardFormat,
+    // ISO-Zeit auf das Format des Datumsfelds kürzen (ohne Sekunden/Zeitzone).
+    publishAt: project.publishAt ? project.publishAt.slice(0, 16) : '',
     cover: project.cover,
     preview: project.preview,
     model: project.model,
@@ -171,6 +175,7 @@ export default function ProjectEditor() {
       palette: draft.palette.filter((color) => color.hex.trim() !== ''),
       display: draft.display,
       cardFormat: draft.cardFormat,
+      publishAt: draft.publishAt === '' ? null : draft.publishAt,
       coverId: draft.cover?.id ?? null,
       previewId: draft.preview?.id ?? null,
       modelId: draft.model?.id ?? null,
@@ -490,6 +495,24 @@ export default function ProjectEditor() {
               ))}
             </div>
 
+            <div>
+              <label className="label" htmlFor="publishAt">
+                Veröffentlichen am (optional)
+              </label>
+              <input
+                id="publishAt"
+                type="datetime-local"
+                className="field"
+                value={draft.publishAt}
+                onChange={(event) => set('publishAt', event.target.value)}
+              />
+              <p className="mt-1 text-[0.6875rem] leading-relaxed text-faint">
+                {draft.publishAt
+                  ? 'Das Projekt bleibt Entwurf und geht zum gewählten Zeitpunkt von selbst live.'
+                  : 'Leer lassen für sofortiges Veröffentlichen über den Knopf unten.'}
+              </p>
+            </div>
+
             <label className="flex cursor-pointer items-start gap-2.5 text-xs text-muted">
               <input
                 type="checkbox"
@@ -676,11 +699,16 @@ export default function ProjectEditor() {
       {addingGallery && (
         <MediaPicker
           title="Zur Bildstrecke hinzufügen"
+          multiple
           onClose={() => setAddingGallery(false)}
-          onSelect={(item) => {
-            set('gallery', [...draft.gallery, { media: item, caption: '', layout: 'full' }]);
-            setAddingGallery(false);
-          }}
+          onSelect={(item) =>
+            // Wird pro gewählter Datei einmal aufgerufen – deshalb anhängen
+            // statt aus `draft` zu lesen, sonst überschreiben sich die Aufrufe.
+            setDraft((current) => ({
+              ...current,
+              gallery: [...current.gallery, { media: item, caption: '', layout: 'full' }],
+            }))
+          }
         />
       )}
     </div>

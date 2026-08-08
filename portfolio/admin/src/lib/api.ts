@@ -46,6 +46,7 @@ export interface Project {
   display: 'cover' | 'contain';
   cardFormat: 'landscape' | 'square' | 'portrait';
   status: 'draft' | 'published';
+  publishAt: string | null;
   featured: boolean;
   position: number;
   views: number;
@@ -132,6 +133,8 @@ export interface SystemReport {
     uploadsSize: string;
     mediaCount: number;
     imagesWithoutVariants: number;
+    imagesWithoutAlt: number;
+    scheduledProjects: number;
     trashCount: number;
     serverTime: string;
     memoryLimit: string;
@@ -149,6 +152,15 @@ export interface Settings {
   hero: HeroSettings;
   portrait: { mediaId: number | null; caption: string; image: MediaItem | null };
   texts: Record<string, string>;
+  marquee: string[];
+  cv: {
+    profile: string;
+    includePhoto: boolean;
+    includeProjects: boolean;
+    includeExpertise: boolean;
+    details: Array<{ label: string; value: string }>;
+    footer: string;
+  };
   expertise: ExpertiseItem[];
   resume: Resume;
   availability: { visible: boolean; status: 'open' | 'limited' | 'closed'; label: string; detail: string };
@@ -169,6 +181,7 @@ export interface Stats {
     perDay: Array<{ day: string; views: number; visitors: number }>;
     topPages: Array<{ path: string; views: number }>;
     topProjects: Array<{ id: number; title: string; slug: string; views: number }>;
+    readDepth: Array<{ id: number; title: string; slug: string; opened: number; finished: number; share: number }>;
     referrers: Array<{ referrer: string; views: number }>;
     devices: Array<{ device: string; views: number }>;
   };
@@ -250,6 +263,7 @@ export const api = {
 
   // Medien
   media: (kind?: string) => request<{ media: MediaItem[] }>(`media${kind ? `?kind=${kind}` : ''}`),
+  mediaWithoutAlt: () => request<{ media: MediaItem[] }>('media?missingAlt=1&limit=100'),
   uploadMedia: (file: File, alt = '') => {
     const form = new FormData();
     form.append('file', file);

@@ -56,6 +56,29 @@ function fillTexts(settings: Settings): void {
   });
 }
 
+/** Laufband auf der Startseite aus dem Dashboard befüllen. */
+function fillMarquee(settings: Settings): void {
+  const track = document.querySelector<HTMLElement>('[data-marquee-track]');
+  if (!track) return;
+
+  const items = (settings.marquee ?? []).map((item) => item.trim()).filter(Boolean);
+  if (items.length === 0) {
+    track.closest('.marquee')?.remove();
+    return;
+  }
+
+  // Zweimal ausgeben: Die Animation läuft bis -50 % und springt unsichtbar zurück.
+  track.innerHTML = [...items, ...items]
+    .map(
+      (item) => `
+      <span class="flex shrink-0 items-center gap-8 px-8">
+        <span class="whitespace-nowrap text-sm font-medium tracking-tight text-muted">${escapeHtml(item)}</span>
+        <span class="text-accent/60">✦</span>
+      </span>`,
+    )
+    .join('');
+}
+
 function fillPortrait(settings: Settings): void {
   const figure = document.querySelector<HTMLElement>('[data-portrait]');
   if (!figure) return;
@@ -258,6 +281,7 @@ export async function initHydration(): Promise<void> {
   // Zuerst die festen Texte – danach überschreiben die spezielleren
   // Bausteine (Name, Rolle …) gezielt einzelne Stellen.
   fillTexts(settings);
+  fillMarquee(settings);
   fillPortrait(settings);
 
   setText('[data-name]', settings.name);

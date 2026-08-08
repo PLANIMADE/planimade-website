@@ -1,0 +1,91 @@
+---
+import Base from '../layouts/Base.astro';
+
+/**
+ * Bewerbungs-Lebenslauf im klassischen tabellarischen Aufbau.
+ *
+ * Bewusst eine eigene Seite und nicht die Druckansicht von „Über mich":
+ * Eine Bewerbung braucht andere Angaben (Anschrift, Geburtsjahr, Kurzprofil)
+ * und ein nüchternes Layout – während die Portfolio-Seite werben darf.
+ *
+ * Die Daten kommen aus demselben Dashboard, sind also immer aktuell.
+ * Über „Als PDF speichern" erzeugt der Browser daraus ein sauberes A4-Dokument.
+ */
+---
+
+<Base
+  title="Lebenslauf – Dominic Majewski"
+  description="Tabellarischer Lebenslauf von Dominic Majewski."
+  noindex={true}
+>
+  <div data-cv class="cv-page">
+    <!-- Bildschirm-Leiste: im Ausdruck ausgeblendet -->
+    <div class="no-print container-page pt-[calc(var(--nav-height)+2.5rem)]">
+      <div
+        class="surface-card flex flex-wrap items-center justify-between gap-4 p-5"
+        data-reveal
+      >
+        <p class="text-sm text-muted">
+          Dieser Lebenslauf zieht seine Angaben aus dem Dashboard – er ist also nie veraltet.
+        </p>
+        <button
+          type="button"
+          data-print
+          data-cursor="hover"
+          class="shrink-0 rounded-full bg-ink px-6 py-3 text-sm font-semibold text-bg"
+        >
+          Als PDF speichern
+        </button>
+      </div>
+    </div>
+
+    <!-- Das eigentliche Dokument -->
+    <article class="cv-sheet">
+      <header class="cv-header">
+        <div class="cv-header-text">
+          <p class="cv-kicker">Lebenslauf</p>
+          <h1 class="cv-name" data-name>Dominic Majewski</h1>
+          <p class="cv-role" data-role>3D Artist · Motion Designer</p>
+        </div>
+
+        <figure class="cv-photo" data-cv-photo hidden>
+          <img data-cv-photo-image alt="" />
+        </figure>
+      </header>
+
+      <dl class="cv-details" data-cv-details></dl>
+
+      <section class="cv-section" data-cv-profile-block hidden>
+        <h2 class="cv-section-title">Kurzprofil</h2>
+        <p class="cv-profile" data-cv-profile></p>
+      </section>
+
+      <section class="cv-section" data-cv-block="work" hidden>
+        <h2 class="cv-section-title">Berufserfahrung</h2>
+        <div class="cv-entries" data-cv-entries="work"></div>
+      </section>
+
+      <section class="cv-section" data-cv-block="education" hidden>
+        <h2 class="cv-section-title">Ausbildung</h2>
+        <div class="cv-entries" data-cv-entries="education"></div>
+      </section>
+
+      <section class="cv-section" data-cv-block="project" hidden>
+        <h2 class="cv-section-title">Projekte</h2>
+        <div class="cv-entries" data-cv-entries="project"></div>
+      </section>
+
+      <section class="cv-section" data-cv-block="expertise" hidden>
+        <h2 class="cv-section-title">Kenntnisse</h2>
+        <div class="cv-entries" data-cv-expertise></div>
+      </section>
+
+      <section class="cv-section" data-cv-block="languages" hidden>
+        <h2 class="cv-section-title">Sprachen</h2>
+        <div class="cv-entries" data-cv-languages></div>
+      </section>
+
+      <p class="cv-footer" data-cv-footer hidden></p>
+    </article>
+  </div>
+</Base>

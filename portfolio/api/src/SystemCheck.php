@@ -201,6 +201,13 @@ final class SystemCheck
             'imagesWithoutVariants' => (int) $this->db->value(
                 "SELECT COUNT(*) FROM media WHERE kind = 'image' AND (variants = '{}' OR variants = '' OR variants IS NULL)"
             ),
+            // Bilder ohne Beschreibung: schlecht für Screenreader und Bildersuche.
+            'imagesWithoutAlt' => (int) $this->db->value(
+                "SELECT COUNT(*) FROM media WHERE kind = 'image' AND (alt IS NULL OR trim(alt) = '')"
+            ),
+            'scheduledProjects' => (int) $this->db->value(
+                'SELECT COUNT(*) FROM projects WHERE publish_at IS NOT NULL AND deleted_at IS NULL'
+            ),
             'trashCount' => (int) $this->db->value('SELECT COUNT(*) FROM projects WHERE deleted_at IS NOT NULL'),
             'serverTime' => gmdate('c'),
             'memoryLimit' => (string) ini_get('memory_limit'),
