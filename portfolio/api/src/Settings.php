@@ -216,6 +216,10 @@ final class Settings
              */
             'cv' => [
                 'profile' => '',
+                // Papierfarbe des Dokuments: 'light' oder 'dark'. Unabhängig
+                // vom Farbschema der Website – das Blatt ist ein eigenes
+                // Medium und soll überall gleich aussehen.
+                'theme' => 'light',
                 'includePhoto' => true,
                 'includeProjects' => true,
                 'includeExpertise' => true,

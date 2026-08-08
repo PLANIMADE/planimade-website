@@ -611,7 +611,6 @@ html.no-js .line-mask > span {
   max-width: 62rem;
   overflow: hidden;
   border-radius: 1.5rem;
-  background: var(--bg-elevated);
   box-shadow:
     0 2px 6px rgb(0 0 0 / 18%),
     0 44px 90px -44px rgb(0 0 0 / 55%);
@@ -620,6 +619,36 @@ html.no-js .line-mask > span {
   /* Innenabstand des Blatts – am Bildschirm großzügig, im Druck 14 mm. */
   --cv-pad: clamp(1.75rem, 4.5vw, 3.5rem);
   counter-reset: cv-section;
+
+  /* Das Blatt bringt seine eigene Palette mit und hängt nicht am Farbschema
+     der Website: Ein Dokument soll überall gleich aussehen – am Bildschirm,
+     im PDF und auf Papier. Welche der beiden gilt, steht im Dashboard und
+     lässt sich oben für einen einzelnen Export umschalten. */
+  --paper: #ffffff;
+  --paper-soft: #f7f7fa;
+  --accent: #7c3aed;
+  --on-accent: #ffffff;
+  --surface: #ffffff;
+  --text: #101014;
+  --text-muted: #3f3f4a;
+  --text-faint: #6c6c78;
+  --line: #e3e3e9;
+  --line-strong: #c4c4ce;
+
+  background: var(--paper);
+  color: var(--text);
+}
+
+.cv-sheet.cv-dark {
+  --paper: #0b0b12;
+  --paper-soft: #101018;
+  --accent: #a855f7;
+  --surface: #0e0e16;
+  --text: #edecf2;
+  --text-muted: #a3a2b0;
+  --text-faint: #6f6e7d;
+  --line: #23222e;
+  --line-strong: #3a3948;
 }
 
 /* ------------------------------------------------------------------ Kopf */
@@ -688,15 +717,10 @@ html.no-js .line-mask > span {
   display: block;
 }
 
-/* Der Nachname als Kontur – exakt der Kniff aus dem Hero der Startseite. */
+/* Beide Zeilen gefüllt: Der Name ist der stärkste Block auf dem Blatt und
+   soll das auch sein. Die Konturschrift des Heros bleibt der Startseite. */
+.cv-name-first,
 .cv-name-last {
-  color: transparent;
-  -webkit-text-stroke: 1.5px rgb(255 255 255 / 55%);
-  transition: color var(--dur-slow) var(--ease-out-expo);
-}
-
-/* Kleine Belohnung am Bildschirm: Wer den Namen berührt, füllt ihn. */
-.cv-name:hover .cv-name-last {
   color: #fff;
 }
 
@@ -731,7 +755,7 @@ html.no-js .line-mask > span {
   overflow: hidden;
   padding: 0.85rem var(--cv-pad);
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-family: var(--font-mono);
   font-size: 0.625rem;
   letter-spacing: 0.28em;
@@ -744,33 +768,19 @@ html.no-js .line-mask > span {
 
 .cv-body {
   display: grid;
-  grid-template-columns: 15.5rem 1fr;
+  grid-template-columns: 17.5rem 1fr;
 }
 
 .cv-rail {
   position: relative;
   align-self: stretch;
-  padding: clamp(2rem, 4vw, 2.75rem) clamp(1.5rem, 3vw, 2rem) clamp(2rem, 4vw, 2.75rem) var(--cv-pad);
+  padding: clamp(2rem, 4vw, 2.75rem) clamp(2rem, 3.5vw, 2.5rem) clamp(2rem, 4vw, 2.75rem) var(--cv-pad);
   border-right: 1px solid var(--line);
-  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
-}
-
-/* Senkrechte Marke am Spaltenrand – kostet keine Zeilenhöhe und gibt dem
-   Blatt sofort eine Leserichtung. */
-.cv-rail-vertical {
-  position: absolute;
-  top: clamp(2rem, 4vw, 2.75rem);
-  right: 0.55rem;
-  writing-mode: vertical-rl;
-  font-family: var(--font-mono);
-  font-size: 0.5625rem;
-  letter-spacing: 0.42em;
-  text-transform: uppercase;
-  color: var(--text-faint);
+  background: color-mix(in srgb, var(--accent) 5%, var(--paper));
 }
 
 .cv-rail-block + .cv-rail-block {
-  margin-top: 1.75rem;
+  margin-top: 2.25rem;
 }
 
 .cv-rail-title {
@@ -790,7 +800,7 @@ html.no-js .line-mask > span {
 
 .cv-contact-row + .cv-contact-row,
 .cv-facts-row + .cv-facts-row {
-  margin-top: 0.7rem;
+  margin-top: 0.95rem;
 }
 
 .cv-contact-row dt,
@@ -974,7 +984,7 @@ html.no-js .line-mask > span {
 .cv-chip.is-key {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
 }
 
@@ -986,7 +996,7 @@ html.no-js .line-mask > span {
   gap: 0.9rem;
   padding: 1rem var(--cv-pad);
   border-top: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--paper-soft);
   font-family: var(--font-mono);
   font-size: 0.625rem;
   letter-spacing: 0.16em;
@@ -1002,7 +1012,7 @@ html.no-js .line-mask > span {
   flex-shrink: 0;
   border-radius: 0.4rem;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-family: var(--font-display);
   font-size: 0.625rem;
   font-weight: 800;
@@ -1021,12 +1031,25 @@ html.no-js .line-mask > span {
   --signal: #3a3a44;
 }
 
+/* Auf dunklem Papier muss die neutrale Farbe hell sein, sonst verschwinden
+   Band, Chips und Marke. Dann ist auch die Schrift darauf dunkel. */
+.cv-sheet.cv-dark.cv-mono {
+  --accent: #d9d9e2;
+  --on-accent: #0b0b12;
+  --signal: #6f6e7d;
+}
+
 .cv-sheet.cv-mono .cv-head-wash {
   background: linear-gradient(160deg, #22222a, #08080b);
 }
 
 .cv-sheet.cv-mono .cv-rail {
-  background: color-mix(in srgb, #000 4%, var(--surface));
+  background: color-mix(in srgb, var(--text) 4%, var(--paper));
+}
+
+/* Das Porträt bleibt sichtbar – nur eben ohne Farbe. */
+.cv-sheet.cv-mono .cv-photo img {
+  filter: grayscale(1);
 }
 
 /* Ausdrücklich `screen`: Ein A4-Blatt ist 794 px breit und würde sonst im
@@ -1236,6 +1259,14 @@ html.no-js .line-mask > span {
     page: cv;
   }
 
+  /* Endet das Blatt vor der Seitenkante, käme darunter das Weiß der Seite
+     zum Vorschein – beim dunklen Papier ein heller Streifen am unteren Rand.
+     Der Hintergrund des Wurzelelements färbt die ganze Druckfläche. */
+  html:has(.cv-sheet.cv-dark),
+  html:has(.cv-sheet.cv-dark) body {
+    background: #0b0b12 !important;
+  }
+
   .cv-sheet {
     page: cv;
     width: 100%;
@@ -1244,7 +1275,6 @@ html.no-js .line-mask > span {
     border: 0;
     border-radius: 0;
     box-shadow: none;
-    background: #fff;
     /* Am Bildschirm beschneidet `overflow: hidden` die abgerundeten Ecken.
        Im Druck macht dieselbe Angabe das Blatt zu einem unteilbaren Kasten –
        dann greift weder der eigene Seitenname noch ein sauberer Umbruch. */
@@ -1252,27 +1282,12 @@ html.no-js .line-mask > span {
     font-size: 9.5pt;
     line-height: 1.42;
     --cv-pad: 14mm;
-
-    /* Die allgemeine Druckansicht oben setzt alles auf Schwarzweiß. Der
-       Lebenslauf soll aber aussehen wie die Website – deshalb hier eine
-       eigene, für Papier abgestimmte Palette. */
-    --accent: #7c3aed;
-    --signal: #0ea5e9;
-    --surface: #ffffff;
-    --text: #101014;
-    --text-muted: #3f3f4a;
-    --text-faint: #6c6c78;
-    --line: #e3e3e9;
-    --line-strong: #c4c4ce;
-  }
-
-  .cv-sheet.cv-mono {
-    --accent: #14141a;
-    --signal: #3a3a44;
   }
 
   /* Ohne diese Angabe wirft der Browser alle Farbflächen beim Drucken weg –
-     und genau die machen hier das Dokument aus. */
+     und genau die machen hier das Dokument aus. Beim dunklen Papier gilt das
+     für das ganze Blatt. */
+  .cv-sheet,
   .cv-head,
   .cv-head-wash,
   .cv-strip,
@@ -1280,8 +1295,10 @@ html.no-js .line-mask > span {
   .cv-rail-title,
   .cv-num,
   .cv-chip,
+  .cv-foot,
   .cv-foot-mark,
-  .cv-photo {
+  .cv-photo,
+  .cv-photo img {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
@@ -1332,7 +1349,7 @@ html.no-js .line-mask > span {
   }
 
   .cv-body {
-    grid-template-columns: 52mm 1fr;
+    grid-template-columns: 54mm 1fr;
     align-items: start;
   }
 
@@ -1340,14 +1357,8 @@ html.no-js .line-mask > span {
     padding: 8mm 6mm 8mm var(--cv-pad);
   }
 
-  .cv-rail-vertical {
-    top: 8mm;
-    right: 1.5mm;
-    font-size: 6pt;
-  }
-
   .cv-rail-block + .cv-rail-block {
-    margin-top: 6mm;
+    margin-top: 6.5mm;
   }
 
   .cv-rail-block {
@@ -1366,7 +1377,7 @@ html.no-js .line-mask > span {
 
   .cv-contact-row + .cv-contact-row,
   .cv-facts-row + .cv-facts-row {
-    margin-top: 2.4mm;
+    margin-top: 2.8mm;
   }
 
   .cv-contact-row dt,

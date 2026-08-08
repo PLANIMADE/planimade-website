@@ -155,6 +155,8 @@ export interface Settings {
   marquee: string[];
   cv: {
     profile: string;
+    /** Papierfarbe des Dokuments – unabhängig vom Farbschema der Website. */
+    theme: 'light' | 'dark';
     includePhoto: boolean;
     includeProjects: boolean;
     includeExpertise: boolean;

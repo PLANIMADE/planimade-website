@@ -111,12 +111,13 @@ function fillExpertise(settings: Settings): void {
 }
 
 /**
- * Erlaubt einen Zeilenumbruch hinter „@" und Punkten, indem dort ein
- * unsichtbares Trennzeichen steht. Ohne das bricht der Browser eine lange
- * E-Mail mitten im Wort um – „…@gma / il.com" sieht auf Papier falsch aus.
+ * Erlaubt einen Zeilenumbruch hinter „@" und „/", indem dort ein unsichtbares
+ * Trennzeichen steht. Ohne das bricht der Browser eine lange E-Mail mitten im
+ * Wort um – „…@gma / il.com" sieht auf Papier falsch aus. Punkte bleiben
+ * bewusst außen vor, sonst landet „com" allein in der nächsten Zeile.
  */
 function softBreaks(value: string): string {
-  return value.replace(/([@./])/g, '$1​');
+  return value.replace(/([@/])/g, '$1​');
 }
 
 /** Zeilen für die schmale Spalte – Beschriftung oben, Wert darunter. */
@@ -289,6 +290,9 @@ function wireToggles(sheet: HTMLElement): void {
     if (name === 'color') {
       sheet.classList.toggle('cv-mono', !on);
     }
+    if (name === 'dark') {
+      sheet.classList.toggle('cv-dark', on);
+    }
   };
 
   document.querySelectorAll<HTMLInputElement>('[data-cv-toggle]').forEach((input) => {
@@ -300,6 +304,9 @@ function wireToggles(sheet: HTMLElement): void {
     }
     if (name === 'projects') {
       input.checked = document.querySelector<HTMLElement>('[data-cv-block="project"]')?.hidden === false;
+    }
+    if (name === 'dark') {
+      input.checked = sheet.classList.contains('cv-dark');
     }
 
     input.addEventListener('change', () => apply(name, input.checked));
@@ -353,7 +360,12 @@ export async function initCv(): Promise<void> {
   fillFooter(settings);
 
   const sheet = document.querySelector<HTMLElement>('[data-cv-sheet]');
-  if (sheet) wireToggles(sheet);
+  if (sheet) {
+    // Papierfarbe zuerst setzen, damit die Schalter oben den richtigen
+    // Startzustand ablesen können.
+    sheet.classList.toggle('cv-dark', settings.cv.theme === 'dark');
+    wireToggles(sheet);
+  }
 
   document.querySelectorAll<HTMLButtonElement>('[data-print]').forEach((button) => {
     button.addEventListener('click', () => window.print());

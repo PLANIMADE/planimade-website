@@ -487,6 +487,31 @@ export default function SettingsPage() {
               </p>
             </div>
 
+            <div>
+              <p className="label">Papier</p>
+              <div className="mt-2 flex gap-2">
+                {(
+                  [
+                    ['light', 'Hell'],
+                    ['dark', 'Dunkel'],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => set('cv', { ...settings.cv, theme: value })}
+                    className={`btn text-xs ${settings.cv.theme === value ? 'btn-primary' : 'btn-ghost'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1 text-[0.6875rem] leading-relaxed text-faint">
+                Gilt nur für das Lebenslauf-Dokument, nicht für die Website. Auf der Seite selbst
+                kannst du für einen einzelnen Export jederzeit umschalten.
+              </p>
+            </div>
+
             <div className="space-y-2">
               {(
                 [

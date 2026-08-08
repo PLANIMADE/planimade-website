@@ -10,10 +10,12 @@ import Base from '../layouts/Base.astro';
  *
  * Gestaltung: kein Behörden-Formular, sondern ein Editorial-Blatt aus
  * demselben Baukasten wie die Website – randabfallender Kopf in der
- * Akzentfarbe, der Nachname als Konturschrift wie im Hero, ein Laufband
- * aus Schlagwörtern, nummerierte Abschnitte und Kenntnisse als Chipwand.
- * Wer es nüchtern braucht, schaltet oben „Farbe" aus: dann steht dasselbe
- * Layout in Schwarz da.
+ * Akzentfarbe, großer Name, ein Laufband aus Schlagwörtern, nummerierte
+ * Abschnitte und Kenntnisse als Chipwand.
+ *
+ * Das Blatt bringt seine eigene Palette mit und hängt nicht am Farbschema
+ * der Website. Hell oder dunkel steht im Dashboard; die Schalter oben
+ * ändern Foto, Projekte, Farbe und Papier für einen einzelnen Export.
  */
 ---
 
@@ -55,6 +57,10 @@ import Base from '../layouts/Base.astro';
             <label class="flex cursor-pointer items-center gap-2 text-xs text-muted">
               <input type="checkbox" data-cv-toggle="color" class="accent-[var(--accent)]" checked />
               Farbe
+            </label>
+            <label class="flex cursor-pointer items-center gap-2 text-xs text-muted">
+              <input type="checkbox" data-cv-toggle="dark" class="accent-[var(--accent)]" />
+              Dunkles Papier
             </label>
 
             <button
@@ -106,8 +112,6 @@ import Base from '../layouts/Base.astro';
           <!-- =================================================== KÖRPER -->
           <div class="cv-body">
             <aside class="cv-rail">
-              <p class="cv-rail-vertical" aria-hidden="true">Curriculum Vitae</p>
-
               <div class="cv-rail-stack">
                 <section class="cv-rail-block">
                   <h2 class="cv-rail-title">Kontakt</h2>
