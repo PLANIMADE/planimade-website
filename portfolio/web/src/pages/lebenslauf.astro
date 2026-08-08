@@ -132,6 +132,14 @@ import Base from '../layouts/Base.astro';
                   <h2 class="cv-rail-title">Eckdaten</h2>
                   <dl class="cv-facts" data-cv-facts></dl>
                 </section>
+
+                {/* Die Chipwand steht hier und nicht im Textteil: In der
+                    schmalen Spalte war sonst ein Drittel der Seite tote
+                    Fläche, während der Werdegang daneben überlief. */}
+                <section class="cv-rail-block" data-cv-block="expertise" hidden>
+                  <h2 class="cv-rail-title">Werkzeuge &amp; Kenntnisse</h2>
+                  <div class="cv-chip-wall" data-cv-expertise></div>
+                </section>
               </div>
             </aside>
 
@@ -153,11 +161,6 @@ import Base from '../layouts/Base.astro';
               <section class="cv-section" data-cv-block="project" hidden>
                 <h2 class="cv-section-title"><i class="cv-num" aria-hidden="true"></i>Ausgewählte Projekte</h2>
                 <div data-cv-entries="project"></div>
-              </section>
-
-              <section class="cv-section cv-section-skills" data-cv-block="expertise" hidden>
-                <h2 class="cv-section-title"><i class="cv-num" aria-hidden="true"></i>Werkzeuge &amp; Kenntnisse</h2>
-                <div class="cv-chip-wall" data-cv-expertise></div>
               </section>
             </div>
           </div>

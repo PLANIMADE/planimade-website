@@ -148,7 +148,8 @@ function fillLanguages(settings: Settings): void {
     return;
   }
 
-  container.innerHTML = rowsMarkup(rows, 'cv-contact-row');
+  // Wie die Eckdaten kurze Wertepaare – Beschriftung links, Stufe rechts.
+  container.innerHTML = rowsMarkup(rows, 'cv-facts-row');
   block.hidden = false;
 }
 

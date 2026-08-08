@@ -786,7 +786,7 @@ html.no-js .line-mask > span {
 
 .cv-body {
   display: grid;
-  grid-template-columns: 17.5rem 1fr;
+  grid-template-columns: 20rem 1fr;
 }
 
 .cv-rail {
@@ -821,6 +821,17 @@ html.no-js .line-mask > span {
   margin-top: 0.95rem;
 }
 
+.cv-facts-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.cv-facts-row dd {
+  text-align: right;
+}
+
 .cv-contact-row dt,
 .cv-facts-row dt {
   font-size: 0.5625rem;
@@ -833,6 +844,7 @@ html.no-js .line-mask > span {
 .cv-contact-row dd,
 .cv-facts-row dd {
   margin: 0.15rem 0 0;
+  flex-shrink: 0;
   font-size: 0.8125rem;
   color: var(--text);
   /* Umbruch nur an sinnvollen Stellen. Wo eine E-Mail brechen darf, setzt
@@ -963,12 +975,13 @@ html.no-js .line-mask > span {
 
 /* Kenntnisse als Chipwand statt als Balkendiagramm: Balken behaupten eine
    Genauigkeit, die es nicht gibt. Drei Stufen reichen – gefüllt heißt
-   Kernwerkzeug, Kontur heißt sicher, neutral heißt vorhanden. */
+   Kernwerkzeug, Kontur heißt sicher, neutral heißt vorhanden.
+
+   Die Wand sitzt in der schmalen Spalte, deshalb eine Gruppe je Zeile. */
 .cv-chip-wall {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: 1.1rem 1.75rem;
-  margin-top: 1.1rem;
+  gap: 1.1rem;
+  margin-top: 1rem;
 }
 
 .cv-chip-group-title {
@@ -1309,8 +1322,8 @@ html.no-js .line-mask > span {
        Im Druck macht dieselbe Angabe das Blatt zu einem unteilbaren Kasten –
        dann greift weder der eigene Seitenname noch ein sauberer Umbruch. */
     overflow: visible;
-    font-size: 9.5pt;
-    line-height: 1.42;
+    font-size: 9pt;
+    line-height: 1.5;
     --cv-pad: 14mm;
   }
 
@@ -1342,7 +1355,7 @@ html.no-js .line-mask > span {
   }
 
   .cv-head {
-    padding: 11mm var(--cv-pad) 7mm;
+    padding: 12mm var(--cv-pad) 8mm;
     color: #fff;
     break-inside: avoid;
   }
@@ -1378,18 +1391,20 @@ html.no-js .line-mask > span {
   }
 
   .cv-body {
-    /* 60 mm statt 54: schmaler passt die E-Mail selbst verkleinert nicht in
-       die Spalte, sondern läuft über den Rand in den Textteil. */
-    grid-template-columns: 60mm 1fr;
+    /* Breit genug für zwei Dinge: die E-Mail in einer Zeile und die Chips
+       der Kenntnisse nebeneinander statt untereinander. Beide Spalten
+       enden dadurch etwa gleich hoch – vorher stand in der einen tote
+       Fläche, während die andere überlief. */
+    grid-template-columns: 70mm 1fr;
     align-items: start;
   }
 
   .cv-rail {
-    padding: 8mm 6mm 8mm var(--cv-pad);
+    padding: 9mm 6mm 9mm var(--cv-pad);
   }
 
   .cv-rail-block + .cv-rail-block {
-    margin-top: 6.5mm;
+    margin-top: 8mm;
   }
 
   .cv-rail-block {
@@ -1408,7 +1423,7 @@ html.no-js .line-mask > span {
 
   .cv-contact-row + .cv-contact-row,
   .cv-facts-row + .cv-facts-row {
-    margin-top: 2.8mm;
+    margin-top: 3.4mm;
   }
 
   .cv-contact-row dt,
@@ -1418,7 +1433,7 @@ html.no-js .line-mask > span {
 
   .cv-contact-row dd,
   .cv-facts-row dd {
-    font-size: 8pt;
+    font-size: 7.5pt;
   }
 
   /* Auf Papier ist die Spaltenbreite fest – dann darf auch die Größe fest
@@ -1434,26 +1449,26 @@ html.no-js .line-mask > span {
   }
 
   .cv-main {
-    padding: 6mm var(--cv-pad) 6mm 7mm;
+    padding: 8mm var(--cv-pad) 8mm 8mm;
   }
 
   .cv-lead {
-    margin-bottom: 5mm;
+    margin-bottom: 7mm;
   }
 
   .cv-profile {
-    padding-left: 4mm;
+    padding-left: 5mm;
     border-left-width: 2.5pt;
-    font-size: 10.5pt;
-    line-height: 1.4;
+    font-size: 10pt;
+    line-height: 1.5;
   }
 
   .cv-section + .cv-section {
-    margin-top: 4.5mm;
+    margin-top: 7mm;
   }
 
   .cv-section-title {
-    padding-bottom: 1.8mm;
+    padding-bottom: 2.4mm;
     font-size: 6.5pt;
     gap: 3mm;
     break-after: avoid;
@@ -1467,7 +1482,7 @@ html.no-js .line-mask > span {
   .cv-entry {
     grid-template-columns: 24mm 1fr;
     gap: 4mm;
-    padding: 2.2mm 0;
+    padding: 3.4mm 0;
     break-inside: avoid;
   }
 
@@ -1476,16 +1491,16 @@ html.no-js .line-mask > span {
   }
 
   .cv-entry-title {
-    font-size: 10pt;
+    font-size: 9.5pt;
   }
 
   .cv-entry-meta {
-    font-size: 8.5pt;
+    font-size: 8pt;
   }
 
   .cv-entry-text {
-    margin-top: 1.2mm;
-    font-size: 9pt;
+    margin-top: 1.6mm;
+    font-size: 8.5pt;
   }
 
   .cv-entry-tags {
@@ -1499,8 +1514,7 @@ html.no-js .line-mask > span {
   }
 
   .cv-chip-wall {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4mm 6mm;
+    gap: 3.5mm;
     margin-top: 3.5mm;
   }
 
@@ -1518,9 +1532,9 @@ html.no-js .line-mask > span {
   }
 
   .cv-chip {
-    padding: 0.8mm 2mm;
+    padding: 0.9mm 2mm;
     border-radius: 1mm;
-    font-size: 7.5pt;
+    font-size: 7pt;
   }
 
   .cv-foot {
