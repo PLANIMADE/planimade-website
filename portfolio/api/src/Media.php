@@ -75,11 +75,13 @@ final class Media
 
         [$width, $height] = $this->dimensions($absolute, $kind);
         $thumb = $kind === 'image' ? $this->makeThumbnail($absolute, $targetDir, $filename, $mime) : null;
+        $variants = $kind === 'image' ? $this->makeVariants($absolute, $targetDir, $filename, $mime, $relativeDir) : [];
 
         $id = $this->db->insert('media', [
             'filename' => $filename,
             'path' => $relativeDir . '/' . $filename,
             'thumb_path' => $thumb === null ? null : $relativeDir . '/' . $thumb,
+            'variants' => json_encode($variants) ?: '{}',
             'mime' => $mime,
             'kind' => $kind,
             'size' => (int) $file['size'],
@@ -106,8 +108,14 @@ final class Media
             return;
         }
 
+        $variants = json_decode((string) ($row['variants'] ?? '{}'), true);
+        $paths = array_merge(
+            [$row['path'], $row['thumb_path']],
+            is_array($variants) ? array_values($variants) : []
+        );
+
         $base = rtrim($this->config['uploads_path'], '/') . '/';
-        foreach ([$row['path'], $row['thumb_path']] as $path) {
+        foreach ($paths as $path) {
             if ($path !== null && $path !== '' && is_file($base . $path)) {
                 @unlink($base . $path);
             }
@@ -121,10 +129,26 @@ final class Media
     {
         $base = rtrim((string) $config['uploads_url'], '/');
 
+        // Die Varianten werden gleich als fertiges srcset geliefert – das
+        // Frontend soll sich nicht mit Breiten und Pfaden beschäftigen müssen.
+        $variants = json_decode((string) ($row['variants'] ?? '{}'), true);
+        $variants = is_array($variants) ? $variants : [];
+
+        $srcset = [];
+        foreach ($variants as $width => $path) {
+            $srcset[] = $base . '/' . ltrim((string) $path, '/') . ' ' . (int) $width . 'w';
+        }
+        if ($srcset !== [] && !empty($row['width'])) {
+            // Das Original als größte Stufe ergänzen, damit auch 4K-Displays
+            // etwas Passendes bekommen.
+            $srcset[] = $base . '/' . ltrim((string) $row['path'], '/') . ' ' . (int) $row['width'] . 'w';
+        }
+
         return [
             'id' => (int) $row['id'],
             'url' => $base . '/' . ltrim((string) $row['path'], '/'),
             'thumbUrl' => empty($row['thumb_path']) ? null : $base . '/' . ltrim((string) $row['thumb_path'], '/'),
+            'srcset' => $srcset === [] ? null : implode(', ', $srcset),
             'filename' => $row['filename'],
             'mime' => $row['mime'],
             'kind' => $row['kind'],
@@ -211,6 +235,113 @@ final class Media
         $info = @getimagesize($path);
 
         return $info === false ? [null, null] : [(int) $info[0], (int) $info[1]];
+    }
+
+    /**
+     * Erzeugt verkleinerte Fassungen in mehreren Breiten.
+     *
+     * Ein 4000 px breites Rendering muss niemand auf dem Handy laden. Über
+     * `srcset` sucht sich der Browser die passende Größe selbst aus – das
+     * spart bei bildlastigen Portfolios schnell mehrere Megabyte pro Seite.
+     *
+     * Vergrößert wird nie: Breiten oberhalb des Originals werden übersprungen.
+     *
+     * @return array<int, string> Breite → relativer Pfad
+     */
+    public function makeVariants(string $absolute, string $targetDir, string $filename, string $mime, string $relativeDir): array
+    {
+        $source = $this->loadImage($absolute, $mime);
+        if ($source === null) {
+            return [];
+        }
+
+        $originalWidth = imagesx($source);
+        $originalHeight = imagesy($source);
+        $baseName = pathinfo($filename, PATHINFO_FILENAME);
+        $out = [];
+
+        foreach ($this->config['image_widths'] as $width) {
+            $width = (int) $width;
+            if ($width >= $originalWidth) {
+                continue;
+            }
+
+            $height = max(1, (int) round($originalHeight * ($width / max(1, $originalWidth))));
+            $resized = imagecreatetruecolor($width, $height);
+            imagealphablending($resized, false);
+            imagesavealpha($resized, true);
+            imagecopyresampled($resized, $source, 0, 0, 0, 0, $width, $height, $originalWidth, $originalHeight);
+
+            $extension = function_exists('imagewebp') ? 'webp' : 'jpg';
+            $name = $baseName . '-' . $width . '.' . $extension;
+            $ok = $extension === 'webp'
+                ? imagewebp($resized, $targetDir . '/' . $name, 82)
+                : imagejpeg($resized, $targetDir . '/' . $name, 84);
+
+            imagedestroy($resized);
+
+            if ($ok) {
+                $out[$width] = $relativeDir . '/' . $name;
+            }
+        }
+
+        imagedestroy($source);
+
+        return $out;
+    }
+
+    /** Erzeugt fehlende Varianten für bereits hochgeladene Bilder nach. */
+    public function backfillVariants(int $limit = 25): array
+    {
+        $rows = $this->db->all(
+            "SELECT * FROM media WHERE kind = 'image' AND (variants = '{}' OR variants = '' OR variants IS NULL) LIMIT ?",
+            [$limit]
+        );
+
+        $done = 0;
+        foreach ($rows as $row) {
+            $absolute = rtrim($this->config['uploads_path'], '/') . '/' . $row['path'];
+            if (!is_file($absolute)) {
+                continue;
+            }
+
+            $relativeDir = dirname((string) $row['path']);
+            $variants = $this->makeVariants(
+                $absolute,
+                rtrim($this->config['uploads_path'], '/') . '/' . $relativeDir,
+                (string) $row['filename'],
+                (string) $row['mime'],
+                $relativeDir
+            );
+
+            $this->db->update('media', ['variants' => json_encode($variants) ?: '{}'], 'id = :id', ['id' => $row['id']]);
+            $done++;
+        }
+
+        $remaining = (int) $this->db->value(
+            "SELECT COUNT(*) FROM media WHERE kind = 'image' AND (variants = '{}' OR variants = '' OR variants IS NULL)"
+        );
+
+        return ['optimized' => $done, 'remaining' => $remaining];
+    }
+
+    /** Lädt eine Bilddatei als GD-Ressource – oder null, wenn das nicht geht. */
+    private function loadImage(string $path, string $mime): ?\GdImage
+    {
+        if (!function_exists('imagecreatetruecolor') || $mime === 'image/svg+xml') {
+            return null;
+        }
+
+        $image = match ($mime) {
+            'image/jpeg' => @imagecreatefromjpeg($path),
+            'image/png' => @imagecreatefrompng($path),
+            'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false,
+            'image/gif' => @imagecreatefromgif($path),
+            'image/avif' => function_exists('imagecreatefromavif') ? @imagecreatefromavif($path) : false,
+            default => false,
+        };
+
+        return $image instanceof \GdImage ? $image : null;
     }
 
     /**

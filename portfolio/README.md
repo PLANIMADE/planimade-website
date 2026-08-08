@@ -57,13 +57,23 @@ Veröffentlichen: **[DEPLOY-ALL-INKL.md](DEPLOY-ALL-INKL.md)**
 
 ## Was das Frontend kann
 
-- **WebGL-Hero** – strömendes Rauschen, das auf Maus und Scroll reagiert
-  (~4 KB eigener Shader statt einer 3D-Bibliothek), mit sauberem Rückfall auf
-  einen CSS-Verlauf
+- **Kopfbereich wahlweise als Showreel oder Typografie** – umschaltbar im
+  Dashboard. Video läuft stumm in Dauerschleife, Ton ist zuschaltbar.
+- **WebGL-Hero** (Typo-Variante) – strömendes Rauschen, das auf Maus und Scroll
+  reagiert (~4 KB eigener Shader statt einer 3D-Bibliothek), mit sauberem
+  Rückfall auf einen CSS-Verlauf
+- **Interaktiver Lebenslauf** unter „Über mich": Zeitstrahl mit Filtern,
+  Kompetenzen mit Niveau-Anzeige, Sprachen, Eckdaten – plus Druckansicht, aus
+  der der Browser ein sauberes PDF erzeugt
 - **Eigener Mauszeiger** mit Zustandswechsel, magnetische Buttons
 - **Projektraster** mit Kategoriefiltern und stummer Video-Vorschau beim Hover
-- **Case-Studies** mit Markdown-Text, Kennzahlen, Bildstrecke,
-  Vorher/Nachher-Vergleich und drehbarem 3D-Modell (GLB)
+- **Seitenübergänge**: Beim Klick wächst das Titelbild in die Case-Study hinein
+  (native View Transitions – Browser ohne Unterstützung navigieren normal)
+- **Case-Studies** mit Markdown-Text, Kennzahlen, Bildstrecke mit Lightbox,
+  Vorher/Nachher-Vergleich, drehbarem 3D-Modell (GLB) und einem
+  „Nächstes Projekt"-Block samt Pfeiltasten-Navigation
+- **Responsive Bildgrößen**: Jedes Bild liegt in 400/800/1600 px als WebP vor,
+  ausgeliefert per `srcset` – auf dem Handy lädt niemand ein 4K-Rendering
 - **Command-Palette** (⌘K / Strg+K) über Seiten, Projekte und Aktionen
 - **Hell/Dunkel-Umschalter** – welches Design neue Besucher zuerst sehen,
   legst du im Dashboard fest (Einstellungen → Profil → Darstellung). Die
@@ -77,15 +87,27 @@ Veröffentlichen: **[DEPLOY-ALL-INKL.md](DEPLOY-ALL-INKL.md)**
 ## Was das Dashboard kann
 
 - Projekte anlegen, bearbeiten, per **Drag & Drop** sortieren, als Entwurf halten
-- **Medienbibliothek** mit Mehrfach-Upload, Drag & Drop und automatischen
-  WebP-Vorschaubildern
+- **Papierkorb**: Gelöschtes bleibt 30 Tage wiederherstellbar
+- **Medienbibliothek** mit Mehrfach-Upload, Drag & Drop und automatisch
+  erzeugten Bildgrößen
 - **Posteingang** für Kontaktanfragen inklusive Status und Direktantwort
 - **Kundenstimmen** pflegen
-- **Einstellungen**: Profiltexte, Verfügbarkeits-Badge, Fähigkeiten, Ablauf,
+- **Einstellungen**: Farbschema-Vorgabe, Kopfbereich (Showreel/Typo),
+  Profiltexte, Lebenslauf mit Zeitstrahl und Kompetenzen, Fähigkeiten, Ablauf,
   Social-Links, SEO, Impressumsdaten
+- **Systemcheck**: prüft PHP-Version, Bildbibliothek, Schreibrechte, Upload-Limits
+  und HTTPS; verschickt auf Knopfdruck eine Testmail und holt fehlende
+  Bildgrößen oder Vorschaubilder nach
 - **Statistik** ohne Cookies und ohne Drittanbieter – Aufrufe, Besucher,
   beliebteste Projekte, Herkunft, Geräte
 - **Backup** als JSON mit einem Klick
+
+### Social-Vorschaubilder
+
+Beim Speichern eines Projekts erzeugt der Server ein eigenes Bild (1200 × 630)
+aus Titelbild, Kategorie und Titel – das, was bei LinkedIn, WhatsApp oder Slack
+erscheint. Die Bilder liegen unter `uploads/og/`, die dafür nötigen Schriften
+in `api/assets/` (siehe dortige README).
 
 ---
 
@@ -107,9 +129,16 @@ Alle Antworten sind JSON. Schreibende Zugriffe brauchen die Login-Sitzung
 | `GET` | `/api/auth/me` | offen | Sitzung prüfen |
 | `POST/PUT/DELETE` | `/api/projects…` | Login | Projekte verwalten |
 | `POST` | `/api/projects-reorder` | Login | Reihenfolge speichern |
+| `GET` | `/api/trash` | Login | Papierkorb ansehen |
+| `POST` | `/api/trash/{id}/restore` | Login | Wiederherstellen |
+| `DELETE` | `/api/trash/{id}` | Login | Endgültig löschen |
 | `GET/POST/PATCH/DELETE` | `/api/media…` | Login | Medien verwalten |
 | `GET/PATCH/DELETE` | `/api/messages…` | Login | Posteingang |
 | `PUT` | `/api/settings` | Login | Einstellungen speichern |
+| `GET` | `/api/system` | Login | Systemcheck |
+| `POST` | `/api/system/mail-test` | Login | Testmail senden |
+| `POST` | `/api/system/optimize` | Login | Fehlende Bildgrößen nachholen |
+| `POST` | `/api/system/social-cards` | Login | Vorschaubilder neu erzeugen |
 | `GET` | `/api/stats` | Login | Auswertung |
 | `GET` | `/api/export` | Login | Vollständiges Backup |
 

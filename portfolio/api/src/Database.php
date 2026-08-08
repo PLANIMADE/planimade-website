@@ -274,6 +274,18 @@ final class Database
                     created_at TEXT NOT NULL
                 );
             SQL,
+
+            // Mehrere Bildgrößen pro Datei, damit das Frontend per srcset
+            // nur lädt, was das jeweilige Gerät wirklich braucht.
+            '011_media_variants' => <<<'SQL'
+                ALTER TABLE media ADD COLUMN variants TEXT NOT NULL DEFAULT '{}';
+            SQL,
+
+            // Gelöschte Projekte wandern zunächst in den Papierkorb.
+            '012_projects_soft_delete' => <<<'SQL'
+                ALTER TABLE projects ADD COLUMN deleted_at TEXT;
+                CREATE INDEX idx_projects_deleted ON projects(deleted_at);
+            SQL,
         ];
     }
 }

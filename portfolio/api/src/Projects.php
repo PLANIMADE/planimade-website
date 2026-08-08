@@ -25,7 +25,8 @@ final class Projects
     /** @return array<int, array<string, mixed>> */
     public function list(bool $includeDrafts = false, ?string $category = null, ?int $limit = null): array
     {
-        $where = $includeDrafts ? '1 = 1' : "status = 'published'";
+        // Papierkorb-Einträge tauchen in keiner normalen Liste auf.
+        $where = ($includeDrafts ? '1 = 1' : "status = 'published'") . ' AND deleted_at IS NULL';
         $params = [];
 
         if ($category !== null && $category !== '' && $category !== 'all') {
@@ -50,7 +51,7 @@ final class Projects
 
     public function findBySlug(string $slug, bool $includeDrafts = false): ?array
     {
-        $row = $this->db->first('SELECT * FROM projects WHERE slug = ?', [$slug]);
+        $row = $this->db->first('SELECT * FROM projects WHERE slug = ? AND deleted_at IS NULL', [$slug]);
         if ($row === null) {
             return null;
         }
@@ -140,9 +141,54 @@ final class Projects
         return $this->findById($id) ?? [];
     }
 
+    /**
+     * Verschiebt ein Projekt in den Papierkorb. Es verschwindet sofort von der
+     * Website, bleibt aber wiederherstellbar – Löschen soll kein Unfall sein.
+     */
     public function delete(int $id): void
     {
-        $this->db->run('DELETE FROM projects WHERE id = ?', [$id]);
+        $this->db->update('projects', ['deleted_at' => gmdate('c')], 'id = :where_id', ['where_id' => $id]);
+        $this->purgeExpired();
+    }
+
+    public function restore(int $id): ?array
+    {
+        $this->db->update('projects', ['deleted_at' => null], 'id = :where_id', ['where_id' => $id]);
+
+        return $this->findById($id);
+    }
+
+    /** Endgültig löschen – nur aus dem Papierkorb heraus möglich. */
+    public function purge(int $id): void
+    {
+        $this->db->run('DELETE FROM projects WHERE id = ? AND deleted_at IS NOT NULL', [$id]);
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function trash(): array
+    {
+        $rows = $this->db->all('SELECT * FROM projects WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC');
+        $mediaMap = $this->mediaMapFor($rows);
+        $days = (int) ($this->config['trash_days'] ?? 30);
+
+        return array_map(function (array $row) use ($mediaMap, $days): array {
+            $project = $this->present($row, [], $mediaMap);
+            $project['deletedAt'] = $row['deleted_at'];
+            $project['purgeAt'] = gmdate('c', strtotime((string) $row['deleted_at']) + $days * 86400);
+
+            return $project;
+        }, $rows);
+    }
+
+    /** Räumt den Papierkorb auf: älter als `trash_days` wird endgültig entfernt. */
+    public function purgeExpired(): int
+    {
+        $days = (int) ($this->config['trash_days'] ?? 30);
+        $cutoff = gmdate('c', time() - $days * 86400);
+
+        $stmt = $this->db->run('DELETE FROM projects WHERE deleted_at IS NOT NULL AND deleted_at < ?', [$cutoff]);
+
+        return $stmt->rowCount();
     }
 
     /** @param array<int, int> $orderedIds */
@@ -164,7 +210,9 @@ final class Projects
     public function categories(): array
     {
         $rows = $this->db->all(
-            "SELECT DISTINCT category FROM projects WHERE status = 'published' AND category != '' ORDER BY category"
+            "SELECT DISTINCT category FROM projects
+             WHERE status = 'published' AND category != '' AND deleted_at IS NULL
+             ORDER BY category"
         );
 
         return array_map(static fn (array $r): string => (string) $r['category'], $rows);

@@ -6,9 +6,10 @@
  * Lokal im Dev-Server wird stattdessen über den Slug nachgeladen.
  */
 
-import { fetchProject, track } from '../lib/api';
+import { fetchProject, fetchProjects, track } from '../lib/api';
 import type { Project } from '../lib/types';
 import { refreshMotion } from './motion';
+import { initLightbox } from './lightbox';
 
 function escapeHtml(value: string): string {
   const div = document.createElement('div');
@@ -54,13 +55,30 @@ function galleryMarkup(project: Project): string {
         ${project.gallery
           .map((item, index) => {
             const span = item.layout === 'half' ? '' : 'md:col-span-2';
+            const sizes = item.layout === 'half' ? '(max-width: 768px) 100vw, 45vw' : '(max-width: 768px) 100vw, 90vw';
+            const alt = escapeHtml(item.media.alt || item.caption || project.title);
+
             const media =
               item.media.kind === 'video'
                 ? `<video src="${escapeHtml(item.media.url)}" controls playsinline preload="metadata" class="h-full w-full object-cover"></video>`
-                : `<img src="${escapeHtml(item.media.url)}" alt="${escapeHtml(item.media.alt || item.caption || project.title)}" loading="lazy" decoding="async" class="h-full w-full object-cover">`;
+                : `<img
+                     src="${escapeHtml(item.media.thumbUrl ?? item.media.url)}"
+                     ${item.media.srcset ? `srcset="${escapeHtml(item.media.srcset)}" sizes="${sizes}"` : ''}
+                     alt="${alt}"
+                     loading="lazy" decoding="async"
+                     class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                   >`;
 
             return `
-              <figure class="${span}" data-reveal data-reveal-delay="${(index % 2) * 80}">
+              <figure
+                class="${span} group"
+                data-reveal data-reveal-delay="${(index % 2) * 80}"
+                ${item.media.kind === 'model' ? '' : 'data-lightbox-item'}
+                data-full="${escapeHtml(item.media.url)}"
+                data-alt="${alt}"
+                data-caption="${escapeHtml(item.caption)}"
+                data-kind="${item.media.kind}"
+              >
                 <div class="overflow-hidden rounded-2xl border border-line bg-elevated">${media}</div>
                 ${item.caption ? `<figcaption class="mt-3 font-mono text-xs text-faint">${escapeHtml(item.caption)}</figcaption>` : ''}
               </figure>`;
@@ -68,6 +86,69 @@ function galleryMarkup(project: Project): string {
           .join('')}
       </div>
     </section>`;
+}
+
+/**
+ * „Nächstes Projekt" am Ende der Case-Study.
+ *
+ * Ohne diesen Block endet jede Projektseite in einer Sackgasse – wer sich
+ * durchklicken will, müsste zurück navigieren.
+ */
+async function nextProjectMarkup(project: Project): Promise<{ html: string; slug: string | null }> {
+  const { projects } = await fetchProjects().catch(() => ({ projects: [] as Project[] }));
+  if (projects.length < 2) return { html: '', slug: null };
+
+  const position = projects.findIndex((entry) => entry.id === project.id);
+  const next = projects[(position + 1) % projects.length];
+  if (!next || next.id === project.id) return { html: '', slug: null };
+
+  const cover = next.cover;
+
+  return {
+    slug: next.slug,
+    html: `
+      <section class="mt-32 border-t border-line pt-16">
+        <div class="container-page">
+          <div class="flex items-center justify-between gap-4">
+            <p class="label-mono">Nächstes Projekt</p>
+            <p class="hidden font-mono text-[0.625rem] tracking-widest text-faint sm:block">
+              MIT → ZUR NÄCHSTEN ARBEIT
+            </p>
+          </div>
+
+          <a
+            href="/work/${escapeHtml(next.slug)}"
+            data-cursor="view"
+            data-cursor-label="ANSEHEN"
+            data-next-project
+            class="group mt-6 block overflow-hidden rounded-3xl border border-line bg-elevated"
+          >
+            <div class="relative aspect-[21/9]">
+              ${
+                cover
+                  ? `<img
+                       data-cover
+                       src="${escapeHtml(cover.thumbUrl ?? cover.url)}"
+                       ${cover.srcset ? `srcset="${escapeHtml(cover.srcset)}" sizes="90vw"` : ''}
+                       alt="${escapeHtml(cover.alt || next.title)}"
+                       loading="lazy" decoding="async"
+                       class="h-full w-full object-cover transition-transform duration-[1.2s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
+                     >`
+                  : '<div class="h-full w-full bg-surface"></div>'
+              }
+              <div class="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent"></div>
+              <div class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-6 p-6 sm:p-10">
+                <div>
+                  <p class="font-mono text-[0.625rem] uppercase tracking-[0.2em] text-white/60">${escapeHtml(next.category)}</p>
+                  <p class="mt-2 text-2xl font-bold tracking-tight text-white sm:text-4xl">${escapeHtml(next.title)}</p>
+                </div>
+                <span class="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-white/30 text-white transition-all duration-500 group-hover:border-transparent group-hover:bg-white group-hover:text-black">→</span>
+              </div>
+            </div>
+          </a>
+        </div>
+      </section>`,
+  };
 }
 
 function metricsMarkup(project: Project): string {
@@ -162,8 +243,17 @@ export async function initProjectDetail(): Promise<void> {
   root.style.setProperty('--card-accent', project.accent);
 
   const cover = project.cover;
+  // `view-transition-name` verbindet dieses Bild mit der angeklickten Kachel
+  // auf der Übersicht – der Browser lässt es beim Seitenwechsel hineinwachsen.
   const heroMedia = cover
-    ? `<img src="${escapeHtml(cover.url)}" alt="${escapeHtml(cover.alt || project.title)}" class="h-full w-full object-cover" fetchpriority="high" decoding="async">`
+    ? `<img
+         src="${escapeHtml(cover.url)}"
+         ${cover.srcset ? `srcset="${escapeHtml(cover.srcset)}" sizes="90vw"` : ''}
+         alt="${escapeHtml(cover.alt || project.title)}"
+         class="h-full w-full object-cover"
+         style="view-transition-name: project-hero"
+         fetchpriority="high" decoding="async"
+       >`
     : '<div class="h-full w-full bg-surface"></div>';
 
   root.innerHTML = `
@@ -221,7 +311,9 @@ export async function initProjectDetail(): Promise<void> {
 
       ${galleryMarkup(project)}
 
-      <section class="container-page mt-32">
+      <div data-next-slot></div>
+
+      <section class="container-page mt-20">
         <div class="surface-card flex flex-col items-start justify-between gap-8 p-10 sm:flex-row sm:items-center">
           <div>
             <p class="label-mono">Weiter geht's</p>
@@ -241,6 +333,39 @@ export async function initProjectDetail(): Promise<void> {
 
   const bodyContainer = root.querySelector<HTMLElement>('[data-project-body]');
   if (bodyContainer) await renderBody(project, bodyContainer);
+
+  // Nächstes Projekt anhängen und per Pfeiltaste erreichbar machen.
+  const { html: nextHtml, slug: nextSlug } = await nextProjectMarkup(project);
+  const nextSlot = root.querySelector<HTMLElement>('[data-next-slot]');
+  if (nextSlot && nextHtml !== '') {
+    nextSlot.outerHTML = nextHtml;
+
+    if (nextSlug !== null) {
+      // Der Name darf pro Seite nur einmal vergeben sein: erst dem
+      // Titelbild wegnehmen, dann dem Vorschaubild des nächsten Projekts geben.
+      const handOverName = (): void => {
+        root.querySelectorAll<HTMLElement>('[style*="view-transition-name"]').forEach((element) => {
+          element.style.removeProperty('view-transition-name');
+        });
+        document
+          .querySelector<HTMLElement>('[data-next-project] [data-cover]')
+          ?.style.setProperty('view-transition-name', 'project-hero');
+      };
+
+      document.querySelector('[data-next-project]')?.addEventListener('click', handOverName);
+
+      document.addEventListener('keydown', (event) => {
+        const target = event.target as HTMLElement | null;
+        if (target?.matches('input, textarea, select')) return;
+        if (event.key === 'ArrowRight' && !event.metaKey && !event.ctrlKey && !event.altKey) {
+          handOverName();
+          location.href = `/work/${nextSlug}`;
+        }
+      });
+    }
+  }
+
+  initLightbox(root);
 
   // Schwergewichte erst laden, wenn das Projekt sie wirklich braucht.
   if (root.querySelector('[data-before-after]')) {

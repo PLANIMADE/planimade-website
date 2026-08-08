@@ -9,6 +9,7 @@ export interface MediaItem {
   id: number;
   url: string;
   thumbUrl: string | null;
+  srcset: string | null;
   filename: string;
   mime: string;
   kind: 'image' | 'video' | 'model';
@@ -79,6 +80,62 @@ export interface Testimonial {
   avatarUrl: string | null;
 }
 
+export interface HeroSettings {
+  mode: 'type' | 'showreel';
+  mediaId: number | null;
+  posterId: number | null;
+  overlay: number;
+  showTitle: boolean;
+  video: MediaItem | null;
+  poster: MediaItem | null;
+}
+
+export interface ExpertiseItem {
+  name: string;
+  level: number;
+  note: string;
+  group: string;
+}
+
+export interface TimelineEntry {
+  period: string;
+  title: string;
+  org: string;
+  location: string;
+  description: string;
+  type: 'work' | 'education' | 'project';
+  tags: string[];
+}
+
+export interface Resume {
+  headline: string;
+  summary: string;
+  timeline: TimelineEntry[];
+  languages: Array<{ name: string; level: string }>;
+  facts: Array<{ label: string; value: string }>;
+}
+
+export interface SystemCheckItem {
+  label: string;
+  status: 'ok' | 'warn' | 'error';
+  value: string;
+  hint: string | null;
+}
+
+export interface SystemReport {
+  checks: SystemCheckItem[];
+  info: {
+    databaseSize: string;
+    uploadsSize: string;
+    mediaCount: number;
+    imagesWithoutVariants: number;
+    trashCount: number;
+    serverTime: string;
+    memoryLimit: string;
+    maxExecutionTime: string;
+  };
+}
+
 export interface Settings {
   name: string;
   role: string;
@@ -86,6 +143,9 @@ export interface Settings {
   tagline: string;
   intro: string;
   appearance: { defaultTheme: 'light' | 'dark' | 'system' };
+  hero: HeroSettings;
+  expertise: ExpertiseItem[];
+  resume: Resume;
   availability: { visible: boolean; status: 'open' | 'limited' | 'closed'; label: string; detail: string };
   email: string;
   phone: string;
@@ -211,6 +271,21 @@ export const api = {
       body: JSON.stringify(data),
     }),
   deleteTestimonial: (id: number) => request<{ ok: boolean }>(`testimonials/${id}`, { method: 'DELETE' }),
+
+  // Papierkorb
+  trash: () => request<{ projects: Array<Project & { deletedAt: string; purgeAt: string }> }>('trash'),
+  restoreProject: (id: number) => request<{ project: Project }>(`trash/${id}/restore`, { method: 'POST' }),
+  purgeProject: (id: number) => request<{ ok: boolean }>(`trash/${id}`, { method: 'DELETE' }),
+
+  // Systemcheck
+  system: () => request<SystemReport>('system'),
+  mailTest: () => request<{ ok: boolean; message: string }>('system/mail-test', { method: 'POST' }),
+  optimizeImages: (limit = 20) =>
+    request<{ optimized: number; remaining: number }>('system/optimize', {
+      method: 'POST',
+      body: JSON.stringify({ limit }),
+    }),
+  rebuildSocialCards: () => request<{ generated: number }>('system/social-cards', { method: 'POST' }),
 
   // Einstellungen & Auswertung
   settings: () => request<{ settings: Settings }>('settings'),

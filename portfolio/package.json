@@ -6,7 +6,7 @@
   "description": "Portfolio von Dominic Majewski – Astro-Frontend, PHP-API und eigenes Dashboard.",
   "scripts": {
     "setup": "npm --prefix web install && npm --prefix admin install",
-    "dev:api": "php -S 127.0.0.1:8787 -t . api/router.dev.php",
+    "dev:api": "php -d upload_max_filesize=256M -d post_max_size=260M -d memory_limit=512M -S 127.0.0.1:8787 -t . api/router.dev.php",
     "dev:web": "npm --prefix web run dev",
     "dev:admin": "npm --prefix admin run dev",
     "build": "npm run build:web && npm run build:admin && node scripts/assemble.mjs",

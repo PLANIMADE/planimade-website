@@ -4,6 +4,8 @@ export interface MediaItem {
   id: number;
   url: string;
   thumbUrl: string | null;
+  /** Fertiges srcset über alle erzeugten Bildgrößen, null bei Videos/Modellen. */
+  srcset: string | null;
   filename: string;
   mime: string;
   kind: 'image' | 'video' | 'model';
@@ -72,6 +74,42 @@ export interface ProcessStep {
   description: string;
 }
 
+export interface ExpertiseItem {
+  name: string;
+  /** Selbsteinschätzung 0–100 */
+  level: number;
+  note: string;
+  group: string;
+}
+
+export interface TimelineEntry {
+  period: string;
+  title: string;
+  org: string;
+  location: string;
+  description: string;
+  type: 'work' | 'education' | 'project';
+  tags: string[];
+}
+
+export interface Resume {
+  headline: string;
+  summary: string;
+  timeline: TimelineEntry[];
+  languages: Array<{ name: string; level: string }>;
+  facts: Array<{ label: string; value: string }>;
+}
+
+export interface HeroSettings {
+  mode: 'type' | 'showreel';
+  mediaId: number | null;
+  posterId: number | null;
+  overlay: number;
+  showTitle: boolean;
+  video: MediaItem | null;
+  poster: MediaItem | null;
+}
+
 export interface Settings {
   name: string;
   role: string;
@@ -79,6 +117,9 @@ export interface Settings {
   tagline: string;
   intro: string;
   appearance: { defaultTheme: 'light' | 'dark' | 'system' };
+  hero: HeroSettings;
+  expertise: ExpertiseItem[];
+  resume: Resume;
   availability: {
     /** Aus = das Status-Feld erscheint nirgends auf der Seite. */
     visible: boolean;

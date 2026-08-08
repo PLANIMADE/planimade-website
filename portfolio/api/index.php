@@ -21,6 +21,8 @@ use App\Projects;
 use App\Router;
 use App\Security;
 use App\Settings;
+use App\SocialCard;
+use App\SystemCheck;
 use App\Testimonials;
 
 $config = require __DIR__ . '/config.php';
@@ -65,6 +67,8 @@ $messages = new Messages($db, $security, $config);
 $settings = new Settings($db, $config);
 $analytics = new Analytics($db, $security);
 $testimonials = new Testimonials($db, $config);
+$socialCard = new SocialCard($config);
+$systemCheck = new SystemCheck($db, $config);
 $pages = new Pages($projects, $settings, $analytics, $config);
 
 // Seiten-Routen (kommen per Rewrite aus dem Root-.htaccess)
@@ -158,19 +162,51 @@ $router->post('auth/password', static function () use ($auth): void {
 
 // ------------------------------------------------------------------ geschützt
 
-$router->post('projects', static function () use ($projects, $auth): void {
+$router->post('projects', static function () use ($projects, $auth, $socialCard): void {
     $auth->requireWrite();
-    Http::json(['project' => $projects->create(Http::body())], 201);
+    $project = $projects->create(Http::body());
+    $socialCard->generate($project);
+
+    Http::json(['project' => $project], 201);
 });
 
-$router->put('projects/{id}', static function (string $id) use ($projects, $auth): void {
+$router->put('projects/{id}', static function (string $id) use ($projects, $auth, $socialCard): void {
     $auth->requireWrite();
-    Http::json(['project' => $projects->update((int) $id, Http::body())]);
+    $project = $projects->update((int) $id, Http::body());
+    // Vorschaubild bei jedem Speichern neu erzeugen – Titel oder Titelbild
+    // können sich geändert haben.
+    $socialCard->generate($project);
+
+    Http::json(['project' => $project]);
 });
 
 $router->delete('projects/{id}', static function (string $id) use ($projects, $auth): void {
     $auth->requireWrite();
     $projects->delete((int) $id);
+    Http::json(['ok' => true]);
+});
+
+// ------------------------------------------------------------------ Papierkorb
+
+$router->get('trash', static function () use ($projects, $auth): void {
+    $auth->requireUser();
+    Http::json(['projects' => $projects->trash()]);
+});
+
+$router->post('trash/{id}/restore', static function (string $id) use ($projects, $auth): void {
+    $auth->requireWrite();
+    Http::json(['project' => $projects->restore((int) $id)]);
+});
+
+$router->delete('trash/{id}', static function (string $id) use ($projects, $auth, $socialCard, $db): void {
+    $auth->requireWrite();
+
+    $row = $db->first('SELECT slug FROM projects WHERE id = ?', [(int) $id]);
+    $projects->purge((int) $id);
+    if ($row !== null) {
+        $socialCard->delete((string) $row['slug']);
+    }
+
     Http::json(['ok' => true]);
 });
 
@@ -269,6 +305,42 @@ $router->get('stats', static function () use ($analytics, $projects, $messages, 
             })($projects->list(true))
         ), 0, 5),
     ]);
+});
+
+// ----------------------------------------------------------------- Systemcheck
+
+$router->get('system', static function () use ($systemCheck, $auth): void {
+    $auth->requireUser();
+    Http::json($systemCheck->run());
+});
+
+$router->post('system/mail-test', static function () use ($systemCheck, $auth): void {
+    $auth->requireWrite();
+    Http::json($systemCheck->sendTestMail());
+});
+
+/** Erzeugt fehlende Bildgrößen nach – stückweise, damit nichts in ein Zeitlimit läuft. */
+$router->post('system/optimize', static function () use ($media, $auth): void {
+    $auth->requireWrite();
+    Http::json($media->backfillVariants((int) Http::input('limit', 20)));
+});
+
+/** Erzeugt alle Social-Vorschaubilder neu. */
+$router->post('system/social-cards', static function () use ($projects, $auth, $socialCard): void {
+    $auth->requireWrite();
+
+    if (!$socialCard->available()) {
+        Http::error('Vorschaubilder brauchen die GD-Erweiterung und die Schriften in api/assets/.', 422);
+    }
+
+    $count = 0;
+    foreach ($projects->list(true) as $project) {
+        if ($socialCard->generate($project) !== null) {
+            $count++;
+        }
+    }
+
+    Http::json(['generated' => $count]);
 });
 
 /** Vollständiges JSON-Backup aller Inhalte – ein Klick im Dashboard. */

@@ -25,7 +25,35 @@ final class Settings
             $out[$row['key']] = $decoded === null && $row['value'] !== 'null' ? $row['value'] : $decoded;
         }
 
+        // Gespeichert werden nur Medien-IDs; das Frontend braucht fertige URLs.
+        $out['hero'] = $this->resolveHeroMedia($out['hero'] ?? []);
+
         return $out;
+    }
+
+    /** Ergänzt zur Video- und Poster-ID die vollständigen Mediendaten. */
+    private function resolveHeroMedia(array $hero): array
+    {
+        $hero['video'] = null;
+        $hero['poster'] = null;
+
+        if (!isset($this->config['uploads_url'])) {
+            return $hero;
+        }
+
+        $ids = array_filter([
+            'video' => $hero['mediaId'] ?? null,
+            'poster' => $hero['posterId'] ?? null,
+        ]);
+
+        foreach ($ids as $key => $id) {
+            $row = $this->db->first('SELECT * FROM media WHERE id = ?', [(int) $id]);
+            if ($row !== null) {
+                $hero[$key] = Media::present($row, $this->config);
+            }
+        }
+
+        return $hero;
     }
 
     public function get(string $key, mixed $default = null): mixed
@@ -43,6 +71,12 @@ final class Settings
         foreach ($values as $key => $value) {
             if (!in_array($key, $allowed, true)) {
                 continue;
+            }
+
+            // Aufgelöste Mediendaten nicht zurückschreiben – gespeichert
+            // werden nur die IDs, alles andere kommt beim Lesen dazu.
+            if ($key === 'hero' && is_array($value)) {
+                unset($value['video'], $value['poster']);
             }
             $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: 'null';
             $this->db->run(
@@ -121,6 +155,15 @@ final class Settings
                 'defaultTheme' => 'light',
             ],
 
+            // Kopfbereich der Startseite: große Typografie oder Showreel.
+            'hero' => [
+                'mode' => 'type',       // 'type' oder 'showreel'
+                'mediaId' => null,      // Video (MP4/WebM)
+                'posterId' => null,     // Standbild, solange das Video lädt
+                'overlay' => 55,        // Abdunklung in Prozent, damit Schrift lesbar bleibt
+                'showTitle' => true,    // Name zusätzlich über dem Video
+            ],
+
             // Das Status-Feld ist standardmäßig aus. Wer es einschaltet,
             // formuliert selbst, was dort steht.
             'availability' => [
@@ -159,6 +202,65 @@ final class Settings
                     'items' => ['Branding', 'Typografie', 'Layout', 'Print', 'Social Assets'],
                 ],
             ],
+            // Software-Kompetenzen mit Selbsteinschätzung (0–100).
+            'expertise' => [
+                ['name' => 'Blender', 'level' => 95, 'note' => '', 'group' => '3D & Rendering'],
+                ['name' => 'Unreal Engine 5', 'level' => 80, 'note' => '', 'group' => '3D & Rendering'],
+                ['name' => 'Substance', 'level' => 70, 'note' => '', 'group' => '3D & Rendering'],
+                ['name' => 'After Effects', 'level' => 85, 'note' => '', 'group' => 'Motion & Schnitt'],
+                ['name' => 'Premiere Pro', 'level' => 85, 'note' => '', 'group' => 'Motion & Schnitt'],
+                ['name' => 'DaVinci Resolve', 'level' => 75, 'note' => '', 'group' => 'Motion & Schnitt'],
+                ['name' => 'Photoshop', 'level' => 85, 'note' => '', 'group' => 'Grafik & Layout'],
+                ['name' => 'Illustrator', 'level' => 70, 'note' => '', 'group' => 'Grafik & Layout'],
+                ['name' => 'InDesign', 'level' => 65, 'note' => '', 'group' => 'Grafik & Layout'],
+            ],
+
+            // Interaktiver Lebenslauf.
+            'resume' => [
+                'headline' => 'Werdegang',
+                'summary' => 'Stationen, Projekte und Ausbildung im Überblick.',
+                // Bewusst als erkennbare Platzhalter angelegt – bitte im
+                // Dashboard durch die echten Stationen ersetzen.
+                'timeline' => [
+                    [
+                        'period' => 'seit 2022',
+                        'title' => 'Beispieleintrag – bitte ersetzen',
+                        'org' => 'Selbstständig',
+                        'location' => '',
+                        'description' => 'Beschreibe hier kurz, woran du in dieser Zeit gearbeitet hast.',
+                        'type' => 'work',
+                        'tags' => ['Blender', 'Unreal Engine'],
+                    ],
+                    [
+                        'period' => '2019 — 2022',
+                        'title' => 'Beispieleintrag – bitte ersetzen',
+                        'org' => 'Firma oder Agentur',
+                        'location' => '',
+                        'description' => 'Rolle, Verantwortung, größte Projekte.',
+                        'type' => 'work',
+                        'tags' => [],
+                    ],
+                    [
+                        'period' => '2016 — 2019',
+                        'title' => 'Beispieleintrag – bitte ersetzen',
+                        'org' => 'Schule, Hochschule oder Ausbildung',
+                        'location' => '',
+                        'description' => 'Abschluss und Schwerpunkte.',
+                        'type' => 'education',
+                        'tags' => [],
+                    ],
+                ],
+                'languages' => [
+                    ['name' => 'Deutsch', 'level' => 'Muttersprache'],
+                    ['name' => 'Englisch', 'level' => 'Verhandlungssicher'],
+                ],
+                'facts' => [
+                    ['label' => 'Erfahrung', 'value' => '8+ Jahre'],
+                    ['label' => 'Arbeitsweise', 'value' => 'Remote & vor Ort'],
+                    ['label' => 'Antwortzeit', 'value' => 'unter 24 h'],
+                ],
+            ],
+
             'process' => [
                 ['title' => 'Briefing', 'description' => 'Wir klären Ziel, Zielgruppe und Rahmen. Ehrlich – auch wenn die Antwort mal "das braucht ihr nicht" lautet.'],
                 ['title' => 'Konzept', 'description' => 'Moodboard, Referenzen, Look-Richtung. Bevor irgendetwas gerendert wird, steht das Bild im Kopf.'],

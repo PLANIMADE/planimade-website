@@ -48,7 +48,17 @@ final class Pages
 
         $title = sprintf('%s – %s | %s', $project['title'], $project['category'] !== '' ? $project['category'] : 'Case Study', $name);
         $description = Str::excerpt($project['summary'] !== '' ? $project['summary'] : $project['body'], 180);
-        $image = $project['cover']['url'] ?? '';
+
+        // Bevorzugt das eigens erzeugte Vorschaubild mit Titel; sonst das
+        // Titelbild des Projekts. Der Zeitstempel im Link sorgt dafür, dass
+        // soziale Netzwerke nach einer Änderung nicht die alte Fassung zeigen.
+        $cardPath = rtrim((string) $this->config['uploads_path'], '/') . '/og/' . $project['slug'] . '.jpg';
+        if (is_file($cardPath)) {
+            $image = rtrim((string) $this->config['uploads_url'], '/') . '/og/' . $project['slug'] . '.jpg?v=' . filemtime($cardPath);
+        } else {
+            $image = $project['cover']['url'] ?? '';
+        }
+
         if ($image !== '' && !str_starts_with($image, 'http')) {
             $image = $siteUrl . $image;
         }

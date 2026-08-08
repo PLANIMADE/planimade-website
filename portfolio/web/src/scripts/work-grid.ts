@@ -23,10 +23,15 @@ function cardMarkup(project: Project, index: number, size: 'large' | 'normal'): 
   const aspect = size === 'large' ? 'aspect-[16/10]' : 'aspect-[4/3]';
   const meta = [project.category, project.year].filter(Boolean).join(' · ');
 
+  // `sizes` sagt dem Browser, wie breit das Bild tatsächlich dargestellt wird –
+  // ohne diese Angabe lädt er immer die größte Variante.
+  const sizes = size === 'large' ? '(max-width: 768px) 100vw, 66vw' : '(max-width: 768px) 100vw, 45vw';
+
   const visual = cover
     ? `<img
+         data-cover
          src="${escapeHtml(cover.thumbUrl ?? cover.url)}"
-         ${cover.thumbUrl ? `srcset="${escapeHtml(cover.thumbUrl)} 640w, ${escapeHtml(cover.url)} 1600w" sizes="(max-width: 768px) 100vw, 50vw"` : ''}
+         ${cover.srcset ? `srcset="${escapeHtml(cover.srcset)}" sizes="${sizes}"` : ''}
          alt="${escapeHtml(cover.alt || project.title)}"
          loading="${index < 2 ? 'eager' : 'lazy'}"
          decoding="async"
@@ -133,6 +138,14 @@ function wireTracking(container: HTMLElement): void {
   container.querySelectorAll<HTMLAnchorElement>('[data-project-link]').forEach((link) => {
     link.addEventListener('click', () => {
       track('project_view', { projectId: Number(link.dataset.projectLink) });
+
+      // Für den Seitenübergang: Nur das angeklickte Titelbild bekommt den
+      // Namen, unter dem der Browser es auf der Zielseite wiederfindet.
+      // Ein Name darf pro Seite nur einmal vorkommen – deshalb erst aufräumen.
+      container.querySelectorAll<HTMLElement>('[data-cover]').forEach((cover) => {
+        cover.style.viewTransitionName = '';
+      });
+      link.querySelector<HTMLElement>('[data-cover]')?.style.setProperty('view-transition-name', 'project-hero');
     });
   });
 }

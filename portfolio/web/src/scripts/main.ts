@@ -11,7 +11,7 @@ import { initMotion } from './motion';
 import { initPalette } from './palette';
 import { initHydration } from './hydrate';
 import { initEasterEgg } from './easter-egg';
-import { track } from '../lib/api';
+import { fetchSettings, track } from '../lib/api';
 
 async function boot(): Promise<void> {
   initTheme();
@@ -24,10 +24,7 @@ async function boot(): Promise<void> {
 
   void initHydration();
 
-  if (document.querySelector('[data-hero-canvas]')) {
-    const { initHero } = await import('./hero');
-    initHero();
-  }
+  await initHeroSection();
 
   if (document.querySelector('[data-work-grid]')) {
     const { initWorkGrid } = await import('./work-grid');
@@ -44,8 +41,34 @@ async function boot(): Promise<void> {
     initContactForm();
   }
 
+  if (document.querySelector('[data-resume]')) {
+    const { initResume } = await import('./resume');
+    void initResume();
+  }
+
   // Seitenaufruf zählen – ohne Cookie, ohne Drittanbieter.
   track('pageview');
+}
+
+/**
+ * Kopfbereich: Showreel oder WebGL-Typografie.
+ *
+ * Die Entscheidung fällt anhand der Einstellung aus dem Dashboard. Deshalb
+ * wird hier kurz auf die Einstellungen gewartet, statt den WebGL-Hintergrund
+ * zu starten und ihn gleich darauf wieder wegzuwerfen.
+ */
+async function initHeroSection(): Promise<void> {
+  if (!document.querySelector('[data-hero-canvas]')) return;
+
+  const settings = await fetchSettings().catch(() => null);
+
+  if (settings?.hero?.mode === 'showreel' && settings.hero.video) {
+    const { initHeroShowreel } = await import('./hero-showreel');
+    if (initHeroShowreel(settings)) return;
+  }
+
+  const { initHero } = await import('./hero');
+  initHero();
 }
 
 if (document.readyState === 'loading') {

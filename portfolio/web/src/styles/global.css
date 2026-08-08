@@ -180,13 +180,16 @@
   padding-inline: var(--gutter);
 }
 
-/* Überschriften im Portfolio-Maßstab: skalieren stufenlos mit dem Viewport. */
+/* Überschriften im Portfolio-Maßstab: skalieren stufenlos mit dem Viewport.
+   `overflow-wrap` ist die Notbremse: Ohne sie ragen lange deutsche Wörter aus
+   dem Kasten und werden von der Einblend-Maske abgeschnitten. */
 @utility display-xl {
   font-size: clamp(2.75rem, 11vw, 12rem);
   line-height: 0.86;
   letter-spacing: -0.045em;
   font-weight: 800;
   text-transform: uppercase;
+  overflow-wrap: break-word;
 }
 
 @utility display-lg {
@@ -195,6 +198,7 @@
   letter-spacing: -0.035em;
   font-weight: 800;
   text-transform: uppercase;
+  overflow-wrap: break-word;
 }
 
 @utility display-md {
@@ -202,6 +206,31 @@
   line-height: 1;
   letter-spacing: -0.03em;
   font-weight: 700;
+  overflow-wrap: break-word;
+}
+
+/* Läuft ein Video im Kopfbereich, liegt darüber immer eine dunkle Ebene –
+   dann muss die Schrift hell sein, unabhängig vom gewählten Farbschema. */
+[data-hero-on-video] {
+  --text: #ffffff;
+  --text-muted: rgb(255 255 255 / 72%);
+  --text-faint: rgb(255 255 255 / 45%);
+  --line: rgb(255 255 255 / 18%);
+  --line-strong: rgb(255 255 255 / 40%);
+}
+
+[data-hero-on-video] .text-outline {
+  -webkit-text-stroke-color: rgb(255 255 255 / 45%);
+}
+
+/* Der helle Knopf bleibt hell, seine Beschriftung wird dunkel – sonst wäre
+   sie über dem Video weiß auf weiß. */
+[data-hero-on-video] .bg-ink {
+  background-color: #ffffff;
+}
+
+[data-hero-on-video] .text-bg {
+  color: #08080c;
 }
 
 @utility label-mono {
@@ -222,6 +251,55 @@
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 1.25rem;
+}
+
+/* ==========================================================================
+   Seitenübergänge
+   Der Browser blendet zwischen zwei Seiten über und lässt das Titelbild einer
+   Projektkachel in die Case-Study hineinwachsen. Bewusst nativ gelöst (statt
+   über einen JavaScript-Router): Browser ohne Unterstützung navigieren einfach
+   wie gewohnt, und es läuft kein zusätzliches Skript mit.
+   ========================================================================== */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 320ms;
+  animation-timing-function: var(--ease-out-expo);
+}
+
+::view-transition-old(root) {
+  animation-name: vt-fade-out;
+}
+
+::view-transition-new(root) {
+  animation-name: vt-fade-in;
+}
+
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Das Bild, das von der Kachel in die Projektseite wandert. */
+::view-transition-group(project-hero) {
+  animation-duration: 520ms;
+  animation-timing-function: var(--ease-out-expo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
 }
 
 /* Filmkorn – liegt als fixierte Ebene über der Seite. */
@@ -432,6 +510,131 @@ html.no-js .line-mask > span {
   background: var(--surface);
   padding: 0.125em 0.375em;
   border-radius: 0.25rem;
+}
+
+/* ==========================================================================
+   Druckansicht
+   Ziel: „Als PDF speichern" im Browser ergibt einen brauchbaren Lebenslauf –
+   ohne Navigation, ohne Farbflächen, ohne abgeschnittene Abschnitte.
+   ========================================================================== */
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 14mm;
+  }
+
+  /* Alles auf Papier: schwarz auf weiß, unabhängig vom gewählten Farbschema. */
+  :root,
+  :root[data-theme='dark'],
+  :root[data-theme='light'] {
+    --bg: #ffffff;
+    --bg-elevated: #ffffff;
+    --surface: #ffffff;
+    --text: #000000;
+    --text-muted: #333333;
+    --text-faint: #666666;
+    --line: #cccccc;
+    --line-strong: #999999;
+    --accent: #000000;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 10.5pt;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  /* Bildschirm-Beiwerk hat auf Papier nichts verloren. */
+  .no-print,
+  #site-nav,
+  #mobile-menu,
+  footer,
+  .grain,
+  .cursor-dot,
+  .cursor-ring,
+  .cursor-label,
+  [data-command-root],
+  [data-hero-canvas],
+  [data-hero-media],
+  [data-availability-block],
+  [data-print] {
+    display: none !important;
+  }
+
+  main {
+    padding-top: 0 !important;
+  }
+
+  section {
+    padding-top: 0 !important;
+    padding-bottom: 8mm !important;
+    /* Abschnitte nicht mitten im Satz umbrechen. */
+    break-inside: avoid;
+  }
+
+  .container-page {
+    max-width: none;
+    padding-inline: 0;
+  }
+
+  /* Überschriften auf Papier deutlich kleiner – 12 rem sprengt jede Seite. */
+  .display-xl,
+  .display-lg {
+    font-size: 24pt !important;
+    line-height: 1.1 !important;
+  }
+
+  .display-md {
+    font-size: 15pt !important;
+  }
+
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  .label-mono {
+    font-size: 7.5pt;
+    letter-spacing: 0.12em;
+  }
+
+  /* Zeitstrahl-Einträge zusammenhalten */
+  [data-timeline-entry] {
+    break-inside: avoid;
+    padding-bottom: 5mm;
+  }
+
+  /* Einblend-Animationen dürfen im Druck nichts verstecken. */
+  [data-reveal],
+  .line-mask > span {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Kompetenzbalken als Umriss, damit sie auch ungefärbt lesbar sind. */
+  [data-level] {
+    background: #000 !important;
+    print-color-adjust: exact;
+  }
+
+  a {
+    color: #000 !important;
+    text-decoration: none;
+  }
+
+  .surface-card {
+    border: 1px solid #ccc;
+  }
 }
 
 /* ==========================================================================

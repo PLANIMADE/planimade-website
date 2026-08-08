@@ -1,13 +1,22 @@
 import { useEffect, useState } from 'react';
-import { api, type Settings } from '../lib/api';
+import { api, type Settings, type TimelineEntry } from '../lib/api';
 import { useToast } from '../lib/toast';
+import MediaField from '../components/MediaField';
 
 const TABS = [
   { id: 'profil', label: 'Profil' },
+  { id: 'startseite', label: 'Startseite' },
+  { id: 'lebenslauf', label: 'Lebenslauf' },
   { id: 'inhalte', label: 'Fähigkeiten & Ablauf' },
   { id: 'seo', label: 'SEO' },
   { id: 'rechtliches', label: 'Rechtliches' },
   { id: 'konto', label: 'Konto' },
+] as const;
+
+const TIMELINE_TYPES = [
+  { value: 'work', label: 'Beruflich' },
+  { value: 'education', label: 'Ausbildung' },
+  { value: 'project', label: 'Projekt' },
 ] as const;
 
 export default function SettingsPage() {
@@ -255,6 +264,438 @@ export default function SettingsPage() {
                   <span className="mt-0.5 block text-[0.6875rem] text-faint">{hint}</span>
                 </span>
               </label>
+            ))}
+          </section>
+        </div>
+      )}
+
+      {tab === 'startseite' && (
+        <div className="space-y-6">
+          <section className="panel space-y-4 p-6">
+            <h2 className="text-sm font-semibold">Kopfbereich</h2>
+            <p className="text-[0.6875rem] leading-relaxed text-faint">
+              Das Erste, was Besucher sehen. Typografie wirkt ruhiger, ein Showreel zeigt in drei
+              Sekunden, was du kannst.
+            </p>
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              {(
+                [
+                  ['type', 'Große Typografie', 'Dein Name über einem bewegten Farbverlauf'],
+                  ['showreel', 'Showreel-Video', 'Video im Vollbild, Ton auf Wunsch zuschaltbar'],
+                ] as const
+              ).map(([value, label, hint]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => set('hero', { ...settings.hero, mode: value })}
+                  className={`rounded-lg border p-4 text-left transition-colors ${
+                    settings.hero.mode === value ? 'border-accent bg-accent/10' : 'border-line hover:border-line-strong'
+                  }`}
+                >
+                  <span className="block text-sm">{label}</span>
+                  <span className="mt-1 block text-[0.6875rem] leading-relaxed text-faint">{hint}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {settings.hero.mode === 'showreel' && (
+            <section className="panel space-y-5 p-6">
+              <h2 className="text-sm font-semibold">Showreel</h2>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <MediaField
+                  label="Video"
+                  hint="Am besten web-optimiertes MP4 (H.264). Läuft stumm in Dauerschleife."
+                  kind="video"
+                  value={settings.hero.video}
+                  onChange={(item) => set('hero', { ...settings.hero, video: item, mediaId: item?.id ?? null })}
+                />
+                <MediaField
+                  label="Standbild"
+                  hint="Wird angezeigt, solange das Video lädt. Bester erster Frame."
+                  value={settings.hero.poster}
+                  onChange={(item) => set('hero', { ...settings.hero, poster: item, posterId: item?.id ?? null })}
+                />
+              </div>
+
+              <div>
+                <label className="label" htmlFor="overlay">
+                  Abdunklung: {settings.hero.overlay} %
+                </label>
+                <input
+                  id="overlay"
+                  type="range"
+                  min={0}
+                  max={90}
+                  step={5}
+                  value={settings.hero.overlay}
+                  onChange={(event) => set('hero', { ...settings.hero, overlay: Number(event.target.value) })}
+                  className="w-full accent-[var(--accent)]"
+                />
+                <p className="mt-1 text-[0.6875rem] text-faint">
+                  Je heller das Video, desto mehr Abdunklung braucht die Schrift darüber.
+                </p>
+              </div>
+
+              {!settings.hero.video && (
+                <p className="rounded-lg border border-warn/40 bg-warn/10 px-3 py-2.5 text-xs text-warn">
+                  Ohne Video bleibt die Startseite bei der Typografie-Variante.
+                </p>
+              )}
+            </section>
+          )}
+        </div>
+      )}
+
+      {tab === 'lebenslauf' && (
+        <div className="space-y-6">
+          <section className="panel space-y-4 p-6">
+            <h2 className="text-sm font-semibold">Eckdaten</h2>
+            <p className="text-[0.6875rem] text-faint">Die Zahlenreihe oben auf der Lebenslauf-Seite.</p>
+
+            {settings.resume.facts.map((fact, index) => (
+              <div key={index} className="flex gap-2">
+                <input
+                  className="field w-48 shrink-0"
+                  value={fact.label}
+                  placeholder="Erfahrung"
+                  onChange={(event) => {
+                    const facts = [...settings.resume.facts];
+                    facts[index] = { ...fact, label: event.target.value };
+                    set('resume', { ...settings.resume, facts });
+                  }}
+                />
+                <input
+                  className="field flex-1"
+                  value={fact.value}
+                  placeholder="8+ Jahre"
+                  onChange={(event) => {
+                    const facts = [...settings.resume.facts];
+                    facts[index] = { ...fact, value: event.target.value };
+                    set('resume', { ...settings.resume, facts });
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    set('resume', {
+                      ...settings.resume,
+                      facts: settings.resume.facts.filter((_, position) => position !== index),
+                    })
+                  }
+                  className="btn btn-danger px-2.5 text-xs"
+                  aria-label="Entfernen"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() =>
+                set('resume', { ...settings.resume, facts: [...settings.resume.facts, { label: '', value: '' }] })
+              }
+              className="btn btn-ghost text-xs"
+            >
+              + Eckdatum
+            </button>
+          </section>
+
+          <section className="panel space-y-4 p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Werdegang</h2>
+              <button
+                type="button"
+                onClick={() =>
+                  set('resume', {
+                    ...settings.resume,
+                    timeline: [
+                      {
+                        period: '',
+                        title: '',
+                        org: '',
+                        location: '',
+                        description: '',
+                        type: 'work',
+                        tags: [],
+                      },
+                      ...settings.resume.timeline,
+                    ],
+                  })
+                }
+                className="btn btn-ghost px-3 py-1.5 text-xs"
+              >
+                + Station
+              </button>
+            </div>
+            <p className="text-[0.6875rem] leading-relaxed text-faint">
+              Neueste Station zuerst – die Reihenfolge hier ist auch die Reihenfolge auf der Website.
+            </p>
+
+            {settings.resume.timeline.map((entry, index) => (
+              <div key={index} className="space-y-3 rounded-lg border border-line p-4">
+                <div className="flex flex-wrap gap-2">
+                  <input
+                    className="field w-40 shrink-0"
+                    value={entry.period}
+                    placeholder="2022 — heute"
+                    onChange={(event) => {
+                      const timeline = [...settings.resume.timeline];
+                      timeline[index] = { ...entry, period: event.target.value };
+                      set('resume', { ...settings.resume, timeline });
+                    }}
+                  />
+                  <input
+                    className="field min-w-40 flex-1"
+                    value={entry.title}
+                    placeholder="Position oder Titel"
+                    onChange={(event) => {
+                      const timeline = [...settings.resume.timeline];
+                      timeline[index] = { ...entry, title: event.target.value };
+                      set('resume', { ...settings.resume, timeline });
+                    }}
+                  />
+                  <select
+                    className="field w-36 shrink-0"
+                    value={entry.type}
+                    onChange={(event) => {
+                      const timeline = [...settings.resume.timeline];
+                      timeline[index] = { ...entry, type: event.target.value as TimelineEntry['type'] };
+                      set('resume', { ...settings.resume, timeline });
+                    }}
+                  >
+                    {TIMELINE_TYPES.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex shrink-0 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (index === 0) return;
+                        const timeline = [...settings.resume.timeline];
+                        [timeline[index - 1], timeline[index]] = [timeline[index]!, timeline[index - 1]!];
+                        set('resume', { ...settings.resume, timeline });
+                      }}
+                      className="btn btn-ghost px-2 py-1 text-xs"
+                      aria-label="Nach oben"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        set('resume', {
+                          ...settings.resume,
+                          timeline: settings.resume.timeline.filter((_, position) => position !== index),
+                        })
+                      }
+                      className="btn btn-danger px-2 py-1 text-xs"
+                      aria-label="Station entfernen"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <input
+                    className="field min-w-40 flex-1"
+                    value={entry.org}
+                    placeholder="Firma, Agentur oder Hochschule"
+                    onChange={(event) => {
+                      const timeline = [...settings.resume.timeline];
+                      timeline[index] = { ...entry, org: event.target.value };
+                      set('resume', { ...settings.resume, timeline });
+                    }}
+                  />
+                  <input
+                    className="field w-40 shrink-0"
+                    value={entry.location}
+                    placeholder="Ort (optional)"
+                    onChange={(event) => {
+                      const timeline = [...settings.resume.timeline];
+                      timeline[index] = { ...entry, location: event.target.value };
+                      set('resume', { ...settings.resume, timeline });
+                    }}
+                  />
+                </div>
+
+                <textarea
+                  className="field min-h-16 resize-y text-xs"
+                  value={entry.description}
+                  placeholder="Was hast du dort gemacht? Zwei Sätze reichen."
+                  onChange={(event) => {
+                    const timeline = [...settings.resume.timeline];
+                    timeline[index] = { ...entry, description: event.target.value };
+                    set('resume', { ...settings.resume, timeline });
+                  }}
+                />
+
+                <input
+                  className="field text-xs"
+                  value={entry.tags.join(', ')}
+                  placeholder="Werkzeuge oder Schwerpunkte, mit Komma getrennt"
+                  onChange={(event) => {
+                    const timeline = [...settings.resume.timeline];
+                    timeline[index] = {
+                      ...entry,
+                      tags: event.target.value
+                        .split(',')
+                        .map((tag) => tag.trim())
+                        .filter(Boolean),
+                    };
+                    set('resume', { ...settings.resume, timeline });
+                  }}
+                />
+              </div>
+            ))}
+          </section>
+
+          <section className="panel space-y-4 p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Software-Kompetenzen</h2>
+              <button
+                type="button"
+                onClick={() =>
+                  set('expertise', [...settings.expertise, { name: '', level: 70, note: '', group: '' }])
+                }
+                className="btn btn-ghost px-3 py-1.5 text-xs"
+              >
+                + Programm
+              </button>
+            </div>
+            <p className="text-[0.6875rem] leading-relaxed text-faint">
+              Selbsteinschätzung von 0 bis 100. Gleiche Bereichsnamen werden auf der Website
+              zusammengefasst.
+            </p>
+
+            {settings.expertise.map((item, index) => (
+              <div key={index} className="flex flex-wrap items-center gap-2">
+                <input
+                  className="field w-40 shrink-0"
+                  value={item.name}
+                  placeholder="Blender"
+                  onChange={(event) => {
+                    const expertise = [...settings.expertise];
+                    expertise[index] = { ...item, name: event.target.value };
+                    set('expertise', expertise);
+                  }}
+                />
+                <input
+                  className="field w-44 shrink-0"
+                  value={item.group}
+                  placeholder="Bereich"
+                  list="expertise-groups"
+                  onChange={(event) => {
+                    const expertise = [...settings.expertise];
+                    expertise[index] = { ...item, group: event.target.value };
+                    set('expertise', expertise);
+                  }}
+                />
+                <div className="flex min-w-44 flex-1 items-center gap-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={item.level}
+                    onChange={(event) => {
+                      const expertise = [...settings.expertise];
+                      expertise[index] = { ...item, level: Number(event.target.value) };
+                      set('expertise', expertise);
+                    }}
+                    className="flex-1 accent-[var(--accent)]"
+                    aria-label={`Niveau ${item.name}`}
+                  />
+                  <span className="w-9 shrink-0 text-right font-mono text-xs text-faint">{item.level}</span>
+                </div>
+                <input
+                  className="field w-32 shrink-0 text-xs"
+                  value={item.note}
+                  placeholder="Notiz"
+                  onChange={(event) => {
+                    const expertise = [...settings.expertise];
+                    expertise[index] = { ...item, note: event.target.value };
+                    set('expertise', expertise);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => set('expertise', settings.expertise.filter((_, position) => position !== index))}
+                  className="btn btn-danger px-2.5 text-xs"
+                  aria-label="Entfernen"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+
+            <datalist id="expertise-groups">
+              {[...new Set(settings.expertise.map((item) => item.group).filter(Boolean))].map((group) => (
+                <option key={group} value={group} />
+              ))}
+            </datalist>
+          </section>
+
+          <section className="panel space-y-4 p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Sprachen</h2>
+              <button
+                type="button"
+                onClick={() =>
+                  set('resume', {
+                    ...settings.resume,
+                    languages: [...settings.resume.languages, { name: '', level: '' }],
+                  })
+                }
+                className="btn btn-ghost px-3 py-1.5 text-xs"
+              >
+                + Sprache
+              </button>
+            </div>
+
+            {settings.resume.languages.map((language, index) => (
+              <div key={index} className="flex gap-2">
+                <input
+                  className="field w-48 shrink-0"
+                  value={language.name}
+                  placeholder="Deutsch"
+                  onChange={(event) => {
+                    const languages = [...settings.resume.languages];
+                    languages[index] = { ...language, name: event.target.value };
+                    set('resume', { ...settings.resume, languages });
+                  }}
+                />
+                <input
+                  className="field flex-1"
+                  value={language.level}
+                  placeholder="Muttersprache"
+                  onChange={(event) => {
+                    const languages = [...settings.resume.languages];
+                    languages[index] = { ...language, level: event.target.value };
+                    set('resume', { ...settings.resume, languages });
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    set('resume', {
+                      ...settings.resume,
+                      languages: settings.resume.languages.filter((_, position) => position !== index),
+                    })
+                  }
+                  className="btn btn-danger px-2.5 text-xs"
+                  aria-label="Entfernen"
+                >
+                  ✕
+                </button>
+              </div>
             ))}
           </section>
         </div>

@@ -107,7 +107,8 @@ Domain-Verzeichnis (nicht den Ordner `deploy` selbst).
 > **Wichtig ab dem zweiten Upload:**
 > `uploads/` und `api/storage/` **nicht** mit hochladen bzw. nicht überschreiben.
 > Dort liegen deine hochgeladenen Dateien und die Datenbank mit allen Projekten,
-> Nachrichten und Statistiken.
+> Nachrichten und Statistiken – außerdem die erzeugten Vorschaubilder
+> (`uploads/og/`) und die Farbschema-Vorgabe (`uploads/theme.js`).
 
 Rechte prüfen (im FTP-Programm per Rechtsklick → Dateirechte):
 
@@ -145,6 +146,10 @@ php8.2 api/scripts/setup.php --email=deine@mail.de --password='…'
 
 ## Schritt 7 – Fertig einrichten
 
+0. **Systemcheck ansehen:** `https://deine-domain.de/admin/#/system`
+   Dort steht auf einen Blick, ob PHP-Version, Bildbibliothek, Schreibrechte
+   und Upload-Limits passen – und was zu tun ist, falls nicht. Gleich danach
+   „Testmail senden", um den Mailversand zu prüfen.
 1. **Dashboard öffnen:** `https://deine-domain.de/admin/`
 2. **Einstellungen → Rechtliches** vollständig ausfüllen
    (Anschrift, Telefon, ggf. USt-IdNr.). In Deutschland ist ein vollständiges
