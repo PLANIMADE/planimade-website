@@ -79,6 +79,43 @@ function fillMarquee(settings: Settings): void {
     .join('');
 }
 
+/**
+ * Ersetzt das Monogramm durch das hochgeladene Logo.
+ *
+ * Betrifft alle Stellen mit `data-mark`: die Marke in der Navigation, den
+ * Fuß des Lebenslaufs und den Sperrbildschirm. Ohne Logo bleibt ein
+ * Monogramm stehen – dann aber aus den Initialen des eingetragenen Namens
+ * und nicht als fest verdrahtetes „DM".
+ */
+function fillMark(settings: Settings): void {
+  const marks = document.querySelectorAll<HTMLElement>('[data-mark]');
+  if (marks.length === 0) return;
+
+  const logo = settings.logo?.image ?? null;
+
+  const initialen = settings.name
+    .split(/\s+/)
+    .filter((teil) => teil !== '')
+    .slice(0, 2)
+    .map((teil) => teil[0]?.toUpperCase() ?? '')
+    .join('');
+
+  marks.forEach((mark) => {
+    if (!logo) {
+      if (initialen !== '') mark.textContent = initialen;
+      return;
+    }
+
+    const bild = document.createElement('img');
+    bild.src = logo.thumbUrl ?? logo.url;
+    bild.alt = settings.logo.alt || settings.name;
+    // Vollständig zeigen statt beschneiden: Ein Logo ist selten quadratisch.
+    bild.className = 'h-full w-full object-contain';
+    mark.replaceChildren(bild);
+    mark.classList.add('is-logo');
+  });
+}
+
 function fillPortrait(settings: Settings): void {
   const figure = document.querySelector<HTMLElement>('[data-portrait]');
   if (!figure) return;
@@ -283,6 +320,7 @@ export async function initHydration(): Promise<void> {
   fillTexts(settings);
   fillMarquee(settings);
   fillPortrait(settings);
+  fillMark(settings);
 
   setText('[data-name]', settings.name);
 

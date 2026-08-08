@@ -247,6 +247,18 @@
   transition: all var(--dur-slow) var(--ease-out-expo);
 }
 
+/* Steht im Dashboard ein eigenes Logo, ersetzt es das Monogramm. Der Kasten
+   gibt dann Rahmen und Fläche auf – ein Logo bringt seine eigene Form und
+   Farbe mit – und darf breiter werden als ein quadratisches Kürzel. */
+[data-mark].is-logo {
+  width: auto;
+  min-width: 2.25rem;
+  max-width: 10rem;
+  padding: 0;
+  border-color: transparent;
+  background: none;
+}
+
 @utility surface-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1034,6 +1046,13 @@ html.no-js .line-mask > span {
   color: var(--text-faint);
 }
 
+.cv-foot-mark.is-logo {
+  height: 1.6rem;
+  min-width: 0;
+  max-width: 8rem;
+  border-radius: 0;
+}
+
 .cv-foot-mark {
   display: grid;
   place-items: center;
@@ -1339,7 +1358,8 @@ html.no-js .line-mask > span {
   .cv-foot,
   .cv-foot-mark,
   .cv-photo,
-  .cv-photo img {
+  .cv-photo img,
+  .cv-foot-mark img {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
@@ -1533,6 +1553,12 @@ html.no-js .line-mask > span {
     height: 6mm;
     border-radius: 1.2mm;
     font-size: 6.5pt;
+  }
+
+  .cv-foot-mark.is-logo {
+    width: auto;
+    max-width: 30mm;
+    border-radius: 0;
   }
 }
 

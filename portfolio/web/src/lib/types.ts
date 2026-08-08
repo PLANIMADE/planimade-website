@@ -124,6 +124,8 @@ export interface Settings {
   appearance: { defaultTheme: 'light' | 'dark' | 'system' };
   hero: HeroSettings;
   portrait: { mediaId: number | null; caption: string; image: MediaItem | null };
+  /** Eigenes Logo statt des Monogramms – Navigation und Lebenslauf. */
+  logo: { mediaId: number | null; alt: string; image: MediaItem | null };
   /** Schlüssel → Text. Die Schlüssel stehen im HTML als `data-text`. */
   texts: Record<string, string>;
   /** Wortliste des Laufbands auf der Startseite */

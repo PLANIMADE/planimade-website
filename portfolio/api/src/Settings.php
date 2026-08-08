@@ -32,6 +32,7 @@ final class Settings
         // Gespeichert werden nur Medien-IDs; das Frontend braucht fertige URLs.
         $out['hero'] = $this->resolveMedia($out['hero'] ?? [], ['mediaId' => 'video', 'posterId' => 'poster']);
         $out['portrait'] = $this->resolveMedia($out['portrait'] ?? [], ['mediaId' => 'image']);
+        $out['logo'] = $this->resolveMedia($out['logo'] ?? [], ['mediaId' => 'image']);
 
         return $out;
     }
@@ -115,7 +116,7 @@ final class Settings
             if ($key === 'hero' && is_array($value)) {
                 unset($value['video'], $value['poster']);
             }
-            if ($key === 'portrait' && is_array($value)) {
+            if (($key === 'portrait' || $key === 'logo') && is_array($value)) {
                 unset($value['image']);
             }
             $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: 'null';
@@ -235,6 +236,18 @@ final class Settings
             'portrait' => [
                 'mediaId' => null,
                 'caption' => '',
+            ],
+
+            /**
+             * Eigenes Logo statt des Monogramms.
+             *
+             * Steht in der Navigation, im Fuß des Lebenslaufs und auf dem
+             * Sperrbildschirm. Ohne Logo bilden die Initialen aus dem Namen
+             * das Monogramm – es gibt also nie eine Lücke.
+             */
+            'logo' => [
+                'mediaId' => null,
+                'alt' => '',
             ],
 
             /**

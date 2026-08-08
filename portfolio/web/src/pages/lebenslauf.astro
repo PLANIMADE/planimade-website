@@ -24,7 +24,10 @@ import Base from '../layouts/Base.astro';
     {/* Sperrbildschirm für alle, die nicht eingeloggt sind */}
     <section data-cv-locked hidden class="container-page grid min-h-screen place-items-center py-20">
       <div class="surface-card max-w-md p-10 text-center">
-        <span class="mx-auto grid h-12 w-12 place-items-center rounded-xl border border-line-strong text-base font-bold tracking-tight">
+        <span
+          data-mark
+          class="mx-auto grid h-12 w-12 place-items-center overflow-hidden rounded-xl border border-line-strong text-base font-bold tracking-tight"
+        >
           DM
         </span>
         <h1 class="mt-6 text-lg font-semibold tracking-tight text-ink">Nur für dich</h1>
@@ -167,7 +170,7 @@ import Base from '../layouts/Base.astro';
 
           <!-- =================================================== FUSS -->
           <footer class="cv-foot">
-            <span class="cv-foot-mark" aria-hidden="true">DM</span>
+            <span class="cv-foot-mark" data-mark aria-hidden="true">DM</span>
             <span class="cv-foot-text" data-cv-footer hidden></span>
             <span class="cv-foot-link" data-cv-site></span>
           </footer>

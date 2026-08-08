@@ -143,6 +143,40 @@ export default function SettingsPage() {
             </div>
           </section>
 
+          <section className="panel space-y-5 p-6">
+            <h2 className="text-sm font-semibold">Logo</h2>
+            <p className="text-[0.6875rem] leading-relaxed text-faint">
+              Ersetzt das Monogramm in der Navigation und im Lebenslauf. Ein PNG oder SVG mit
+              transparentem Hintergrund passt sich beiden Farbschemata an; das Logo wird
+              vollständig gezeigt, nicht beschnitten. Ohne Logo stehen dort die Initialen aus
+              deinem Namen.
+            </p>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <MediaField
+                label="Logo"
+                hint="Am besten quer oder quadratisch, mit etwas Luft am Rand."
+                value={settings.logo.image}
+                onChange={(item) => set('logo', { ...settings.logo, image: item, mediaId: item?.id ?? null })}
+              />
+              <div>
+                <label className="label" htmlFor="logo-alt">
+                  Alternativtext
+                </label>
+                <input
+                  id="logo-alt"
+                  className="field"
+                  value={settings.logo.alt}
+                  placeholder={settings.name}
+                  onChange={(event) => set('logo', { ...settings.logo, alt: event.target.value })}
+                />
+                <p className="mt-1 text-[0.6875rem] text-faint">
+                  Was Screenreader vorlesen. Leer lassen: dann wird dein Name verwendet.
+                </p>
+              </div>
+            </div>
+          </section>
+
           <section className="panel space-y-4 p-6">
             <h2 className="text-sm font-semibold">Darstellung</h2>
             <p className="text-[0.6875rem] leading-relaxed text-faint">

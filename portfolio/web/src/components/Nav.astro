@@ -19,8 +19,11 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
     style="height: var(--nav-height)"
   >
     <a href="/" class="group flex items-center gap-3" aria-label="Zur Startseite" data-cursor="hover">
+      {/* Steht im Dashboard ein Logo, ersetzt das Skript den Inhalt dieses
+          Kastens durch das Bild. Ohne Logo bleiben die Initialen stehen. */}
       <span
-        class="grid h-9 w-9 place-items-center rounded-lg border border-line-strong font-display text-sm font-black tracking-tighter transition-colors duration-300 group-hover:border-accent group-hover:text-accent"
+        data-mark
+        class="grid h-9 w-9 place-items-center overflow-hidden rounded-lg border border-line-strong font-display text-sm font-black tracking-tighter transition-colors duration-300 group-hover:border-accent group-hover:text-accent"
       >
         DM
       </span>
