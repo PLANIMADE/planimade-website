@@ -66,11 +66,14 @@ function portfolio_setup(string $email, string $password, bool $withDemo = false
         $log[] = '• Zugang ' . $email . ' existiert bereits – unverändert gelassen (--force setzt das Passwort neu)';
     }
 
-    $settings = new Settings($db);
+    $settings = new Settings($db, $config);
     if ($db->value('SELECT COUNT(*) FROM settings') === 0) {
         $settings->save(Settings::defaults());
         $log[] = '✓ Grundeinstellungen und Profiltexte eingespielt';
     }
+
+    // Legt uploads/theme.js an – die Farbschema-Vorgabe für neue Besucher.
+    $settings->writeAppearanceFile();
 
     foreach ([$config['uploads_path'], $config['uploads_path'] . '/' . gmdate('Y/m')] as $dir) {
         if (!is_dir($dir)) {

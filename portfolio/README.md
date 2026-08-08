@@ -65,7 +65,11 @@ Veröffentlichen: **[DEPLOY-ALL-INKL.md](DEPLOY-ALL-INKL.md)**
 - **Case-Studies** mit Markdown-Text, Kennzahlen, Bildstrecke,
   Vorher/Nachher-Vergleich und drehbarem 3D-Modell (GLB)
 - **Command-Palette** (⌘K / Strg+K) über Seiten, Projekte und Aktionen
-- **Hell/Dunkel-Umschalter**, dezente Interface-Sounds (standardmäßig aus)
+- **Hell/Dunkel-Umschalter** – welches Design neue Besucher zuerst sehen,
+  legst du im Dashboard fest (Einstellungen → Profil → Darstellung). Die
+  Vorgabe landet als `uploads/theme.js` auf dem Server und wird noch vor dem
+  ersten Bildaufbau geladen, damit nichts aufblitzt.
+- Dezente Interface-Sounds (standardmäßig aus)
 - **Osterei**: Konami-Code oder das Wort „render" tippen
 - **Rücksichtsvoll**: respektiert `prefers-reduced-motion`, funktioniert mit
   Tastatur, Schwergewichte (three.js, Markdown-Parser) werden nur bei Bedarf geladen

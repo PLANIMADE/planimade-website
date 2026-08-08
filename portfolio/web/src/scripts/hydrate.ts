@@ -36,6 +36,17 @@ function renderParagraphs(container: HTMLElement, text: string): void {
 }
 
 function fillAvailability(settings: Settings): void {
+  // Abgeschaltet: Badge samt Beschriftung restlos entfernen, damit kein
+  // leerer Rahmen stehen bleibt.
+  if (settings.availability.visible === false) {
+    document.querySelectorAll('[data-availability], [data-availability-detail]').forEach((element) => {
+      element.closest('[data-availability-block]')?.remove();
+      element.remove();
+    });
+
+    return;
+  }
+
   const color = statusColors[settings.availability.status] ?? statusColors.open!;
   const pulse = settings.availability.status === 'open';
 

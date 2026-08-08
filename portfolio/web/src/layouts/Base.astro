@@ -19,7 +19,7 @@ interface Props {
 
 const {
   title,
-  description = 'Portfolio von Dominic Majewski – 3D-Renderings in Blender, Echtzeit-Szenen in Unreal Engine 5, cinematischer Schnitt und handgeschriebene Websites.',
+  description = 'Portfolio von Dominic Majewski – 3D-Renderings in Blender, Echtzeit-Szenen in Unreal Engine 5 und cinematischer Schnitt.',
   image = '/og-default.jpg',
   noindex = false,
   bare = false,
@@ -71,6 +71,15 @@ const ogImage = new URL(image, Astro.site ?? 'https://dominic-majewski.de');
         }
       })();
     </script>
+
+    {/*
+      Überschreibt die Vorgabe oben mit der Einstellung aus dem Dashboard
+      (Einstellungen → Profil → Darstellung). Das Backend schreibt diese Datei
+      bei jedem Speichern neu; sie muss blockierend geladen werden, damit das
+      richtige Farbschema schon beim ersten Bildaufbau steht.
+      Fehlt sie (z. B. vor der Ersteinrichtung), gilt einfach die Vorgabe oben.
+    */}
+    <script is:inline src="/uploads/theme.js"></script>
   </head>
 
   <body class="relative">

@@ -85,7 +85,8 @@ export interface Settings {
   location: string;
   tagline: string;
   intro: string;
-  availability: { status: 'open' | 'limited' | 'closed'; label: string; detail: string };
+  appearance: { defaultTheme: 'light' | 'dark' | 'system' };
+  availability: { visible: boolean; status: 'open' | 'limited' | 'closed'; label: string; detail: string };
   email: string;
   phone: string;
   socials: Array<{ label: string; url: string }>;

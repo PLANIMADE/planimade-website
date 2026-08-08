@@ -78,7 +78,14 @@ export interface Settings {
   location: string;
   tagline: string;
   intro: string;
-  availability: { status: 'open' | 'limited' | 'closed'; label: string; detail: string };
+  appearance: { defaultTheme: 'light' | 'dark' | 'system' };
+  availability: {
+    /** Aus = das Status-Feld erscheint nirgends auf der Seite. */
+    visible: boolean;
+    status: 'open' | 'limited' | 'closed';
+    label: string;
+    detail: string;
+  };
   email: string;
   phone: string;
   socials: ProjectLink[];

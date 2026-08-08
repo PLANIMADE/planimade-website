@@ -104,38 +104,87 @@ export default function SettingsPage() {
           </section>
 
           <section className="panel space-y-4 p-6">
-            <h2 className="text-sm font-semibold">Verfügbarkeit</h2>
-            <p className="text-[0.6875rem] text-faint">Das kleine Statusfeld oben auf der Startseite.</p>
+            <h2 className="text-sm font-semibold">Darstellung</h2>
+            <p className="text-[0.6875rem] leading-relaxed text-faint">
+              Gilt für Besucher, die zum ersten Mal kommen. Wer selbst umschaltet, behält seine Wahl.
+            </p>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <label className="label">Status</label>
-                <select
-                  className="field"
-                  value={settings.availability.status}
-                  onChange={(event) =>
-                    set('availability', {
-                      ...settings.availability,
-                      status: event.target.value as Settings['availability']['status'],
-                    })
-                  }
+            <div className="grid gap-2 sm:grid-cols-3">
+              {(
+                [
+                  ['light', 'Hell', 'Immer im hellen Design starten'],
+                  ['dark', 'Dunkel', 'Immer im dunklen Design starten'],
+                  ['system', 'Wie das Gerät', 'Folgt der Systemeinstellung'],
+                ] as const
+              ).map(([value, label, hint]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => set('appearance', { ...settings.appearance, defaultTheme: value })}
+                  className={`rounded-lg border p-3 text-left transition-colors ${
+                    settings.appearance.defaultTheme === value
+                      ? 'border-accent bg-accent/10'
+                      : 'border-line hover:border-line-strong'
+                  }`}
                 >
-                  <option value="open">Offen (grün)</option>
-                  <option value="limited">Begrenzt (gelb)</option>
-                  <option value="closed">Ausgebucht (rot)</option>
-                </select>
-              </div>
-              <Field
-                label="Beschriftung"
-                value={settings.availability.label}
-                onChange={(value) => set('availability', { ...settings.availability, label: value })}
-              />
-              <Field
-                label="Zusatz"
-                value={settings.availability.detail}
-                onChange={(value) => set('availability', { ...settings.availability, detail: value })}
-              />
+                  <span className="block text-sm">{label}</span>
+                  <span className="mt-0.5 block text-[0.6875rem] leading-relaxed text-faint">{hint}</span>
+                </button>
+              ))}
             </div>
+          </section>
+
+          <section className="panel space-y-4 p-6">
+            <h2 className="text-sm font-semibold">Status-Feld</h2>
+
+            <label className="flex cursor-pointer items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                checked={settings.availability.visible}
+                onChange={(event) =>
+                  set('availability', { ...settings.availability, visible: event.target.checked })
+                }
+                className="mt-1 accent-[var(--accent)]"
+              />
+              <span>
+                Status auf der Website anzeigen
+                <span className="mt-0.5 block text-[0.6875rem] leading-relaxed text-faint">
+                  Das kleine Feld mit dem farbigen Punkt über deinem Namen. Aus = erscheint nirgends.
+                </span>
+              </span>
+            </label>
+
+            {settings.availability.visible && (
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <label className="label">Farbe</label>
+                  <select
+                    className="field"
+                    value={settings.availability.status}
+                    onChange={(event) =>
+                      set('availability', {
+                        ...settings.availability,
+                        status: event.target.value as Settings['availability']['status'],
+                      })
+                    }
+                  >
+                    <option value="open">Grün</option>
+                    <option value="limited">Gelb</option>
+                    <option value="closed">Rot</option>
+                  </select>
+                </div>
+                <Field
+                  label="Beschriftung"
+                  value={settings.availability.label}
+                  onChange={(value) => set('availability', { ...settings.availability, label: value })}
+                />
+                <Field
+                  label="Zusatz (optional)"
+                  value={settings.availability.detail}
+                  onChange={(value) => set('availability', { ...settings.availability, detail: value })}
+                />
+              </div>
+            )}
           </section>
 
           <section className="panel space-y-4 p-6">
