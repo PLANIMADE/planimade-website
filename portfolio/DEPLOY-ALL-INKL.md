@@ -19,7 +19,18 @@ Rechner noch auf dem Server. Dort läuft nur PHP.
 3. **Software → PHP-Version**: auf **PHP 8.2 oder höher** stellen,
    Betriebsart **FastCGI** (Standard) beibehalten.
 4. **Domain → SSL-Schutz**: kostenloses **Let's-Encrypt-Zertifikat**
-   aktivieren. Erst danach greift die HTTPS-Weiterleitung aus der `.htaccess`.
+   aktivieren. Das klappt erst, wenn die Domain öffentlich auflöst – ein
+   Zertifikat wird nur für erreichbare Domains ausgestellt.
+
+   Meldet das KAS „Für diese Domain wurden keine DNS-Informationen gefunden",
+   ist die Domain noch **nicht registriert** oder ihre Nameserver zeigen
+   woandershin. Im KAS eine Domain anzulegen registriert sie nicht – das ist
+   ein eigener Schritt unter **Domain → Domain bestellen**. Nach der
+   Registrierung dauert es bis zu 24 Stunden.
+
+   Solange kannst du alles schon über die **Übergangsdomain** ansehen, die
+   im KAS neben der Domain steht (`…kasserver.com`). Sie ist von der
+   HTTPS-Weiterleitung ausgenommen und funktioniert auch ohne Zertifikat.
 5. **FTP → FTP-Benutzer**: Zugang anlegen oder vorhandenen notieren.
 6. **E-Mail**: eine Adresse der eigenen Domain anlegen, etwa
    `website@deine-domain.de`. all-inkl verwirft Mails mit fremden Absendern,

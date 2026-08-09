@@ -12,10 +12,16 @@ AddDefaultCharset UTF-8
     RewriteBase /
 
     # --- HTTPS erzwingen -----------------------------------------------------
-    # Erst aktivieren, wenn das SSL-Zertifikat im KAS eingerichtet ist,
-    # sonst sperrt man sich bei der ersten Einrichtung selbst aus.
+    # Wichtig: Das SSL-Zertifikat muss im KAS aktiviert sein, sonst zeigt der
+    # Browser nach der Weiterleitung eine Zertifikatswarnung.
+    #
+    # Die Übergangsdomain (…kasserver.com) ist ausgenommen. Über sie lässt
+    # sich die Seite schon ansehen, solange die eigene Domain noch nicht
+    # aufgelöst wird oder das Zertifikat fehlt – ohne diese Ausnahme liefe
+    # man in eine Weiterleitung auf eine Adresse, die es noch nicht gibt.
     RewriteCond %{HTTPS} !=on
     RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteCond %{HTTP_HOST} !\.kasserver\.com$ [NC]
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
     # --- Case-Studies --------------------------------------------------------
