@@ -219,6 +219,18 @@
   --line-strong: rgb(255 255 255 / 40%);
 }
 
+/* Dasselbe für die Kopfzeile: Sie liegt über dem Video, gehört aber nicht zum
+   Hero-Abschnitt und erbt dessen Umstellung deshalb nicht. Sobald sie beim
+   Scrollen ihren eigenen Untergrund bekommt, gelten wieder die normalen
+   Farben – daran erkennt man `data-scrolled`. */
+html[data-hero-video] [data-nav]:not([data-scrolled]) {
+  --text: #ffffff;
+  --text-muted: rgb(255 255 255 / 80%);
+  --text-faint: rgb(255 255 255 / 55%);
+  --line: rgb(255 255 255 / 22%);
+  --line-strong: rgb(255 255 255 / 45%);
+}
+
 [data-hero-on-video] .text-outline {
   -webkit-text-stroke-color: rgb(255 255 255 / 45%);
 }

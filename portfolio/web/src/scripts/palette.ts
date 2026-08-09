@@ -7,7 +7,7 @@
 
 import { fetchProjects, fetchSettings } from '../lib/api';
 import { toggleTheme } from './theme';
-import { sound } from './sound';
+import { sound, soundEnabled, toggleSound } from './sound';
 
 interface Command {
   id: string;
@@ -44,6 +44,14 @@ export function initPalette(): void {
       group: 'Aktionen',
       keywords: 'dark light theme farbe',
       run: () => toggleTheme(),
+    },
+    {
+      id: 'sound',
+      label: soundEnabled() ? 'Interface-Töne ausschalten' : 'Interface-Töne einschalten',
+      hint: 'Ton',
+      group: 'Aktionen',
+      keywords: 'ton sound audio stumm lautsprecher',
+      run: () => notify(toggleSound() ? 'Töne an' : 'Töne aus'),
     },
     {
       id: 'mail',

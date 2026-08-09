@@ -80,6 +80,30 @@ function syncButtons(): void {
   });
 }
 
+/**
+ * Ton an oder aus.
+ *
+ * Erreichbar über die Schnellsuche (⌘K). In der Kopfzeile stand dafür lange
+ * ein Lautsprecher – für eine Einstellung, die kaum jemand sucht, war das
+ * ein zu prominenter Platz.
+ */
+export function toggleSound(): boolean {
+  enabled = !enabled;
+  try {
+    localStorage.setItem(STORAGE_KEY, enabled ? 'on' : 'off');
+  } catch {
+    /* egal */
+  }
+  syncButtons();
+  if (enabled) sound.open();
+
+  return enabled;
+}
+
+export function soundEnabled(): boolean {
+  return enabled;
+}
+
 export function initSound(): void {
   try {
     enabled = localStorage.getItem(STORAGE_KEY) === 'on';
@@ -89,16 +113,7 @@ export function initSound(): void {
   syncButtons();
 
   document.querySelectorAll<HTMLButtonElement>('[data-sound-toggle]').forEach((button) => {
-    button.addEventListener('click', () => {
-      enabled = !enabled;
-      try {
-        localStorage.setItem(STORAGE_KEY, enabled ? 'on' : 'off');
-      } catch {
-        /* egal */
-      }
-      syncButtons();
-      if (enabled) sound.open();
-    });
+    button.addEventListener('click', () => toggleSound());
   });
 
   // Hover- und Klickgeräusche an allen interaktiven Elementen.

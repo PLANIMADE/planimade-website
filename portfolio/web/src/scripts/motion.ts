@@ -117,6 +117,9 @@ function initNavState(): void {
     const y = window.scrollY;
     if (nav) {
       const scrolled = y > 24;
+      // Merkmal für das Stylesheet: Solange die Kopfzeile über dem Hero
+      // schwebt, braucht sie unter Umständen eine andere Schriftfarbe.
+      nav.toggleAttribute('data-scrolled', scrolled);
       nav.classList.toggle('bg-bg/80', scrolled);
       nav.classList.toggle('backdrop-blur-xl', scrolled);
       nav.classList.toggle('border-b', scrolled);

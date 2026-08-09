@@ -100,6 +100,13 @@ function fillMark(settings: Settings): void {
     .map((teil) => teil[0]?.toUpperCase() ?? '')
     .join('');
 
+  // Mit eigenem Logo verschwindet der Namenszug daneben: Eine Wortmarke
+  // enthält den Namen meist selbst, zweimal nebeneinander sieht nach Versehen
+  // aus. Ohne Logo bleibt er stehen – ein Kürzel allein sagt zu wenig.
+  document.querySelectorAll<HTMLElement>('[data-wordmark]').forEach((wortmarke) => {
+    if (logo) wortmarke.remove();
+  });
+
   marks.forEach((mark) => {
     if (!logo) {
       if (initialen !== '') mark.textContent = initialen;

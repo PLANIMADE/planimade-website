@@ -49,6 +49,11 @@ export function initHeroShowreel(settings: Settings): boolean {
   // Text im hellen Farbschema kaum lesbar.
   container.closest('section')?.setAttribute('data-hero-on-video', '');
 
+  // Auch die Kopfzeile schwebt über dem Video. Sie steht außerhalb dieses
+  // Abschnitts, erbt die Umstellung also nicht – deshalb eine Markierung am
+  // Wurzelelement, an der sich das Stylesheet bedienen kann.
+  document.documentElement.dataset.heroVideo = '';
+
   if (!calm) {
     const play = (): void => {
       void video.play().catch(() => undefined);

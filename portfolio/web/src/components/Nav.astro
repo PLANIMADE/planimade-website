@@ -27,7 +27,9 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
       >
         DM
       </span>
-      <span class="hidden text-sm font-semibold tracking-tight sm:block">Dominic Majewski</span>
+      {/* Weicht dem Logo: Wer eine Wortmarke hochlädt, will den Namen nicht
+          zusätzlich als Text daneben stehen haben. */}
+      <span data-wordmark class="hidden text-sm font-semibold tracking-tight sm:block" data-name>Dominic Majewski</span>
     </a>
 
     <nav class="hidden items-center gap-8 md:flex" aria-label="Hauptnavigation">
@@ -37,8 +39,11 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
             href={link.href}
             data-cursor="hover"
             class:list={[
-              'link-underline text-sm font-medium transition-colors duration-300',
-              isActive(link.href) ? 'text-ink' : 'text-muted hover:text-ink',
+              // Volle Textfarbe statt Grau: In der Kopfzeile stehen vier Wörter,
+              // die sollen lesbar sein. Der aktive Punkt hebt sich über das
+              // Gewicht ab, nicht über einen Helligkeitsunterschied.
+              'link-underline text-sm transition-colors duration-300 text-ink',
+              isActive(link.href) ? 'font-semibold' : 'font-medium opacity-80 hover:opacity-100',
             ]}
           >
             {link.label}
@@ -57,20 +62,6 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
       >
         <span class="font-mono tracking-widest">SUCHE</span>
         <kbd class="rounded border border-line px-1.5 py-0.5 font-mono text-[0.625rem]">⌘K</kbd>
-      </button>
-
-      <button
-        type="button"
-        data-sound-toggle
-        data-cursor="hover"
-        class="grid h-9 w-9 place-items-center rounded-full border border-line text-muted transition-colors duration-300 hover:border-line-strong hover:text-ink"
-        aria-label="Interface-Sounds umschalten"
-        aria-pressed="false"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="h-4 w-4">
-          <path d="M11 5 6 9H3v6h3l5 4V5Z" stroke-linejoin="round"></path>
-          <path data-sound-wave class="opacity-30" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" stroke-linecap="round"></path>
-        </svg>
       </button>
 
       <button
