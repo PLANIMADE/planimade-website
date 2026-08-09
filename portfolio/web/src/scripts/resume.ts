@@ -79,7 +79,7 @@ function renderTimeline(settings: Settings): void {
           </span>
         </p>
 
-        ${entry.description ? `<p class="mt-3 max-w-2xl text-sm leading-relaxed text-muted">${escapeHtml(entry.description)}</p>` : ''}
+        ${entry.description ? `<p class="mt-3 max-w-2xl whitespace-pre-line text-sm leading-relaxed text-muted">${escapeHtml(entry.description)}</p>` : ''}
 
         ${
           entry.tags.length > 0

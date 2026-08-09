@@ -899,7 +899,11 @@ html.no-js .line-mask > span {
   margin-bottom: clamp(1.75rem, 3.5vw, 2.5rem);
 }
 
+/* `pre-line` erhält gesetzte Zeilenumbrüche, fasst aber mehrfache
+   Leerzeichen weiterhin zusammen. Ohne das landet eine Aufzählung, die im
+   Dashboard über mehrere Zeilen steht, hier als ein einziger Fließtext. */
 .cv-profile {
+  white-space: pre-line;
   padding-left: 1.15rem;
   border-left: 3px solid var(--accent);
   font-size: clamp(1rem, 1.5vw, 1.1875rem);
@@ -978,6 +982,7 @@ html.no-js .line-mask > span {
 }
 
 .cv-entry-text {
+  white-space: pre-line;
   margin-top: 0.45rem;
   font-size: 0.875rem;
   color: var(--text-muted);

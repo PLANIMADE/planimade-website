@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react';
 import { api, type Settings, type TimelineEntry } from '../lib/api';
 import { useToast } from '../lib/toast';
 import MediaField from '../components/MediaField';
+import ListField from '../components/ListField';
 import { TEXT_GROUPS } from '../lib/text-schema';
 
 const TABS = [
@@ -465,8 +466,10 @@ export default function SettingsPage() {
                 placeholder="Zwei, drei Sätze für Bewerbungen – nüchterner als der Text auf der Website."
                 onChange={(event) => set('cv', { ...settings.cv, profile: event.target.value })}
               />
-              <p className="mt-1 text-[0.6875rem] text-faint">
-                Leer lassen: dann wird der erste Absatz deines Vorstellungstexts verwendet.
+              <p className="mt-1 text-[0.6875rem] leading-relaxed text-faint">
+                Zeilenumbrüche bleiben erhalten – für eine Aufzählung von Aufgaben oder
+                Schwerpunkten einfach je Punkt eine Zeile. Leer lassen: dann wird der erste
+                Absatz deines Vorstellungstexts verwendet.
               </p>
             </div>
 
@@ -816,19 +819,12 @@ export default function SettingsPage() {
                   }}
                 />
 
-                <input
-                  className="field text-xs"
-                  value={entry.tags.join(', ')}
+                <ListField
+                  value={entry.tags}
                   placeholder="Werkzeuge oder Schwerpunkte, mit Komma getrennt"
-                  onChange={(event) => {
+                  onChange={(tags) => {
                     const timeline = [...settings.resume.timeline];
-                    timeline[index] = {
-                      ...entry,
-                      tags: event.target.value
-                        .split(',')
-                        .map((tag) => tag.trim())
-                        .filter(Boolean),
-                    };
+                    timeline[index] = { ...entry, tags };
                     set('resume', { ...settings.resume, timeline });
                   }}
                 />
@@ -1026,19 +1022,12 @@ export default function SettingsPage() {
                     set('skills', next);
                   }}
                 />
-                <input
-                  className="field text-xs"
-                  value={skill.items.join(', ')}
+                <ListField
+                  value={skill.items}
                   placeholder="Werkzeuge, mit Komma getrennt"
-                  onChange={(event) => {
+                  onChange={(items) => {
                     const next = [...settings.skills];
-                    next[index] = {
-                      ...skill,
-                      items: event.target.value
-                        .split(',')
-                        .map((entry) => entry.trim())
-                        .filter(Boolean),
-                    };
+                    next[index] = { ...skill, items };
                     set('skills', next);
                   }}
                 />
