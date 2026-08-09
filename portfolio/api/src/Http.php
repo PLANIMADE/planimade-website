@@ -29,7 +29,24 @@ final class Http
             $uri = $m[1];
         }
 
-        return trim($uri, '/');
+        $path = trim($uri, '/');
+
+        /*
+         * Notweg ohne mod_rewrite.
+         *
+         * Fehlt `api/.htaccess` auf dem Server – FTP-Programme lassen Dateien
+         * mit führendem Punkt gerne aus –, erreicht keine Anfrage den
+         * Front-Controller, und die ganze Seite wirkt tot. Dann sprechen die
+         * Clients index.php direkt an und nennen die Route in `_route`.
+         */
+        if ($path === '' || $path === 'index.php') {
+            $route = trim((string) ($_GET['_route'] ?? ''), '/');
+            if ($route !== '') {
+                return $route;
+            }
+        }
+
+        return $path;
     }
 
     /** Dekodierter JSON-Body (leeres Array bei Formular-Uploads). */

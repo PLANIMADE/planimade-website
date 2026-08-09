@@ -210,6 +210,25 @@ export class ApiError extends Error {
 
 let csrfToken = '';
 
+/**
+ * Normalerweise laufen Anfragen über die kurze Adresse `/api/<route>`. Fehlt
+ * auf dem Server die Umschreibung aus `api/.htaccess`, greift der direkte Weg
+ * über index.php – dann steht die Route in `_route`.
+ */
+let direkterWeg = false;
+
+function apiUrl(path: string): string {
+  if (!direkterWeg) {
+    return `/api/${path}`;
+  }
+
+  // Eine bereits angehängte Abfrage (etwa `projects?drafts=1`) muss erhalten
+  // bleiben – mitkodiert käme sie auf dem Server nie an.
+  const [route = '', query] = path.split('?');
+
+  return `/api/index.php?_route=${encodeURIComponent(route)}${query ? `&${query}` : ''}`;
+}
+
 export function setCsrfToken(token: string): void {
   csrfToken = token;
 }
@@ -226,7 +245,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers.set('X-CSRF-Token', csrfToken);
   }
 
-  const response = await fetch(`/api/${path}`, { ...options, headers, credentials: 'same-origin' });
+  const response = await fetch(apiUrl(path), { ...options, headers, credentials: 'same-origin' });
+
+  // Antwortet der Server auf die kurze Adresse mit einer HTML-Fehlerseite,
+  // fehlt auf ihm `api/.htaccess`. Dann einmal auf den direkten Weg über
+  // index.php umschalten – danach läuft alles wie gewohnt weiter.
+  if (!direkterWeg && response.status === 404 && !(response.headers.get('content-type') ?? '').includes('json')) {
+    direkterWeg = true;
+
+    return request<T>(path, options);
+  }
 
   if (response.status === 204) {
     return undefined as T;

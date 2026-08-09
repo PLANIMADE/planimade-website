@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Serverdateien wiederherstellen</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 2rem;
+         background: #08080b; color: #e4e4e7;
+         font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .card { width: 100%; max-width: 34rem; background: #101014; border: 1px solid #26262e;
+          border-radius: 1rem; padding: 2rem; }
+  h1 { margin: 0 0 .25rem; font-size: 1.25rem; letter-spacing: -0.02em; }
+  p.lead { margin: 0 0 1.25rem; color: #a1a1aa; font-size: .875rem; }
+  button { width: 100%; margin-top: 1.5rem; padding: .8rem; border: 0; border-radius: .5rem;
+           background: #a855f7; color: #fff; font-weight: 600; font-size: .9375rem; cursor: pointer; }
+  button:hover { background: #9333ea; }
+  ul { padding-left: 0; margin: 0; list-style: none; font-size: .875rem; }
+  li { padding: .5rem .75rem; border-radius: .4rem; margin-bottom: .4rem; background: #16161c; }
+  li.ok { color: #86efac; }
+  li.err { color: #fca5a5; }
+  code { background: #1c1c22; padding: .1rem .35rem; border-radius: .25rem; font-size: .8125rem; }
+  a { color: #a855f7; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Serverdateien wiederherstellen</h1>
+
+      <p class="lead">Fertig. Diese Datei hat sich selbst gelöscht.</p>
+    <ul>
+              <li class="ok">
+          <code>.htaccess</code> — angelegt        </li>
+              <li class="ok">
+          <code>api/.htaccess</code> — angelegt        </li>
+              <li class="err">
+          <code>uploads/.htaccess</code> — Ordner uploads fehlt – bitte zuerst vollständig hochladen.        </li>
+              <li class="ok">
+          <code>api/storage/.htaccess</code> — angelegt        </li>
+          </ul>
+    <p class="lead" style="margin-top:1.25rem">
+      Weiter zum Dashboard: <a href="/admin/">/admin/</a>
+    </p>
+  </div>
+</body>
+</html>

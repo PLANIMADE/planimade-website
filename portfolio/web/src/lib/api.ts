@@ -9,11 +9,40 @@ import type { Project, Settings, Testimonial } from './types';
 
 const cache = new Map<string, Promise<unknown>>();
 
+/**
+ * Normalerweise laufen Anfragen über die kurze Adresse `/api/<route>`. Fehlt
+ * auf dem Server die Umschreibung aus `api/.htaccess` – FTP-Programme lassen
+ * Dateien mit führendem Punkt gerne aus –, greift der direkte Weg über
+ * index.php. Ohne diesen Notweg bliebe die Seite bei ihren eingebauten
+ * Standardtexten stehen, ohne dass man den Grund sähe.
+ */
+let direkterWeg = false;
+
+function apiUrl(path: string): string {
+  if (!direkterWeg) {
+    return `/api/${path}`;
+  }
+
+  const [route = '', query] = path.split('?');
+
+  return `/api/index.php?_route=${encodeURIComponent(route)}${query ? `&${query}` : ''}`;
+}
+
 async function get<T>(path: string): Promise<T> {
-  const response = await fetch(`/api/${path}`, {
+  let response = await fetch(apiUrl(path), {
     headers: { Accept: 'application/json' },
     credentials: 'same-origin',
   });
+
+  // Eine HTML-Fehlerseite statt JSON heißt: Der Server kennt die kurze
+  // Adresse nicht. Einmal umschalten, danach bleibt es dabei.
+  if (!direkterWeg && response.status === 404 && !(response.headers.get('content-type') ?? '').includes('json')) {
+    direkterWeg = true;
+    response = await fetch(apiUrl(path), {
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+    });
+  }
 
   if (!response.ok) {
     throw new Error(`API-Fehler ${response.status} bei /api/${path}`);
@@ -65,7 +94,7 @@ export interface ContactPayload {
 export async function sendContact(
   payload: ContactPayload,
 ): Promise<{ ok: boolean; error?: string; fields?: Record<string, string> }> {
-  const response = await fetch('/api/contact', {
+  const response = await fetch(apiUrl('contact'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
