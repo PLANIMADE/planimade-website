@@ -68,13 +68,16 @@ function fillMarquee(settings: Settings): void {
   }
 
   // Zweimal ausgeben: Die Animation läuft bis -50 % und springt unsichtbar zurück.
+  //
+  // Der Abstand sitzt am Wort, nicht am Paar – dieselbe Aufteilung wie in
+  // `Marquee.astro`. Lag er am Paar, standen links vom Trennzeichen 32 px und
+  // rechts davon 64 px: Es klebte am linken Wort, das Band wirkte verrutscht.
   track.innerHTML = [...items, ...items]
     .map(
       (item) => `
-      <span class="flex shrink-0 items-center gap-8 px-8">
-        <span class="whitespace-nowrap text-sm font-medium tracking-tight text-muted">${escapeHtml(item)}</span>
-        <span class="text-accent/60">✦</span>
-      </span>`,
+      <span class="flex shrink-0 items-center"><span class="whitespace-nowrap px-8 text-sm font-medium tracking-tight text-muted">${escapeHtml(
+        item,
+      )}</span><span class="text-accent/60">✦</span></span>`,
     )
     .join('');
 }

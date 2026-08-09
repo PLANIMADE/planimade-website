@@ -614,17 +614,14 @@ html.no-js .line-mask > span {
 /* Eigenes Seitenformat nur für den Lebenslauf: ohne Seitenrand, damit der
    Kopf wirklich bis an die Blattkante läuft. Browser ohne Unterstützung für
    benannte Seiten drucken ihn mit normalem Rand – das Layout bleibt heil. */
-/* Folgeseiten brauchen Luft, sonst klebt der Text an der Blattkante und wird
-   von den meisten Druckern abgeschnitten. Nur oben und unten – die seitlichen
-   Ränder bleiben bei 0, damit die Textbreite auf allen Seiten gleich ist und
-   nichts umbricht. */
+/* Kein Seitenrand – auf keiner Seite.
+   Ein Rand bleibt beim Drucken weiß, auch wenn das Dokument dunkel ist: Der
+   Browser färbt diesen Bereich nicht mit. Auf Seite zwei entstand dadurch ein
+   heller Balken quer über das Blatt. Der Abstand zum Papierrand kommt deshalb
+   von innen, aus der Polsterung der Spalten – und die wiederholt sich dank
+   `box-decoration-break` auf jeder Seite. */
 @page cv {
   size: A4;
-  margin: 14mm 0 12mm;
-}
-
-/* Die erste Seite ist das Deckblatt: randabfallender Kopf bis an die Kante. */
-@page cv:first {
   margin: 0;
 }
 
@@ -1378,8 +1375,24 @@ html.no-js .line-mask > span {
 
   .cv-sheet {
     page: cv;
-    width: 100%;
+    /* `--cv-fit` setzt das Skript, nachdem es das Blatt in A4-Breite
+       nachgemessen hat: Läuft das Dokument nur knapp über die Seite, wird es
+       als Ganzes ein paar Prozent kleiner gesetzt, statt hinten eine fast
+       leere Seite anzuhängen. `zoom` ist dafür das richtige Werkzeug – es
+       verkleinert vor dem Umbruch, `transform` erst danach. Weil `zoom` auch
+       die Breite mitnimmt, wird sie hier gegengerechnet, sonst bliebe rechts
+       ein weißer Streifen. */
+    zoom: var(--cv-fit, 1);
+    width: calc(100% / var(--cv-fit, 1));
     max-width: none;
+    /* Das Blatt füllt immer ganze Seiten, sonst endete es nach dem
+       Verkleinern ein Stück vor der Blattkante und die Fußleiste schwebte
+       mitten auf der Seite. Wie viele Seiten es sind, weiß das Skript aus
+       derselben Messung. Der Millimeter Abzug fängt Rundungen ab – ohne ihn
+       genügt ein halbes Pixel für eine leere Extraseite. */
+    display: flex;
+    flex-direction: column;
+    min-height: calc((var(--cv-seiten, 1) * 297mm - 1mm) / var(--cv-fit, 1));
     margin: 0;
     border: 0;
     border-radius: 0;
@@ -1464,10 +1477,19 @@ html.no-js .line-mask > span {
        Fläche, während die andere überlief. */
     grid-template-columns: 70mm 1fr;
     align-items: start;
+    /* Der Rumpf nimmt die Höhe, die nach Kopf und Fuß übrig bleibt – so
+       reicht die getönte Spalte links bis an die Fußleiste heran, statt
+       nach dem letzten Eintrag abzubrechen. */
+    flex: 1;
   }
 
   .cv-rail {
     padding: 9mm 6mm 9mm var(--cv-pad);
+    /* `clone` wiederholt Polsterung und Hintergrund auf jeder Seite, über die
+       die Spalte läuft. Ohne das säße der Text auf Seite zwei direkt an der
+       Blattkante. */
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
   }
 
   .cv-rail-block + .cv-rail-block {
@@ -1505,6 +1527,8 @@ html.no-js .line-mask > span {
 
   .cv-main {
     padding: 8mm var(--cv-pad) 8mm 8mm;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
   }
 
   .cv-lead {

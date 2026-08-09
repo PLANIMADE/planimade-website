@@ -18,9 +18,12 @@ const doubled = [...items, ...items];
 >
   <div class="marquee-track" data-marquee-track>
     {
+      /* Der Abstand sitzt am Wort, nicht am Paar: So steht zwischen zwei
+         Wörtern immer dieselbe Strecke, und das Trennzeichen genau in deren
+         Mitte. Lag der Abstand am Paar, klebte das Zeichen am linken Wort. */
       doubled.map((item) => (
-        <span class="flex shrink-0 items-center gap-8 px-8">
-          <span class="text-sm font-medium tracking-tight text-muted whitespace-nowrap">{item}</span>
+        <span class="flex shrink-0 items-center">
+          <span class="whitespace-nowrap px-8 text-sm font-medium tracking-tight text-muted">{item}</span>
           <span class="text-accent/60">{separator}</span>
         </span>
       ))
