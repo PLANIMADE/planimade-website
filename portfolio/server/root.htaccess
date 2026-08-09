@@ -31,6 +31,13 @@ AddDefaultCharset UTF-8
     RewriteCond %{REQUEST_URI} !^/work/detail
     RewriteRule ^work/([a-zA-Z0-9-]+)/?$ api/index.php?_page=work/$1 [QSA,L]
 
+    # --- Dashboard ------------------------------------------------------------
+    # Adressen sind auf dem Server gross-/kleinschreibungsabhaengig: /Admin
+    # liefe sonst in einen 404. Die Bedingung nimmt die richtige Schreibweise
+    # aus, sonst leitete die Regel auf sich selbst weiter.
+    RewriteCond %{REQUEST_URI} !^/admin/?$
+    RewriteRule ^admin/?$ /admin/ [R=301,L,NC]
+
     # --- Sitemap -------------------------------------------------------------
     RewriteRule ^sitemap\.xml$ api/index.php?_page=sitemap [L]
 </IfModule>

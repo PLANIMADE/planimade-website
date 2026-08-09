@@ -53,6 +53,10 @@ const year = new Date().getFullYear();
       <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
         <a href="/impressum/" class="transition-colors hover:text-ink">Impressum</a>
         <a href="/datenschutz/" class="transition-colors hover:text-ink">Datenschutz</a>
+        {/* Der eigene Zugang zum Dashboard – bewusst unauffällig, aber ohne
+            Adresse zum Merken. Wer nicht eingeloggt ist, sieht dort ohnehin
+            nur das Anmeldeformular. */}
+        <a href="/admin/" rel="nofollow" class="transition-colors hover:text-ink">Admin</a>
         <span class="font-mono">Handgebaut mit Astro &amp; PHP</span>
       </div>
     </div>
