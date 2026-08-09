@@ -41,10 +41,9 @@ if ($path === '/sitemap.xml') {
 }
 
 // 3. API – vorhandene PHP-Dateien direkt ausführen, alles andere über den
-//    Front-Controller. Genau die Reihenfolge steht auch in api/.htaccess:
-//    Ohne diese Unterscheidung wäre der Einrichtungsdialog unter
-//    /api/scripts/setup.web.php lokal nicht erreichbar – und die Vorschau
-//    würde etwas anderes zeigen als der echte Server.
+//    Front-Controller. Genau die Reihenfolge steht auch in api/.htaccess –
+//    ohne diese Unterscheidung würde die Vorschau etwas anderes zeigen als
+//    der echte Server.
 if (str_starts_with($path, '/api/')) {
     $ziel = $deploy . $path;
     if (is_file($ziel) && str_ends_with($ziel, '.php')) {

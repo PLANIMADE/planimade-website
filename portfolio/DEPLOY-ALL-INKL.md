@@ -48,23 +48,23 @@ Danach im FTP-Programm per Rechtsklick die Rechte prüfen:
 | `uploads/` | 755 (oder 775) – muss beschreibbar sein |
 | `api/storage/` | 755 (oder 775) – muss beschreibbar sein |
 
-### 3. Einmal im Browser einrichten
-
-Rufe auf:
+### 3. Dashboard aufrufen
 
 ```
-https://deine-domain.de/api/scripts/setup.web.php
+https://deine-domain.de/admin/
 ```
 
-E-Mail und Passwort eintragen, **Einrichten** klicken. Das Skript legt die
-Datenbank an, erstellt deinen Zugang, prüft die Schreibrechte – und **löscht
-sich anschließend selbst**. Es bleibt also kein offener Einrichtungsdialog
-im Netz stehen.
+Beim ersten Aufruf steht dort kein Login, sondern ein Formular zum **Anlegen
+deines Zugangs** – die Datenbank existiert ja noch nicht. E-Mail und Passwort
+eintragen, fertig: Du bist direkt angemeldet. Ab dem zweiten Mal erscheint an
+derselben Stelle der normale Login.
+
+Es gibt also genau **eine Adresse**, die du dir merken musst.
 
 ### 4. Alles Weitere im Dashboard
 
-Unter `https://deine-domain.de/admin/` einloggen. Es gibt **keine Datei mehr,
-die du anfassen musst** – auch Adresse und Mailversand stehen im Dashboard:
+Es gibt **keine Datei, die du anfassen musst** – auch Adresse und Mailversand
+stehen im Dashboard:
 
 **Einstellungen → SEO → Adresse & Versand**
 

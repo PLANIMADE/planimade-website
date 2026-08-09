@@ -62,6 +62,10 @@ await cp(path.join(root, 'api'), path.join(deploy, 'api'), {
 
     if (name === '.env.php') return false;
     if (name === 'router.dev.php') return false;
+    // Die Kommandozeilen-Einrichtung ist eine Entwicklungshilfe. Auf dem
+    // Server läuft die Einrichtung über `/admin/` – ein zweiter Weg wäre
+    // nur eine zusätzliche Angriffsfläche.
+    if (name === 'setup.php') return false;
     if (name === 'error.log' || name === 'salt.key') return false;
     if (name.endsWith('.sqlite') || name.endsWith('.sqlite-wal') || name.endsWith('.sqlite-shm')) return false;
     // storage/ wird angelegt, aber ohne Inhalt (Live-Daten bleiben unangetastet)

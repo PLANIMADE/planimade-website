@@ -1,8 +1,10 @@
 <?php
 
 /**
- * Gemeinsame Einrichtungslogik für CLI (`setup.php`) und Browser
- * (`setup.web.php`). Beide Wege legen exakt dieselben Daten an.
+ * Einrichtungslogik für die Kommandozeile (`setup.php`) – gedacht fürs
+ * lokale Entwickeln. Auf dem Server läuft die Einrichtung über `/admin/`:
+ * Solange kein Zugang existiert, zeigt das Dashboard ein Formular zum
+ * Anlegen. `portfolio_seed_demo()` teilen sich beide Wege.
  */
 
 declare(strict_types=1);

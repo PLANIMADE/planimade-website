@@ -10,7 +10,8 @@
  * Auf all-inkl (SSH-Zugang vorhanden):
  *   php8.4 api/scripts/setup.php --email=... --password=...
  *
- * Ohne SSH: einmalig `api/scripts/setup.web.php` per Browser aufrufen.
+ * Auf dem Server nicht nötig – dort richtet man über `/admin/` ein.
+ * Dieses Skript liegt deshalb gar nicht erst im hochgeladenen Paket.
  */
 
 declare(strict_types=1);

@@ -164,6 +164,57 @@ $router->post('events', static function () use ($analytics, $settings): void {
 
 // --------------------------------------------------------------------- login
 
+/**
+ * Erste Einrichtung – findet im Dashboard statt, nicht in einer eigenen Datei.
+ *
+ * Solange kein Zugang existiert, zeigt `/admin/` statt des Logins ein Formular
+ * zum Anlegen. Damit gibt es genau eine Adresse, die man sich merken muss.
+ */
+$router->get('auth/setup', static function () use ($db): void {
+    Http::json(['required' => (int) $db->value('SELECT COUNT(*) FROM users') === 0]);
+});
+
+$router->post('auth/setup', static function () use ($db, $auth, $security): void {
+    // Nur solange es niemanden gibt. Danach ist der Weg dauerhaft zu –
+    // sonst könnte sich jeder einen zweiten Zugang anlegen.
+    if ((int) $db->value('SELECT COUNT(*) FROM users') > 0) {
+        Http::error('Es existiert bereits ein Zugang. Bitte einloggen.', 409);
+    }
+
+    // Auch der erste Aufruf wird gebremst: Ohne Grenze liesse sich das
+    // Formular als Weg nutzen, den Server mit Passwort-Hashes zu beschäftigen.
+    if (!$security->attempt('setup:' . $security->ipHash(), 10, 900)) {
+        Http::error('Zu viele Versuche. Bitte in einer Viertelstunde erneut probieren.', 429);
+    }
+
+    $body = Http::body();
+    $email = mb_strtolower(trim((string) ($body['email'] ?? '')));
+    $password = (string) ($body['password'] ?? '');
+    $name = trim((string) ($body['name'] ?? ''));
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        Http::error('Bitte eine gültige E-Mail-Adresse angeben.', 422, ['email' => 'Ungültige Adresse.']);
+    }
+    if (mb_strlen($password) < 10) {
+        Http::error('Das Passwort braucht mindestens 10 Zeichen.', 422, ['password' => 'Zu kurz.']);
+    }
+
+    $db->insert('users', [
+        'email' => $email,
+        'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+        'name' => $name !== '' ? $name : 'Portfolio',
+        'created_at' => gmdate('c'),
+    ]);
+
+    if (($body['demo'] ?? false) === true) {
+        require_once __DIR__ . '/scripts/bootstrap.php';
+        portfolio_seed_demo($db);
+    }
+
+    // Direkt anmelden – ein zweites Formular gleich danach wäre reine Schikane.
+    Http::json($auth->login($email, $password));
+});
+
 $router->post('auth/login', static function () use ($auth): void {
     $body = Http::body();
     Http::json($auth->login((string) ($body['email'] ?? ''), (string) ($body['password'] ?? '')));

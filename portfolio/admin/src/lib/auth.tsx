@@ -11,6 +11,7 @@ interface AuthValue {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  setup: (email: string, password: string, name: string, demo: boolean) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -45,13 +46,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   }, []);
 
+  // Legt den ersten Zugang an und meldet direkt an – ein zweites Formular
+  // unmittelbar danach wäre reine Schikane.
+  const setup = useCallback(async (email: string, password: string, name: string, demo: boolean) => {
+    const data = await api.setup(email, password, name, demo);
+    setCsrfToken(data.csrfToken);
+    setUser(data.user);
+  }, []);
+
   const logout = useCallback(async () => {
     await api.logout().catch(() => undefined);
     setCsrfToken('');
     setUser(null);
   }, []);
 
-  const value = useMemo(() => ({ user, loading, login, logout }), [user, loading, login, logout]);
+  const value = useMemo(
+    () => ({ user, loading, login, setup, logout }),
+    [user, loading, login, setup, logout],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

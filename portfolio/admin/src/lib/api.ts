@@ -254,6 +254,14 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
   logout: () => request<{ ok: boolean }>('auth/logout', { method: 'POST' }),
+
+  // Erste Einrichtung – nur relevant, solange es keinen Zugang gibt.
+  setupRequired: () => request<{ required: boolean }>('auth/setup'),
+  setup: (email: string, password: string, name: string, demo: boolean) =>
+    request<{ user: { id: number; email: string; name: string }; csrfToken: string }>('auth/setup', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name, demo }),
+    }),
   changePassword: (current: string, next: string) =>
     request<{ ok: boolean }>('auth/password', { method: 'POST', body: JSON.stringify({ current, next }) }),
 
