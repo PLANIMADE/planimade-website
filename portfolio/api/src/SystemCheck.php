@@ -29,6 +29,7 @@ final class SystemCheck
                 $this->writable($this->config['uploads_path'], 'Upload-Ordner beschreibbar'),
                 $this->writable($this->config['storage_path'], 'Datenbank-Ordner beschreibbar'),
                 $this->uploadLimit(),
+                $this->serverFiles(),
                 $this->siteUrl(),
                 $this->mailConfig(),
                 $this->https(),
@@ -174,6 +175,28 @@ final class SystemCheck
             $ok ? 'ok' : 'warn',
             $ok ? $from : 'nicht gesetzt',
             $ok ? null : 'Ohne Absender kommen keine Benachrichtigungen an. Muss eine Adresse der eigenen Domain sein.'
+        );
+    }
+
+    /**
+     * Die `.htaccess`-Dateien regeln Weiterleitungen, Zwischenspeicher und –
+     * am wichtigsten – dass Datenbank und Protokolle nicht abrufbar sind.
+     * Sie beginnen mit einem Punkt und werden von FTP-Programmen deshalb
+     * gerne ausgelassen. Der Server legt fehlende selbst an; hier steht,
+     * ob das geklappt hat.
+     */
+    private function serverFiles(): array
+    {
+        $stand = ServerFiles::ensure($this->config);
+        $fehlend = array_keys(array_filter($stand, static fn (bool $da): bool => !$da));
+        $ok = $fehlend === [];
+
+        return $this->result(
+            'Server-Konfiguration (.htaccess)',
+            $ok ? 'ok' : 'error',
+            $ok ? 'vollständig' : count($fehlend) . ' fehlt',
+            $ok ? null : 'Fehlt: ' . implode(', ', $fehlend)
+                . '. Der Ordner ist vermutlich nicht beschreibbar – im FTP-Programm auf 755 setzen.'
         );
     }
 

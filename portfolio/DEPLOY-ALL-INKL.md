@@ -41,6 +41,11 @@ Rechner noch auf dem Server. Dort läuft nur PHP.
 ZIP entpacken und den **Inhalt** des Ordners per FTP in das
 Domain-Verzeichnis laden – nicht den Ordner selbst.
 
+Um versteckte Dateien musst du dich nicht kümmern: Die `.htaccess`-Dateien
+beginnen mit einem Punkt und werden von vielen FTP-Programmen ausgelassen.
+Der Server legt fehlende beim ersten Aufruf selbst an – die Vorlagen dafür
+liegen als gewöhnliche Textdateien in `api/assets/server/`.
+
 Danach im FTP-Programm per Rechtsklick die Rechte prüfen:
 
 | Ordner | Rechte |
@@ -187,7 +192,7 @@ Zum Wiederherstellen beides einfach zurückspielen.
 | „Upload-Ordner nicht beschreibbar" | Rechte von `uploads/` auf 755/775 setzen. |
 | Upload bricht bei großen Videos ab | KAS → PHP-Einstellungen: `upload_max_filesize` und `post_max_size` erhöhen (z. B. 256M). |
 | Kontaktformular sendet keine Mail | `mail_from` in `api/.env.php` muss eine Adresse **deiner** Domain sein. Die Anfrage steht trotzdem im Dashboard. |
-| `/work/mein-projekt` zeigt 404 | Die `.htaccess` im Hauptverzeichnis fehlt (versteckte Dateien im FTP-Programm einblenden). |
+| `/work/mein-projekt` zeigt 404 | Die `.htaccess` im Hauptverzeichnis fehlte und wurde noch nicht ergänzt – einmal die Startseite aufrufen, dann legt der Server sie an. Bleibt es dabei, steht der Grund im Systemcheck. |
 | Dashboard lädt endlos | Browser-Cache leeren; prüfen, ob `https://deine-domain.de/api/health` eine JSON-Antwort liefert. |
 | Endlos-Weiterleitung nach dem Upload | SSL noch nicht aktiv. Im KAS Let's Encrypt aktivieren oder den HTTPS-Block in der `.htaccess` vorübergehend auskommentieren. |
 | Passwort vergessen | `php api/scripts/setup.php --email=… --password='…' --force` per SSH, oder `api/storage/portfolio.sqlite` löschen und neu einrichten (Achtung: alle Inhalte weg). |

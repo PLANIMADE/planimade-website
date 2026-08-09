@@ -20,6 +20,7 @@ use App\Pages;
 use App\Projects;
 use App\Router;
 use App\Security;
+use App\ServerFiles;
 use App\Settings;
 use App\SocialCard;
 use App\SystemCheck;
@@ -56,6 +57,21 @@ set_exception_handler(static function (Throwable $e) use ($isDev, $config): void
 
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
+
+/*
+ * Fehlende Serverdateien ergänzen.
+ *
+ * `.htaccess` beginnt mit einem Punkt und gilt damit als versteckt – die
+ * meisten FTP-Programme lassen solche Dateien beim Hochladen aus. Ohne sie
+ * wären Datenbank und Protokolle über die Adresszeile abrufbar, und keine
+ * Anfrage erreichte diesen Front-Controller auf dem üblichen Weg.
+ *
+ * Der Regelfall kostet vier Dateiabfragen. Geschrieben wird nur, was fehlt –
+ * eigene Anpassungen bleiben unangetastet.
+ */
+if (!ServerFiles::complete($config)) {
+    ServerFiles::ensure($config);
+}
 
 // Container – bewusst simpel, ohne DI-Framework.
 $db = new Database($config);

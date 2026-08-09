@@ -80,6 +80,18 @@ await cp(path.join(root, 'server', 'root.htaccess'), path.join(deploy, '.htacces
 await mkdir(path.join(deploy, 'uploads'), { recursive: true });
 await cp(path.join(root, 'server', 'uploads.htaccess'), path.join(deploy, 'uploads', '.htaccess'));
 
+// 4b. Dieselben Inhalte noch einmal als gewöhnliche Textdateien.
+//     Grund: `.htaccess` beginnt mit einem Punkt und gilt damit als versteckt –
+//     die meisten FTP-Programme übertragen solche Dateien nicht. Fehlen sie,
+//     wären Datenbank und Protokolle über die Adresszeile abrufbar. Der Server
+//     legt sie beim ersten Aufruf aus diesen Vorlagen selbst an.
+const vorlagen = path.join(deploy, 'api', 'assets', 'server');
+await mkdir(vorlagen, { recursive: true });
+await cp(path.join(root, 'server', 'root.htaccess'), path.join(vorlagen, 'root.htaccess.txt'));
+await cp(path.join(root, 'api', '.htaccess'), path.join(vorlagen, 'api.htaccess.txt'));
+await cp(path.join(root, 'server', 'uploads.htaccess'), path.join(vorlagen, 'uploads.htaccess.txt'));
+await cp(path.join(root, 'api', 'storage', '.htaccess'), path.join(vorlagen, 'storage.htaccess.txt'));
+
 // 5. Kurze Erinnerung direkt im Ordner
 await writeFile(
   path.join(deploy, 'api', 'storage', 'HINWEIS.txt'),
