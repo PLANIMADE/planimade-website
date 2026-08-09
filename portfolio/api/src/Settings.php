@@ -303,6 +303,17 @@ final class Settings
             'logo' => [
                 'mediaId' => null,
                 'alt' => '',
+                /*
+                 * Verhalten bei wechselndem Untergrund.
+                 *
+                 * Ein einfarbiges Logo verschwindet, sobald der Hintergrund
+                 * dieselbe Helligkeit hat – ein weißes Logo auf hellem Papier
+                 * ist unsichtbar. `light` kehrt es im hellen Design um,
+                 * `dark` im dunklen. `none` lässt es, wie es hochgeladen
+                 * wurde; richtig für mehrfarbige Logos, die eine Umkehrung
+                 * nicht verträgt.
+                 */
+                'adapt' => 'none',
             ],
 
             /**

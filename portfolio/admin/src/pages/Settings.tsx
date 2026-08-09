@@ -176,6 +176,38 @@ export default function SettingsPage() {
                 </p>
               </div>
             </div>
+
+            <div>
+              <p className="label">Bei wechselndem Untergrund</p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                {(
+                  [
+                    ['none', 'Wie hochgeladen', 'Richtig für mehrfarbige Logos'],
+                    ['light', 'Im hellen Design umkehren', 'Für ein weißes oder helles Logo'],
+                    ['dark', 'Im dunklen Design umkehren', 'Für ein schwarzes oder dunkles Logo'],
+                  ] as const
+                ).map(([wert, label, hinweis]) => (
+                  <button
+                    key={wert}
+                    type="button"
+                    onClick={() => set('logo', { ...settings.logo, adapt: wert })}
+                    className={`rounded-lg border p-3 text-left transition ${
+                      settings.logo.adapt === wert
+                        ? 'border-accent bg-accent/10'
+                        : 'border-line hover:border-line-strong'
+                    }`}
+                  >
+                    <span className="block text-xs font-medium">{label}</span>
+                    <span className="mt-0.5 block text-[0.6875rem] leading-snug text-faint">{hinweis}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1 text-[0.6875rem] leading-relaxed text-faint">
+                Ein einfarbiges Logo verschwindet, wenn der Untergrund dieselbe Helligkeit hat.
+                Die Umkehrung dreht Schwarz und Weiß – im Lebenslauf richtet sie sich nach der
+                Papierfarbe, nicht nach dem Design der Website.
+              </p>
+            </div>
           </section>
 
           <section className="panel space-y-4 p-6">
@@ -811,7 +843,7 @@ export default function SettingsPage() {
                 <textarea
                   className="field min-h-16 resize-y text-xs"
                   value={entry.description}
-                  placeholder="Was hast du dort gemacht? Zwei Sätze reichen."
+                  placeholder={'Was hast du dort gemacht?\nJede Zeile bleibt erhalten – für eine Aufzählung je Punkt eine Zeile.'}
                   onChange={(event) => {
                     const timeline = [...settings.resume.timeline];
                     timeline[index] = { ...entry, description: event.target.value };

@@ -116,6 +116,9 @@ function fillMark(settings: Settings): void {
     const bild = document.createElement('img');
     bild.src = logo.thumbUrl ?? logo.url;
     bild.alt = settings.logo.alt || settings.name;
+    // Merkmal fürs Stylesheet: Ein einfarbiges Logo muss auf hellem und
+    // dunklem Untergrund unterschiedlich behandelt werden.
+    mark.dataset.logoAdapt = settings.logo.adapt ?? 'none';
     // Vollständig zeigen statt beschneiden: Ein Logo ist selten quadratisch.
     bild.className = 'h-full w-full object-contain';
     mark.replaceChildren(bild);

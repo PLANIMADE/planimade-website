@@ -271,6 +271,32 @@ html[data-hero-video] [data-nav]:not([data-scrolled]) {
   background: none;
 }
 
+/* Ein einfarbiges Logo verschwindet, sobald der Untergrund dieselbe
+   Helligkeit hat – ein weißes Logo auf hellem Papier ist unsichtbar.
+   `invert(1)` macht aus Weiß Schwarz und umgekehrt; für einfarbige Marken
+   genau richtig, deshalb ist es eine bewusste Einstellung und nicht die
+   Voreinstellung. Mehrfarbige Logos verträgt eine Umkehrung nicht.
+
+   Maßgeblich ist der tatsächliche Untergrund, nicht das Farbschema der
+   Website: Im Lebenslauf hat das Blatt eine eigene Papierfarbe. */
+html[data-theme='light'] [data-mark][data-logo-adapt='light'] img,
+html[data-theme='dark'] [data-mark][data-logo-adapt='dark'] img {
+  filter: invert(1);
+}
+
+/* Das Blatt des Lebenslaufs entscheidet selbst – seine Papierfarbe steht
+   unabhängig vom Farbschema der Website. Deshalb hier zurücknehmen und neu
+   entscheiden. Das `html[data-theme]` davor ist kein Zierrat: Ohne diesen
+   Zusatz wiegt die Regel weniger als die der Website und käme nie zum Zug. */
+html[data-theme] .cv-sheet [data-mark][data-logo-adapt] img {
+  filter: none;
+}
+
+html[data-theme] .cv-sheet:not(.cv-dark) [data-mark][data-logo-adapt='light'] img,
+html[data-theme] .cv-sheet.cv-dark [data-mark][data-logo-adapt='dark'] img {
+  filter: invert(1);
+}
+
 @utility surface-card {
   background: var(--surface);
   border: 1px solid var(--line);

@@ -152,7 +152,13 @@ export interface Settings {
   hero: HeroSettings;
   portrait: { mediaId: number | null; caption: string; image: MediaItem | null };
   /** Eigenes Logo statt des Monogramms – Navigation und Lebenslauf. */
-  logo: { mediaId: number | null; alt: string; image: MediaItem | null };
+  logo: {
+    mediaId: number | null;
+    alt: string;
+    /** 'light' kehrt das Logo im hellen Design um, 'dark' im dunklen. */
+    adapt: 'none' | 'light' | 'dark';
+    image: MediaItem | null;
+  };
   texts: Record<string, string>;
   marquee: string[];
   cv: {
