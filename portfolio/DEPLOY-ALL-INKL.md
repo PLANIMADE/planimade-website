@@ -1,35 +1,99 @@
 # Portfolio auf all-inkl veröffentlichen
 
-Schritt für Schritt vom lokalen Ordner zur fertigen Website. Rechne beim
-ersten Mal mit etwa 30 Minuten – danach dauert ein Update knapp 2 Minuten.
+Es gibt zwei Wege. Der erste braucht **keinen einzigen Befehl** – nur ein
+FTP-Programm und einen Browser. Rechne mit etwa 20 Minuten.
 
 ---
 
-## Was du brauchst
+## Weg A – Fertiges Paket hochladen (empfohlen)
 
-| Was | Wofür | Woher |
-|---|---|---|
-| Node.js 20 oder neuer | baut Website und Dashboard | <https://nodejs.org> |
-| PHP 8.2 oder neuer | nur für die lokale Vorschau | <https://www.php.net> |
-| FTP-Programm | Upload zum Webspace | FileZilla, Cyberduck, Transmit |
-| all-inkl-Paket | Hosting | ab „PrivatPlus" ausreichend |
+Du bekommst ein ZIP, in dem die Website, das Dashboard und das PHP-Backend
+schon fertig gebaut sind. Node.js brauchst du dafür nicht – weder auf deinem
+Rechner noch auf dem Server. Dort läuft nur PHP.
 
-Auf dem Server selbst brauchst du **kein** Node.js – dort läuft nur PHP.
+### 1. KAS vorbereiten (all-inkl)
+
+1. Im **KAS** einloggen: <https://kas.all-inkl.com>
+2. **Domain** → Domain anlegen oder auswählen. Merke dir das Verzeichnis,
+   meist `/www/htdocs/wXXXXXXX/deine-domain.de`.
+3. **Software → PHP-Version**: auf **PHP 8.2 oder höher** stellen,
+   Betriebsart **FastCGI** (Standard) beibehalten.
+4. **Domain → SSL-Schutz**: kostenloses **Let's-Encrypt-Zertifikat**
+   aktivieren. Erst danach greift die HTTPS-Weiterleitung aus der `.htaccess`.
+5. **FTP → FTP-Benutzer**: Zugang anlegen oder vorhandenen notieren.
+6. **E-Mail**: eine Adresse der eigenen Domain anlegen, etwa
+   `website@deine-domain.de`. all-inkl verwirft Mails mit fremden Absendern,
+   deshalb braucht das Kontaktformular eine eigene.
+
+### 2. Hochladen
+
+ZIP entpacken und den **Inhalt** des Ordners per FTP in das
+Domain-Verzeichnis laden – nicht den Ordner selbst.
+
+Danach im FTP-Programm per Rechtsklick die Rechte prüfen:
+
+| Ordner | Rechte |
+|---|---|
+| `uploads/` | 755 (oder 775) – muss beschreibbar sein |
+| `api/storage/` | 755 (oder 775) – muss beschreibbar sein |
+
+### 3. Einmal im Browser einrichten
+
+Rufe auf:
+
+```
+https://deine-domain.de/api/scripts/setup.web.php
+```
+
+E-Mail und Passwort eintragen, **Einrichten** klicken. Das Skript legt die
+Datenbank an, erstellt deinen Zugang, prüft die Schreibrechte – und **löscht
+sich anschließend selbst**. Es bleibt also kein offener Einrichtungsdialog
+im Netz stehen.
+
+### 4. Alles Weitere im Dashboard
+
+Unter `https://deine-domain.de/admin/` einloggen. Es gibt **keine Datei mehr,
+die du anfassen musst** – auch Adresse und Mailversand stehen im Dashboard:
+
+**Einstellungen → SEO → Adresse & Versand**
+
+| Feld | Was hinein gehört |
+|---|---|
+| Adresse der Website | `https://deine-domain.de` (ohne Schrägstrich am Ende) |
+| Absender für Kontaktmails | `website@deine-domain.de` – Adresse deiner Domain |
+| Anfragen weiterleiten an | wohin Nachrichten gehen sollen |
+
+Bleiben die Felder leer, funktioniert die Seite trotzdem: Die Adresse leitet
+der Server dann aus der Anfrage ab, und Anfragen stehen ohnehin immer unter
+„Nachrichten" im Dashboard.
 
 ---
 
-## Schritt 1 – Lokal einrichten
+## Weg B – Selbst bauen
+
+Nur nötig, wenn du am Code etwas geändert hast.
+
+| Was | Wofür |
+|---|---|
+| Node.js 20 oder neuer | baut Website und Dashboard |
+| PHP 8.2 oder neuer | nur für die lokale Vorschau |
 
 ```bash
 cd portfolio
-npm run setup                       # installiert Frontend + Dashboard
-php api/scripts/setup.php --email=deine@mail.de --password='MindestensZehnZeichen' --demo
+npm run setup          # Abhängigkeiten installieren
+npm run build          # erzeugt den Ordner deploy/
 ```
 
-Der letzte Befehl legt die Datenbank an, erzeugt deinen Zugang und spielt vier
-Beispielprojekte ein (`--demo` weglassen, wenn du leer starten willst).
+Danach liegt das fertige Paket in **`deploy/`** – der Inhalt entspricht genau
+dem ZIP aus Weg A und wird genauso hochgeladen.
 
-**Lokal ansehen** – drei Terminals:
+**Vorher lokal ansehen:**
+
+```bash
+php -S 127.0.0.1:8080 -t deploy scripts/preview.php
+```
+
+Zum Entwickeln mit sofortiger Aktualisierung – drei Terminals:
 
 ```bash
 npm run dev:api      # PHP-Backend   → http://127.0.0.1:8787
@@ -37,114 +101,26 @@ npm run dev:web      # Website       → http://127.0.0.1:4321
 npm run dev:admin    # Dashboard     → http://127.0.0.1:5173/admin/
 ```
 
----
+Eine lokale Datenbank legst du mit `php api/scripts/setup.php
+--email=du@example.de --password='MindestensZehnZeichen' --demo` an.
 
-## Schritt 2 – KAS vorbereiten (all-inkl)
-
-1. Im **KAS** einloggen: <https://kas.all-inkl.com>
-2. **Domain** → deine Domain anlegen oder auswählen. Merke dir das
-   Verzeichnis, meist `/www/htdocs/wXXXXXXX/deine-domain.de`.
-3. **Software → PHP-Version**: auf **PHP 8.2 oder höher** stellen.
-   Wichtig: Betriebsart **FastCGI** (Standard) beibehalten.
-4. **Domain → SSL-Schutz**: kostenloses **Let's-Encrypt-Zertifikat** aktivieren.
-   Erst danach greift die HTTPS-Weiterleitung aus der `.htaccess`.
-5. **FTP → FTP-Benutzer**: Zugang anlegen (oder vorhandenen notieren).
-6. **E-Mail**: eine Adresse der eigenen Domain anlegen, z. B.
-   `website@deine-domain.de`. Sie wird gleich als Absender fürs Kontaktformular
-   gebraucht – all-inkl verwirft Mails mit fremden Absendern.
+Die Datei `api/.env.php` (Vorlage: `api/.env.example.php`) gibt es weiterhin.
+Sie ist optional – Werte aus dem Dashboard haben Vorrang. Sinnvoll ist sie
+nur, wenn du etwas festschreiben willst, das nicht im Dashboard stehen soll.
 
 ---
 
-## Schritt 3 – Konfiguration hinterlegen
+## Beim zweiten Upload
 
-Kopiere `api/.env.example.php` nach `api/.env.php` und trage deine Werte ein:
-
-```php
-return [
-    'app_env'   => 'production',
-    'site_url'  => 'https://deine-domain.de',
-    'mail_from' => 'website@deine-domain.de',   // Adresse DEINER Domain
-    'mail_to'   => 'deine@mail.de',             // wohin Anfragen gehen
-];
-```
-
-Diese Datei ist bewusst nicht im Git-Repository – sie gehört nur auf den Server
-(und in deinen lokalen Ordner).
+> **Wichtig:** `uploads/` und `api/storage/` **nicht** überschreiben.
+> Dort liegen deine hochgeladenen Dateien und die Datenbank mit allen
+> Projekten, Nachrichten und Statistiken – außerdem die erzeugten
+> Vorschaubilder (`uploads/og/`) und die Farbschema-Vorgabe
+> (`uploads/theme.js`).
 
 ---
 
-## Schritt 4 – Bauen
-
-```bash
-npm run build
-```
-
-Danach liegt alles Fertige im Ordner **`deploy/`**:
-
-```
-deploy/
-  index.html, work/, about/, contact/ …   die Website
-  _astro/                                 Styles, Skripte, Schriften
-  admin/                                  das Dashboard
-  api/                                    PHP-Backend
-  uploads/                                Medien
-  .htaccess                               Weiterleitungen, Cache, Sicherheit
-```
-
-**Vorher lokal testen** (zeigt exakt das Ergebnis von oben):
-
-```bash
-php -S 127.0.0.1:8080 -t deploy scripts/preview.php
-```
-
----
-
-## Schritt 5 – Hochladen
-
-Verbinde dich per FTP und lade den **Inhalt** von `deploy/` in das
-Domain-Verzeichnis (nicht den Ordner `deploy` selbst).
-
-> **Wichtig ab dem zweiten Upload:**
-> `uploads/` und `api/storage/` **nicht** mit hochladen bzw. nicht überschreiben.
-> Dort liegen deine hochgeladenen Dateien und die Datenbank mit allen Projekten,
-> Nachrichten und Statistiken – außerdem die erzeugten Vorschaubilder
-> (`uploads/og/`) und die Farbschema-Vorgabe (`uploads/theme.js`).
-
-Rechte prüfen (im FTP-Programm per Rechtsklick → Dateirechte):
-
-| Ordner | Rechte |
-|---|---|
-| `uploads/` | 755 (oder 775) – muss beschreibbar sein |
-| `api/storage/` | 755 (oder 775) – muss beschreibbar sein |
-
----
-
-## Schritt 6 – Einrichtung im Browser
-
-Rufe **einmalig** auf:
-
-```
-https://deine-domain.de/api/scripts/setup.web.php
-```
-
-Dort E-Mail und Passwort eintragen → **Einrichten**. Das Skript legt die
-Datenbank an und prüft die Schreibrechte.
-
-**Danach die Datei `api/scripts/setup.web.php` per FTP löschen.**
-(Sie sperrt sich zwar selbst, sobald ein Zugang existiert – weg ist trotzdem
-sicherer.)
-
-Wenn dein Paket SSH bietet, geht es auch ohne Browser:
-
-```bash
-ssh sshXXXXX@deine-domain.de
-cd /www/htdocs/wXXXXXXX/deine-domain.de
-php8.2 api/scripts/setup.php --email=deine@mail.de --password='…'
-```
-
----
-
-## Schritt 7 – Fertig einrichten
+## Zum Schluss
 
 0. **Systemcheck ansehen:** `https://deine-domain.de/admin/#/system`
    Dort steht auf einen Blick, ob PHP-Version, Bildbibliothek, Schreibrechte
@@ -154,7 +130,7 @@ php8.2 api/scripts/setup.php --email=deine@mail.de --password='…'
 2. **Einstellungen → Rechtliches** vollständig ausfüllen
    (Anschrift, Telefon, ggf. USt-IdNr.). In Deutschland ist ein vollständiges
    Impressum Pflicht.
-3. **Einstellungen → Profil**: Vorstellungstext, Verfügbarkeit, Social-Links.
+3. **Einstellungen → Profil**: Vorstellungstext, Porträt, Logo, Social-Links.
 4. **Projekte**: Beispielprojekte löschen, eigene anlegen.
 5. **Kontaktformular testen** – Anfrage abschicken und prüfen, ob sie unter
    „Nachrichten" landet und die Mail ankommt.

@@ -638,7 +638,11 @@ html.no-js .line-mask > span {
      lässt sich oben für einen einzelnen Export umschalten. */
   --paper: #ffffff;
   --paper-soft: #f7f7fa;
-  --accent: #7c3aed;
+  /* `--cv-accent` setzt das Skript aus der Einstellung im Dashboard. Ohne
+     eigene Wahl gilt die Farbe der Website. Der Umweg über eine zweite
+     Variable ist nötig, damit „Farbe aus" weiterhin greift: Eine direkt
+     gesetzte `--accent` käme aus dem Inline-Stil und schlüge jede Regel. */
+  --accent: var(--cv-accent, #7c3aed);
   --signal: #0284c7;
   --on-accent: #ffffff;
   --surface: #ffffff;
@@ -655,7 +659,9 @@ html.no-js .line-mask > span {
 .cv-sheet.cv-dark {
   --paper: #0b0b12;
   --paper-soft: #101018;
-  --accent: #a855f7;
+  /* Auf dunklem Papier eine aufgehellte Fassung – eine für Weiß gewählte
+     Farbe wäre hier sonst zu dunkel. */
+  --accent: var(--cv-accent-dark, #a855f7);
   --signal: #38bdf8;
   --surface: #0e0e16;
   --text: #edecf2;

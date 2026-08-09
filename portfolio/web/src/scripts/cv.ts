@@ -286,6 +286,28 @@ function fillFooter(settings: Settings): void {
   if (year) year.textContent = String(new Date().getFullYear());
 }
 
+/**
+ * Eigene Akzentfarbe für das Dokument.
+ *
+ * Gesetzt wird nicht `--accent` selbst, sondern eine vorgelagerte Variable:
+ * Ein Inline-Stil schlägt jede Regel im Stylesheet, und „Farbe aus" könnte
+ * die Farbe dann nicht mehr auf Schwarz ziehen.
+ *
+ * Für dunkles Papier wird die Farbe aufgehellt – ein für Weiß gewählter Ton
+ * verschwände sonst im Untergrund.
+ */
+function applyAccent(sheet: HTMLElement, accent: string): void {
+  const wert = accent.trim();
+  if (!/^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(wert)) {
+    sheet.style.removeProperty('--cv-accent');
+    sheet.style.removeProperty('--cv-accent-dark');
+    return;
+  }
+
+  sheet.style.setProperty('--cv-accent', wert);
+  sheet.style.setProperty('--cv-accent-dark', `color-mix(in srgb, ${wert} 78%, white)`);
+}
+
 /** Schnellschalter: wirken nur auf diesen einen Export. */
 function wireToggles(sheet: HTMLElement): void {
   const apply = (name: string, on: boolean): void => {
@@ -381,6 +403,7 @@ export async function initCv(): Promise<void> {
     // Papierfarbe zuerst setzen, damit die Schalter oben den richtigen
     // Startzustand ablesen können.
     sheet.classList.toggle('cv-dark', settings.cv.theme === 'dark');
+    applyAccent(sheet, settings.cv.accent);
     wireToggles(sheet);
   }
 

@@ -14,7 +14,13 @@
 
 declare(strict_types=1);
 
-$deploy = dirname(__DIR__) . '/deploy';
+// Das ausgelieferte Verzeichnis kommt vom Server (`php -S ... -t <ordner>`).
+// Fest auf `deploy/` zu zeigen wäre falsch, sobald man eine Kopie prüft –
+// dann liefe die API gegen die eine und die Website gegen die andere.
+$deploy = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+if ($deploy === '' || !is_dir($deploy)) {
+    $deploy = dirname(__DIR__) . '/deploy';
+}
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $path = rawurldecode($path);
 
@@ -34,8 +40,19 @@ if ($path === '/sitemap.xml') {
     return true;
 }
 
-// 3. API
+// 3. API – vorhandene PHP-Dateien direkt ausführen, alles andere über den
+//    Front-Controller. Genau die Reihenfolge steht auch in api/.htaccess:
+//    Ohne diese Unterscheidung wäre der Einrichtungsdialog unter
+//    /api/scripts/setup.web.php lokal nicht erreichbar – und die Vorschau
+//    würde etwas anderes zeigen als der echte Server.
 if (str_starts_with($path, '/api/')) {
+    $ziel = $deploy . $path;
+    if (is_file($ziel) && str_ends_with($ziel, '.php')) {
+        require $ziel;
+
+        return true;
+    }
+
     require $deploy . '/api/index.php';
 
     return true;

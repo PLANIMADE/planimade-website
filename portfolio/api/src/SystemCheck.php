@@ -47,7 +47,7 @@ final class SystemCheck
             return ['ok' => false, 'message' => 'Diese PHP-Installation kann keine Mails versenden.'];
         }
         if ($to === '' || $from === '') {
-            return ['ok' => false, 'message' => 'In api/.env.php fehlen mail_to oder mail_from.'];
+            return ['ok' => false, 'message' => 'Unter Einstellungen → SEO fehlen Absender oder Empfänger.'];
         }
 
         $sent = @mail(
@@ -160,7 +160,7 @@ final class SystemCheck
             'Domain hinterlegt',
             $ok ? 'ok' : 'warn',
             $ok ? $url : 'nicht gesetzt',
-            $ok ? null : 'In api/.env.php site_url eintragen – wird für Sitemap und Link-Vorschauen gebraucht.'
+            $ok ? null : 'Unter Einstellungen → SEO die Adresse der Website eintragen – wird für Sitemap und Link-Vorschauen gebraucht.'
         );
     }
 

@@ -59,12 +59,17 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 
 // Container – bewusst simpel, ohne DI-Framework.
 $db = new Database($config);
+
+// Adresse und Mailversand werden im Dashboard gepflegt. Sie müssen deshalb
+// feststehen, bevor die übrigen Dienste ihre Konfiguration bekommen.
+$settings = new Settings($db, $config);
+$config = Settings::applyToConfig($config, $settings->all());
+
 $security = new Security($db, $config);
 $auth = new Auth($db, $security, $config);
 $projects = new Projects($db, $config);
 $media = new Media($db, $config);
 $messages = new Messages($db, $security, $config);
-$settings = new Settings($db, $config);
 $analytics = new Analytics($db, $security);
 $testimonials = new Testimonials($db, $config);
 $socialCard = new SocialCard($config);
@@ -116,10 +121,15 @@ $router->get('projects/{slug}', static function (string $slug) use ($projects, $
 $router->get('settings', static function () use ($settings, $auth): void {
     $data = $settings->all();
 
-    // Bewerbungsdaten (Anschrift, Telefon, Geburtsjahr, Kurzprofil) haben in
-    // einer offenen Antwort nichts verloren – sie gehören nur dir.
     if ($auth->user() === null) {
+        // Bewerbungsdaten (Anschrift, Telefon, Geburtsjahr, Kurzprofil) haben
+        // in einer offenen Antwort nichts verloren – sie gehören nur dir.
         unset($data['cv']);
+
+        // Ebenso die Versanddaten: `mailTo` ist der private Posteingang, und
+        // eine offen abrufbare Adresse steht in Minuten in jeder Spam-Liste.
+        // Die Adresse der Website darf bleiben – die steht ohnehin im Browser.
+        $data['site'] = ['url' => $data['site']['url'] ?? ''];
     }
 
     Http::json(['settings' => $data]);

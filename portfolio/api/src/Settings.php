@@ -180,6 +180,36 @@ final class Settings
         return @file_put_contents($path . '/theme.js', $js) !== false;
     }
 
+    /**
+     * Legt die im Dashboard gepflegten Werte über die Dateikonfiguration.
+     *
+     * So greifen alle bestehenden Stellen (Kontaktformular, Sitemap,
+     * Systemcheck) unverändert auf `$config` zu, ohne zu wissen, woher der
+     * Wert stammt. Leere Felder ändern nichts – die Datei behält dann das
+     * letzte Wort.
+     *
+     * @param array<string, mixed> $config
+     * @param array<string, mixed> $settings
+     * @return array<string, mixed>
+     */
+    public static function applyToConfig(array $config, array $settings): array
+    {
+        $site = $settings['site'] ?? [];
+
+        foreach ([['url', 'site_url'], ['mailTo', 'mail_to'], ['mailFrom', 'mail_from']] as [$from, $to]) {
+            $value = trim((string) ($site[$from] ?? ''));
+            if ($value !== '') {
+                $config[$to] = $to === 'site_url' ? rtrim($value, '/') : $value;
+            }
+        }
+
+        if (array_key_exists('mailEnabled', $site)) {
+            $config['mail_enabled'] = (bool) $site['mailEnabled'];
+        }
+
+        return $config;
+    }
+
     /** Struktur und Startwerte – gleichzeitig die Whitelist beim Speichern. */
     public static function defaults(): array
     {
@@ -217,6 +247,10 @@ final class Settings
              */
             'cv' => [
                 'profile' => '',
+                // Akzentfarbe des Dokuments als Hex-Wert. Leer = die Farbe
+                // der Website. Auf dunklem Papier wird sie automatisch
+                // aufgehellt, sonst verschwände sie im Untergrund.
+                'accent' => '',
                 // Papierfarbe des Dokuments: 'light' oder 'dark'. Unabhängig
                 // vom Farbschema der Website – das Blatt ist ein eigenes
                 // Medium und soll überall gleich aussehen.
@@ -236,6 +270,27 @@ final class Settings
             'portrait' => [
                 'mediaId' => null,
                 'caption' => '',
+            ],
+
+            /**
+             * Adresse und Mailversand.
+             *
+             * Diese Werte standen früher in `api/.env.php` und mussten per
+             * FTP eingetragen werden. Jetzt stehen sie hier, damit sich das
+             * Portfolio ohne einen einzigen Dateizugriff einrichten lässt.
+             * Ist ein Feld leer, gilt weiterhin der Wert aus der Datei –
+             * bestehende Installationen ändern sich also nicht.
+             */
+            'site' => [
+                // Vollständige Adresse ohne Schrägstrich am Ende. Leer lassen:
+                // dann leitet der Server sie aus der Anfrage ab.
+                'url' => '',
+                // Empfänger für Anfragen aus dem Kontaktformular.
+                'mailTo' => '',
+                // Absender. Muss bei all-inkl eine Adresse der eigenen Domain
+                // sein, sonst verwirft der Mailserver die Nachricht.
+                'mailFrom' => '',
+                'mailEnabled' => true,
             ],
 
             /**

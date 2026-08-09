@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { api, type Settings, type TimelineEntry } from '../lib/api';
 import { useToast } from '../lib/toast';
 import MediaField from '../components/MediaField';
@@ -518,6 +518,56 @@ export default function SettingsPage() {
               </button>
               <p className="text-[0.6875rem] leading-relaxed text-faint">
                 Leere Angaben erscheinen nicht. E-Mail und Standort kommen automatisch aus dem Profil.
+              </p>
+            </div>
+
+            <div>
+              <p className="label">Akzentfarbe</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {(
+                  [
+                    ['', 'Wie die Website'],
+                    ['#7c3aed', 'Violett'],
+                    ['#0ea5e9', 'Azur'],
+                    ['#0d9488', 'Petrol'],
+                    ['#059669', 'Smaragd'],
+                    ['#d97706', 'Bernstein'],
+                    ['#e11d48', 'Koralle'],
+                    ['#334155', 'Graphit'],
+                  ] as const
+                ).map(([wert, label]) => (
+                  <button
+                    key={wert || 'auto'}
+                    type="button"
+                    title={label}
+                    aria-label={label}
+                    aria-pressed={settings.cv.accent === wert}
+                    onClick={() => set('cv', { ...settings.cv, accent: wert })}
+                    className={`h-8 w-8 rounded-lg border-2 transition ${
+                      settings.cv.accent === wert ? 'border-ink' : 'border-line hover:border-line-strong'
+                    }`}
+                    style={
+                      wert
+                        ? { background: wert }
+                        : { background: 'linear-gradient(135deg, #7c3aed, #0ea5e9)' }
+                    }
+                  />
+                ))}
+
+                <label className="ml-2 flex items-center gap-2 text-xs text-muted">
+                  Eigene
+                  <input
+                    type="color"
+                    value={settings.cv.accent || '#7c3aed'}
+                    onChange={(event) => set('cv', { ...settings.cv, accent: event.target.value })}
+                    className="h-8 w-10 cursor-pointer rounded border border-line bg-transparent p-0.5"
+                  />
+                </label>
+              </div>
+              <p className="mt-1 text-[0.6875rem] leading-relaxed text-faint">
+                Gilt für Kopfverlauf, Schlagwortband, Abschnittsnummern und Chips. Auf dunklem
+                Papier wird der Ton automatisch aufgehellt. „Farbe aus" auf der Seite selbst
+                setzt weiterhin alles auf Schwarzweiß.
               </p>
             </div>
 
@@ -1119,6 +1169,56 @@ export default function SettingsPage() {
         </section>
       )}
 
+      {tab === 'seo' && (
+        <section className="panel grid gap-4 p-6 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <h2 className="text-sm font-semibold">Adresse &amp; Versand</h2>
+            <p className="mt-1 text-[0.6875rem] leading-relaxed text-faint">
+              Diese drei Angaben brauchte der Server früher als Datei. Jetzt stehen sie hier –
+              nach dem Hochladen ist also kein FTP-Zugriff mehr nötig.
+            </p>
+          </div>
+
+          <div className="sm:col-span-2">
+            <Field
+              label="Adresse der Website"
+              value={settings.site.url}
+              onChange={(value) => set('site', { ...settings.site, url: value })}
+              placeholder="https://deine-domain.de"
+              hint="Ohne Schrägstrich am Ende. Wird für Sitemap, Canonical-Links und Link-Vorschauen gebraucht. Leer lassen: dann leitet der Server sie aus der Anfrage ab."
+            />
+          </div>
+
+          <Field
+            label="Absender für Kontaktmails"
+            value={settings.site.mailFrom}
+            onChange={(value) => set('site', { ...settings.site, mailFrom: value })}
+            placeholder="website@deine-domain.de"
+            type="email"
+            hint="Muss bei all-inkl eine Adresse deiner eigenen Domain sein – fremde Absender werden verworfen."
+          />
+
+          <Field
+            label="Anfragen weiterleiten an"
+            value={settings.site.mailTo}
+            onChange={(value) => set('site', { ...settings.site, mailTo: value })}
+            placeholder="du@example.de"
+            type="email"
+            hint="Wohin Nachrichten aus dem Kontaktformular gehen. Im Dashboard stehen sie ohnehin immer unter Nachrichten."
+          />
+
+          <label className="flex cursor-pointer items-center gap-3 text-sm sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={settings.site.mailEnabled}
+              onChange={(event) => set('site', { ...settings.site, mailEnabled: event.target.checked })}
+              className="accent-[var(--accent)]"
+            />
+            Benachrichtigung per E-Mail verschicken
+          </label>
+        </section>
+      )}
+
       {tab === 'rechtliches' && (
         <section className="panel grid gap-4 p-6 sm:grid-cols-2">
           <p className="text-[0.6875rem] leading-relaxed text-warn sm:col-span-2">
@@ -1168,19 +1268,41 @@ function Field({
   value,
   onChange,
   hint,
+  placeholder,
   type = 'text',
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   hint?: string;
+  placeholder?: string;
   type?: string;
 }) {
+  // Eigene Kennung je Feld: Ohne `htmlFor` ist die Beschriftung nur Text –
+  // ein Klick darauf setzt den Fokus nicht, und Screenreader lesen das Feld
+  // ohne Namen vor.
+  const id = useId();
+  const hintId = `${id}-hint`;
+
   return (
     <div>
-      <label className="label">{label}</label>
-      <input type={type} className="field" value={value} onChange={(event) => onChange(event.target.value)} />
-      {hint && <p className="mt-1 text-[0.6875rem] leading-relaxed text-faint">{hint}</p>}
+      <label className="label" htmlFor={id}>
+        {label}
+      </label>
+      <input
+        id={id}
+        type={type}
+        className="field"
+        value={value}
+        placeholder={placeholder}
+        aria-describedby={hint ? hintId : undefined}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {hint && (
+        <p id={hintId} className="mt-1 text-[0.6875rem] leading-relaxed text-faint">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

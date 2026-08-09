@@ -157,6 +157,8 @@ export interface Settings {
   marquee: string[];
   cv: {
     profile: string;
+    /** Akzentfarbe des Dokuments als Hex-Wert. Leer = Farbe der Website. */
+    accent: string;
     /** Papierfarbe des Dokuments – unabhängig vom Farbschema der Website. */
     theme: 'light' | 'dark';
     includePhoto: boolean;
@@ -173,6 +175,8 @@ export interface Settings {
   socials: Array<{ label: string; url: string }>;
   skills: Array<{ title: string; description: string; items: string[] }>;
   process: Array<{ title: string; description: string }>;
+  /** Adresse und Mailversand – früher in api/.env.php, jetzt im Dashboard. */
+  site: { url: string; mailTo: string; mailFrom: string; mailEnabled: boolean };
   seo: { title: string; description: string; keywords: string };
   legal: { company: string; street: string; city: string; email: string; phone: string; vatId: string };
   features: { sound: boolean; cursor: boolean; analytics: boolean; easterEgg: boolean };

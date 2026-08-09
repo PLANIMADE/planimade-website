@@ -5,8 +5,10 @@
  *
  * Aufruf: https://deine-domain.de/api/scripts/setup.web.php
  *
- * Sicherheitsnetz: Sobald ein Zugang existiert, verweigert das Skript den
- * Dienst. Nach erfolgreicher Einrichtung bitte trotzdem löschen.
+ * Sicherheitsnetz, doppelt: Sobald ein Zugang existiert, verweigert das
+ * Skript den Dienst – und nach erfolgreicher Einrichtung löscht es sich
+ * selbst. Damit bleibt kein offener Einrichtungsdialog im Netz stehen, ohne
+ * dass jemand daran denken muss.
  */
 
 declare(strict_types=1);
@@ -20,6 +22,7 @@ $hasUser = (int) $db->value('SELECT COUNT(*) FROM users') > 0;
 
 $done = false;
 $error = null;
+$removable = false;
 $log = [];
 
 if (!$hasUser && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
@@ -31,6 +34,16 @@ if (!$hasUser && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         );
         $log = $result['log'];
         $done = true;
+
+        // Aufräumen: Die Datei hat ihren Zweck erfüllt. Das Löschen passiert
+        // bewusst erst nach der Antwort – verschwindet die Datei mitten im
+        // Aufruf, liefern manche Server statt der Bestätigung einen 404.
+        $removable = is_writable(__FILE__);
+        if ($removable) {
+            register_shutdown_function(static function (): void {
+                @unlink(__FILE__);
+            });
+        }
     } catch (Throwable $e) {
         $error = $e->getMessage();
     }
@@ -84,10 +97,18 @@ if (!$hasUser && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
   <?php elseif ($done): ?>
     <div class="msg ok">Einrichtung abgeschlossen.</div>
     <ul><?php foreach ($log as $line): ?><li><?= htmlspecialchars($line, ENT_QUOTES) ?></li><?php endforeach; ?></ul>
-    <p class="lead" style="margin-top:1.25rem">
-      <strong style="color:#fca5a5">Wichtig:</strong> Datei <code>api/scripts/setup.web.php</code> jetzt löschen.<br>
-      Danach einloggen unter <a href="/admin/" style="color:#a855f7">/admin/</a>.
-    </p>
+    <?php if ($removable): ?>
+      <p class="lead" style="margin-top:1.25rem">
+        Diese Einrichtungsseite hat sich selbst gelöscht – es bleibt nichts offen stehen.<br>
+        Weiter geht es unter <a href="/admin/" style="color:#a855f7">/admin/</a>.
+      </p>
+    <?php else: ?>
+      <p class="lead" style="margin-top:1.25rem">
+        <strong style="color:#fca5a5">Bitte von Hand löschen:</strong> <code>api/scripts/setup.web.php</code>
+        – das Selbstlöschen hat nicht geklappt, vermutlich wegen der Dateirechte.<br>
+        Danach einloggen unter <a href="/admin/" style="color:#a855f7">/admin/</a>.
+      </p>
+    <?php endif; ?>
   <?php else: ?>
     <form method="post">
       <label for="email">E-Mail (Login)</label>
