@@ -14,7 +14,13 @@
  * dauerhaften Vorgaben stehen im Dashboard.
  */
 
-import type { ExpertiseItem, Settings, TimelineEntry } from '../lib/types';
+import type { ExpertiseItem, Project, Settings, TimelineEntry } from '../lib/types';
+
+/** Nur die Felder der Projekte, die im Lebenslauf vorkommen. */
+type CvProject = Pick<
+  Project,
+  'title' | 'subtitle' | 'summary' | 'category' | 'client' | 'role' | 'year' | 'tools' | 'status' | 'featured'
+>;
 
 function escapeHtml(value: string): string {
   const div = document.createElement('div');
@@ -44,24 +50,62 @@ function entryMarkup(entry: TimelineEntry): string {
     </div>`;
 }
 
-function fillTimeline(settings: Settings, type: TimelineEntry['type']): void {
+/** Wie viele Arbeiten der Abschnitt „Ausgewählte Projekte" höchstens zeigt. */
+const PROJEKTE_MAX = 4;
+
+/**
+ * Macht aus den echten Portfolio-Arbeiten Einträge für den Lebenslauf.
+ *
+ * Vorher speiste sich der Abschnitt allein aus dem Werdegang – aus Einträgen
+ * vom Typ „Projekt". Wer keine angelegt hatte, hakte „Projekte" an und sah:
+ * nichts. Jetzt sind die Projekte aus dem Portfolio die Quelle. Sind welche
+ * hervorgehoben, zählen nur die – „ausgewählt" heißt schließlich ausgewählt.
+ */
+function projectEntries(projects: CvProject[]): TimelineEntry[] {
+  const veroeffentlicht = projects.filter((project) => project.status === 'published');
+  const hervorgehoben = veroeffentlicht.filter((project) => project.featured);
+  const quelle = hervorgehoben.length > 0 ? hervorgehoben : veroeffentlicht;
+
+  return quelle.slice(0, PROJEKTE_MAX).map((project) => ({
+    period: project.year !== null ? String(project.year) : '',
+    title: project.title,
+    // Der Kunde sagt in einer Bewerbung mehr als das Kürzel der Kategorie.
+    org: project.client || project.category,
+    location: project.role,
+    description: project.summary || project.subtitle,
+    type: 'project',
+    // Mehr Werkzeuge als das sprengen die Zeile und wiederholen ohnehin nur,
+    // was links in den Kenntnissen schon steht.
+    tags: project.tools.slice(0, 4),
+  }));
+}
+
+function fillTimeline(settings: Settings, type: TimelineEntry['type'], projects: CvProject[] = []): void {
   const block = document.querySelector<HTMLElement>(`[data-cv-block="${type}"]`);
   const container = document.querySelector<HTMLElement>(`[data-cv-entries="${type}"]`);
   if (!block || !container) return;
 
-  if (type === 'project' && !settings.cv.includeProjects) {
-    block.remove();
-    return;
-  }
+  // Von Hand gepflegte Projekteinträge im Werdegang haben Vorrang: Wer sie
+  // anlegt, will genau diese sehen und nicht die Auswahl aus dem Portfolio.
+  const eigene = settings.resume.timeline.filter((entry) => entry.type === type);
+  const entries = type === 'project' && eigene.length === 0 ? projectEntries(projects) : eigene;
 
-  const entries = settings.resume.timeline.filter((entry) => entry.type === type);
   if (entries.length === 0) {
     block.remove();
+    // Ein Schalter, der nichts einschaltet, ist ein Fehler – also weg damit.
+    if (type === 'project') {
+      document.querySelector<HTMLInputElement>('[data-cv-toggle="projects"]')?.closest('label')?.remove();
+    }
     return;
   }
 
   container.innerHTML = entries.map(entryMarkup).join('');
-  block.hidden = false;
+
+  // Der Abschnitt bleibt im Dokument, auch wenn er ausgeblendet startet:
+  // Der Schnellschalter oben soll ihn für einen einzelnen Export wieder
+  // hervorholen können. Ein entferntes Element bekäme er nie zurück – genau
+  // daran scheiterte „Projekte anzeigen" bisher.
+  block.hidden = type === 'project' && !settings.cv.includeProjects;
 }
 
 /**
@@ -518,7 +562,9 @@ export async function initCv(): Promise<void> {
     return;
   }
 
-  const settings = ((await response.json()) as { settings: Settings }).settings;
+  const antwort = (await response.json()) as { settings: Settings; projects?: CvProject[] };
+  const settings = antwort.settings;
+  const projects = antwort.projects ?? [];
   content.hidden = false;
 
   fillName(settings);
@@ -542,7 +588,7 @@ export async function initCv(): Promise<void> {
 
   fillTimeline(settings, 'work');
   fillTimeline(settings, 'education');
-  fillTimeline(settings, 'project');
+  fillTimeline(settings, 'project', projects);
   fillExpertise(settings);
   fillFooter(settings);
 

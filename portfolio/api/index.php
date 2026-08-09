@@ -157,9 +157,16 @@ $router->get('settings', static function () use ($settings, $auth): void {
  * Die Seite /lebenslauf/ ist zwar statisch ausgeliefert, bleibt ohne diese
  * Antwort aber leer: Ohne Login gibt es hier 401 und damit kein Dokument.
  */
-$router->get('cv', static function () use ($settings, $auth): void {
+$router->get('cv', static function () use ($settings, $projects, $auth): void {
     $auth->requireUser();
-    Http::json(['settings' => $settings->all()]);
+
+    // Die Projekte kommen gleich mit: Der Abschnitt „Ausgewählte Projekte"
+    // soll die echten Arbeiten aus dem Portfolio zeigen und nicht verlangen,
+    // dass dieselben Projekte ein zweites Mal im Werdegang stehen.
+    Http::json([
+        'settings' => $settings->all(),
+        'projects' => $projects->list(),
+    ]);
 });
 
 $router->get('testimonials', static function () use ($testimonials, $auth): void {

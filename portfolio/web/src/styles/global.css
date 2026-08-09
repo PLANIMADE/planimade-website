@@ -1379,11 +1379,15 @@ html.no-js .line-mask > span {
        nachgemessen hat: Läuft das Dokument nur knapp über die Seite, wird es
        als Ganzes ein paar Prozent kleiner gesetzt, statt hinten eine fast
        leere Seite anzuhängen. `zoom` ist dafür das richtige Werkzeug – es
-       verkleinert vor dem Umbruch, `transform` erst danach. Weil `zoom` auch
-       die Breite mitnimmt, wird sie hier gegengerechnet, sonst bliebe rechts
-       ein weißer Streifen. */
+       verkleinert vor dem Umbruch, `transform` erst danach.
+
+       Die Breite bleibt bei 100 %: Prozentangaben rechnet der Browser unter
+       `zoom` schon selbst hoch. Wer hier gegenrechnet, macht das Blatt
+       breiter als die Seite – es steht dann über beide Kanten hinaus und der
+       Innenabstand verschwindet. Millimeter dagegen schrumpfen mit, die
+       Mindesthöhe unten muss also sehr wohl gegengerechnet werden. */
     zoom: var(--cv-fit, 1);
-    width: calc(100% / var(--cv-fit, 1));
+    width: 100%;
     max-width: none;
     /* Das Blatt füllt immer ganze Seiten, sonst endete es nach dem
        Verkleinern ein Stück vor der Blattkante und die Fußleiste schwebte
