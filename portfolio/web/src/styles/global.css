@@ -420,6 +420,55 @@ html[data-theme] .cv-sheet.cv-dark [data-mark][data-logo-adapt='dark'] img {
 }
 
 /* ==========================================================================
+   PDF-Ansicht
+   Die Seiten werden selbst gezeichnet (siehe scripts/pdf-viewer.ts) und
+   liegen als Blätter auf einer Fläche – dieselbe Optik wie bei den
+   Print-Projekten, statt einer grauen Werkzeugleiste aus einem anderen
+   Programm mitten in der Arbeit.
+   ========================================================================== */
+.pdf-ansicht {
+  display: grid;
+  gap: clamp(1rem, 2vw, 2rem);
+  overflow-y: auto;
+  padding: clamp(1rem, 3%, 2.5rem);
+  background:
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--card-accent, var(--accent)) 12%, transparent), transparent 70%),
+    var(--bg-elevated);
+  /* Eine angenehme Bildlaufleiste statt der klobigen Voreinstellung. */
+  scrollbar-width: thin;
+}
+
+.pdf-blatt {
+  position: relative;
+  margin-inline: auto;
+  width: 100%;
+  max-width: 52rem;
+}
+
+.pdf-blatt canvas {
+  border-radius: 0.25rem;
+  background: #fff;
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 12%),
+    0 18px 48px -16px rgb(0 0 0 / 45%);
+}
+
+[data-theme='light'] .pdf-blatt canvas {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 8%),
+    0 16px 40px -18px rgb(0 0 0 / 28%);
+}
+
+.pdf-nummer {
+  margin-top: 0.625rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.18em;
+  text-align: center;
+  color: var(--text-faint);
+}
+
+/* ==========================================================================
    Video mit Abspieltaste
    Das Standbild kommt aus dem Video selbst (siehe scripts/video.ts); hier
    liegt nur die Taste darüber. Läuft das Video, verschwindet sie.

@@ -11,32 +11,35 @@ import type { Project } from '../lib/types';
 import { refreshMotion } from './motion';
 import { initLightbox } from './lightbox';
 import { initVideos, videoMarkup } from './video';
+import { initPdfViewer } from './pdf-viewer';
 
 /**
  * Was oben auf der Seite steht.
  *
  * Vorher war das immer das Titelbild. Das Titelbild ist aber für die Kacheln
  * der Übersicht gemacht – wer eine Projektseite öffnet, will die Arbeit
- * sehen und nicht noch einmal dasselbe Vorschaubild. Also gilt: erst das
- * Video, dann das erste Stück aus der Galerie, und nur wenn es beides nicht
- * gibt, das Titelbild.
+ * sehen und nicht noch einmal dasselbe Vorschaubild.
+ *
+ * Die Reihenfolge: Video, dann Dokument, dann Bild – und nur wenn es nichts
+ * davon gibt, das Titelbild. Das Dokument steht vor dem Bild, weil bei einer
+ * Print-Arbeit das PDF die Arbeit ist und die Bilder daneben nur Beiwerk.
  *
  * `ausGalerie` merkt sich, welcher Eintrag nach oben gewandert ist – der
  * fällt in der Galerie darunter weg, sonst stünde er zweimal auf der Seite.
  */
 function heroAuswahl(project: Project): { media: Project['cover']; ausGalerie: number | null } {
-  const galerieVideo = project.gallery.findIndex((item) => item.media.kind === 'video');
-  if (galerieVideo !== -1) {
-    return { media: project.gallery[galerieVideo]!.media, ausGalerie: galerieVideo };
-  }
+  const ausGalerie = (art: string): number => project.gallery.findIndex((item) => item.media.kind === art);
 
-  if (project.preview?.kind === 'video') {
-    return { media: project.preview, ausGalerie: null };
-  }
+  for (const art of ['video', 'document', 'image']) {
+    const stelle = ausGalerie(art);
+    if (stelle !== -1) {
+      return { media: project.gallery[stelle]!.media, ausGalerie: stelle };
+    }
 
-  const galerieBild = project.gallery.findIndex((item) => item.media.kind === 'image');
-  if (galerieBild !== -1) {
-    return { media: project.gallery[galerieBild]!.media, ausGalerie: galerieBild };
+    // Ein Vorschauvideo ist gleichwertig zu einem aus der Galerie.
+    if (art === 'video' && project.preview?.kind === 'video') {
+      return { media: project.preview, ausGalerie: null };
+    }
   }
 
   return { media: project.cover, ausGalerie: null };
@@ -90,9 +93,11 @@ function galleryMarkup(project: Project, ohneIndex: number | null): string {
             const sizes = item.layout === 'half' ? '(max-width: 768px) 100vw, 45vw' : '(max-width: 768px) 100vw, 90vw';
             const alt = escapeHtml(item.media.alt || item.caption || project.title);
 
-            // PDFs bekommen eine eigene Kachel mit Download statt Lightbox.
+            // PDFs werden gezeigt, nicht zum Herunterladen angeboten. Über
+            // die volle Breite, weil eine Seite in einer halben Spalte nicht
+            // mehr lesbar wäre.
             if (item.media.kind === 'document') {
-              return `<div class="${span}" data-reveal>${documentMarkup(item.media, item.caption)}</div>`;
+              return `<div class="md:col-span-2" data-reveal>${documentMarkup(item.media, item.caption)}</div>`;
             }
 
             // Videos bekommen den eigenen Rahmen mit Abspieltaste – und
@@ -173,35 +178,49 @@ function paletteMarkup(project: Project): string {
     </section>`;
 }
 
-/** Kachel für ein PDF: Seitenvorschau, falls vorhanden – sonst schlichtes Feld. */
-function documentMarkup(media: Project['gallery'][number]['media'], caption: string): string {
-  const preview = media.thumbUrl;
+/**
+ * Ein Dokument auf der Projektseite.
+ *
+ * Die Seiten zeichnet das Skript selbst (siehe `pdf-viewer.ts`) – der
+ * eingebaute Betrachter des Browsers schafft nur ein Dokument pro Seite,
+ * zeigt auf dem iPhone bloß die erste Seite und bringt eine graue
+ * Werkzeugleiste mit, die mitten in der Arbeit steht.
+ *
+ * Bis die Seiten da sind, steht die erste Seite als Bild im Rahmen – die
+ * erzeugt der Server beim Hochladen. So ist die Fläche nie leer.
+ */
+function documentMarkup(media: Project['gallery'][number]['media'], caption: string, hoehe = 'h-[70vh] max-h-[52rem] min-h-[26rem]'): string {
+  const url = escapeHtml(media.url);
+  const titel = escapeHtml(caption || media.filename);
 
   return `
-    <a
-      href="${escapeHtml(media.url)}"
-      target="_blank"
-      rel="noopener"
-      data-cursor="hover"
-      class="group block overflow-hidden rounded-2xl border border-line bg-elevated transition-colors hover:border-line-strong"
-    >
-      ${
-        preview
-          ? `<span class="paper-stage block aspect-[3/4] w-full">
-               <img src="${escapeHtml(preview)}" alt="${escapeHtml(media.alt || caption)}" loading="lazy" class="paper-sheet">
-             </span>`
-          : `<span class="grid aspect-[3/4] w-full place-items-center bg-surface">
-               <span class="font-mono text-xs tracking-[0.2em] text-faint">PDF</span>
-             </span>`
-      }
-      <span class="flex items-center justify-between gap-3 px-4 py-3">
+    <figure class="overflow-hidden rounded-2xl border border-line bg-elevated">
+      <div class="pdf-ansicht ${hoehe}" data-pdf="${url}" aria-label="${titel}">
+        ${
+          media.thumbUrl
+            ? `<figure class="pdf-blatt"><img src="${escapeHtml(media.thumbUrl)}" alt="${escapeHtml(media.alt || caption)}" class="block h-auto w-full rounded"></figure>`
+            : `<p class="p-10 text-center font-mono text-xs tracking-[0.2em] text-faint">PDF WIRD GELADEN …</p>`
+        }
+      </div>
+
+      <figcaption class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3.5">
         <span class="min-w-0">
-          <span class="block truncate text-sm text-ink">${escapeHtml(caption || media.filename)}</span>
-          <span class="block font-mono text-[0.625rem] text-faint">PDF · ${Math.round(media.size / 1024 / 1024 * 10) / 10} MB</span>
+          <span class="block truncate text-sm text-ink">${titel}</span>
+          <span class="block font-mono text-[0.625rem] text-faint">PDF · ${dateiGroesse(media.size)}</span>
         </span>
-        <span class="shrink-0 text-ink transition-transform duration-500 group-hover:translate-y-0.5">↓</span>
-      </span>
-    </a>`;
+        <span class="flex shrink-0 items-center gap-4">
+          <a href="${url}" target="_blank" rel="noopener" data-cursor="hover" class="link-underline text-xs text-ink">Ganze Seite</a>
+          <a href="${url}" download data-cursor="hover" class="link-underline text-xs text-muted">Herunterladen</a>
+        </span>
+      </figcaption>
+    </figure>`;
+}
+
+/** Unter einem Megabyte in Kilobyte – „0 MB" hilft niemandem. */
+function dateiGroesse(bytes: number): string {
+  return bytes >= 1024 * 1024
+    ? `${Math.round((bytes / 1024 / 1024) * 10) / 10} MB`
+    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
 /**
@@ -404,6 +423,7 @@ export async function initProjectDetail(): Promise<void> {
   const { media: heroQuelle, ausGalerie } = heroAuswahl(project);
   const contain = project.display === 'contain';
   const istVideo = heroQuelle?.kind === 'video';
+  const istDokument = heroQuelle?.kind === 'document';
 
   // Hochformate dürfen nicht auf 16:9 beschnitten werden – bei „vollständig
   // zeigen" bekommt das Bild deshalb ein höheres Feld und liegt darin wie ein
@@ -435,6 +455,16 @@ export async function initProjectDetail(): Promise<void> {
       ? `<div class="paper-stage h-full w-full">${heroImage}</div>`
       : heroImage;
 
+  /*
+   * Ein Dokument bringt seinen eigenen Rahmen mit – Seitenzahlen, Zoom und
+   * Blättern gehören zum Betrachter und nicht in einen Kasten mit festem
+   * Seitenverhältnis. Deshalb hier keine `heroAspect`-Hülle, sondern die
+   * Ansicht selbst, etwas höher als in der Galerie.
+   */
+  const heroBlock = istDokument
+    ? documentMarkup(heroQuelle!, project.title, 'h-[80vh] max-h-[58rem] min-h-[28rem]')
+    : `<div class="${heroAspect} overflow-hidden rounded-3xl border border-line bg-elevated">${heroMedia}</div>`;
+
   root.innerHTML = `
     <article>
       <header class="relative overflow-hidden pt-[calc(var(--nav-height)+3rem)]">
@@ -448,7 +478,7 @@ export async function initProjectDetail(): Promise<void> {
         </div>
 
         <div class="container-page relative mt-14">
-          <div class="${heroAspect} overflow-hidden rounded-3xl border border-line bg-elevated">${heroMedia}</div>
+          ${heroBlock}
         </div>
       </header>
 
@@ -553,6 +583,9 @@ export async function initProjectDetail(): Promise<void> {
   trackReadingDepth(project.id);
   initLightbox(root);
   initVideos(root);
+  // Nur wenn wirklich ein Dokument auf der Seite steht – die Bibliothek zum
+  // Zeichnen der Seiten wiegt einiges und wird erst dann geladen.
+  if (root.querySelector('[data-pdf]')) initPdfViewer(root);
 
   // Schwergewichte erst laden, wenn das Projekt sie wirklich braucht.
   if (root.querySelector('[data-before-after]')) {
