@@ -32,9 +32,11 @@ Rechner noch auf dem Server. Dort läuft nur PHP.
    im KAS neben der Domain steht (`…kasserver.com`). Sie ist von der
    HTTPS-Weiterleitung ausgenommen und funktioniert auch ohne Zertifikat.
 5. **FTP → FTP-Benutzer**: Zugang anlegen oder vorhandenen notieren.
-6. **E-Mail**: eine Adresse der eigenen Domain anlegen, etwa
-   `website@deine-domain.de`. all-inkl verwirft Mails mit fremden Absendern,
-   deshalb braucht das Kontaktformular eine eigene.
+6. **E-Mail**: ein Postfach der eigenen Domain anlegen, etwa
+   `website@deine-domain.de`, und Passwort sowie Servername notieren
+   (steht im KAS beim Postfach, meist `wXXabcde.kasserver.com`).
+   all-inkl verwirft Mails mit fremden Absendern – und über das Postfach
+   erfährt man wenigstens, warum, wenn doch etwas schiefgeht.
 
 ### 2. Hochladen
 
@@ -78,10 +80,18 @@ stehen im Dashboard:
 | Adresse der Website | `https://deine-domain.de` (ohne Schrägstrich am Ende) |
 | Absender für Kontaktmails | `website@deine-domain.de` – Adresse deiner Domain |
 | Anfragen weiterleiten an | wohin Nachrichten gehen sollen |
+| Mailserver / Port | `wXXabcde.kasserver.com`, Port 587 |
+| Postfach / Passwort | Zugangsdaten desselben Postfachs |
 
 Bleiben die Felder leer, funktioniert die Seite trotzdem: Die Adresse leitet
 der Server dann aus der Anfrage ab, und Anfragen stehen ohnehin immer unter
 „Nachrichten" im Dashboard.
+
+**Zum Mailversand:** Ohne Postfach übergibt die Seite die Nachricht dem
+Mailprogramm des Servers und erfährt nie, was daraus wird – nicht angenommen,
+im Spam gelandet oder verworfen sieht von außen alles gleich aus. Mit
+hinterlegtem Postfach meldet sich die Seite am Mailserver an, und jeder
+Fehler steht im Klartext unter **System**. Danach einmal „Testmail senden".
 
 ---
 
@@ -191,7 +201,8 @@ Zum Wiederherstellen beides einfach zurückspielen.
 | Weiße Seite, HTTP 500 | PHP-Version im KAS auf 8.2+ stellen. Details stehen in `api/storage/error.log`. |
 | „Upload-Ordner nicht beschreibbar" | Rechte von `uploads/` auf 755/775 setzen. |
 | Upload bricht bei großen Videos ab | KAS → PHP-Einstellungen: `upload_max_filesize` und `post_max_size` erhöhen (z. B. 256M). |
-| Kontaktformular sendet keine Mail | `mail_from` in `api/.env.php` muss eine Adresse **deiner** Domain sein. Die Anfrage steht trotzdem im Dashboard. |
+| Kontaktformular sendet keine Mail | Unter **System → Mailversand** steht, welcher Absender und Empfänger verwendet werden. Ist kein Postfach hinterlegt, trage eines ein (Einstellungen → SEO) – dann nennt „Testmail senden" den genauen Grund. Die Anfrage steht in jedem Fall unter „Nachrichten". |
+| Mail kommt an, aber im Spam | Absender muss eine Adresse **deiner** Domain sein und als Postfach existieren. Mit hinterlegtem Postfach passen Absender und Umschlag zusammen, das ist die halbe Miete. |
 | `/work/mein-projekt` zeigt 404 | Die `.htaccess` im Hauptverzeichnis fehlte und wurde noch nicht ergänzt – einmal die Startseite aufrufen, dann legt der Server sie an. Bleibt es dabei, steht der Grund im Systemcheck. |
 | Dashboard lädt endlos | Browser-Cache leeren; prüfen, ob `https://deine-domain.de/api/health` eine JSON-Antwort liefert. |
 | Endlos-Weiterleitung nach dem Upload | SSL noch nicht aktiv. Im KAS Let's Encrypt aktivieren oder den HTTPS-Block in der `.htaccess` vorübergehend auskommentieren. |

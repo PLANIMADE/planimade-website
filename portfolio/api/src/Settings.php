@@ -199,12 +199,20 @@ final class Settings
     {
         $site = $settings['site'] ?? [];
 
-        foreach ([['url', 'site_url'], ['mailTo', 'mail_to'], ['mailFrom', 'mail_from']] as [$from, $to]) {
+        $felder = [
+            ['url', 'site_url'], ['mailTo', 'mail_to'], ['mailFrom', 'mail_from'],
+            ['smtpHost', 'smtp_host'], ['smtpUser', 'smtp_user'], ['smtpPass', 'smtp_pass'],
+            ['smtpSecurity', 'smtp_security'],
+        ];
+
+        foreach ($felder as [$from, $to]) {
             $value = trim((string) ($site[$from] ?? ''));
             if ($value !== '') {
                 $config[$to] = $to === 'site_url' ? rtrim($value, '/') : $value;
             }
         }
+
+        $config['smtp_port'] = (int) ($site['smtpPort'] ?? 587) ?: 587;
 
         if (array_key_exists('mailEnabled', $site)) {
             $config['mail_enabled'] = (bool) $site['mailEnabled'];
@@ -326,6 +334,17 @@ final class Settings
                 // sein, sonst verwirft der Mailserver die Nachricht.
                 'mailFrom' => '',
                 'mailEnabled' => true,
+
+                // Eigenes Postfach für den Versand. Leer = über `mail()` des
+                // Servers, was auf geteilten Webspaces oft im Spam landet
+                // oder wortlos verworfen wird.
+                'smtpHost' => '',
+                'smtpPort' => 587,
+                'smtpUser' => '',
+                'smtpPass' => '',
+                // 'auto' entscheidet nach Port: 465 verschlüsselt von Anfang
+                // an, sonst STARTTLS.
+                'smtpSecurity' => 'auto',
             ],
 
             /**

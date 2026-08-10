@@ -41,29 +41,22 @@ final class SystemCheck
     /** Verschickt eine Testmail an die hinterlegte Adresse. */
     public function sendTestMail(): array
     {
-        $to = (string) $this->config['mail_to'];
-        $from = (string) $this->config['mail_from'];
-
-        if (!function_exists('mail')) {
-            return ['ok' => false, 'message' => 'Diese PHP-Installation kann keine Mails versenden.'];
-        }
-        if ($to === '' || $from === '') {
-            return ['ok' => false, 'message' => 'Unter Einstellungen → SEO fehlen Absender oder Empfänger.'];
-        }
-
-        $sent = @mail(
-            $to,
-            '=?UTF-8?B?' . base64_encode('Testmail vom Portfolio') . '?=',
-            "Diese Nachricht bestätigt, dass der Mailversand funktioniert.\n\nGesendet: " . gmdate('c'),
-            implode("\r\n", [
-                'From: Portfolio <' . $from . '>',
-                'Content-Type: text/plain; charset=UTF-8',
-            ])
+        $mailer = new Mailer($this->config);
+        $ergebnis = $mailer->send(
+            'Testmail vom Portfolio',
+            "Diese Nachricht bestätigt, dass der Mailversand funktioniert.\n\n"
+                . 'Absender: ' . $mailer->absender() . "\n"
+                . 'Empfänger: ' . $mailer->empfaenger() . "\n"
+                . 'Gesendet: ' . gmdate('c') . "\n"
         );
 
-        return $sent
-            ? ['ok' => true, 'message' => 'Testmail wurde an ' . $to . ' übergeben. Bitte Postfach und Spam-Ordner prüfen.']
-            : ['ok' => false, 'message' => 'Der Server hat die Mail abgelehnt. Absender muss eine Adresse der eigenen Domain sein.'];
+        // Die verwendeten Adressen gehören in die Rückmeldung: Kommt nichts
+        // an, ist die erste Frage immer „von wem an wen eigentlich?".
+        $ergebnis['message'] .= $ergebnis['ok']
+            ? ' Absender war ' . $mailer->absender() . '. Bitte auch den Spam-Ordner prüfen.'
+            : '';
+
+        return $ergebnis;
     }
 
     // ------------------------------------------------------------------
@@ -165,16 +158,35 @@ final class SystemCheck
         );
     }
 
+    /**
+     * Der Punkt, an dem der Mailversand am häufigsten hängt.
+     *
+     * Gezeigt werden die Adressen, die tatsächlich verwendet werden – nicht
+     * die, die im Dashboard stehen. Beides kann auseinanderlaufen: Ist das
+     * Absenderfeld leer, wird die Adresse aus der Domain gebildet.
+     */
     private function mailConfig(): array
     {
-        $from = (string) $this->config['mail_from'];
-        $ok = $from !== '';
+        $mailer = new Mailer($this->config);
+        $hindernis = $mailer->hindernis();
+
+        if ($hindernis !== '') {
+            return $this->result('Mailversand', 'error', 'nicht möglich', $hindernis);
+        }
+
+        $weg = $mailer->ueberPostfach()
+            ? ' (über das eigene Postfach)'
+            : ' (über den Server)';
 
         return $this->result(
-            'Mail-Absender',
-            $ok ? 'ok' : 'warn',
-            $ok ? $from : 'nicht gesetzt',
-            $ok ? null : 'Ohne Absender kommen keine Benachrichtigungen an. Muss eine Adresse der eigenen Domain sein.'
+            'Mailversand',
+            $mailer->ueberPostfach() ? 'ok' : 'warn',
+            $mailer->absender() . ' → ' . $mailer->empfaenger() . $weg,
+            $mailer->ueberPostfach()
+                ? 'Mit „Testmail senden" prüfen.'
+                : 'Der Server übergibt die Mail an sein eigenes Mailprogramm und meldet nicht '
+                    . 'zurück, was damit geschieht – kommt nichts an, sieht man den Grund nirgends. '
+                    . 'Verlässlicher ist ein eigenes Postfach unter Einstellungen → SEO.'
         );
     }
 

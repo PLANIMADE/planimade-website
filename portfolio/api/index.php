@@ -142,9 +142,12 @@ $router->get('settings', static function () use ($settings, $auth): void {
         // in einer offenen Antwort nichts verloren – sie gehören nur dir.
         unset($data['cv']);
 
-        // Ebenso die Versanddaten: `mailTo` ist der private Posteingang, und
-        // eine offen abrufbare Adresse steht in Minuten in jeder Spam-Liste.
-        // Die Adresse der Website darf bleiben – die steht ohnehin im Browser.
+        // Ebenso die Versanddaten: `mailTo` ist der private Posteingang, eine
+        // offen abrufbare Adresse steht in Minuten in jeder Spam-Liste – und
+        // seit dem eigenen Postfach steht hier auch ein Passwort. Deshalb
+        // wird nicht einzeln entfernt, sondern nur durchgelassen, was
+        // unbedenklich ist: die Adresse der Website, die ohnehin im Browser
+        // steht. Kommt später ein Feld dazu, ist es damit automatisch dicht.
         $data['site'] = ['url' => $data['site']['url'] ?? ''];
     }
 

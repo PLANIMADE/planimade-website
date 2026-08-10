@@ -112,12 +112,16 @@ export default function Messages() {
                 {/* Der Versand scheiterte bisher lautlos: Die Nachricht stand
                     hier, im Postfach kam nichts an, und nichts sagte einem,
                     dass überhaupt etwas schiefging. */}
-                {message.notified === -1 && (
+                {message.notified < 0 && (
                   <span
                     className="shrink-0 rounded border border-warn/40 px-1.5 py-0.5 text-[0.5625rem] uppercase tracking-wider text-warn"
-                    title="Der Server hat die Benachrichtigung abgelehnt. Unter System → Testmail prüfen."
+                    title={
+                      message.notified === -2
+                        ? 'Es wurde gar nicht erst verschickt – unter System steht, was fehlt.'
+                        : 'Der Server hat die Benachrichtigung abgelehnt. Unter System → Testmail prüfen.'
+                    }
                   >
-                    Mail nicht raus
+                    {message.notified === -2 ? 'Kein Versand' : 'Mail abgelehnt'}
                   </span>
                 )}
                 <span className="shrink-0 text-[0.6875rem] text-faint">{formatDate(message.createdAt)}</span>

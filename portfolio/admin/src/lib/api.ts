@@ -73,7 +73,7 @@ export interface Message {
   budget: string;
   body: string;
   status: 'new' | 'read' | 'archived';
-  /** 1 = als Mail übergeben, -1 = vom Server abgelehnt, 0 = kein Versand. */
+  /** 1 = übergeben, -1 = abgelehnt, -2 = nicht versucht, 0 = älter als diese Zählung. */
   notified: number;
   createdAt: string;
 }
@@ -188,7 +188,18 @@ export interface Settings {
   skills: Array<{ title: string; description: string; items: string[] }>;
   process: Array<{ title: string; description: string }>;
   /** Adresse und Mailversand – früher in api/.env.php, jetzt im Dashboard. */
-  site: { url: string; mailTo: string; mailFrom: string; mailEnabled: boolean };
+  site: {
+    url: string;
+    mailTo: string;
+    mailFrom: string;
+    mailEnabled: boolean;
+    /** Eigenes Postfach für den Versand. Leer = über mail() des Servers. */
+    smtpHost: string;
+    smtpPort: number;
+    smtpUser: string;
+    smtpPass: string;
+    smtpSecurity: 'auto' | 'tls' | 'ssl' | 'none';
+  };
   seo: { title: string; description: string; keywords: string };
   legal: { company: string; street: string; city: string; email: string; phone: string; vatId: string };
   features: { sound: boolean; cursor: boolean; analytics: boolean; easterEgg: boolean };

@@ -80,7 +80,7 @@ final class Messages
             'budget' => $r['budget'],
             'body' => $r['body'],
             'status' => $r['status'],
-            // 1 = als Mail übergeben, -1 = vom Server abgelehnt, 0 = kein Versand
+            // 1 = übergeben, -1 = abgelehnt, -2 = nicht versucht, 0 = älter als diese Zählung
             'notified' => (int) ($r['notified'] ?? 0),
             'createdAt' => $r['created_at'],
         ], $rows);
@@ -104,51 +104,47 @@ final class Messages
         return (int) $this->db->value("SELECT COUNT(*) FROM messages WHERE status = 'new'");
     }
 
+    /**
+     * Schickt die Anfrage zusätzlich per Mail.
+     *
+     * Das Ergebnis wird an der Nachricht festgehalten – sonst scheitert der
+     * Versand lautlos und man sieht im Posteingang eine Nachricht, ohne zu
+     * ahnen, dass im Postfach nie etwas ankam.
+     *
+     *  1 = übergeben, -1 = vom Server abgelehnt, -2 = gar nicht versucht
+     */
     private function notify(int $id): void
     {
-        if (!$this->config['mail_enabled'] || !function_exists('mail')) {
-            return;
-        }
-
-        $to = (string) $this->config['mail_to'];
-        $from = (string) $this->config['mail_from'];
-        if ($to === '' || $from === '') {
-            return;
-        }
-
         $message = $this->db->first('SELECT * FROM messages WHERE id = ?', [$id]);
         if ($message === null) {
             return;
         }
 
-        $subject = 'Neue Portfolio-Anfrage von ' . $message['name'];
-        $lines = [
+        $mailer = new Mailer($this->config);
+        if ($mailer->hindernis() !== '') {
+            $this->db->update('messages', ['notified' => -2], 'id = :id', ['id' => $id]);
+
+            return;
+        }
+
+        $zeilen = [
             'Name:    ' . $message['name'],
             'E-Mail:  ' . $message['email'],
             'Betreff: ' . ($message['subject'] !== '' ? $message['subject'] : '–'),
-            'Budget:  ' . ($message['budget'] !== '' ? $message['budget'] : '–'),
-            '',
-            $message['body'],
-            '',
-            '— gesendet über das Kontaktformular',
         ];
 
-        $headers = [
-            'From: Portfolio <' . $from . '>',
-            'Reply-To: ' . $message['email'],
-            'Content-Type: text/plain; charset=UTF-8',
-            'X-Mailer: PHP/' . PHP_VERSION,
-        ];
+        if (($message['budget'] ?? '') !== '') {
+            $zeilen[] = 'Budget:  ' . $message['budget'];
+        }
 
-        $sent = @mail(
-            $to,
-            '=?UTF-8?B?' . base64_encode($subject) . '?=',
-            implode("\n", $lines),
-            implode("\r\n", $headers)
+        $zeilen = array_merge($zeilen, ['', (string) $message['body'], '', '— gesendet über das Kontaktformular']);
+
+        $ergebnis = $mailer->send(
+            'Neue Nachricht über das Portfolio von ' . $message['name'],
+            implode("\n", $zeilen),
+            (string) $message['email']
         );
 
-        // Das Ergebnis wird festgehalten, damit der Posteingang im Dashboard
-        // eine abgelehnte Mail anzeigen kann, statt sie zu verschlucken.
-        $this->db->update('messages', ['notified' => $sent ? 1 : -1], 'id = :id', ['id' => $id]);
+        $this->db->update('messages', ['notified' => $ergebnis['ok'] ? 1 : -1], 'id = :id', ['id' => $id]);
     }
 }

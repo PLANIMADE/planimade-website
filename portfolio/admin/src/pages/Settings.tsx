@@ -1192,6 +1192,77 @@ export default function SettingsPage() {
             />
             Benachrichtigung per E-Mail verschicken
           </label>
+
+          <div className="mt-2 border-t border-line pt-5 sm:col-span-2">
+            <h3 className="text-sm font-semibold">Eigenes Postfach (empfohlen)</h3>
+            <p className="mt-1 text-[0.6875rem] leading-relaxed text-faint">
+              Ohne diese Angaben übergibt der Server die Mail an sein eigenes Mailprogramm. Ob sie
+              dort angenommen, verworfen oder als Spam einsortiert wird, erfährt niemand – genau
+              deshalb kommen Nachrichten manchmal nie an. Trägst du hier ein Postfach ein (bei
+              all-inkl im KAS anlegen), meldet sich die Website daran an und der Mailserver
+              antwortet auf jeden Schritt. Schlägt etwas fehl, steht der Grund unter „System".
+            </p>
+          </div>
+
+          <Field
+            label="Mailserver"
+            value={settings.site.smtpHost}
+            onChange={(value) => set('site', { ...settings.site, smtpHost: value })}
+            placeholder="w01abcde.kasserver.com"
+            hint="Bei all-inkl steht der Name im KAS beim Postfach. Leer lassen = alter Weg über den Server."
+          />
+
+          <div className="grid grid-cols-[1fr_auto] gap-3">
+            <Field
+              label="Port"
+              value={String(settings.site.smtpPort ?? 587)}
+              onChange={(value) => set('site', { ...settings.site, smtpPort: Number(value) || 587 })}
+              placeholder="587"
+            />
+            <div>
+              <label className="label" htmlFor="smtp-security">
+                Verschlüsselung
+              </label>
+              <select
+                id="smtp-security"
+                className="field"
+                value={settings.site.smtpSecurity ?? 'auto'}
+                onChange={(event) =>
+                  set('site', { ...settings.site, smtpSecurity: event.target.value as typeof settings.site.smtpSecurity })
+                }
+              >
+                <option value="auto">Automatisch</option>
+                <option value="tls">STARTTLS (587)</option>
+                <option value="ssl">SSL (465)</option>
+                <option value="none">Ohne</option>
+              </select>
+            </div>
+          </div>
+
+          <Field
+            label="Postfach / Benutzername"
+            value={settings.site.smtpUser}
+            onChange={(value) => set('site', { ...settings.site, smtpUser: value })}
+            placeholder="website@deine-domain.de"
+            hint="Meist dieselbe Adresse wie der Absender oben."
+          />
+
+          <div>
+            <label className="label" htmlFor="smtp-pass">
+              Passwort
+            </label>
+            <input
+              id="smtp-pass"
+              className="field"
+              type="password"
+              autoComplete="new-password"
+              value={settings.site.smtpPass}
+              onChange={(event) => set('site', { ...settings.site, smtpPass: event.target.value })}
+            />
+            <p className="mt-1 text-[0.6875rem] text-faint">
+              Das Passwort des Postfachs, nicht das deines Dashboards.
+            </p>
+          </div>
         </section>
       )}
 
