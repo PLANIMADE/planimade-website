@@ -346,7 +346,7 @@ export default function SettingsPage() {
               [
                 ['analytics', 'Besuchsstatistik erfassen', 'Cookiefrei und anonymisiert – Basis für die Übersicht.'],
                 ['sound', 'Interface-Sounds anbieten', 'Standardmäßig aus; Besucher schalten sie selbst ein.'],
-                ['cursor', 'Eigener Mauszeiger', 'Nur auf Geräten mit Maus.'],
+                ['cursor', 'Eigener Mauszeiger', 'Aus = der Zeiger des Systems. Auf Touch-Geräten ohnehin.'],
                 ['easterEgg', 'Wireframe-Osterei', 'Konami-Code oder das Wort „render" tippen.'],
               ] as const
             ).map(([key, label, hint]) => (

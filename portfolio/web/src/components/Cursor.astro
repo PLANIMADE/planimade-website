@@ -6,7 +6,9 @@
  */
 ---
 
-<div data-cursor-root aria-hidden="true" class="pointer-events-none">
+{/* Startet versteckt: Sichtbar wird der eigene Zeiger erst, wenn das Skript
+    ihn übernimmt – bis dahin führt der Zeiger des Systems. */}
+<div data-cursor-root hidden aria-hidden="true" class="pointer-events-none">
   <div class="cursor-dot" data-cursor-dot></div>
   <div class="cursor-ring" data-cursor-ring data-state="default"></div>
   <span class="cursor-label" data-cursor-label></span>

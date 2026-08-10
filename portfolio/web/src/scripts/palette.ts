@@ -7,6 +7,7 @@
 
 import { fetchProjects, fetchSettings } from '../lib/api';
 import { toggleTheme } from './theme';
+import { cursorEnabled, toggleCursor } from './cursor';
 import { sound, soundEnabled, toggleSound } from './sound';
 
 interface Command {
@@ -52,6 +53,14 @@ export function initPalette(): void {
       group: 'Aktionen',
       keywords: 'ton sound audio stumm lautsprecher',
       run: () => notify(toggleSound() ? 'Töne an' : 'Töne aus'),
+    },
+    {
+      id: 'cursor',
+      label: cursorEnabled() ? 'Eigenen Mauszeiger ausschalten' : 'Eigenen Mauszeiger einschalten',
+      hint: 'Zeiger',
+      group: 'Aktionen',
+      keywords: 'maus cursor zeiger pfeil',
+      run: () => notify(toggleCursor() ? 'Eigener Mauszeiger an' : 'Mauszeiger des Systems'),
     },
     {
       id: 'mail',

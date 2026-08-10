@@ -63,9 +63,9 @@ const ogImage = new URL(image, Astro.site ?? 'https://dominic-majewski.de');
           var stored = localStorage.getItem('dm-theme');
           var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
           root.dataset.theme = stored || (prefersLight ? 'light' : 'dark');
-          if (localStorage.getItem('dm-cursor') !== 'off' && window.matchMedia('(pointer: fine)').matches) {
-            root.dataset.cursor = 'custom';
-          }
+          /* Der eigene Mauszeiger wird hier bewusst NICHT eingeschaltet.
+             Das darf erst das Skript, das ihn auch zeichnet – sonst versteckt
+             diese Zeile den System-Zeiger und niemand ersetzt ihn. */
         } catch (error) {
           root.dataset.theme = 'dark';
         }

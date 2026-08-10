@@ -8,6 +8,7 @@
 
 import { fetchSettings, fetchTestimonials } from '../lib/api';
 import type { Settings } from '../lib/types';
+import { setCursor } from './cursor';
 
 /** Statusfarben kommen aus CSS-Variablen – damit stimmt der Kontrast in beiden Themes. */
 const statusColors: Record<string, string> = {
@@ -349,6 +350,13 @@ export async function initHydration(): Promise<void> {
   document.querySelectorAll<HTMLElement>('[data-intro]').forEach((element) => {
     renderParagraphs(element, settings.intro);
   });
+
+  // Ist der eigene Mauszeiger im Dashboard abgeschaltet, führt wieder der des
+  // Systems. Die Wahl des Besuchers in der Schnellsuche bleibt davon
+  // unberührt – deshalb wird sie hier nicht überschrieben.
+  if (settings.features?.cursor === false) {
+    setCursor(false, false);
+  }
 
   fillAvailability(settings);
   fillSocials(settings);
