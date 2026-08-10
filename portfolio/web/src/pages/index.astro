@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import SectionHeading from '../components/SectionHeading.astro';
+import ContactForm from '../components/ContactForm.astro';
 import Marquee from '../components/Marquee.astro';
 
 const marqueeItems = [
@@ -161,24 +162,48 @@ const marqueeItems = [
   </section>
 
   <!-- ============================================================= KONTAKT -->
-  {/* Bewusst schlicht. Hier stand ein Aufruf zur Projektanfrage – das ist die
-      Sprache einer Agentur, die Aufträge sucht. Diese Seite zeigt Arbeiten;
-      wer Kontakt aufnehmen will, findet hier die Adresse und sonst nichts. */}
-  <section class="container-page pb-24">
-    <div class="flex flex-col items-start justify-between gap-8 border-t border-line pt-12 sm:flex-row sm:items-end">
+  {/* Das Formular steht direkt hier. Vorher führte an dieser Stelle nur ein
+      Verweis auf die Kontaktseite – ein Klick mehr für etwas, das genauso gut
+      hier passieren kann. Es ist derselbe Baustein wie auf /contact/, also
+      auch dieselbe Prüfung und derselbe Posteingang. */}
+  <section class="container-page pb-28">
+    {/* Auf großen Bildschirmen mittig ausgerichtet: Der Text links ist kurz,
+        das Formular rechts hoch – oben bündig blieb darunter ein Loch. */}
+    <div class="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:items-center lg:gap-20">
       <div>
-        <p class="label-mono" data-text="home.contact.label">Kontakt</p>
-        <p class="display-section mt-4 text-ink" data-text="home.contact.headline">Schreib mir</p>
+        <p class="label-mono flex items-center gap-3" data-reveal>
+          <span class="inline-block h-px w-8 bg-accent"></span>
+          <span data-text="home.contact.label">Kontakt</span>
+        </p>
+
+        <h2 class="display-section mt-5 text-ink line-mask">
+          <span data-text="home.contact.headline">Schreib mir</span>
+        </h2>
+
+        <p class="mt-6 max-w-md text-base leading-relaxed text-muted" data-reveal data-reveal-delay="100">
+          <span data-text="home.contact.lead">Fragen zu einer Arbeit, zur Zusammenarbeit oder einfach so – ein paar Zeilen genügen. Ich melde mich in der Regel innerhalb von 24 Stunden.</span>
+        </p>
+
+        <div class="mt-10 space-y-8" data-reveal data-reveal-delay="160">
+          <div>
+            <p class="label-mono">Direkt schreiben</p>
+            <a href="#" data-mail-link data-cursor="hover" class="link-underline mt-2 block font-mono text-sm text-ink">…</a>
+          </div>
+          <div data-availability-block>
+            <p class="label-mono">Status</p>
+            <div
+              data-availability
+              class="mt-3 inline-flex items-center gap-2.5 rounded-full border border-line px-4 py-2 opacity-0 transition-opacity duration-700"
+            >
+              <span data-availability-dot class="h-1.5 w-1.5 rounded-full"></span>
+              <span data-availability-label class="text-xs font-medium"></span>
+            </div>
+            <p class="mt-2 text-sm text-muted" data-availability-detail></p>
+          </div>
+        </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-6">
-        <a href="#" data-mail-link data-cursor="hover" class="link-underline font-mono text-sm text-ink">…</a>
-        <a
-          href="/contact/"
-          data-cursor="hover"
-          class="rounded-full border border-line px-6 py-3 text-sm text-ink transition-colors hover:border-line-strong"
-          data-text="home.contact.button">Über das Formular</a>
-      </div>
+      <ContactForm />
     </div>
   </section>
 </Base>

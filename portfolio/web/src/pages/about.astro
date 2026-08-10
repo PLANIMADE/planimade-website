@@ -32,19 +32,41 @@ import SectionHeading from '../components/SectionHeading.astro';
       <dl class="mt-12 grid grid-cols-2 gap-8 border-y border-line py-8 sm:grid-cols-4" data-resume-facts></dl>
     </section>
 
-    <!-- ============================================================ INTRO -->
+    <!-- ==================================== INTRO + WERDEGANG + RANDSPALTE
+
+         Ein gemeinsames Raster für Vorstellung und Werdegang. Vorher stand
+         der Werdegang in einem eigenen Abschnitt darunter: Neben dem kurzen
+         Vorstellungstext blieb die Randspalte allein stehen, und weil sie
+         mit Porträt und Eckdaten viel höher ist als der Text, klaffte
+         darunter eine leere Fläche bis zum nächsten Abschnitt. Läuft der
+         Werdegang in derselben Spalte weiter, füllt er genau diese Lücke –
+         und das Porträt darf wieder so groß sein, wie es sein soll.
+         ------------------------------------------------------------------ -->
     <section class="container-page mt-16">
-      <div class="grid gap-12 lg:grid-cols-[1.4fr_1fr] lg:gap-20">
-        <div class="space-y-6 text-base leading-relaxed text-muted sm:text-lg" data-intro data-reveal>
-          <p>Wird geladen …</p>
+      <div class="grid items-start gap-12 lg:grid-cols-[1.4fr_1fr] lg:gap-20">
+        <div>
+          <div class="space-y-6 text-base leading-relaxed text-muted sm:text-lg" data-intro data-reveal>
+            <p>Wird geladen …</p>
+          </div>
+
+          <!-- ================================================= WERDEGANG -->
+          <div class="pt-20 sm:pt-24" id="werdegang">
+            <SectionHeading
+              label="Werdegang"
+              title="Stationen"
+              lead="Beruflicher Weg, Ausbildung und größere Projekte – filterbar nach Art."
+              keys={{ label: 'about.timeline.label', title: 'about.timeline.headline', lead: 'about.timeline.lead' }}
+            />
+
+            <div data-timeline-filters class="no-print mt-10 flex flex-wrap gap-2" role="group" aria-label="Zeitstrahl filtern"></div>
+
+            <ol class="mt-12" data-timeline></ol>
+          </div>
         </div>
 
-        <aside class="space-y-8" data-reveal data-reveal-delay="100">
-          {/* Porträt – erscheint nur, wenn im Dashboard ein Bild hinterlegt ist.
-              In der Breite gedeckelt: Über die volle Spalte war das Bild höher
-              als der Text daneben lang, und darunter klaffte bis zum Werdegang
-              eine tote Fläche. */}
-          <figure data-portrait class="hidden max-w-[17rem]">
+        <aside class="space-y-8 lg:sticky lg:top-28" data-reveal data-reveal-delay="100">
+          {/* Porträt – erscheint nur, wenn im Dashboard ein Bild hinterlegt ist. */}
+          <figure data-portrait class="hidden">
             <div class="overflow-hidden rounded-2xl border border-line bg-elevated">
               <img data-portrait-image alt="" class="aspect-[4/5] w-full object-cover" loading="lazy" decoding="async" />
             </div>
@@ -86,22 +108,8 @@ import SectionHeading from '../components/SectionHeading.astro';
       </div>
     </section>
 
-    <!-- ======================================================= WERDEGANG -->
-    <section class="container-page py-24 sm:py-32" id="werdegang">
-      <SectionHeading
-        label="Werdegang"
-        title="Stationen"
-        lead="Beruflicher Weg, Ausbildung und größere Projekte – filterbar nach Art."
-        keys={{ label: 'about.timeline.label', title: 'about.timeline.headline', lead: 'about.timeline.lead' }}
-      />
-
-      <div data-timeline-filters class="no-print mt-10 flex flex-wrap gap-2" role="group" aria-label="Zeitstrahl filtern"></div>
-
-      <ol class="mt-12" data-timeline></ol>
-    </section>
-
     <!-- ====================================================== KOMPETENZEN -->
-    <section class="container-page pb-24">
+    <section class="container-page pt-24 pb-24 sm:pt-32">
       <SectionHeading
         label="Kompetenzen"
         title="Womit ich täglich arbeite"

@@ -64,12 +64,12 @@ export const TEXT_GROUPS: TextGroup[] = [
     ],
   },
   {
-    title: 'Startseite — Abschluss',
-    hint: 'Die schmale Zeile ganz unten, die zur Kontaktseite führt.',
+    title: 'Startseite — Kontakt',
+    hint: 'Der Abschnitt ganz unten mit dem Formular.',
     fields: [
       { key: 'home.contact.label', label: 'Kleine Überschrift' },
       { key: 'home.contact.headline', label: 'Überschrift' },
-      { key: 'home.contact.button', label: 'Knopf' },
+      { key: 'home.contact.lead', label: 'Text', long: true },
     ],
   },
   {

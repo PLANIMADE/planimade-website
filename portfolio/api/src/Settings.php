@@ -381,7 +381,7 @@ final class Settings
                 'home.testimonials.headline' => 'Was Kund:innen sagen',
                 'home.contact.label' => 'Kontakt',
                 'home.contact.headline' => 'Schreib mir',
-                'home.contact.button' => 'Über das Formular',
+                'home.contact.lead' => 'Fragen zu einer Arbeit, zur Zusammenarbeit oder einfach so – ein paar Zeilen genügen. Ich melde mich in der Regel innerhalb von 24 Stunden.',
 
                 // Arbeiten
                 'work.label' => 'Portfolio',
