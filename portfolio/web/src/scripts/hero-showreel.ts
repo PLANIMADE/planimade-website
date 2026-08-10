@@ -5,7 +5,12 @@
  * laufendes Video den WebGL-Hintergrund. Der Ton lässt sich zuschalten –
  * automatisch mit Ton startet hier nichts.
  *
- * Wer weniger Bewegung eingestellt hat, sieht nur das Standbild.
+ * Das Video läuft von selbst, auch wenn das System „weniger Bewegung"
+ * meldet. Vorher tat es das nicht – dann stand oben ein Standbild und man
+ * musste erst auf „Ton an" drücken, damit sich etwas rührte. Das Showreel
+ * ist aber der Inhalt der Seite und keine Verzierung. Damit die Regel
+ * trotzdem gewahrt bleibt, dass sich Bewegung anhalten lassen muss, sitzt
+ * neben dem Ton-Schalter ein Schalter zum Anhalten.
  */
 
 import type { Settings } from '../lib/types';
@@ -19,7 +24,6 @@ export function initHeroShowreel(settings: Settings): boolean {
     return false;
   }
 
-  const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const poster = hero.poster?.url ?? '';
   const overlay = Math.min(90, Math.max(0, Number(hero.overlay ?? 55))) / 100;
 
@@ -28,7 +32,7 @@ export function initHeroShowreel(settings: Settings): boolean {
       data-hero-video
       class="absolute inset-0 h-full w-full object-cover"
       ${poster ? `poster="${poster}"` : ''}
-      muted loop playsinline preload="metadata"
+      muted loop playsinline autoplay preload="auto"
       aria-label="Showreel"
     >
       <source src="${hero.video.url}" type="${hero.video.mime}">
@@ -54,29 +58,79 @@ export function initHeroShowreel(settings: Settings): boolean {
   // Wurzelelement, an der sich das Stylesheet bedienen kann.
   document.documentElement.dataset.heroVideo = '';
 
-  if (!calm) {
-    const play = (): void => {
-      void video.play().catch(() => undefined);
-    };
-    play();
-    // Manche Browser blocken den ersten Versuch – nach der ersten
-    // Interaktion klappt es zuverlässig.
-    document.addEventListener('pointerdown', play, { once: true });
-  }
+  // Von Hand angehalten? Dann soll es auch angehalten bleiben – weder der
+  // Beobachter unten noch ein Tabwechsel dürfen es wieder anwerfen.
+  const stand = { pausiert: false };
 
-  addSoundToggle(container, video);
-  addPauseOnHidden(video, calm);
+  const play = (): void => {
+    if (stand.pausiert) return;
+    void video.play().catch(() => undefined);
+  };
+
+  play();
+  // Manche Browser blocken den ersten Versuch – nach der ersten
+  // Interaktion klappt es zuverlässig.
+  document.addEventListener('pointerdown', play, { once: true });
+
+  addControls(container, video, stand);
+  addPauseOnHidden(video, play);
 
   return true;
 }
 
-/** Ton-Schalter unten rechts im Hero. */
-function addSoundToggle(container: HTMLElement, video: HTMLVideoElement): void {
+/** Anhalten und Ton – unten rechts im Hero. */
+function addControls(container: HTMLElement, video: HTMLVideoElement, stand: { pausiert: boolean }): void {
+  const leiste = document.createElement('div');
+  leiste.className = 'absolute bottom-6 right-6 z-20 flex items-center gap-2';
+
+  leiste.append(addPlayToggle(video, stand), addSoundToggle(video));
+  container.append(leiste);
+}
+
+const KNOPF =
+  'flex items-center gap-2 rounded-full border border-white/25 bg-black/40 px-4 py-2.5 font-mono text-[0.625rem] uppercase tracking-[0.2em] text-white/90 backdrop-blur transition-colors hover:border-white/60';
+
+/**
+ * Anhalten und weiterlaufen lassen.
+ *
+ * Ohne diesen Schalter dürfte das Video nicht von selbst laufen: Bewegung,
+ * die länger als ein paar Sekunden dauert und von allein startet, muss sich
+ * anhalten lassen.
+ */
+function addPlayToggle(video: HTMLVideoElement, stand: { pausiert: boolean }): HTMLButtonElement {
   const button = document.createElement('button');
   button.type = 'button';
   button.dataset.cursor = 'hover';
-  button.className =
-    'absolute bottom-6 right-6 z-20 flex items-center gap-2 rounded-full border border-white/25 bg-black/40 px-4 py-2.5 font-mono text-[0.625rem] uppercase tracking-[0.2em] text-white/90 backdrop-blur transition-colors hover:border-white/60';
+  button.className = KNOPF;
+  button.setAttribute('aria-label', 'Showreel anhalten');
+
+  const label = document.createElement('span');
+  label.textContent = 'Pause';
+  button.append(playIcon(true), label);
+
+  button.addEventListener('click', () => {
+    stand.pausiert = !video.paused;
+
+    if (stand.pausiert) {
+      video.pause();
+    } else {
+      void video.play().catch(() => undefined);
+    }
+
+    label.textContent = stand.pausiert ? 'Abspielen' : 'Pause';
+    button.setAttribute('aria-label', stand.pausiert ? 'Showreel abspielen' : 'Showreel anhalten');
+    button.replaceChild(playIcon(!stand.pausiert), button.firstChild!);
+  });
+
+  return button;
+}
+
+/** Ton-Schalter unten rechts im Hero. */
+function addSoundToggle(video: HTMLVideoElement): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.dataset.cursor = 'hover';
+  button.className = KNOPF;
   button.setAttribute('aria-pressed', 'false');
 
   const label = document.createElement('span');
@@ -95,7 +149,19 @@ function addSoundToggle(container: HTMLElement, video: HTMLVideoElement): void {
     }
   });
 
-  container.append(button);
+  return button;
+}
+
+function playIcon(laeuft: boolean): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'currentColor');
+  svg.setAttribute('class', 'h-3.5 w-3.5');
+  svg.innerHTML = laeuft
+    ? '<rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="13.5" y="5" width="3.5" height="14" rx="1"/>'
+    : '<path d="M8 5.5v13l11-6.5z"/>';
+
+  return svg;
 }
 
 function icon(on: boolean): SVGSVGElement {
@@ -112,13 +178,16 @@ function icon(on: boolean): SVGSVGElement {
   return svg;
 }
 
-/** Im Hintergrund-Tab oder außerhalb des Bildes nicht weiterlaufen lassen. */
-function addPauseOnHidden(video: HTMLVideoElement, calm: boolean): void {
-  if (calm) return;
-
+/**
+ * Im Hintergrund-Tab oder außerhalb des Bildes nicht weiterlaufen lassen.
+ *
+ * `play` prüft selbst, ob von Hand angehalten wurde – sonst würde ein
+ * Tabwechsel die Pause des Besuchers übergehen.
+ */
+function addPauseOnHidden(video: HTMLVideoElement, play: () => void): void {
   const observer = new IntersectionObserver(([entry]) => {
     if (entry?.isIntersecting) {
-      void video.play().catch(() => undefined);
+      play();
     } else {
       video.pause();
     }
@@ -129,7 +198,7 @@ function addPauseOnHidden(video: HTMLVideoElement, calm: boolean): void {
     if (document.hidden) {
       video.pause();
     } else {
-      void video.play().catch(() => undefined);
+      play();
     }
   });
 }

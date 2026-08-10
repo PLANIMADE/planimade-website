@@ -80,6 +80,8 @@ final class Messages
             'budget' => $r['budget'],
             'body' => $r['body'],
             'status' => $r['status'],
+            // 1 = als Mail übergeben, -1 = vom Server abgelehnt, 0 = kein Versand
+            'notified' => (int) ($r['notified'] ?? 0),
             'createdAt' => $r['created_at'],
         ], $rows);
     }
@@ -138,11 +140,15 @@ final class Messages
             'X-Mailer: PHP/' . PHP_VERSION,
         ];
 
-        @mail(
+        $sent = @mail(
             $to,
             '=?UTF-8?B?' . base64_encode($subject) . '?=',
             implode("\n", $lines),
             implode("\r\n", $headers)
         );
+
+        // Das Ergebnis wird festgehalten, damit der Posteingang im Dashboard
+        // eine abgelehnte Mail anzeigen kann, statt sie zu verschlucken.
+        $this->db->update('messages', ['notified' => $sent ? 1 : -1], 'id = :id', ['id' => $id]);
     }
 }

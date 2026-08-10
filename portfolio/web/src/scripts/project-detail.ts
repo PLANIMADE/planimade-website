@@ -10,6 +10,37 @@ import { fetchProject, fetchProjects, track } from '../lib/api';
 import type { Project } from '../lib/types';
 import { refreshMotion } from './motion';
 import { initLightbox } from './lightbox';
+import { initVideos, videoMarkup } from './video';
+
+/**
+ * Was oben auf der Seite steht.
+ *
+ * Vorher war das immer das Titelbild. Das Titelbild ist aber für die Kacheln
+ * der Übersicht gemacht – wer eine Projektseite öffnet, will die Arbeit
+ * sehen und nicht noch einmal dasselbe Vorschaubild. Also gilt: erst das
+ * Video, dann das erste Stück aus der Galerie, und nur wenn es beides nicht
+ * gibt, das Titelbild.
+ *
+ * `ausGalerie` merkt sich, welcher Eintrag nach oben gewandert ist – der
+ * fällt in der Galerie darunter weg, sonst stünde er zweimal auf der Seite.
+ */
+function heroAuswahl(project: Project): { media: Project['cover']; ausGalerie: number | null } {
+  const galerieVideo = project.gallery.findIndex((item) => item.media.kind === 'video');
+  if (galerieVideo !== -1) {
+    return { media: project.gallery[galerieVideo]!.media, ausGalerie: galerieVideo };
+  }
+
+  if (project.preview?.kind === 'video') {
+    return { media: project.preview, ausGalerie: null };
+  }
+
+  const galerieBild = project.gallery.findIndex((item) => item.media.kind === 'image');
+  if (galerieBild !== -1) {
+    return { media: project.gallery[galerieBild]!.media, ausGalerie: galerieBild };
+  }
+
+  return { media: project.cover, ausGalerie: null };
+}
 
 function escapeHtml(value: string): string {
   const div = document.createElement('div');
@@ -46,13 +77,14 @@ async function renderBody(project: Project, container: HTMLElement): Promise<voi
   container.innerHTML = await marked.parse(project.body, { async: true, breaks: true });
 }
 
-function galleryMarkup(project: Project): string {
-  if (project.gallery.length === 0) return '';
+function galleryMarkup(project: Project, ohneIndex: number | null): string {
+  const eintraege = project.gallery.filter((_, index) => index !== ohneIndex);
+  if (eintraege.length === 0) return '';
 
   return `
     <section class="container-page mt-24">
       <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-        ${project.gallery
+        ${eintraege
           .map((item, index) => {
             const span = item.layout === 'half' ? '' : 'md:col-span-2';
             const sizes = item.layout === 'half' ? '(max-width: 768px) 100vw, 45vw' : '(max-width: 768px) 100vw, 90vw';
@@ -63,10 +95,20 @@ function galleryMarkup(project: Project): string {
               return `<div class="${span}" data-reveal>${documentMarkup(item.media, item.caption)}</div>`;
             }
 
-            const media =
-              item.media.kind === 'video'
-                ? `<video src="${escapeHtml(item.media.url)}" controls playsinline preload="metadata" class="h-full w-full object-cover"></video>`
-                : `<img
+            // Videos bekommen den eigenen Rahmen mit Abspieltaste – und
+            // ausdrücklich kein `data-lightbox-item` weiter unten: Ein Klick
+            // soll abspielen, nicht die Großansicht aufziehen.
+            if (item.media.kind === 'video') {
+              return `
+                <figure class="${span}" data-reveal data-reveal-delay="${(index % 2) * 80}">
+                  <div class="overflow-hidden rounded-2xl border border-line">
+                    ${videoMarkup(escapeHtml(item.media.url), escapeHtml(item.media.mime), 'aspect-video')}
+                  </div>
+                  ${item.caption ? `<figcaption class="mt-3 font-mono text-xs text-faint">${escapeHtml(item.caption)}</figcaption>` : ''}
+                </figure>`;
+            }
+
+            const media = `<img
                      src="${escapeHtml(item.media.thumbUrl ?? item.media.url)}"
                      ${item.media.srcset ? `srcset="${escapeHtml(item.media.srcset)}" sizes="${sizes}"` : ''}
                      alt="${alt}"
@@ -359,28 +401,39 @@ export async function initProjectDetail(): Promise<void> {
   document.title = `${project.title} – ${project.category || 'Case Study'} | Dominic Majewski`;
   root.style.setProperty('--card-accent', project.accent);
 
-  const cover = project.cover;
+  const { media: heroQuelle, ausGalerie } = heroAuswahl(project);
   const contain = project.display === 'contain';
+  const istVideo = heroQuelle?.kind === 'video';
 
   // Hochformate dürfen nicht auf 16:9 beschnitten werden – bei „vollständig
   // zeigen" bekommt das Bild deshalb ein höheres Feld und liegt darin wie ein
-  // Blatt auf einer Fläche.
-  const heroAspect = contain ? 'aspect-[4/3] sm:aspect-[16/10]' : 'aspect-[16/9]';
+  // Blatt auf einer Fläche. Videos laufen immer im Kinoformat.
+  const heroAspect = istVideo ? 'aspect-video' : contain ? 'aspect-[4/3] sm:aspect-[16/10]' : 'aspect-[16/9]';
 
   // `view-transition-name` verbindet dieses Bild mit der angeklickten Kachel
   // auf der Übersicht – der Browser lässt es beim Seitenwechsel hineinwachsen.
-  const heroImage = cover
+  const heroImage = heroQuelle
     ? `<img
-         src="${escapeHtml(cover.url)}"
-         ${cover.srcset ? `srcset="${escapeHtml(cover.srcset)}" sizes="90vw"` : ''}
-         alt="${escapeHtml(cover.alt || project.title)}"
+         src="${escapeHtml(heroQuelle.url)}"
+         ${heroQuelle.srcset ? `srcset="${escapeHtml(heroQuelle.srcset)}" sizes="90vw"` : ''}
+         alt="${escapeHtml(heroQuelle.alt || project.title)}"
          class="${contain ? 'paper-sheet' : 'h-full w-full object-cover'}"
-         style="view-transition-name: project-hero"
+         style="view-transition-name: project-hero${
+           // Der eingestellte Ausschnitt gilt nur, wenn hier wirklich das
+           // Titelbild steht und formatfüllend beschnitten wird.
+           !contain && heroQuelle === project.cover
+             ? `; object-position: ${escapeHtml(project.coverFocus || '50% 50%')}`
+             : ''
+         }"
          fetchpriority="high" decoding="async"
        >`
     : '<div class="h-full w-full bg-surface"></div>';
 
-  const heroMedia = contain && cover ? `<div class="paper-stage h-full w-full">${heroImage}</div>` : heroImage;
+  const heroMedia = istVideo
+    ? videoMarkup(escapeHtml(heroQuelle!.url), escapeHtml(heroQuelle!.mime), 'h-full w-full')
+    : contain && heroQuelle
+      ? `<div class="paper-stage h-full w-full">${heroImage}</div>`
+      : heroImage;
 
   root.innerHTML = `
     <article>
@@ -401,7 +454,10 @@ export async function initProjectDetail(): Promise<void> {
 
       <div class="container-page mt-20 grid gap-16 lg:grid-cols-[1fr_18rem] lg:gap-24">
         <div>
-          ${project.summary ? `<p class="text-xl leading-relaxed text-ink sm:text-2xl" data-reveal>${escapeHtml(project.summary)}</p>` : ''}
+          ${/* `whitespace-pre-line`: Ein Enter in der Kurzbeschreibung soll auch
+                auf der Seite eine neue Zeile sein. Ohne die Angabe faltet HTML
+                jeden Umbruch zu einem Leerzeichen zusammen. */ ''}
+          ${project.summary ? `<p class="whitespace-pre-line text-xl leading-relaxed text-ink sm:text-2xl" data-reveal>${escapeHtml(project.summary)}</p>` : ''}
           <div class="prose-case mt-10" data-project-body data-reveal></div>
           ${metricsMarkup(project)}
         </div>
@@ -436,26 +492,10 @@ export async function initProjectDetail(): Promise<void> {
       }
 
       ${paletteMarkup(project)}
-      ${galleryMarkup(project)}
+      ${galleryMarkup(project, ausGalerie)}
 
       <div data-next-slot></div>
 
-      <section class="container-page mt-20">
-        <div class="surface-card flex flex-col items-start justify-between gap-8 p-10 sm:flex-row sm:items-center">
-          <div>
-            <p class="label-mono">Weiter geht's</p>
-            <p class="display-md mt-3 text-ink">Ähnliches Projekt im Kopf?</p>
-          </div>
-          <a
-            href="/contact/"
-            data-magnetic="0.3"
-            data-cursor="hover"
-            class="shrink-0 rounded-full bg-ink px-8 py-4 text-sm font-semibold text-bg transition-transform"
-          >
-            <span data-magnetic-inner class="block">Projekt anfragen</span>
-          </a>
-        </div>
-      </section>
     </article>`;
 
   const bodyContainer = root.querySelector<HTMLElement>('[data-project-body]');
@@ -512,6 +552,7 @@ export async function initProjectDetail(): Promise<void> {
 
   trackReadingDepth(project.id);
   initLightbox(root);
+  initVideos(root);
 
   // Schwergewichte erst laden, wenn das Projekt sie wirklich braucht.
   if (root.querySelector('[data-before-after]')) {

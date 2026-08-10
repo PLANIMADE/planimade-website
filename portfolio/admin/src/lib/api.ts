@@ -45,6 +45,10 @@ export interface Project {
   accent: string;
   display: 'cover' | 'contain';
   cardFormat: 'landscape' | 'square' | 'portrait';
+  /** Blickpunkt des Kachelausschnitts als CSS-Wert, z. B. '50% 30%'. */
+  coverFocus: string;
+  /** Vergrößerung des Kachelausschnitts, 1 = unverändert. */
+  coverZoom: number;
   status: 'draft' | 'published';
   publishAt: string | null;
   featured: boolean;
@@ -69,6 +73,8 @@ export interface Message {
   budget: string;
   body: string;
   status: 'new' | 'read' | 'archived';
+  /** 1 = als Mail übergeben, -1 = vom Server abgelehnt, 0 = kein Versand. */
+  notified: number;
   createdAt: string;
 }
 

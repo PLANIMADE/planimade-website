@@ -40,8 +40,11 @@ import SectionHeading from '../components/SectionHeading.astro';
         </div>
 
         <aside class="space-y-8" data-reveal data-reveal-delay="100">
-          {/* Porträt – erscheint nur, wenn im Dashboard ein Bild hinterlegt ist. */}
-          <figure data-portrait class="hidden">
+          {/* Porträt – erscheint nur, wenn im Dashboard ein Bild hinterlegt ist.
+              In der Breite gedeckelt: Über die volle Spalte war das Bild höher
+              als der Text daneben lang, und darunter klaffte bis zum Werdegang
+              eine tote Fläche. */}
+          <figure data-portrait class="hidden max-w-[17rem]">
             <div class="overflow-hidden rounded-2xl border border-line bg-elevated">
               <img data-portrait-image alt="" class="aspect-[4/5] w-full object-cover" loading="lazy" decoding="async" />
             </div>
@@ -120,22 +123,12 @@ import SectionHeading from '../components/SectionHeading.astro';
       <div data-skills class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"></div>
     </section>
 
-    <!-- ========================================================== PROZESS -->
-    <section class="container-page pb-24 no-print" id="ablauf">
-      <SectionHeading
-        label="Ablauf"
-        title="Wie ich arbeite"
-        keys={{ label: 'about.process.label', title: 'about.process.headline' }}
-      />
-      <ol data-process class="mt-12 border-b border-line"></ol>
-    </section>
-
     <!-- ============================================================== CTA -->
     <section class="container-page pb-16 no-print">
       <div class="surface-card flex flex-col items-start justify-between gap-8 p-10 sm:flex-row sm:items-center">
         <div>
-          <p class="label-mono" data-text="about.cta.label">Zusammenarbeit</p>
-          <p class="display-md mt-3 text-ink" data-text="about.cta.headline">Klingt passend?</p>
+          <p class="label-mono" data-text="about.cta.label">Kontakt</p>
+          <p class="display-md mt-3 text-ink" data-text="about.cta.headline">Fragen zu meiner Arbeit?</p>
         </div>
         <a
           href="/contact/"
@@ -143,7 +136,7 @@ import SectionHeading from '../components/SectionHeading.astro';
           data-cursor="hover"
           class="shrink-0 rounded-full bg-ink px-8 py-4 text-sm font-semibold text-bg"
         >
-          <span data-magnetic-inner class="block" data-text="about.cta.button">Kontakt aufnehmen</span>
+          <span data-magnetic-inner class="block" data-text="about.cta.button">Schreib mir</span>
         </a>
       </div>
     </section>

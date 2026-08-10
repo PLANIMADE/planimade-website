@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, formatBytes, type MediaItem } from '../lib/api';
 import { useToast } from '../lib/toast';
+import MediaThumb from './MediaThumb';
 
 interface Props {
   kind?: 'image' | 'video' | 'model' | 'document';
@@ -21,6 +22,8 @@ export default function MediaPicker({ kind, onSelect, onClose, title = 'Medium a
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [picked, setPicked] = useState<MediaItem[]>([]);
+  // Video, das gerade angesehen wird – liegt über dem Dialog.
+  const [vorschau, setVorschau] = useState<MediaItem | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Bei Mehrfachauswahl sammelt der Dialog erst und übergibt am Ende alles
@@ -162,19 +165,31 @@ export default function MediaPicker({ kind, onSelect, onClose, title = 'Medium a
                       </span>
                     )}
                     <span className="block aspect-[4/3] bg-panel2">
-                      {item.kind === 'image' ? (
-                        <img
-                          src={item.thumbUrl ?? item.url}
-                          alt={item.alt}
-                          loading="lazy"
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="grid h-full w-full place-items-center font-mono text-[0.625rem] text-faint">
-                          {item.kind === 'video' ? '▶ VIDEO' : item.kind === 'document' ? '▤ PDF' : '◈ 3D'}
-                        </span>
-                      )}
+                      <MediaThumb item={item} />
                     </span>
+
+                    {/* Ansehen, bevor man auswählt. Der Knopf sitzt im Knopf –
+                        deshalb hält er das Klickereignis hier auf, sonst wäre
+                        die Datei mit dem Blick auch gleich ausgewählt. */}
+                    {item.kind === 'video' && (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setVorschau(item);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key !== 'Enter' && event.key !== ' ') return;
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setVorschau(item);
+                        }}
+                        className="absolute bottom-11 right-2 rounded border border-line bg-panel/90 px-1.5 py-0.5 text-[0.5625rem] text-muted backdrop-blur transition-colors hover:border-accent hover:text-ink"
+                      >
+                        Ansehen
+                      </span>
+                    )}
                     <span className="block px-2 py-1.5">
                       <span className="block truncate text-[0.6875rem] text-muted">{item.filename}</span>
                       <span className="block text-[0.625rem] text-faint">{formatBytes(item.size)}</span>
@@ -186,6 +201,39 @@ export default function MediaPicker({ kind, onSelect, onClose, title = 'Medium a
           )}
         </div>
       </div>
+
+      {vorschau && (
+        <div className="absolute inset-0 z-10 grid place-items-center p-6" role="dialog" aria-modal="true">
+          <button
+            type="button"
+            aria-label="Vorschau schließen"
+            onClick={() => setVorschau(null)}
+            className="absolute inset-0 bg-black/80"
+          />
+          <div className="panel relative w-full max-w-3xl overflow-hidden">
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+            <video src={vorschau.url} controls autoPlay className="max-h-[70vh] w-full bg-black" />
+            <div className="flex items-center justify-between gap-3 p-4">
+              <span className="min-w-0 truncate text-xs text-muted">{vorschau.filename}</span>
+              <span className="flex shrink-0 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    choose(vorschau);
+                    setVorschau(null);
+                  }}
+                  className="btn btn-primary px-3 py-1.5 text-xs"
+                >
+                  Dieses nehmen
+                </button>
+                <button type="button" onClick={() => setVorschau(null)} className="btn btn-ghost px-3 py-1.5 text-xs">
+                  Schließen
+                </button>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -150,16 +150,6 @@ const marqueeItems = [
     <div data-skills class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"></div>
   </section>
 
-  <!-- ============================================================ PROZESS -->
-  <section class="container-page py-16 sm:py-24" id="ablauf">
-    <SectionHeading
-      label="Ablauf"
-      title="Wie ein Projekt läuft"
-      keys={{ label: 'home.process.label', title: 'home.process.headline' }}
-    />
-    <ol data-process class="mt-14 border-b border-line"></ol>
-  </section>
-
   <!-- ======================================================== TESTIMONIALS -->
   <section class="container-page py-28 sm:py-36">
     <SectionHeading
@@ -170,31 +160,24 @@ const marqueeItems = [
     <div data-testimonials class="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3"></div>
   </section>
 
-  <!-- ================================================================= CTA -->
-  <section class="container-page pb-16">
-    <div class="surface-card relative overflow-hidden px-8 py-20 text-center sm:px-16 sm:py-28">
-      <div class="glow left-1/2 top-0 h-80 w-80 -translate-x-1/2" style="background: var(--accent)"></div>
+  <!-- ============================================================= KONTAKT -->
+  {/* Bewusst schlicht. Hier stand ein Aufruf zur Projektanfrage – das ist die
+      Sprache einer Agentur, die Aufträge sucht. Diese Seite zeigt Arbeiten;
+      wer Kontakt aufnehmen will, findet hier die Adresse und sonst nichts. */}
+  <section class="container-page pb-24">
+    <div class="flex flex-col items-start justify-between gap-8 border-t border-line pt-12 sm:flex-row sm:items-end">
+      <div>
+        <p class="label-mono" data-text="home.contact.label">Kontakt</p>
+        <p class="display-section mt-4 text-ink" data-text="home.contact.headline">Schreib mir</p>
+      </div>
 
-      <div class="relative">
-        <p class="label-mono" data-reveal data-text="home.cta.label">Nächster Schritt</p>
-        <h2 class="display-lg mx-auto mt-6 max-w-3xl text-ink line-mask">
-          <span data-text="home.cta.headline">Lass uns etwas bauen.</span>
-        </h2>
-        <p class="mx-auto mt-6 max-w-xl text-base text-muted" data-reveal data-reveal-delay="100">
-          <span data-text="home.cta.lead">Ob fertiges Briefing oder erste vage Idee – schreib mir, was du vorhast. Der Rest ergibt sich im Gespräch.</span>
-        </p>
-
-        <div class="mt-10 flex flex-wrap items-center justify-center gap-4" data-reveal data-reveal-delay="160">
-          <a
-            href="/contact/"
-            data-magnetic="0.35"
-            data-cursor="hover"
-            class="rounded-full bg-accent px-8 py-4 text-sm font-semibold text-white"
-          >
-            <span data-magnetic-inner class="block" data-text="home.cta.button">Projekt anfragen</span>
-          </a>
-          <a href="#" data-mail-link data-cursor="hover" class="link-underline font-mono text-sm text-muted">…</a>
-        </div>
+      <div class="flex flex-wrap items-center gap-6">
+        <a href="#" data-mail-link data-cursor="hover" class="link-underline font-mono text-sm text-ink">…</a>
+        <a
+          href="/contact/"
+          data-cursor="hover"
+          class="rounded-full border border-line px-6 py-3 text-sm text-ink transition-colors hover:border-line-strong"
+          data-text="home.contact.button">Über das Formular</a>
       </div>
     </div>
   </section>

@@ -50,9 +50,17 @@ export interface Project {
   /** Farbfelder für Branding-Arbeiten */
   palette: Array<{ name: string; hex: string }>;
   accent: string;
-  /** 'cover' = formatfüllend beschnitten, 'contain' = vollständig gezeigt */
+  /**
+   * Darstellung des Titelbilds auf der Projektseite.
+   * 'cover' = formatfüllend beschnitten, 'contain' = vollständig gezeigt.
+   * Die Kachel im Raster ist davon unabhängig immer formatfüllend.
+   */
   display: 'cover' | 'contain';
   cardFormat: 'landscape' | 'square' | 'portrait';
+  /** Blickpunkt des Ausschnitts als CSS-Wert, z. B. '50% 30%'. */
+  coverFocus: string;
+  /** Vergrößerung des Ausschnitts, 1 = unverändert. */
+  coverZoom: number;
   status: 'draft' | 'published';
   featured: boolean;
   position: number;

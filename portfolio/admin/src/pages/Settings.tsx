@@ -9,7 +9,7 @@ const TABS = [
   { id: 'profil', label: 'Profil' },
   { id: 'startseite', label: 'Startseite' },
   { id: 'lebenslauf', label: 'Lebenslauf' },
-  { id: 'inhalte', label: 'Fähigkeiten & Ablauf' },
+  { id: 'inhalte', label: 'Fähigkeiten' },
   { id: 'texte', label: 'Texte' },
   { id: 'seo', label: 'SEO' },
   { id: 'rechtliches', label: 'Rechtliches' },
@@ -1067,51 +1067,6 @@ export default function SettingsPage() {
             ))}
           </section>
 
-          <section className="panel space-y-4 p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Ablauf</h2>
-              <button
-                type="button"
-                onClick={() => set('process', [...settings.process, { title: '', description: '' }])}
-                className="btn btn-ghost px-3 py-1.5 text-xs"
-              >
-                + Schritt
-              </button>
-            </div>
-
-            {settings.process.map((step, index) => (
-              <div key={index} className="flex gap-2">
-                <input
-                  className="field w-40 shrink-0"
-                  value={step.title}
-                  placeholder="Briefing"
-                  onChange={(event) => {
-                    const next = [...settings.process];
-                    next[index] = { ...step, title: event.target.value };
-                    set('process', next);
-                  }}
-                />
-                <input
-                  className="field flex-1"
-                  value={step.description}
-                  placeholder="Was passiert in diesem Schritt?"
-                  onChange={(event) => {
-                    const next = [...settings.process];
-                    next[index] = { ...step, description: event.target.value };
-                    set('process', next);
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => set('process', settings.process.filter((_, position) => position !== index))}
-                  className="btn btn-danger px-2.5 text-xs"
-                  aria-label="Schritt entfernen"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </section>
         </div>
       )}
 
@@ -1216,7 +1171,7 @@ export default function SettingsPage() {
             onChange={(value) => set('site', { ...settings.site, mailFrom: value })}
             placeholder="website@deine-domain.de"
             type="email"
-            hint="Muss bei all-inkl eine Adresse deiner eigenen Domain sein – fremde Absender werden verworfen."
+            hint="Muss bei all-inkl eine Adresse deiner eigenen Domain sein – fremde Absender werden verworfen. Leer lassen ist in Ordnung: dann wird noreply@deine-domain.de verwendet."
           />
 
           <Field

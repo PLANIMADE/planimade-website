@@ -27,13 +27,16 @@ const CARD_ASPECT: Record<string, string> = {
 function cardMarkup(project: Project, index: number, size: 'large' | 'normal'): string {
   const cover = project.cover;
   const preview = project.preview;
-  const contain = project.display === 'contain';
 
   // Großformatige Kacheln bleiben quer, außer das Projekt wünscht ausdrücklich
   // ein anderes Format – sonst reißt ein Hochformat die Startseite auseinander.
+  //
+  // Flach statt hoch: Mit 16:10 über die volle Breite füllte die erste Kachel
+  // fast den ganzen Bildschirm und alles darunter verschwand. Als Band bleibt
+  // sie das Highlight, ohne die Seite zu verstopfen.
   const aspect =
     size === 'large' && project.cardFormat === 'landscape'
-      ? 'aspect-[16/10]'
+      ? 'aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9]'
       : (CARD_ASPECT[project.cardFormat] ?? CARD_ASPECT.landscape);
 
   const meta = [project.category, project.year].filter(Boolean).join(' · ');
@@ -45,29 +48,25 @@ function cardMarkup(project: Project, index: number, size: 'large' | 'normal'): 
     ? `src="${escapeHtml(cover.thumbUrl ?? cover.url)}" ${cover.srcset ? `srcset="${escapeHtml(cover.srcset)}" sizes="${sizes}"` : ''}`
     : '';
 
+  // Die Kachel ist immer formatfüllend – auch bei „vollständig zeigen".
+  // Diese Einstellung entscheidet über die Projektseite, nicht über die
+  // Übersicht: Dort soll das Raster ein Raster bleiben und nicht aus halb
+  // gefüllten Feldern bestehen. Wie viel vom Motiv in die Kachel passt,
+  // steuert stattdessen das Kachelformat (quer, quadratisch, hoch) und der
+  // Bildausschnitt.
   const visual = !cover
     ? `<div class="grid h-full w-full place-items-center bg-surface">
          <span class="font-mono text-xs tracking-[0.3em] text-faint">OHNE VORSCHAUBILD</span>
        </div>`
-    : contain
-      ? `<div class="paper-stage h-full w-full">
-           <img
-             data-cover
-             ${source}
-             alt="${escapeHtml(cover.alt || project.title)}"
-             loading="${index < 2 ? 'eager' : 'lazy'}"
-             decoding="async"
-             class="paper-sheet"
-           >
-         </div>`
-      : `<img
-           data-cover
-           ${source}
-           alt="${escapeHtml(cover.alt || project.title)}"
-           loading="${index < 2 ? 'eager' : 'lazy'}"
-           decoding="async"
-           class="h-full w-full object-cover transition-transform duration-[1.2s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
-         >`;
+    : `<img
+         data-cover
+         ${source}
+         alt="${escapeHtml(cover.alt || project.title)}"
+         loading="${index < 2 ? 'eager' : 'lazy'}"
+         decoding="async"
+         style="object-position: ${escapeHtml(project.coverFocus || '50% 50%')}; --cover-zoom: ${Number(project.coverZoom) || 1}"
+         class="cover-zoom h-full w-full object-cover"
+       >`;
 
   const video = preview
     ? `<video
@@ -100,13 +99,7 @@ function cardMarkup(project: Project, index: number, size: 'large' | 'normal'): 
         <div class="relative ${aspect} overflow-hidden rounded-2xl border border-line bg-elevated">
           ${visual}
           ${video}
-          ${
-            // Bei „vollständig zeigen" würde eine dunkle Überblendung das
-            // Papier grau waschen – dort steht der Titel darunter.
-            contain
-              ? ''
-              : `<div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent opacity-70 transition-opacity duration-500 group-hover:opacity-90"></div>`
-          }
+          <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-95"></div>
           <div
             class="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
             style="box-shadow: inset 0 0 0 1px var(--card-accent), 0 24px 60px -24px var(--card-accent)"
@@ -114,37 +107,23 @@ function cardMarkup(project: Project, index: number, size: 'large' | 'normal'): 
 
           ${
             project.featured
-              ? `<span class="absolute left-4 top-4 rounded-full px-2.5 py-1 font-mono text-[0.5625rem] uppercase tracking-[0.2em] backdrop-blur ${
-                  contain
-                    ? 'border border-line-strong bg-bg/70 text-ink'
-                    : 'border border-white/25 bg-black/40 text-white/90'
-                }">Highlight</span>`
+              ? `<span class="absolute left-4 top-4 rounded-full border border-white/25 bg-black/40 px-2.5 py-1 font-mono text-[0.5625rem] uppercase tracking-[0.2em] text-white/90 backdrop-blur">Highlight</span>`
               : ''
           }
 
-          ${
-            contain
-              ? ''
-              : `<div class="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-                   <h3 class="${size === 'large' ? 'text-2xl sm:text-4xl' : 'text-xl sm:text-2xl'} font-bold tracking-tight text-white">
-                     ${escapeHtml(project.title)}
-                   </h3>
-                   ${project.subtitle ? `<p class="mt-1.5 max-w-lg text-sm text-white/65">${escapeHtml(project.subtitle)}</p>` : ''}
-                 </div>`
-          }
+          ${/* Größer als vorher: Auf einer Kachel, die die halbe Seite einnimmt,
+                wirkte ein Titel in Fließtextgröße wie eine Bildunterschrift. */ ''}
+          <div class="absolute inset-x-0 bottom-0 p-6 sm:p-8">
+            <h3 class="${size === 'large' ? 'text-3xl sm:text-5xl' : 'text-2xl sm:text-3xl'} font-bold tracking-tight text-white">
+              ${escapeHtml(project.title)}
+            </h3>
+            ${project.subtitle ? `<p class="mt-2 max-w-xl text-base text-white/70 sm:text-lg">${escapeHtml(project.subtitle)}</p>` : ''}
+          </div>
         </div>
 
         <div class="mt-4 flex items-start justify-between gap-4">
           <div class="min-w-0">
-            ${
-              contain
-                ? `<h3 class="${size === 'large' ? 'text-2xl sm:text-3xl' : 'text-xl'} font-bold tracking-tight text-ink">
-                     ${escapeHtml(project.title)}
-                   </h3>
-                   ${project.subtitle ? `<p class="mt-1 text-sm text-muted">${escapeHtml(project.subtitle)}</p>` : ''}
-                   <p class="label-mono mt-3">${escapeHtml(meta)}</p>`
-                : `<p class="label-mono">${escapeHtml(meta)}</p>`
-            }
+            <p class="label-mono">${escapeHtml(meta)}</p>
             <p class="mt-2 flex flex-wrap gap-1.5">
               ${project.tools
                 .slice(0, 4)
@@ -254,11 +233,14 @@ function renderFilters(categories: string[], onChange: (selected: Set<string>) =
       const active = key === 'all' ? selected.size === 0 : selected.has(key);
 
       button.setAttribute('aria-pressed', String(active));
-      button.classList.toggle('bg-ink', active);
-      button.classList.toggle('text-bg', active);
-      button.classList.toggle('border-transparent', active);
-      button.classList.toggle('border-line', !active);
-      button.classList.toggle('text-muted', !active);
+
+      // Die Hover-Farbe darf nur an den nicht gewählten Knöpfen hängen.
+      // Vorher stand sie fest in der Klassenliste: Der gewählte Knopf ist
+      // dunkel mit heller Schrift, beim Darüberfahren zog `hover:text-ink`
+      // die Schrift aber auf dieselbe Farbe wie den Grund – der Text war weg.
+      button.className = active
+        ? 'rounded-full border border-transparent bg-ink px-4 py-2 text-sm text-bg transition-all duration-300'
+        : 'rounded-full border border-line px-4 py-2 text-sm text-muted transition-all duration-300 hover:border-line-strong hover:text-ink';
     });
 
     const share = container.querySelector<HTMLButtonElement>('[data-share-selection]');

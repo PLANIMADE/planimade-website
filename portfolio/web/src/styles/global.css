@@ -193,9 +193,26 @@
 }
 
 @utility display-lg {
-  font-size: clamp(2.25rem, 7vw, 6rem);
-  line-height: 0.92;
+  /* Vorher bis 6 rem. Bei der Breite brauchte eine Überschrift aus vier
+     Wörtern drei Zeilen und erschlug die halbe Seite. Groß bleibt groß –
+     aber nicht mehr so groß, dass jedes Wort eine eigene Zeile bekommt. */
+  font-size: clamp(2.25rem, 5.2vw, 4.25rem);
+  line-height: 0.95;
   letter-spacing: -0.035em;
+  font-weight: 800;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+}
+
+/* Überschrift eines Abschnitts.
+   Vorher stand hier dieselbe Größe wie über der ganzen Seite: In einer
+   Textspalte brach eine Überschrift aus vier Wörtern dann auf vier Zeilen um
+   und erschlug alles darunter. Diese Stufe bleibt in derselben Formsprache,
+   fällt aber deutlich kleiner aus. */
+@utility display-section {
+  font-size: clamp(1.75rem, 3.2vw, 3rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
   font-weight: 800;
   text-transform: uppercase;
   overflow-wrap: break-word;
@@ -387,6 +404,71 @@ html[data-theme] .cv-sheet.cv-dark [data-mark][data-logo-adapt='dark'] img {
 
 .group:hover .paper-sheet {
   transform: translateY(-4px);
+}
+
+/* Bildausschnitt der Kachel: Der Zoom kommt als Zahl aus dem Dashboard, das
+   sanfte Heranfahren beim Überfahren multipliziert sich darauf. Über die
+   eigenständige `scale`-Eigenschaft statt über `transform` – sonst müsste
+   der Hover-Zustand den eingestellten Wert kennen. */
+.cover-zoom {
+  scale: var(--cover-zoom, 1);
+  transition: scale 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.group:hover .cover-zoom {
+  scale: calc(var(--cover-zoom, 1) * 1.04);
+}
+
+/* ==========================================================================
+   Video mit Abspieltaste
+   Das Standbild kommt aus dem Video selbst (siehe scripts/video.ts); hier
+   liegt nur die Taste darüber. Läuft das Video, verschwindet sie.
+   ========================================================================== */
+.video-frame {
+  position: relative;
+  overflow: hidden;
+  background: #000;
+}
+
+.video-play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  /* Nach unten hin dunkler: Das hebt die Taste auch vor hellen Bildern ab,
+     ohne das Standbild flächig zuzudecken. */
+  background: radial-gradient(60% 60% at 50% 50%, rgb(0 0 0 / 34%), rgb(0 0 0 / 8%));
+  transition:
+    opacity var(--dur-fast) var(--ease-out-expo),
+    background-color var(--dur-fast) var(--ease-out-expo);
+}
+
+.video-play::before {
+  content: '';
+  position: absolute;
+  width: 4.5rem;
+  height: 4.5rem;
+  border: 1px solid rgb(255 255 255 / 65%);
+  border-radius: 50%;
+  background: rgb(0 0 0 / 35%);
+  backdrop-filter: blur(6px);
+  transition: transform var(--dur-fast) var(--ease-out-expo);
+}
+
+.video-play svg {
+  position: relative;
+}
+
+.video-frame:hover .video-play::before {
+  transform: scale(1.08);
+}
+
+.video-frame[data-playing] .video-play {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Filmkorn – liegt als fixierte Ebene über der Seite. */
@@ -1289,6 +1371,11 @@ html.no-js .line-mask > span {
     line-height: 1.1 !important;
   }
 
+  .display-section {
+    font-size: 17pt !important;
+    line-height: 1.15 !important;
+  }
+
   .display-md {
     font-size: 15pt !important;
   }
@@ -1643,13 +1730,23 @@ html.no-js .line-mask > span {
    Barrierefreiheit: Wer weniger Bewegung möchte, bekommt weniger Bewegung.
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  *,
+  /* `:not(.marquee-track)` ist Absicht. Die Sammelregel darunter erschlägt
+     jede Animation auf der Seite – auch das Laufband, das dann als starre
+     Wortreihe stehenblieb. Das Laufband ist aber Inhalt und keine Zierde:
+     Es zeigt, womit gearbeitet wird. Es läuft deshalb weiter, nur ruhiger
+     (siehe `.marquee-track` weiter unten), und hält beim Darüberfahren an. */
+  *:not(.marquee-track),
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .marquee-track {
+    /* Halb so schnell – sichtbar in Bewegung, ohne zu hetzen. */
+    animation-duration: calc(var(--marquee-duration, 32s) * 2) !important;
   }
 
   [data-reveal] {

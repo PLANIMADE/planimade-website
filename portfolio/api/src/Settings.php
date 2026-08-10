@@ -156,8 +156,6 @@ final class Settings
         $theme = in_array($appearance['defaultTheme'] ?? 'system', ['light', 'dark', 'system'], true)
             ? $appearance['defaultTheme']
             : 'system';
-        $cursor = ($settings['features']['cursor'] ?? true) === true;
-
         // Bei "system" entscheidet die Einstellung des Betriebssystems,
         // sonst gilt die feste Vorgabe. Eine eigene Wahl des Besuchers
         // (localStorage) hat in beiden Fällen Vorrang.
@@ -165,12 +163,17 @@ final class Settings
             ? "(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')"
             : "'" . $theme . "'";
 
+        /*
+         * Nur das Farbschema. Der eigene Mauszeiger wird hier bewusst NICHT
+         * mehr eingeschaltet: `data-cursor="custom"` versteckt den Zeiger des
+         * Systems, und ob es überhaupt einen Ersatz gibt, steht zu diesem
+         * Zeitpunkt nicht fest – bei „Bewegung reduzieren" gibt es keinen.
+         * Wer das setzt, muss den Zeiger auch zeichnen; das tut das Skript
+         * der Website, und erst dann setzt es die Angabe.
+         */
         $js = "/* Automatisch erzeugt – Änderungen im Dashboard überschreiben diese Datei. */\n"
             . "(function(){var r=document.documentElement;try{"
             . "r.dataset.theme=localStorage.getItem('dm-theme')||{$fallback};"
-            . ($cursor
-                ? "if(localStorage.getItem('dm-cursor')!=='off'&&matchMedia('(pointer:fine)').matches){r.dataset.cursor='custom';}else{delete r.dataset.cursor;}"
-                : "delete r.dataset.cursor;")
             . "}catch(e){r.dataset.theme={$fallback};}})();\n";
 
         if (!is_dir($path) && !@mkdir($path, 0775, true) && !is_dir($path)) {
@@ -207,7 +210,39 @@ final class Settings
             $config['mail_enabled'] = (bool) $site['mailEnabled'];
         }
 
+        // Ohne Absender verschickt das Kontaktformular nichts – und das
+        // wortlos, weil `mail()` ohne gültigen Absender gar nicht erst
+        // aufgerufen wurde. Genau das war der Grund, warum Nachrichten zwar
+        // im Posteingang standen, aber nie im Postfach ankamen. Ist das Feld
+        // leer, wird der Absender deshalb aus der eigenen Domain gebildet.
+        if (trim((string) ($config['mail_from'] ?? '')) === '') {
+            $config['mail_from'] = self::absenderAusDomain((string) ($config['site_url'] ?? ''));
+        }
+
         return $config;
+    }
+
+    /**
+     * Baut einen Absender aus der eigenen Domain.
+     *
+     * Geteilte Webspaces nehmen nur Absender an, die zur Domain des Kontos
+     * gehören – eine Adresse bei einem Freemail-Anbieter lehnen sie ab oder
+     * die Mail landet im Spam. Deshalb nicht die Empfängeradresse nehmen.
+     */
+    private static function absenderAusDomain(string $siteUrl): string
+    {
+        $host = parse_url($siteUrl, PHP_URL_HOST);
+        if (!is_string($host) || $host === '') {
+            $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
+        }
+
+        $host = strtolower(preg_replace('/:\d+$/', '', $host) ?? '');
+        $host = preg_replace('/^www\./', '', $host) ?? '';
+
+        // Ohne brauchbaren Hostnamen (etwa auf dem Entwicklungsrechner) bleibt
+        // das Feld leer – dann wird eben nicht verschickt, statt eine Mail mit
+        // erfundenem Absender loszuschicken.
+        return preg_match('/^[a-z0-9.-]+\.[a-z]{2,}$/', $host) === 1 ? 'noreply@' . $host : '';
     }
 
     /** Struktur und Startwerte – gleichzeitig die Whitelist beim Speichern. */
@@ -342,14 +377,11 @@ final class Settings
                 'home.skills.label' => 'Was ich mache',
                 'home.skills.headline' => 'Vier Disziplinen, ein Ergebnis',
                 'home.skills.lead' => 'Weil alles aus einer Hand kommt, muss niemand zwischen Gewerken übersetzen – und der Look bleibt vom ersten bis zum letzten Frame derselbe.',
-                'home.process.label' => 'Ablauf',
-                'home.process.headline' => 'Wie ein Projekt läuft',
                 'home.testimonials.label' => 'Rückmeldungen',
                 'home.testimonials.headline' => 'Was Kund:innen sagen',
-                'home.cta.label' => 'Nächster Schritt',
-                'home.cta.headline' => 'Lass uns etwas bauen.',
-                'home.cta.lead' => 'Ob fertiges Briefing oder erste vage Idee – schreib mir, was du vorhast. Der Rest ergibt sich im Gespräch.',
-                'home.cta.button' => 'Projekt anfragen',
+                'home.contact.label' => 'Kontakt',
+                'home.contact.headline' => 'Schreib mir',
+                'home.contact.button' => 'Über das Formular',
 
                 // Arbeiten
                 'work.label' => 'Portfolio',
@@ -372,22 +404,20 @@ final class Settings
                 'about.expertise.lead' => 'Selbsteinschätzung – Balken sagen weniger als Projekte, aber sie ordnen ein.',
                 'about.skills.label' => 'Disziplinen',
                 'about.skills.headline' => 'Vier Disziplinen',
-                'about.process.label' => 'Ablauf',
-                'about.process.headline' => 'Wie ich arbeite',
-                'about.cta.label' => 'Zusammenarbeit',
-                'about.cta.headline' => 'Klingt passend?',
-                'about.cta.button' => 'Kontakt aufnehmen',
+                'about.cta.label' => 'Kontakt',
+                'about.cta.headline' => 'Fragen zu meiner Arbeit?',
+                'about.cta.button' => 'Schreib mir',
 
                 // Kontakt
                 'contact.label' => 'Kontakt',
-                'contact.headline' => 'Erzähl mir von deinem Projekt.',
-                'contact.lead' => 'Je konkreter, desto besser – aber eine grobe Idee reicht völlig für den Anfang. Ich melde mich in der Regel innerhalb von 24 Stunden mit einer ehrlichen Einschätzung.',
+                'contact.headline' => 'Schreib mir.',
+                'contact.lead' => 'Fragen zu einer Arbeit, zur Zusammenarbeit oder einfach so – ein paar Zeilen genügen. Ich melde mich in der Regel innerhalb von 24 Stunden.',
                 'contact.direct' => 'Direkt schreiben',
-                'contact.form.button' => 'Anfrage senden',
+                'contact.form.button' => 'Absenden',
 
                 // Fußzeile
-                'footer.headline' => 'Projekt besprechen',
-                'footer.lead' => 'Erzähl mir kurz, woran du arbeitest. Ich melde mich in der Regel innerhalb von 24 Stunden – auch wenn ich gerade keine Kapazität habe.',
+                'footer.headline' => 'Kontakt aufnehmen',
+                'footer.lead' => 'Fragen zu einer Arbeit, zur Zusammenarbeit oder einfach so – schreib mir. Ich melde mich in der Regel innerhalb von 24 Stunden.',
                 'footer.nav' => 'Navigation',
                 'footer.elsewhere' => 'Woanders',
 

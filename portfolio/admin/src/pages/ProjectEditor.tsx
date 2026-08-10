@@ -4,6 +4,7 @@ import { api, type GalleryItem, type MediaItem, type Project } from '../lib/api'
 import { useToast } from '../lib/toast';
 import MediaField from '../components/MediaField';
 import MediaPicker from '../components/MediaPicker';
+import CoverCrop from '../components/CoverCrop';
 
 type Draft = {
   title: string;
@@ -25,6 +26,8 @@ type Draft = {
   palette: Array<{ name: string; hex: string }>;
   display: 'cover' | 'contain';
   cardFormat: 'landscape' | 'square' | 'portrait';
+  coverFocus: string;
+  coverZoom: number;
   publishAt: string;
   cover: MediaItem | null;
   preview: MediaItem | null;
@@ -54,6 +57,8 @@ const EMPTY: Draft = {
   palette: [],
   display: 'cover',
   cardFormat: 'landscape',
+  coverFocus: '50% 50%',
+  coverZoom: 1,
   publishAt: '',
   cover: null,
   preview: null,
@@ -86,6 +91,8 @@ function toDraft(project: Project): Draft {
     palette: project.palette,
     display: project.display,
     cardFormat: project.cardFormat,
+    coverFocus: project.coverFocus ?? '50% 50%',
+    coverZoom: project.coverZoom ?? 1,
     // ISO-Zeit auf das Format des Datumsfelds kürzen (ohne Sekunden/Zeitzone).
     publishAt: project.publishAt ? project.publishAt.slice(0, 16) : '',
     cover: project.cover,
@@ -175,6 +182,8 @@ export default function ProjectEditor() {
       palette: draft.palette.filter((color) => color.hex.trim() !== ''),
       display: draft.display,
       cardFormat: draft.cardFormat,
+      coverFocus: draft.coverFocus,
+      coverZoom: draft.coverZoom,
       publishAt: draft.publishAt === '' ? null : draft.publishAt,
       coverId: draft.cover?.id ?? null,
       previewId: draft.preview?.id ?? null,
@@ -615,8 +624,9 @@ export default function ProjectEditor() {
           <section className="panel space-y-4 p-5">
             <h2 className="text-sm font-semibold">Darstellung</h2>
             <p className="text-[0.6875rem] leading-relaxed text-faint">
-              Wichtig für Print- und Grafikarbeiten: Ein Plakat im Hochformat soll nicht auf
-              Breitbild beschnitten werden.
+              Gilt für die Projektseite. Wichtig für Print- und Grafikarbeiten: Ein Plakat im
+              Hochformat soll dort nicht auf Breitbild beschnitten werden. Die Kachel in der
+              Übersicht ist immer formatfüllend.
             </p>
 
             <div className="space-y-2">
@@ -663,6 +673,17 @@ export default function ProjectEditor() {
                 ))}
               </div>
             </div>
+
+            <CoverCrop
+              cover={draft.cover}
+              format={draft.cardFormat}
+              focus={draft.coverFocus}
+              zoom={draft.coverZoom}
+              onChange={(focus, zoom) => {
+                setDraft((current) => ({ ...current, coverFocus: focus, coverZoom: zoom }));
+                setDirty(true);
+              }}
+            />
           </section>
 
           <section className="panel space-y-3 p-5">

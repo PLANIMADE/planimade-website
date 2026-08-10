@@ -120,12 +120,23 @@ final class Database
             if (in_array($name, $applied, true)) {
                 continue;
             }
-            $this->pdo->exec($sql);
+
+            // Manche Schritte sind keine Tabellenänderung, sondern räumen
+            // gespeicherte Werte auf. Solche Fälle in SQL zu schreiben hieße,
+            // sich auf die JSON-Funktionen von SQLite zu verlassen, die nicht
+            // auf jedem Webspace einkompiliert sind – als Rückruf in PHP ist
+            // es dieselbe Arbeit ohne die Wette.
+            if ($sql instanceof \Closure) {
+                $sql($this);
+            } else {
+                $this->pdo->exec($sql);
+            }
+
             $this->run('INSERT INTO migrations (name, applied_at) VALUES (?, ?)', [$name, gmdate('c')]);
         }
     }
 
-    /** @return array<string, string> */
+    /** @return array<string, string|\Closure> */
     private function migrations(): array
     {
         return [
@@ -324,6 +335,94 @@ final class Database
             '016_analytics_value' => <<<'SQL'
                 ALTER TABLE analytics ADD COLUMN value INTEGER;
             SQL,
+
+            /*
+             * Bildausschnitt des Titelbilds.
+             *
+             * Die Kachel ist formatfüllend, das Motiv also beschnitten – und
+             * beschnitten wurde bisher immer zur Mitte hin. Bei einem Porträt
+             * am Bildrand oder einem Produkt im oberen Drittel war damit das
+             * Falsche zu sehen.
+             *
+             *  cover_focus – Blickpunkt als CSS-Wert, z. B. '50% 30%'
+             *  cover_zoom  – Vergrößerung des Ausschnitts, 1 = unverändert
+             */
+            '017_projects_cover_crop' => <<<'SQL'
+                ALTER TABLE projects ADD COLUMN cover_focus TEXT NOT NULL DEFAULT '50% 50%';
+                ALTER TABLE projects ADD COLUMN cover_zoom REAL NOT NULL DEFAULT 1;
+            SQL,
+
+            /*
+             * Ist die Anfrage auch als Mail rausgegangen?
+             *
+             * Der Versand scheiterte bisher lautlos. Im Dashboard stand die
+             * Nachricht, im Postfach kam nichts an, und nichts sagte einem,
+             * dass überhaupt etwas schiefging.
+             *
+             *  0 = nicht versucht, 1 = übergeben, -1 = abgelehnt
+             */
+            '018_messages_notified' => <<<'SQL'
+                ALTER TABLE messages ADD COLUMN notified INTEGER NOT NULL DEFAULT 0;
+            SQL,
+
+            /*
+             * Aufräumen nach dem Umbau: Der Abschnitt „Ablauf" und der große
+             * Aufruf zur Projektanfrage sind von der Seite verschwunden.
+             * Ihre Texte lägen sonst weiter in der Datenbank und würden die
+             * neuen Vorgaben überschreiben – der Fuß hieße also weiter
+             * „Projekt besprechen".
+             *
+             * Entfernt werden nur Texte, die noch wortgleich der alten
+             * Vorgabe entsprechen. Wer selbst etwas hineingeschrieben hat,
+             * behält es.
+             */
+            '019_texte_ohne_auftragsakquise' => static function (Database $db): void {
+                $row = $db->first("SELECT value FROM settings WHERE key = 'texts'");
+                if ($row === null) {
+                    return;
+                }
+
+                $texte = json_decode((string) $row['value'], true);
+                if (!is_array($texte)) {
+                    return;
+                }
+
+                // Abschnitte, die es nicht mehr gibt – hier ist nichts zu retten.
+                $weg = [
+                    'home.process.label', 'home.process.headline',
+                    'about.process.label', 'about.process.headline',
+                    'home.cta.label', 'home.cta.headline', 'home.cta.lead', 'home.cta.button',
+                ];
+
+                // Diese nur, wenn sie unverändert sind.
+                $nurWennUnveraendert = [
+                    'footer.headline' => 'Projekt besprechen',
+                    'footer.lead' => 'Erzähl mir kurz, woran du arbeitest. Ich melde mich in der Regel innerhalb von 24 Stunden – auch wenn ich gerade keine Kapazität habe.',
+                    'about.cta.label' => 'Zusammenarbeit',
+                    'about.cta.headline' => 'Klingt passend?',
+                    'about.cta.button' => 'Kontakt aufnehmen',
+                    'contact.headline' => 'Erzähl mir von deinem Projekt.',
+                    'contact.lead' => 'Je konkreter, desto besser – aber eine grobe Idee reicht völlig für den Anfang. Ich melde mich in der Regel innerhalb von 24 Stunden mit einer ehrlichen Einschätzung.',
+                    'contact.form.button' => 'Anfrage senden',
+                ];
+
+                foreach ($weg as $schluessel) {
+                    unset($texte[$schluessel]);
+                }
+                foreach ($nurWennUnveraendert as $schluessel => $alt) {
+                    if (($texte[$schluessel] ?? null) === $alt) {
+                        unset($texte[$schluessel]);
+                    }
+                }
+
+                $db->run(
+                    "UPDATE settings SET value = :value, updated_at = :updated_at WHERE key = 'texts'",
+                    [
+                        'value' => json_encode($texte, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}',
+                        'updated_at' => gmdate('c'),
+                    ]
+                );
+            },
         ];
     }
 }

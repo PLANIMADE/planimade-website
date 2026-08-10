@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, formatBytes, formatDate, type MediaItem } from '../lib/api';
 import { useToast } from '../lib/toast';
+import MediaThumb from '../components/MediaThumb';
 
 const FILTERS = [
   { value: 'all', label: 'Alle' },
@@ -147,18 +148,7 @@ export default function MediaLibrary() {
                   className="group w-full overflow-hidden rounded-lg border border-line text-left transition-colors hover:border-accent"
                 >
                   <span className="block aspect-[4/3] bg-panel2">
-                    {item.kind === 'image' ? (
-                      <img
-                        src={item.thumbUrl ?? item.url}
-                        alt={item.alt}
-                        loading="lazy"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="grid h-full w-full place-items-center font-mono text-xs text-faint">
-                        {item.kind === 'video' ? '▶ VIDEO' : item.kind === 'document' ? '▤ PDF' : '◈ 3D'}
-                      </span>
-                    )}
+                    <MediaThumb item={item} />
                   </span>
                   <span className="block px-2.5 py-2">
                     <span className="block truncate text-xs text-muted">{item.filename}</span>

@@ -60,6 +60,47 @@ if (str_starts_with($path, '/api/')) {
 // 4. Vorhandene Dateien direkt ausliefern
 $file = $deploy . $path;
 if (is_file($file)) {
+    /*
+     * Videos brauchen Teilabrufe (`Range`). Apache beherrscht die von Haus
+     * aus, der eingebaute PHP-Server nicht: Dort meldet der Browser das Video
+     * als nicht spulbar, das Standbild bleibt beim ersten Bild stehen und die
+     * Vorschau zeigt etwas anderes als der echte Server. Deshalb hier von
+     * Hand – nur für Videos, alles andere geht den kurzen Weg.
+     */
+    if (preg_match('/\.(mp4|webm|mov|m4v)$/i', $file) === 1) {
+        $groesse = filesize($file) ?: 0;
+        $typ = match (strtolower(pathinfo($file, PATHINFO_EXTENSION))) {
+            'webm' => 'video/webm',
+            'mov' => 'video/quicktime',
+            default => 'video/mp4',
+        };
+
+        header('Content-Type: ' . $typ);
+        header('Accept-Ranges: bytes');
+
+        $range = $_SERVER['HTTP_RANGE'] ?? '';
+        $von = 0;
+        $bis = $groesse - 1;
+
+        if (preg_match('/bytes=(\d*)-(\d*)/', $range, $treffer) === 1) {
+            $von = $treffer[1] === '' ? 0 : (int) $treffer[1];
+            $bis = $treffer[2] === '' ? $groesse - 1 : (int) $treffer[2];
+            $bis = min($bis, $groesse - 1);
+
+            http_response_code(206);
+            header("Content-Range: bytes {$von}-{$bis}/{$groesse}");
+        }
+
+        header('Content-Length: ' . ($bis - $von + 1));
+
+        $zeiger = fopen($file, 'rb');
+        fseek($zeiger, $von);
+        echo fread($zeiger, $bis - $von + 1) ?: '';
+        fclose($zeiger);
+
+        return true;
+    }
+
     return false;
 }
 

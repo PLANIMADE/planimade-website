@@ -18,7 +18,7 @@ final class Projects
         'title', 'subtitle', 'summary', 'body', 'category', 'client', 'role',
         'year', 'accent', 'status', 'featured', 'cover_id', 'preview_id',
         'model_id', 'before_id', 'after_id', 'display', 'card_format',
-        'publish_at',
+        'publish_at', 'cover_focus', 'cover_zoom',
     ];
 
     public function __construct(private Database $db, private array $config) {}
@@ -279,6 +279,20 @@ final class Projects
     // Interna
     // ------------------------------------------------------------------
 
+    /**
+     * Prüft den Blickpunkt: zwei Prozentwerte, sonst die Mitte.
+     *
+     * Der Wert landet unverändert in einem `style`-Attribut. Alles, was nicht
+     * genau diesem Muster entspricht, wird deshalb verworfen statt
+     * durchgereicht.
+     */
+    private static function focusValue(mixed $value): string
+    {
+        $text = trim((string) $value);
+
+        return preg_match('/^\d{1,3}(\.\d+)?% \d{1,3}(\.\d+)?%$/', $text) === 1 ? $text : '50% 50%';
+    }
+
     private function mapInput(array $input): array
     {
         $map = [
@@ -288,6 +302,7 @@ final class Projects
             'status' => 'status', 'featured' => 'featured',
             'display' => 'display', 'cardFormat' => 'card_format',
             'publishAt' => 'publish_at',
+            'coverFocus' => 'cover_focus', 'coverZoom' => 'cover_zoom',
             'coverId' => 'cover_id', 'previewId' => 'preview_id',
             'modelId' => 'model_id', 'beforeId' => 'before_id', 'afterId' => 'after_id',
         ];
@@ -305,6 +320,11 @@ final class Projects
                 'status' => in_array($value, ['draft', 'published'], true) ? $value : 'draft',
                 'display' => in_array($value, ['cover', 'contain'], true) ? $value : 'cover',
                 'card_format' => in_array($value, ['landscape', 'square', 'portrait'], true) ? $value : 'landscape',
+                // Blickpunkt und Zoom kommen aus einem Regler – hier wird
+                // trotzdem geprüft, damit kein fremder Wert in den Stil der
+                // Seite gelangt.
+                'cover_focus' => self::focusValue($value),
+                'cover_zoom' => max(1.0, min(3.0, (float) $value)),
                 'cover_id', 'preview_id', 'model_id', 'before_id', 'after_id' => $value === null || $value === '' ? null : (int) $value,
                 // Termin kommt als lokale Zeit aus dem Dashboard und wird in UTC abgelegt.
                 'publish_at' => $value === null || $value === '' ? null : gmdate('c', strtotime((string) $value) ?: time()),
@@ -419,6 +439,8 @@ final class Projects
             // Wie das Titelbild gezeigt wird: formatfüllend oder vollständig.
             'display' => $row['display'] ?? 'cover',
             'cardFormat' => $row['card_format'] ?? 'landscape',
+            'coverFocus' => $row['cover_focus'] ?? '50% 50%',
+            'coverZoom' => round((float) ($row['cover_zoom'] ?? 1), 3),
             'status' => $row['status'],
             'publishAt' => $row['publish_at'] ?? null,
             'featured' => (bool) $row['featured'],
