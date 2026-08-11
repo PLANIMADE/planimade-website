@@ -87,6 +87,27 @@ Bleiben die Felder leer, funktioniert die Seite trotzdem: Die Adresse leitet
 der Server dann aus der Anfrage ab, und Anfragen stehen ohnehin immer unter
 „Nachrichten" im Dashboard.
 
+### Bewerbungs-Radar
+
+Im Dashboard unter **Bewerbungen** – hinter demselben Login, nirgends öffentlich
+verlinkt. Beim ersten Aufruf liest er die mitgelieferte Liste aus
+`api/assets/bewerbung/agenturen.json` ein. Diese Datei bleibt von Hand pflegbar;
+„Nachschub aus Datei" ergänzt später Hinzugekommenes, ohne Notizen anzufassen.
+
+Unterlagen (Lebenslauf, Mappe, Zeugnisse) landen in `uploads/bewerbung/` und sind
+öffentlich abrufbar – der Ordner überlebt jeden erneuten Upload der Website. Die
+kurze Adresse dorthin regelt die `.htaccess`:
+
+```
+https://deine-domain.de/bewerbung/dateien/lebenslauf.pdf
+```
+
+Verschickt wird über ein Postfach, das im Reiter „Anschreiben" eingetragen wird –
+bei Gmail `smtp.gmail.com`, Port 587, mit einem **App-Passwort** aus dem
+Google-Konto (Zwei-Faktor-Anmeldung muss aktiv sein). Optional legt ein
+IMAP-Zugang jede verschickte Bewerbung im Ordner „Gesendet" ab; bei Gmail ist das
+nicht nötig, dort passiert es von selbst.
+
 **Zum Mailversand:** Ohne Postfach übergibt die Seite die Nachricht dem
 Mailprogramm des Servers und erfährt nie, was daraus wird – nicht angenommen,
 im Spam gelandet oder verworfen sieht von außen alles gleich aus. Mit

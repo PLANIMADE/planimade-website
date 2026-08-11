@@ -9,6 +9,7 @@ const navigation = [
   { to: '/medien', label: 'Medien', icon: '▦' },
   { to: '/nachrichten', label: 'Nachrichten', icon: '✉', badge: true },
   { to: '/stimmen', label: 'Kundenstimmen', icon: '❝' },
+  { to: '/bewerbung', label: 'Bewerbungen', icon: '◎' },
   { to: '/papierkorb', label: 'Papierkorb', icon: '⌫' },
   { to: '/einstellungen', label: 'Einstellungen', icon: '⚙' },
   { to: '/system', label: 'Systemcheck', icon: '✓' },

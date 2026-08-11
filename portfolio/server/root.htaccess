@@ -40,6 +40,14 @@ AddDefaultCharset UTF-8
 
     # --- Sitemap -------------------------------------------------------------
     RewriteRule ^sitemap\.xml$ api/index.php?_page=sitemap [L]
+
+    # --- Bewerbungsunterlagen --------------------------------------------------
+    # Lebenslauf, Mappe und Zeugnisse liegen in `uploads/bewerbung/` – das ist
+    # der einzige Ordner, den ein erneuter Upload der Website nicht ueberschreibt.
+    # Verschickt werden soll aber eine Adresse, die man vorlesen kann, deshalb
+    # diese Umschreibung:
+    #   /bewerbung/dateien/lebenslauf.pdf  ->  /uploads/bewerbung/lebenslauf.pdf
+    RewriteRule ^bewerbung/dateien/(.+)$ uploads/bewerbung/$1 [L]
 </IfModule>
 
 ErrorDocument 404 /404.html

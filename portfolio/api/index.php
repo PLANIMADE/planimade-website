@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 use App\Analytics;
 use App\Auth;
+use App\Bewerbung;
 use App\Database;
 use App\Http;
 use App\Media;
@@ -90,6 +91,7 @@ $analytics = new Analytics($db, $security);
 $testimonials = new Testimonials($db, $config);
 $socialCard = new SocialCard($config);
 $systemCheck = new SystemCheck($db, $config);
+$bewerbung = new Bewerbung($db, $config);
 $pages = new Pages($projects, $settings, $analytics, $config);
 
 // Seiten-Routen (kommen per Rewrite aus dem Root-.htaccess)
@@ -430,6 +432,90 @@ $router->get('system', static function () use ($systemCheck, $auth): void {
 $router->post('system/mail-test', static function () use ($systemCheck, $auth): void {
     $auth->requireWrite();
     Http::json($systemCheck->sendTestMail());
+});
+
+// ---------------------------------------------------------- Bewerbungs-Radar
+//
+// Alles hier verlangt einen Login. Die Liste enthält Kontaktdaten und den
+// laufenden Bewerbungsstand – sie geht niemanden sonst etwas an. Deshalb
+// steht `requireUser()` in jeder einzelnen Route und nicht nur davor: Eine
+// vergessene Zeile fällt sonst niemandem auf.
+
+$router->get('bewerbung', static function () use ($bewerbung, $auth): void {
+    $auth->requireUser();
+    Http::json($bewerbung->alles());
+});
+
+$router->post('bewerbung/eintrag', static function () use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    Http::json(['eintrag' => $bewerbung->anlegen(Http::body())], 201);
+});
+
+/** Status, Notiz, Kontaktdatum – das, was beim Arbeiten entsteht. */
+$router->put('bewerbung/eintrag/{id}', static function (string $id) use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    Http::json(['eintrag' => $bewerbung->merken($id, Http::body())]);
+});
+
+/** Stammdaten (Name, Adresse, Schwerpunkte). */
+$router->put('bewerbung/eintrag/{id}/daten', static function (string $id) use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    Http::json(['eintrag' => $bewerbung->bearbeiten($id, Http::body())]);
+});
+
+$router->delete('bewerbung/eintrag/{id}', static function (string $id) use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    $bewerbung->loeschen($id);
+    Http::noContent();
+});
+
+/** Ergänzt neue Einträge aus der mitgelieferten Datei. */
+$router->post('bewerbung/nachschub', static function () use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    Http::json($bewerbung->nachschub());
+});
+
+/** Übernimmt eine JSON-Sicherung aus der früheren Einzeldatei. */
+$router->post('bewerbung/import', static function () use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    Http::json($bewerbung->importieren(Http::body()));
+});
+
+$router->put('bewerbung/vorlage', static function () use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    Http::json(['vorlage' => $bewerbung->vorlageSpeichern(Http::body())]);
+});
+
+$router->put('bewerbung/versand', static function () use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    Http::json(['versand' => $bewerbung->versandSpeichern(Http::body())]);
+});
+
+$router->post('bewerbung/versand/test', static function () use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    Http::json($bewerbung->versandTest());
+});
+
+$router->post('bewerbung/senden', static function () use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    $ids = Http::input('ids', []);
+    if (!is_array($ids) || $ids === []) {
+        Http::error('Keine Empfänger ausgewählt.', 422);
+    }
+    Http::json($bewerbung->senden($ids));
+});
+
+$router->post('bewerbung/dateien', static function () use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    if (!isset($_FILES['file'])) {
+        Http::error('Keine Datei empfangen.', 422);
+    }
+    Http::json($bewerbung->dateiHochladen($_FILES['file']), 201);
+});
+
+$router->delete('bewerbung/dateien/{name}', static function (string $name) use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    Http::json($bewerbung->dateiLoeschen($name));
 });
 
 /** Erzeugt fehlende Bildgrößen nach – stückweise, damit nichts in ein Zeitlimit läuft. */

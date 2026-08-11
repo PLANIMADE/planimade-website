@@ -423,6 +423,42 @@ final class Database
                     ]
                 );
             },
+
+            /*
+             * Bewerbungs-Radar.
+             *
+             * `eintraege` hält Agenturen und Stellen. Die Stammdaten kommen
+             * aus der mitgelieferten Datei und liegen als JSON in `daten` –
+             * so bleibt die Liste pflegbar, ohne für jedes neue Feld eine
+             * Migration zu brauchen. Was dazugeschrieben wird (Status,
+             * Notiz, Kontaktdatum), steht in eigenen Spalten: Danach wird
+             * gefiltert und sortiert.
+             *
+             * `konfig` ist bewusst eine eigene Tabelle und nicht Teil der
+             * Einstellungen: Dort stehen Zugangsdaten eines Postfachs, und
+             * die öffentliche Antwort von `/api/settings` darf davon nie
+             * etwas mitbekommen – auch nicht durch ein Versehen später.
+             */
+            '020_bewerbung' => <<<'SQL'
+                CREATE TABLE bewerbung_eintraege (
+                    id         TEXT PRIMARY KEY,
+                    typ        TEXT NOT NULL,
+                    daten      TEXT NOT NULL DEFAULT '{}',
+                    quelle     TEXT NOT NULL DEFAULT 'datei',
+                    status     TEXT NOT NULL DEFAULT 'Offen',
+                    notiz      TEXT NOT NULL DEFAULT '',
+                    kontakt_am TEXT NOT NULL DEFAULT '',
+                    gesendet_am TEXT,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE INDEX idx_bewerbung_typ ON bewerbung_eintraege(typ);
+
+                CREATE TABLE bewerbung_konfig (
+                    key        TEXT PRIMARY KEY,
+                    value      TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+            SQL,
         ];
     }
 }

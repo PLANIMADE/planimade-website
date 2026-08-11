@@ -89,7 +89,7 @@ final class Smtp
             $this->befehl('MAIL FROM:<' . $mail['from'] . '>', '250');
             $this->befehl('RCPT TO:<' . $mail['to'] . '>', '250');
             $this->befehl('DATA', '354');
-            $this->schreibe($this->nachricht($mail) . "\r\n.\r\n");
+            $this->schreibe(self::nachrichtText($mail) . "\r\n.\r\n");
             $this->erwarte('250');
             $this->befehl('QUIT', '221');
         } catch (\RuntimeException $e) {
@@ -107,19 +107,25 @@ final class Smtp
     // ------------------------------------------------------------------
 
     /**
+     * Baut die fertige Nachricht.
+     *
+     * Öffentlich und statisch, weil dieselbe Nachricht ein zweites Mal
+     * gebraucht wird: Was verschickt wurde, soll unverändert im
+     * Gesendet-Ordner landen (siehe `Imap`).
+     *
      * @param array{from: string, fromName: string, to: string, subject: string, body: string, replyTo: string} $mail
      */
-    private function nachricht(array $mail): string
+    public static function nachrichtText(array $mail): string
     {
         $kopf = [
             'Date: ' . date('r'),
-            'From: ' . $this->kodiere($mail['fromName']) . ' <' . $mail['from'] . '>',
+            'From: ' . self::kodiere($mail['fromName']) . ' <' . $mail['from'] . '>',
             'To: <' . $mail['to'] . '>',
-            'Subject: ' . $this->kodiere($mail['subject']),
+            'Subject: ' . self::kodiere($mail['subject']),
             'MIME-Version: 1.0',
             'Content-Type: text/plain; charset=UTF-8',
             'Content-Transfer-Encoding: 8bit',
-            'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . $this->helo() . '>',
+            'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . self::eigenerHost() . '>',
         ];
 
         if ($mail['replyTo'] !== '') {
@@ -134,7 +140,7 @@ final class Smtp
         return implode("\r\n", $kopf) . "\r\n\r\n" . $text;
     }
 
-    private function kodiere(string $text): string
+    private static function kodiere(string $text): string
     {
         return preg_match('/[^\x20-\x7e]/', $text) === 1
             ? '=?UTF-8?B?' . base64_encode($text) . '?='
@@ -142,6 +148,11 @@ final class Smtp
     }
 
     private function helo(): string
+    {
+        return self::eigenerHost();
+    }
+
+    private static function eigenerHost(): string
     {
         $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
 

@@ -205,6 +205,71 @@ export interface Settings {
   features: { sound: boolean; cursor: boolean; analytics: boolean; easterEgg: boolean };
 }
 
+/* ------------------------------------------------------------ Bewerbungs-Radar */
+
+/** Ein Eintrag der Liste. Die Kürzel stammen aus der ursprünglichen Datei. */
+export interface BewerbungEintrag {
+  id: string;
+  quelle: 'datei' | 'eigen';
+  status: string;
+  notiz: string;
+  kontaktAm: string;
+  gesendetAm: string | null;
+  // Agentur
+  n?: string;
+  c?: string;
+  r?: string;
+  d?: number;
+  u?: string;
+  e?: string;
+  p?: string;
+  f?: string[];
+  flag?: string;
+  // Stelle
+  role?: string;
+  co?: string;
+  loc?: string;
+  tags?: string[];
+  url?: string | null;
+  note?: string;
+  fit?: boolean;
+}
+
+export interface BewerbungVersand {
+  absender: string;
+  absenderName: string;
+  host: string;
+  port: number;
+  benutzer: string;
+  passwort: string;
+  sicherheit: 'auto' | 'tls' | 'ssl' | 'none';
+  imapHost: string;
+  imapPort: number;
+  imapBenutzer: string;
+  imapPasswort: string;
+  imapOrdner: string;
+  hatPasswort: boolean;
+}
+
+export interface BewerbungDatei {
+  name: string;
+  groesse: number;
+  url: string;
+  kurz: string;
+}
+
+export interface BewerbungDaten {
+  regionen: Array<{ id: string; km: string; city: string }>;
+  links: Array<{ url: string; quelle: string; titel: string; hinweis: string }>;
+  agenturen: BewerbungEintrag[];
+  stellen: BewerbungEintrag[];
+  statiAgentur: string[];
+  statiStelle: string[];
+  vorlage: { subj: string; body: string; att: string };
+  versand: BewerbungVersand;
+  dateien: BewerbungDatei[];
+}
+
 export interface Stats {
   analytics: {
     range: { days: number; since: string };
@@ -378,6 +443,47 @@ export const api = {
   saveSettings: (data: Partial<Settings>) =>
     request<{ settings: Settings }>('settings', { method: 'PUT', body: JSON.stringify(data) }),
   stats: (days = 30) => request<Stats>(`stats?days=${days}`),
+  // Bewerbungs-Radar
+  bewerbung: () => request<BewerbungDaten>('bewerbung'),
+  bewerbungMerken: (id: string, data: Partial<Pick<BewerbungEintrag, 'status' | 'notiz' | 'kontaktAm'>>) =>
+    request<{ eintrag: BewerbungEintrag }>(`bewerbung/eintrag/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  bewerbungAnlegen: (data: Record<string, unknown>) =>
+    request<{ eintrag: BewerbungEintrag }>('bewerbung/eintrag', { method: 'POST', body: JSON.stringify(data) }),
+  bewerbungBearbeiten: (id: string, data: Record<string, unknown>) =>
+    request<{ eintrag: BewerbungEintrag }>(`bewerbung/eintrag/${encodeURIComponent(id)}/daten`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  bewerbungLoeschen: (id: string) =>
+    request<void>(`bewerbung/eintrag/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  bewerbungNachschub: () => request<{ neu: number }>('bewerbung/nachschub', { method: 'POST' }),
+  bewerbungImport: (sicherung: unknown) =>
+    request<{ 'übernommen': number; unbekannt: number }>('bewerbung/import', {
+      method: 'POST',
+      body: JSON.stringify(sicherung),
+    }),
+  bewerbungVorlage: (data: { subj: string; body: string; att: string }) =>
+    request<{ vorlage: BewerbungDaten['vorlage'] }>('bewerbung/vorlage', { method: 'PUT', body: JSON.stringify(data) }),
+  bewerbungVersand: (data: Partial<BewerbungVersand>) =>
+    request<{ versand: BewerbungVersand }>('bewerbung/versand', { method: 'PUT', body: JSON.stringify(data) }),
+  bewerbungVersandTest: () => request<{ ok: boolean; message: string }>('bewerbung/versand/test', { method: 'POST' }),
+  bewerbungSenden: (ids: string[]) =>
+    request<{ ergebnisse: Array<{ id: string; name: string; ok: boolean; meldung: string }> }>('bewerbung/senden', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    }),
+  bewerbungDateiHochladen: (datei: File) => {
+    const body = new FormData();
+    body.append('file', datei);
+
+    return request<{ dateien: BewerbungDatei[] }>('bewerbung/dateien', { method: 'POST', body });
+  },
+  bewerbungDateiLoeschen: (name: string) =>
+    request<{ dateien: BewerbungDatei[] }>(`bewerbung/dateien/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+
   exportUrl: '/api/export',
 };
 

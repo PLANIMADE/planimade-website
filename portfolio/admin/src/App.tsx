@@ -11,6 +11,7 @@ import Testimonials from './pages/Testimonials';
 import SettingsPage from './pages/Settings';
 import Trash from './pages/Trash';
 import System from './pages/System';
+import Bewerbung from './pages/Bewerbung';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/stimmen" element={<Testimonials />} />
         <Route path="/papierkorb" element={<Trash />} />
         <Route path="/system" element={<System />} />
+        <Route path="/bewerbung" element={<Bewerbung />} />
         <Route path="/einstellungen" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
