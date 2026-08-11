@@ -446,6 +446,16 @@ $router->get('bewerbung', static function () use ($bewerbung, $auth): void {
     Http::json($bewerbung->alles());
 });
 
+/** Mehrere auf einmal – der Import aus einer Tabelle. */
+$router->post('bewerbung/eintraege', static function () use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    $zeilen = Http::input('zeilen', []);
+    if (!is_array($zeilen) || $zeilen === []) {
+        Http::error('Die Tabelle enthielt keine Zeilen.', 422);
+    }
+    Http::json($bewerbung->anlegenViele($zeilen), 201);
+});
+
 $router->post('bewerbung/eintrag', static function () use ($bewerbung, $auth): void {
     $auth->requireWrite();
     Http::json(['eintrag' => $bewerbung->anlegen(Http::body())], 201);

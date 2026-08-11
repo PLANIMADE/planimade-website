@@ -21,6 +21,15 @@ import { useToast } from '../lib/toast';
  * Stand wie auf dem Rechner – vorher lag er im jeweiligen Browser.
  */
 
+/**
+ * So viele Mails gehen in einer Anfrage raus, dann eine Pause.
+ *
+ * Klein genug, dass keine Anfrage in ein Zeitlimit läuft, und langsam
+ * genug, dass es nicht nach Massenversand aussieht.
+ */
+const PORTION = 5;
+const PAUSE = 4000;
+
 const REITER = [
   { id: 'agenturen', label: 'Agenturen' },
   { id: 'stellen', label: 'Stellen & Suchlinks' },
@@ -175,7 +184,7 @@ function Agenturen({
   const [region, setRegion] = useState<string | null>(null);
   const [suche, setSuche] = useState('');
   const [status, setStatus] = useState('alle');
-  const [nurMitMail, setNurMitMail] = useState(false);
+  const [adresse, setAdresse] = useState<'alle' | 'mit' | 'ohne'>('alle');
   const [neu, setNeu] = useState(false);
 
   const sichtbar = useMemo(() => {
@@ -184,7 +193,8 @@ function Agenturen({
     return daten.agenturen.filter((a) => {
       if (region !== null && a.r !== region) return false;
       if (status !== 'alle' && a.status !== status) return false;
-      if (nurMitMail && !a.e) return false;
+      if (adresse === 'mit' && !a.e) return false;
+      if (adresse === 'ohne' && a.e) return false;
       if (begriff === '') return true;
 
       return [a.n, a.c, a.p, a.e, a.flag, (a.f ?? []).join(' '), a.notiz]
@@ -192,9 +202,10 @@ function Agenturen({
         .toLowerCase()
         .includes(begriff);
     });
-  }, [daten.agenturen, region, status, suche, nurMitMail]);
+  }, [daten.agenturen, region, status, suche, adresse]);
 
   const zahl = (wert: string): number => daten.agenturen.filter((a) => a.status === wert).length;
+  const ohneAdresse = daten.agenturen.filter((a) => !a.e).length;
 
   return (
     <div className="space-y-4">
@@ -226,30 +237,45 @@ function Agenturen({
               </option>
             ))}
           </select>
-          <label className="flex cursor-pointer items-center gap-2 text-xs text-muted">
-            <input
-              type="checkbox"
-              checked={nurMitMail}
-              onChange={(event) => setNurMitMail(event.target.checked)}
-              className="accent-[var(--accent)]"
-            />
-            nur mit Adresse
-          </label>
+          {/* Der wichtigste Filter, deshalb gleichberechtigt neben dem Status:
+              Ohne Adresse lässt sich niemand anschreiben – das ist die Liste,
+              die man abarbeiten will. */}
+          <select
+            className="field sm:w-44"
+            value={adresse}
+            onChange={(event) => setAdresse(event.target.value as typeof adresse)}
+          >
+            <option value="alle">Mit und ohne Adresse</option>
+            <option value="mit">Nur mit Adresse ({daten.agenturen.filter((a) => a.e).length})</option>
+            <option value="ohne">Nur ohne Adresse ({daten.agenturen.filter((a) => !a.e).length})</option>
+          </select>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs text-faint">
             {sichtbar.length} von {daten.agenturen.length} · {sichtbar.filter((a) => a.e).length} mit E-Mail
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button type="button" className="btn btn-ghost text-xs" onClick={() => csvExport(sichtbar)}>
               CSV für Excel
             </button>
+            <CsvImport setDaten={setDaten} />
             <button type="button" className="btn btn-primary text-xs" onClick={() => setNeu(true)}>
               + Agentur
             </button>
           </div>
         </div>
+
+        {ohneAdresse > 0 && adresse !== 'ohne' && (
+          <button
+            type="button"
+            onClick={() => setAdresse('ohne')}
+            className="w-full rounded-lg border border-warn/30 bg-warn/5 p-3 text-left text-xs text-warn transition-colors hover:border-warn/60"
+          >
+            <b>{ohneAdresse} Agenturen haben keine E-Mail-Adresse</b> – die kannst du nicht anschreiben. Hier
+            klicken, um sie aufzulisten und die Adressen nachzutragen.
+          </button>
+        )}
       </section>
 
       {neu && (
@@ -327,9 +353,14 @@ function Zeile({
           <span className="mt-0.5 block truncate text-xs text-muted">
             {eintrag.c}
             {typeof eintrag.d === 'number' ? ` · ${eintrag.d} km` : ''}
-            {eintrag.e ? ` · ${eintrag.e}` : ' · keine Adresse'}
+            {eintrag.e ? ` · ${eintrag.e}` : ''}
           </span>
         </button>
+
+        {/* Fehlt die Adresse, steht das Feld gleich hier – ohne Aufklappen,
+            ohne Formular. Bei über sechzig Nachträgen zählt jeder Klick, den
+            man nicht machen muss. */}
+        {!eintrag.e && <Adressfeld eintrag={eintrag} ersetze={ersetze} />}
 
         {eintrag.kontaktAm && <span className="shrink-0 text-[0.6875rem] text-faint">{eintrag.kontaktAm}</span>}
 
@@ -446,6 +477,111 @@ function Zeile({
   );
 }
 
+/**
+ * E-Mail-Adresse nachtragen, direkt in der Zeile.
+ *
+ * Gespeichert wird beim Verlassen des Feldes oder mit Enter – nicht bei
+ * jedem Zeichen, sonst schriebe eine halbe Adresse in die Datenbank.
+ */
+function Adressfeld({
+  eintrag,
+  ersetze,
+}: {
+  eintrag: BewerbungEintrag;
+  ersetze: (e: BewerbungEintrag) => void;
+}) {
+  const toast = useToast();
+  const [wert, setWert] = useState('');
+
+  const sichern = async (): Promise<void> => {
+    const adresse = wert.trim();
+    if (adresse === '') return;
+
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(adresse)) {
+      toast('Das sieht nicht nach einer E-Mail-Adresse aus.', 'error');
+
+      return;
+    }
+
+    const r = await api.bewerbungBearbeiten(eintrag.id, { e: adresse });
+    ersetze(r.eintrag);
+    toast('Adresse gespeichert');
+  };
+
+  return (
+    <input
+      className="field w-full shrink-0 py-1.5 text-xs sm:w-56"
+      placeholder="E-Mail nachtragen …"
+      value={wert}
+      onChange={(event) => setWert(event.target.value)}
+      onBlur={() => void sichern()}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          void sichern();
+        }
+      }}
+    />
+  );
+}
+
+/**
+ * Agenturen aus einer Tabelle einlesen.
+ *
+ * Der Weg über die JSON-Datei verlangt FTP und geht bei der nächsten
+ * Aktualisierung der Website verloren. Aus einer Tabelle geht es ohne
+ * beides: Spaltenüberschriften wie beim CSV-Export, alles andere wird
+ * ignoriert. Doppelte überspringt der Server.
+ */
+function CsvImport({ setDaten }: { setDaten: (d: BewerbungDaten) => void }) {
+  const toast = useToast();
+  const wahl = useRef<HTMLInputElement>(null);
+
+  const einlesen = async (datei: File): Promise<void> => {
+    try {
+      const zeilen = csvLesen(await datei.text());
+      if (zeilen.length === 0) {
+        toast('Keine brauchbaren Zeilen gefunden.', 'error');
+
+        return;
+      }
+
+      const { neu, uebersprungen } = await api.bewerbungAnlegenViele(zeilen);
+      setDaten(await api.bewerbung());
+      toast(
+        `${neu} angelegt` + (uebersprungen > 0 ? `, ${uebersprungen} übersprungen (schon vorhanden)` : ''),
+        neu > 0 ? 'success' : 'error',
+      );
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Die Datei ließ sich nicht lesen.', 'error');
+    }
+  };
+
+  return (
+    <>
+      <input
+        ref={wahl}
+        type="file"
+        accept=".csv,text/csv"
+        className="hidden"
+        onChange={(event) => {
+          const datei = event.target.files?.[0];
+          if (datei) void einlesen(datei);
+          event.target.value = '';
+        }}
+      />
+      <button
+        type="button"
+        className="btn btn-ghost text-xs"
+        title="Spalten: Name; Ort; km; Website; Schwerpunkte; Ansprechpartner; E-Mail"
+        onClick={() => wahl.current?.click()}
+      >
+        CSV einlesen
+      </button>
+    </>
+  );
+}
+
 /* -------------------------------------------------------------------- Stellen */
 
 function Stellen({ daten, ersetze }: { daten: BewerbungDaten; ersetze: (e: BewerbungEintrag) => void }) {
@@ -547,6 +683,7 @@ function Anschreiben({ daten, setDaten }: { daten: BewerbungDaten; setDaten: (d:
   const [auswahl, setAuswahl] = useState<string[]>([]);
   const [ergebnisse, setErgebnisse] = useState<Array<{ id: string; name: string; ok: boolean; meldung: string }>>([]);
   const [laeuft, setLaeuft] = useState(false);
+  const [fortschritt, setFortschritt] = useState<{ fertig: number; gesamt: number } | null>(null);
   const zeitgeber = useRef<number>(0);
 
   const mitMail = daten.agenturen.filter((a) => a.e);
@@ -560,21 +697,45 @@ function Anschreiben({ daten, setDaten }: { daten: BewerbungDaten; setDaten: (d:
     }, 600);
   };
 
+  /**
+   * Verschickt in Portionen statt in einem Rutsch.
+   *
+   * Zwei Gründe: Sechzig Mails in einer einzigen Anfrage laufen auf einem
+   * geteilten Webspace ins Zeitlimit, und sechzig Mails in einer Minute
+   * sehen für jeden Spamfilter aus wie ein Werbeversand. Zwischen den
+   * Portionen liegt deshalb eine Pause, und der Fortschritt ist sichtbar –
+   * bricht etwas ab, weiß man, wo.
+   */
   const senden = async (ids: string[]): Promise<void> => {
     if (ids.length === 0) return;
     if (!window.confirm(`Das Anschreiben an ${ids.length} Empfänger verschicken?`)) return;
 
     setLaeuft(true);
     setErgebnisse([]);
+
+    const gesammelt: Array<{ id: string; name: string; ok: boolean; meldung: string }> = [];
+
     try {
-      const { ergebnisse } = await api.bewerbungSenden(ids);
-      setErgebnisse(ergebnisse);
+      for (let i = 0; i < ids.length; i += PORTION) {
+        const teil = ids.slice(i, i + PORTION);
+        setFortschritt({ fertig: i, gesamt: ids.length });
+
+        const { ergebnisse } = await api.bewerbungSenden(teil);
+        gesammelt.push(...ergebnisse);
+        setErgebnisse([...gesammelt]);
+
+        if (i + PORTION < ids.length) {
+          await new Promise((weiter) => window.setTimeout(weiter, PAUSE));
+        }
+      }
+
       setDaten(await api.bewerbung());
-      const gut = ergebnisse.filter((e) => e.ok).length;
-      toast(`${gut} von ${ergebnisse.length} verschickt`, gut === ergebnisse.length ? 'success' : 'error');
+      const gut = gesammelt.filter((e) => e.ok).length;
+      toast(`${gut} von ${gesammelt.length} verschickt`, gut === gesammelt.length ? 'success' : 'error');
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Versand fehlgeschlagen', 'error');
     } finally {
+      setFortschritt(null);
       setLaeuft(false);
     }
   };
@@ -614,9 +775,26 @@ function Anschreiben({ daten, setDaten }: { daten: BewerbungDaten; setDaten: (d:
               placeholder={'Guten Tag,\n\n…'}
               onChange={(event) => merken({ ...vorlage, body: event.target.value })}
             />
-            <p className="mt-1 text-[0.6875rem] text-faint">
-              Links auf deine Unterlagen kannst du unten kopieren und hier einfügen.
-            </p>
+            <div className="mt-2 space-y-1 text-[0.6875rem] leading-relaxed text-faint">
+              <p>Links auf deine Unterlagen kannst du unten kopieren und hier einfügen.</p>
+              <p>
+                Optionale Platzhalter – wer keine benutzt, verschickt seinen Text unverändert:{' '}
+                {['{{anrede}}', '{{agentur}}', '{{ort}}', '{{ansprechpartner}}', '{{schwerpunkte}}'].map((platz) => (
+                  <button
+                    key={platz}
+                    type="button"
+                    className="mr-1 rounded border border-line px-1 font-mono text-[0.625rem] text-muted transition-colors hover:border-accent hover:text-ink"
+                    onClick={() => merken({ ...vorlage, body: `${vorlage.body}${platz}` })}
+                  >
+                    {platz}
+                  </button>
+                ))}
+              </p>
+              <p>
+                <b>{'{{anrede}}'}</b> wird zu „Sehr geehrte:r …", wenn ein Name hinterlegt ist – sonst zu „Sehr
+                geehrte Damen und Herren". Kein „Sehr geehrte:r Geschäftsführung".
+              </p>
+            </div>
           </div>
         </section>
 
@@ -693,7 +871,9 @@ function Anschreiben({ daten, setDaten }: { daten: BewerbungDaten; setDaten: (d:
             disabled={laeuft || auswahl.length === 0}
             onClick={() => void senden(auswahl)}
           >
-            {laeuft ? 'Verschickt …' : `An ${auswahl.length} verschicken`}
+            {laeuft
+              ? `Verschickt … ${fortschritt ? `${fortschritt.fertig} von ${fortschritt.gesamt}` : ''}`
+              : `An ${auswahl.length} verschicken`}
           </button>
 
           {ergebnisse.length > 0 && (
@@ -1047,6 +1227,83 @@ function csvExport(eintraege: BewerbungEintrag[]): void {
   ];
 
   lade(new Blob(['﻿' + zeilen.join('\r\n')], { type: 'text/csv;charset=utf-8;' }), 'bewerbungs-radar.csv');
+}
+
+/**
+ * Liest eine Tabelle ein – dieselben Spalten, die der Export ausgibt.
+ *
+ * Gerechnet wird mit deutschem Excel: Semikolon als Trenner, ein BOM
+ * vorneweg, Anführungszeichen um Felder mit Sonderzeichen. Kommas als
+ * Trenner werden trotzdem erkannt, falls die Datei woanders herkommt.
+ */
+function csvLesen(text: string): Array<Record<string, unknown>> {
+  const roh = text.replace(/^\ufeff/, '').trim();
+  if (roh === '') return [];
+
+  const trenner = (roh.split('\n')[0]?.split(';').length ?? 1) > 1 ? ';' : ',';
+
+  // Zeilenweise zerlegen, aber Anführungszeichen respektieren: In einem
+  // Feld darf ein Trenner stehen, ohne die Spalte zu sprengen.
+  const zerlege = (zeile: string): string[] => {
+    const felder: string[] = [];
+    let feld = '';
+    let inAnfuehrung = false;
+
+    for (let i = 0; i < zeile.length; i++) {
+      const zeichen = zeile[i];
+
+      if (zeichen === '"') {
+        if (inAnfuehrung && zeile[i + 1] === '"') {
+          feld += '"';
+          i++;
+        } else {
+          inAnfuehrung = !inAnfuehrung;
+        }
+        continue;
+      }
+
+      if (zeichen === trenner && !inAnfuehrung) {
+        felder.push(feld);
+        feld = '';
+        continue;
+      }
+
+      feld += zeichen;
+    }
+
+    felder.push(feld);
+
+    return felder.map((f) => f.trim());
+  };
+
+  const zeilen = roh.split(/\r?\n/).filter((z) => z.trim() !== '');
+  const kopf = zerlege(zeilen[0] ?? '').map((k) => k.toLowerCase().replace(/[^a-zäöüß]/g, ''));
+
+  // Überschrift → Feldkürzel. Was nicht zugeordnet werden kann, fällt weg.
+  const spalten: Record<string, string> = {
+    name: 'n', agentur: 'n', firma: 'n',
+    ort: 'c', stadt: 'c', adresse: 'c',
+    km: 'd', entfernung: 'd',
+    website: 'u', url: 'u', web: 'u',
+    schwerpunkte: 'f', leistungen: 'f',
+    ansprechpartner: 'p', kontakt: 'p',
+    email: 'e', mail: 'e', epost: 'e',
+    region: 'r',
+    hinweis: 'flag', notiz: 'flag',
+  };
+
+  return zeilen.slice(1).flatMap((zeile) => {
+    const werte = zerlege(zeile);
+    const eintrag: Record<string, unknown> = {};
+
+    kopf.forEach((ueberschrift, i) => {
+      const feld = spalten[ueberschrift];
+      if (feld === undefined || werte[i] === undefined || werte[i] === '') return;
+      eintrag[feld] = feld === 'd' ? Number(werte[i].replace(/[^0-9]/g, '')) || 0 : werte[i];
+    });
+
+    return typeof eintrag.n === 'string' && eintrag.n !== '' ? [eintrag] : [];
+  });
 }
 
 function sicherungSpeichern(daten: BewerbungDaten): void {

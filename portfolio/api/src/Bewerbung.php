@@ -110,10 +110,17 @@ final class Bewerbung
         $typ = ($input['typ'] ?? 'agentur') === 'stelle' ? 'stelle' : 'agentur';
         $id = ($typ === 'stelle' ? 'j-' : '') . 'eigen-' . bin2hex(random_bytes(4));
 
+        $grundform = $typ === 'stelle'
+            ? ['role' => '', 'co' => '', 'loc' => '', 'd' => 0, 'tags' => [], 'url' => null, 'note' => '']
+            : ['n' => '', 'c' => '', 'r' => '', 'd' => 0, 'u' => '', 'e' => '', 'p' => '', 'f' => [], 'flag' => ''];
+
         $this->db->insert('bewerbung_eintraege', [
             'id' => $id,
             'typ' => $typ,
-            'daten' => json_encode($this->stammdaten($input, $typ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'daten' => json_encode(
+                array_merge($grundform, $this->stammdaten($input, $typ)),
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            ),
             'quelle' => 'eigen',
             'status' => 'Offen',
             'notiz' => '',
@@ -122,6 +129,59 @@ final class Bewerbung
         ]);
 
         return $this->eintrag($id);
+    }
+
+    /**
+     * Mehrere Einträge auf einmal – für den Import aus einer Tabelle.
+     *
+     * Doppelte werden übersprungen statt angelegt: Wer eine erweiterte Liste
+     * ein zweites Mal einliest, will nicht jede Agentur doppelt im Verteiler
+     * haben. Verglichen wird über Name und Ort, weil eine Tabelle keine
+     * Kennungen mitbringt.
+     *
+     * @return array{neu: int, uebersprungen: int}
+     */
+    public function anlegenViele(array $zeilen): array
+    {
+        $vorhanden = [];
+        foreach ($this->eintraege('agentur') as $eintrag) {
+            $vorhanden[$this->kennung((string) ($eintrag['n'] ?? ''), (string) ($eintrag['c'] ?? ''))] = true;
+        }
+
+        $neu = 0;
+        $uebersprungen = 0;
+
+        foreach ($zeilen as $zeile) {
+            if (!is_array($zeile)) {
+                continue;
+            }
+
+            $name = trim((string) ($zeile['n'] ?? ''));
+            if ($name === '') {
+                $uebersprungen++;
+                continue;
+            }
+
+            $schluessel = $this->kennung($name, (string) ($zeile['c'] ?? ''));
+            if (isset($vorhanden[$schluessel])) {
+                $uebersprungen++;
+                continue;
+            }
+
+            $this->anlegen(array_merge($zeile, ['typ' => 'agentur']));
+            $vorhanden[$schluessel] = true;
+            $neu++;
+        }
+
+        return ['neu' => $neu, 'uebersprungen' => $uebersprungen];
+    }
+
+    /** Name und Ort auf das Wesentliche gekürzt – für den Dublettenabgleich. */
+    private function kennung(string $name, string $ort): string
+    {
+        $roh = mb_strtolower($name . '|' . preg_replace('/\(.*$/', '', $ort));
+
+        return preg_replace('/[^a-z0-9|]/u', '', $roh) ?? $roh;
     }
 
     /** Stammdaten eines Eintrags ändern – auch bei denen aus der Datei. */
@@ -156,45 +216,57 @@ final class Bewerbung
     /**
      * Nimmt die Felder an, die es gibt – und nur die.
      *
+     * „Und nur die" ist hier wörtlich zu nehmen: Wer beim Nachtragen einer
+     * E-Mail-Adresse nur dieses eine Feld schickt, darf nicht Name, Ort und
+     * Schwerpunkte verlieren. Deshalb wird jedes Feld übersprungen, das gar
+     * nicht mitkam – ein leeres Feld löscht, ein fehlendes nicht.
+     *
      * Die Kürzel stammen aus der ursprünglichen Datei (`n` für Name, `c`
      * für Stadt …). Sie bleiben, damit die JSON-Datei unverändert weiter
      * gepflegt werden kann.
      */
     private function stammdaten(array $input, string $typ): array
     {
-        $text = static fn (string $key, int $max = 300): string => mb_substr(trim((string) ($input[$key] ?? '')), 0, $max);
-        $liste = static function (string $key) use ($input): array {
-            $wert = $input[$key] ?? [];
-            if (is_string($wert)) {
-                $wert = array_map('trim', explode(',', $wert));
+        $felder = $typ === 'stelle'
+            ? ['role' => 300, 'co' => 300, 'loc' => 300, 'url' => 500, 'note' => 2000]
+            : ['n' => 300, 'c' => 300, 'r' => 20, 'u' => 500, 'e' => 190, 'p' => 300, 'flag' => 500];
+        $listen = $typ === 'stelle' ? ['tags'] : ['f'];
+
+        $daten = [];
+
+        foreach ($felder as $key => $max) {
+            if (array_key_exists($key, $input)) {
+                $daten[$key] = mb_substr(trim((string) $input[$key]), 0, $max);
             }
-
-            return array_values(array_filter(array_map(static fn ($e): string => mb_substr(trim((string) $e), 0, 80), (array) $wert)));
-        };
-
-        if ($typ === 'stelle') {
-            return [
-                'role' => $text('role'),
-                'co' => $text('co'),
-                'loc' => $text('loc'),
-                'd' => max(0, (int) ($input['d'] ?? 0)),
-                'tags' => $liste('tags'),
-                'url' => $text('url', 500) ?: null,
-                'note' => $text('note', 2000),
-            ];
         }
 
-        return [
-            'n' => $text('n'),
-            'c' => $text('c'),
-            'r' => $text('r', 20),
-            'd' => max(0, (int) ($input['d'] ?? 0)),
-            'u' => $text('u', 500),
-            'e' => $text('e', 190),
-            'p' => $text('p'),
-            'f' => $liste('f'),
-            'flag' => $text('flag', 500),
-        ];
+        foreach ($listen as $key) {
+            if (!array_key_exists($key, $input)) {
+                continue;
+            }
+
+            $wert = $input[$key];
+            if (is_string($wert)) {
+                $wert = explode(',', $wert);
+            }
+
+            $daten[$key] = array_values(array_filter(array_map(
+                static fn ($e): string => mb_substr(trim((string) $e), 0, 80),
+                (array) $wert
+            )));
+        }
+
+        if (array_key_exists('d', $input)) {
+            $daten['d'] = max(0, (int) $input['d']);
+        }
+
+        // Beim Anlegen fehlt sonst die Grundausstattung – eine Agentur ohne
+        // `f` würde später in der Oberfläche stolpern.
+        if ($typ === 'stelle') {
+            $daten += ['tags' => [], 'url' => null, 'note' => ''];
+        }
+
+        return $daten;
     }
 
     private function eintrag(string $id): array
@@ -503,8 +575,8 @@ final class Bewerbung
                 'from' => $absender,
                 'fromName' => (string) ($versand['absenderName'] ?: $absender),
                 'to' => $adresse,
-                'subject' => $vorlage['subj'],
-                'body' => $vorlage['body'],
+                'subject' => $this->platzhalter($vorlage['subj'], $eintrag),
+                'body' => $this->platzhalter($vorlage['body'], $eintrag),
                 'replyTo' => '',
             ];
 
@@ -535,6 +607,80 @@ final class Bewerbung
         }
 
         return ['ergebnisse' => $ergebnisse];
+    }
+
+    /**
+     * Setzt Platzhalter im Anschreiben ein.
+     *
+     * Wer keine benutzt, bekommt seinen Text unverändert – so war es
+     * vorher, und so bleibt es. Wer welche benutzt, verschickt nicht
+     * hundertmal denselben anonymen Brief: Eine Bewerbung, die die Agentur
+     * beim Namen nennt, landet seltener im Papierkorb als „Guten Tag".
+     */
+    public function platzhalter(string $text, array $eintrag): string
+    {
+        if (!str_contains($text, '{{')) {
+            return $text;
+        }
+
+        $ort = (string) ($eintrag['c'] ?? '');
+        $werte = [
+            'agentur' => (string) ($eintrag['n'] ?? $eintrag['co'] ?? ''),
+            // Aus „Wuppertal (Bornberg 25, 42109)" wird „Wuppertal".
+            'ort' => trim(preg_replace('/\s*\(.*$/', '', $ort) ?? $ort),
+            'ansprechpartner' => (string) ($eintrag['p'] ?? ''),
+            'schwerpunkte' => implode(', ', (array) ($eintrag['f'] ?? [])),
+        ];
+
+        $werte['anrede'] = $this->anrede($werte['ansprechpartner']);
+
+        foreach ($werte as $name => $wert) {
+            $text = str_replace(['{{' . $name . '}}', '{{ ' . $name . ' }}'], $wert, $text);
+        }
+
+        return $text;
+    }
+
+    /**
+     * Baut die Anrede aus dem Feld „Ansprechpartner".
+     *
+     * Das Feld ist ein Sammelbecken: Mal steht dort eine Person, mal drei
+     * Geschäftsführer mit Kürzel dahinter, mal „Inhabergeführt" oder
+     * „Bewerbungen über Jobs-Seite". Persönlich angeredet wird nur, was
+     * eindeutig eine einzelne Person ist – im Zweifel die allgemeine Form.
+     *
+     * Eine Bewerbung, die mit „Sehr geehrte:r Rob Fährmann, Süleyman
+     * Kayaalp, Marc Freudenhammer (GF)" beginnt, ist schlimmer als eine
+     * ohne Namen.
+     */
+    private function anrede(string $feld): string
+    {
+        $allgemein = 'Sehr geehrte Damen und Herren';
+
+        // Zusätze in Klammern weg: „(GF)", „(Geschäftsführung)" …
+        $person = trim(preg_replace('/\s*\(.*$/u', '', $feld) ?? $feld);
+        if ($person === '') {
+            return $allgemein;
+        }
+
+        // Mehrere Personen – dafür gibt es keine saubere Einzelanrede.
+        if (preg_match('/[,;&]|\bund\b|\+/iu', $person) === 1) {
+            return $allgemein;
+        }
+
+        // Keine Person, sondern eine Rolle oder ein Hinweis.
+        if (preg_match('/^(Inhaber|Gesch|Bewerbung|Team|Kontakt|Personal|HR|Recruit|Sekretariat|Info|Zentrale)/iu', $person) === 1) {
+            return $allgemein;
+        }
+
+        // „Vorname Nachname" oder „Vorname Zweitname Nachname" – mehr Wörter
+        // sind eher ein Satz als ein Name.
+        $woerter = preg_split('/\s+/u', $person) ?: [];
+        if (count($woerter) < 2 || count($woerter) > 3) {
+            return $allgemein;
+        }
+
+        return 'Sehr geehrte:r ' . $person;
     }
 
     /** Testmail an die eigene Adresse – prüft die Zugangsdaten. */

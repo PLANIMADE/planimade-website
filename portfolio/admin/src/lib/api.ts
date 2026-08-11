@@ -450,6 +450,11 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+  bewerbungAnlegenViele: (zeilen: Array<Record<string, unknown>>) =>
+    request<{ neu: number; uebersprungen: number }>('bewerbung/eintraege', {
+      method: 'POST',
+      body: JSON.stringify({ zeilen }),
+    }),
   bewerbungAnlegen: (data: Record<string, unknown>) =>
     request<{ eintrag: BewerbungEintrag }>('bewerbung/eintrag', { method: 'POST', body: JSON.stringify(data) }),
   bewerbungBearbeiten: (id: string, data: Record<string, unknown>) =>

@@ -94,6 +94,15 @@ verlinkt. Beim ersten Aufruf liest er die mitgelieferte Liste aus
 `api/assets/bewerbung/agenturen.json` ein. Diese Datei bleibt von Hand pflegbar;
 „Nachschub aus Datei" ergänzt später Hinzugekommenes, ohne Notizen anzufassen.
 
+Neue Agenturen gehen drei Wege: einzeln über **„+ Agentur"**, viele auf einmal
+über **„CSV einlesen"** (Spalten wie beim Export, Doppelte werden übersprungen)
+oder über die JSON-Datei plus „Nachschub aus Datei". Achtung: Die JSON liegt im
+Website-Paket und wird beim nächsten Upload überschrieben – was über das
+Dashboard angelegt wurde, bleibt.
+
+Verschickt wird in Portionen zu fünf mit Pause dazwischen: Sechzig Mails in einer
+Anfrage laufen ins Zeitlimit und sehen für Spamfilter aus wie Werbung.
+
 Unterlagen (Lebenslauf, Mappe, Zeugnisse) landen in `uploads/bewerbung/` und sind
 öffentlich abrufbar – der Ordner überlebt jeden erneuten Upload der Website. Die
 kurze Adresse dorthin regelt die `.htaccess`:
