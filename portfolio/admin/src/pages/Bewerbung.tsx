@@ -7,6 +7,7 @@ import {
   type BewerbungVersand,
 } from '../lib/api';
 import { useToast } from '../lib/toast';
+import BewerbungStatistik from '../components/BewerbungStatistik';
 
 /**
  * Bewerbungs-Radar.
@@ -34,6 +35,7 @@ const REITER = [
   { id: 'agenturen', label: 'Agenturen' },
   { id: 'stellen', label: 'Stellen & Suchlinks' },
   { id: 'anschreiben', label: 'Anschreiben' },
+  { id: 'statistik', label: 'Statistik' },
 ] as const;
 
 /** Farbe je Status – dieselbe Ampel wie im Original. */
@@ -108,6 +110,7 @@ export default function Bewerbung() {
       {reiter === 'agenturen' && <Agenturen daten={daten} setDaten={setDaten} ersetze={ersetze} />}
       {reiter === 'stellen' && <Stellen daten={daten} ersetze={ersetze} />}
       {reiter === 'anschreiben' && <Anschreiben daten={daten} setDaten={setDaten} />}
+      {reiter === 'statistik' && <BewerbungStatistik daten={daten} />}
     </div>
   );
 

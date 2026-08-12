@@ -20,6 +20,27 @@
   --warn: #fbbf24;
   --bad: #fb7185;
 
+  /**
+   * Farben der Bewerbungs-Statistik.
+   *
+   * Eigene Werte statt der Ampel oben: In einem gestapelten Balken liegen die
+   * Flächen aneinander, und dann zählt nicht, ob eine Farbe für sich hübsch
+   * ist, sondern ob zwei Nachbarn auseinanderzuhalten sind – auch bei einer
+   * Rot-Grün-Schwäche. Diese sechs sind gegen die Panelfarbe durchgerechnet:
+   * jede hebt sich ab (Kontrast ≥ 3:1), und kein Nachbarpaar liegt unter dem
+   * Abstand, der bei Farbfehlsichtigkeit noch trennt.
+   *
+   * Deshalb steht „Absage“ am Anfang und „Zusage“ am Ende: Rot und Grün sind
+   * das Paar, das sich am schlechtesten verträgt, und so berühren sie sich
+   * nie. Die Farbe trägt trotzdem nie allein – überall steht der Name dabei.
+   */
+  --st-absage: #d03b3b;
+  --st-offen: #6b6b7d;
+  --st-kontaktiert: #3987e5;
+  --st-antwort: #d95926;
+  --st-gespraech: #9085e9;
+  --st-zusage: #0ca30c;
+
   color-scheme: dark;
 }
 
