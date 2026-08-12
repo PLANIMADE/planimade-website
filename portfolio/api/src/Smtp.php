@@ -93,7 +93,7 @@ final class Smtp
             $this->erwarte('250');
             $this->befehl('QUIT', '221');
         } catch (\RuntimeException $e) {
-            return $this->fehler($e->getMessage());
+            return $this->fehler($this->verstaendlich($e->getMessage()));
         } finally {
             if (is_resource($this->verbindung)) {
                 fclose($this->verbindung);
@@ -194,6 +194,35 @@ final class Smtp
         if (!str_starts_with($antwort, $code)) {
             throw new \RuntimeException('Der Mailserver antwortete: ' . trim($antwort));
         }
+    }
+
+    /**
+     * Hängt an die Antwort des Mailservers dran, was jetzt zu tun ist.
+     *
+     * Die Codes sagen die Wahrheit, aber nicht die ganze: „Username and
+     * Password not accepted" liest sich wie ein Tippfehler, ist bei Gmail
+     * aber fast immer etwas anderes – dort geht seit 2022 nur noch ein
+     * App-Passwort, nie das Passwort des Google-Kontos.
+     */
+    private function verstaendlich(string $meldung): string
+    {
+        $gmail = str_contains($this->host, 'gmail') || str_contains($this->host, 'googlemail');
+
+        if (str_contains($meldung, '535') || stripos($meldung, 'password not accepted') !== false) {
+            return $meldung . ($gmail
+                ? "\n\nGmail nimmt hier nicht das Passwort deines Google-Kontos an, sondern nur ein "
+                    . 'App-Passwort: Google-Konto → Sicherheit → Bestätigung in zwei Schritten einschalten, '
+                    . 'darunter „App-Passwörter" aufrufen und eins erzeugen. Die 16 Zeichen ohne Leerzeichen '
+                    . 'hier eintragen. Als Benutzername gehört die vollständige Gmail-Adresse ins Feld.'
+                : "\n\nDas Postfach hat Benutzername oder Passwort abgelehnt. Beim Benutzernamen ist "
+                    . 'meist die vollständige E-Mail-Adresse gemeint, nicht nur der Teil vor dem @.');
+        }
+
+        if (str_contains($meldung, '534') || str_contains($meldung, '5.7.9')) {
+            return $meldung . "\n\nDer Mailserver verlangt ein App-Passwort statt des Konto-Passworts.";
+        }
+
+        return $meldung;
     }
 
     /** @return array{ok: false, message: string} */

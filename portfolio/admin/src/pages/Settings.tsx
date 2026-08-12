@@ -1209,7 +1209,7 @@ export default function SettingsPage() {
             value={settings.site.smtpHost}
             onChange={(value) => set('site', { ...settings.site, smtpHost: value })}
             placeholder="w01abcde.kasserver.com"
-            hint="Bei all-inkl steht der Name im KAS beim Postfach. Leer lassen = alter Weg über den Server."
+            hint="Bei all-inkl steht der Name im KAS beim Postfach, bei Gmail smtp.gmail.com. Leer lassen = alter Weg über den Server."
           />
 
           <div className="grid grid-cols-[1fr_auto] gap-3">
@@ -1259,8 +1259,19 @@ export default function SettingsPage() {
               value={settings.site.smtpPass}
               onChange={(event) => set('site', { ...settings.site, smtpPass: event.target.value })}
             />
-            <p className="mt-1 text-[0.6875rem] text-faint">
+            <p className="mt-1 text-[0.6875rem] leading-relaxed text-faint">
               Das Passwort des Postfachs, nicht das deines Dashboards.
+              {settings.site.smtpHost.includes('gmail') || settings.site.smtpHost.includes('googlemail') ? (
+                <>
+                  {' '}
+                  <span className="text-warn">
+                    Bei Gmail gehört hier ein App-Passwort hinein, nicht das Passwort deines
+                    Google-Kontos: Google-Konto → Sicherheit → Bestätigung in zwei Schritten
+                    einschalten, darunter „App-Passwörter" aufrufen und eins erzeugen. Die
+                    16 Zeichen ohne Leerzeichen eintragen.
+                  </span>
+                </>
+              ) : null}
             </p>
           </div>
         </section>
