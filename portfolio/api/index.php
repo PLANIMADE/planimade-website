@@ -479,6 +479,28 @@ $router->delete('bewerbung/eintrag/{id}', static function (string $id) use ($bew
     Http::noContent();
 });
 
+/**
+ * Mehrere Einträge auf einmal löschen.
+ *
+ * Als POST statt DELETE, weil die Kennungen in den Rumpf gehören: Sechzig
+ * davon in eine Adresszeile zu packen sprengt jede Längenbegrenzung.
+ */
+$router->post('bewerbung/loeschen', static function () use ($bewerbung, $auth): void {
+    $auth->requireWrite();
+    $body = Http::body();
+    $ids = $body['ids'] ?? null;
+    if (!is_array($ids)) {
+        Http::error('Es wurde keine Auswahl übergeben.', 422);
+    }
+    Http::json($bewerbung->loeschenViele($ids));
+});
+
+/** Welche Einträge dieselbe Agentur meinen. */
+$router->get('bewerbung/dubletten', static function () use ($bewerbung, $auth): void {
+    $auth->requireUser();
+    Http::json(['ids' => $bewerbung->dubletten()]);
+});
+
 /** Ergänzt neue Einträge aus der mitgelieferten Datei. */
 $router->post('bewerbung/nachschub', static function () use ($bewerbung, $auth): void {
     $auth->requireWrite();

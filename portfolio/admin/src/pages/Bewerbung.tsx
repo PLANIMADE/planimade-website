@@ -192,6 +192,19 @@ function Agenturen({
   const [status, setStatus] = useState('alle');
   const [adresse, setAdresse] = useState<'alle' | 'mit' | 'ohne'>('alle');
   const [neu, setNeu] = useState(false);
+  const [auswahl, setAuswahl] = useState<Set<string>>(new Set());
+  const [dubletten, setDubletten] = useState<string[]>([]);
+  const [loescht, setLoescht] = useState(false);
+
+  // Doppelte Einträge einmal beim Öffnen suchen. Die Frage „ist hier etwas
+  // doppelt?" stellt man sich nicht – man merkt es erst, wenn man darüber
+  // stolpert. Also fragt die Liste von sich aus.
+  useEffect(() => {
+    void api
+      .bewerbungDubletten()
+      .then((r) => setDubletten(r.ids))
+      .catch(() => setDubletten([]));
+  }, [daten.agenturen.length]);
 
   const sichtbar = useMemo(() => {
     const begriff = suche.trim().toLowerCase();
@@ -212,6 +225,48 @@ function Agenturen({
 
   const zahl = (wert: string): number => daten.agenturen.filter((a) => a.status === wert).length;
   const ohneAdresse = daten.agenturen.filter((a) => !a.e).length;
+
+  const umschalten = (id: string): void => {
+    setAuswahl((alt) => {
+      const neuSet = new Set(alt);
+      if (neuSet.has(id)) neuSet.delete(id);
+      else neuSet.add(id);
+
+      return neuSet;
+    });
+  };
+
+  const alleSichtbaren = sichtbar.length > 0 && sichtbar.every((a) => auswahl.has(a.id));
+
+  const auswahlLoeschen = async (): Promise<void> => {
+    const ids = [...auswahl];
+    if (ids.length === 0) return;
+
+    // Gelöscht ist hier endgültig – für Bewerbungseinträge gibt es keinen
+    // Papierkorb. Deshalb einmal nachfragen, mit der Anzahl im Satz.
+    const namen = ids
+      .map((id) => daten.agenturen.find((a) => a.id === id)?.n)
+      .filter((n): n is string => typeof n === 'string')
+      .slice(0, 3);
+    const frage =
+      ids.length === 1
+        ? `„${namen[0] ?? 'Dieser Eintrag'}" wird gelöscht. Das lässt sich nicht rückgängig machen.`
+        : `${ids.length} Einträge werden gelöscht (${namen.join(', ')}${ids.length > 3 ? ' …' : ''}). ` +
+          'Das lässt sich nicht rückgängig machen.';
+    if (!window.confirm(frage)) return;
+
+    setLoescht(true);
+    try {
+      const { geloescht } = await api.bewerbungLoeschenViele(ids);
+      setDaten(await api.bewerbung());
+      setAuswahl(new Set());
+      toast(geloescht === 1 ? 'Eintrag gelöscht' : `${geloescht} Einträge gelöscht`);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Löschen fehlgeschlagen.', 'error');
+    } finally {
+      setLoescht(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -258,9 +313,27 @@ function Agenturen({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs text-faint">
+          {/* Das Kästchen sitzt an der Zeile mit der Trefferzahl, weil es
+              genau die betrifft: markiert wird, was gerade gefiltert ist. */}
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-faint">
+            <input
+              type="checkbox"
+              className="accent-[var(--accent)]"
+              checked={alleSichtbaren}
+              onChange={(event) => {
+                setAuswahl((alt) => {
+                  const neuSet = new Set(alt);
+                  for (const a of sichtbar) {
+                    if (event.target.checked) neuSet.add(a.id);
+                    else neuSet.delete(a.id);
+                  }
+
+                  return neuSet;
+                });
+              }}
+            />
             {sichtbar.length} von {daten.agenturen.length} · {sichtbar.filter((a) => a.e).length} mit E-Mail
-          </p>
+          </label>
           <div className="flex flex-wrap gap-2">
             <button type="button" className="btn btn-ghost text-xs" onClick={() => csvExport(sichtbar)}>
               CSV für Excel
@@ -278,11 +351,68 @@ function Agenturen({
             onClick={() => setAdresse('ohne')}
             className="w-full rounded-lg border border-warn/30 bg-warn/5 p-3 text-left text-xs text-warn transition-colors hover:border-warn/60"
           >
-            <b>{ohneAdresse} Agenturen haben keine E-Mail-Adresse</b> – die kannst du nicht anschreiben. Hier
-            klicken, um sie aufzulisten und die Adressen nachzutragen.
+            {ohneAdresse === 1 ? (
+              <>
+                <b>1 Agentur hat keine E-Mail-Adresse</b> – die kannst du nicht anschreiben. Hier klicken, um
+                sie aufzulisten und die Adresse nachzutragen.
+              </>
+            ) : (
+              <>
+                <b>{ohneAdresse} Agenturen haben keine E-Mail-Adresse</b> – die kannst du nicht anschreiben.
+                Hier klicken, um sie aufzulisten und die Adressen nachzutragen.
+              </>
+            )}
+          </button>
+        )}
+
+        {dubletten.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              setAuswahl(new Set(dubletten));
+              setRegion(null);
+              setStatus('alle');
+              setAdresse('alle');
+              setSuche('');
+            }}
+            className="w-full rounded-lg border border-bad/30 bg-bad/5 p-3 text-left text-xs text-bad transition-colors hover:border-bad/60"
+          >
+            <b>
+              {dubletten.length === 1
+                ? '1 Eintrag ist doppelt vorhanden'
+                : `${dubletten.length} Einträge sind doppelt vorhanden`}
+            </b>{' '}
+            – gleicher Name, gleicher Ort. Hier klicken, um die überzähligen zu markieren; behalten wird
+            jeweils der ältere Eintrag mit deinen Notizen.
           </button>
         )}
       </section>
+
+      {/* Die Leiste erscheint nur, wenn etwas markiert ist – solange nichts
+          ausgewählt ist, wäre sie eine Reihe toter Knöpfe. */}
+      {auswahl.size > 0 && (
+        <section className="panel sticky top-2 z-10 flex flex-wrap items-center justify-between gap-3 border-accent/40 p-4">
+          <p className="text-sm">
+            <b>{auswahl.size}</b> {auswahl.size === 1 ? 'Eintrag' : 'Einträge'} ausgewählt
+            {[...auswahl].some((id) => !sichtbar.some((a) => a.id === id)) && (
+              <span className="text-faint"> · nicht alle davon sind gerade sichtbar</span>
+            )}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="btn btn-ghost text-xs" onClick={() => setAuswahl(new Set())}>
+              Auswahl aufheben
+            </button>
+            <button
+              type="button"
+              className="btn text-xs border-bad/50 text-bad hover:border-bad"
+              onClick={() => void auswahlLoeschen()}
+              disabled={loescht}
+            >
+              {loescht ? 'Wird gelöscht …' : 'Löschen'}
+            </button>
+          </div>
+        </section>
+      )}
 
       {neu && (
         <Formular
@@ -301,7 +431,15 @@ function Agenturen({
       ) : (
         <ul className="space-y-2">
           {sichtbar.map((a) => (
-            <Zeile key={a.id} eintrag={a} stati={daten.statiAgentur} ersetze={ersetze} setDaten={setDaten} />
+            <Zeile
+              key={a.id}
+              eintrag={a}
+              stati={daten.statiAgentur}
+              ersetze={ersetze}
+              setDaten={setDaten}
+              markiert={auswahl.has(a.id)}
+              onMarkieren={() => umschalten(a.id)}
+            />
           ))}
         </ul>
       )}
@@ -315,11 +453,15 @@ function Zeile({
   stati,
   ersetze,
   setDaten,
+  markiert,
+  onMarkieren,
 }: {
   eintrag: BewerbungEintrag;
   stati: string[];
   ersetze: (e: BewerbungEintrag) => void;
   setDaten: (d: BewerbungDaten) => void;
+  markiert?: boolean;
+  onMarkieren?: () => void;
 }) {
   const toast = useToast();
   const [offen, setOffen] = useState(false);
@@ -340,9 +482,21 @@ function Zeile({
   };
 
   return (
-    <li className="panel overflow-hidden">
+    <li className={`panel overflow-hidden transition-colors ${markiert === true ? 'border-accent/60' : ''}`}>
       <div className="flex flex-wrap items-center gap-3 p-4">
-        <button type="button" onClick={() => setOffen(!offen)} className="min-w-0 flex-1 text-left">
+        {onMarkieren !== undefined && (
+          <input
+            type="checkbox"
+            className="size-4 shrink-0 accent-[var(--accent)]"
+            checked={markiert === true}
+            onChange={onMarkieren}
+            aria-label={`${eintrag.n ?? eintrag.role ?? 'Eintrag'} auswählen`}
+          />
+        )}
+        {/* `basis-40` sorgt dafür, dass der Name auf schmalen Bildschirmen
+            eine eigene Zeile bekommt, statt auf drei Buchstaben zu schrumpfen:
+            Unterschreitet er diese Breite, bricht der Rest der Zeile um. */}
+        <button type="button" onClick={() => setOffen(!offen)} className="min-w-0 flex-1 basis-40 text-left">
           <span className="flex flex-wrap items-baseline gap-2">
             <span className="truncate text-sm font-medium">{eintrag.n}</span>
             {eintrag.flag && (

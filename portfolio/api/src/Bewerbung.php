@@ -215,6 +215,98 @@ final class Bewerbung
     }
 
     /**
+     * Mehrere Einträge auf einmal löschen.
+     *
+     * In einem Rutsch statt einer Anfrage je Eintrag: Wer sechzig Dubletten
+     * markiert hat, wartet sonst auf sechzig Anfragen, und bricht eine davon
+     * ab, ist der Rest in unklarem Zustand.
+     *
+     * @param string[] $ids
+     * @return array{geloescht: int}
+     */
+    public function loeschenViele(array $ids): array
+    {
+        $sauber = array_values(array_filter(array_map(
+            static fn ($id): string => trim((string) $id),
+            $ids
+        ), static fn (string $id): bool => $id !== ''));
+
+        if ($sauber === []) {
+            return ['geloescht' => 0];
+        }
+
+        $platzhalter = implode(',', array_fill(0, count($sauber), '?'));
+        $vorher = (int) $this->db->value(
+            "SELECT COUNT(*) FROM bewerbung_eintraege WHERE id IN ({$platzhalter})",
+            $sauber
+        );
+        $this->db->run("DELETE FROM bewerbung_eintraege WHERE id IN ({$platzhalter})", $sauber);
+
+        return ['geloescht' => $vorher];
+    }
+
+    /**
+     * Findet Einträge, die dieselbe Agentur meinen.
+     *
+     * Verglichen wird über Name und Ort – dieselbe Regel wie beim Import.
+     * Behalten wird der ältere Eintrag: An ihm hängen eher Notizen und ein
+     * Status, weil er länger da ist. Zurückgegeben werden nur die jüngeren,
+     * also genau das, was weg kann.
+     *
+     * @return string[] Kennungen der überzähligen Einträge
+     */
+    public function dubletten(): array
+    {
+        $reihen = $this->db->all(
+            'SELECT id, typ, daten, status, notiz, kontakt_am FROM bewerbung_eintraege ORDER BY rowid ASC'
+        );
+
+        $gesehen = [];
+        $ueberzaehlig = [];
+
+        foreach ($reihen as $row) {
+            $x = json_decode((string) $row['daten'], true);
+            if (!is_array($x)) {
+                continue;
+            }
+
+            $schluessel = $row['typ'] . '|' . $this->kennung(
+                (string) ($x['n'] ?? $x['role'] ?? ''),
+                (string) ($x['c'] ?? $x['loc'] ?? '')
+            );
+            if (str_ends_with($schluessel, '||')) {
+                continue;
+            }
+
+            if (!isset($gesehen[$schluessel])) {
+                $gesehen[$schluessel] = $row;
+                continue;
+            }
+
+            // Hat der jüngere Eintrag einen Stand und der ältere nicht, ist er
+            // der wertvollere – dann fliegt stattdessen der ältere.
+            $alt = $gesehen[$schluessel];
+            if ($this->hatStand($row) && !$this->hatStand($alt)) {
+                $ueberzaehlig[] = (string) $alt['id'];
+                $gesehen[$schluessel] = $row;
+                continue;
+            }
+
+            $ueberzaehlig[] = (string) $row['id'];
+        }
+
+        return $ueberzaehlig;
+    }
+
+    /** Ein Eintrag „hat Stand“, sobald daran gearbeitet wurde. */
+    private function hatStand(array $row): bool
+    {
+        return ($row['status'] ?? 'Offen') !== 'Offen'
+            || trim((string) ($row['notiz'] ?? '')) !== ''
+            || trim((string) ($row['kontakt_am'] ?? '')) !== '';
+    }
+
+    /**
      * Nimmt die Felder an, die es gibt – und nur die.
      *
      * „Und nur die" ist hier wörtlich zu nehmen: Wer beim Nachtragen einer
@@ -334,6 +426,11 @@ final class Bewerbung
      * von der Datei überbügelt wird. Status, Notiz und Kontaktdatum liegen
      * in eigenen Spalten und werden hier ohnehin nicht berührt.
      *
+     * Erkannt wird ein bekannter Eintrag über zwei Wege: über seine Kennung
+     * und über Name und Ort. Der zweite Weg ist nötig, weil dieselbe Agentur
+     * auch aus einer Tabelle stammen kann – dann trägt sie eine eigene
+     * Kennung, und ein Abgleich allein darüber legt sie ein zweites Mal an.
+     *
      * @return array{neu: int, ergaenzt: int}
      */
     public function nachschub(): array
@@ -341,6 +438,19 @@ final class Bewerbung
         $stamm = $this->datei();
         $bekannt = $this->db->all('SELECT id, daten FROM bewerbung_eintraege');
         $daten = array_column($bekannt, 'daten', 'id');
+
+        $nachName = [];
+        foreach ($bekannt as $row) {
+            $x = json_decode((string) $row['daten'], true);
+            if (!is_array($x)) {
+                continue;
+            }
+            $schluessel = $this->kennung((string) ($x['n'] ?? $x['role'] ?? ''), (string) ($x['c'] ?? $x['loc'] ?? ''));
+            if ($schluessel !== '|') {
+                $nachName[$schluessel] ??= (string) $row['id'];
+            }
+        }
+
         $neu = 0;
         $ergaenzt = 0;
 
@@ -353,8 +463,19 @@ final class Bewerbung
 
                 unset($eintrag['id']);
 
-                if (array_key_exists($id, $daten)) {
-                    if ($this->fehlendesAuffuellen($id, (string) $daten[$id], $eintrag)) {
+                $schluessel = $this->kennung(
+                    (string) ($eintrag['n'] ?? $eintrag['role'] ?? ''),
+                    (string) ($eintrag['c'] ?? $eintrag['loc'] ?? '')
+                );
+                $treffer = $daten[$id] ?? null;
+                $trefferId = $id;
+                if ($treffer === null && isset($nachName[$schluessel])) {
+                    $trefferId = $nachName[$schluessel];
+                    $treffer = $daten[$trefferId] ?? null;
+                }
+
+                if ($treffer !== null) {
+                    if ($this->fehlendesAuffuellen($trefferId, (string) $treffer, $eintrag)) {
                         $ergaenzt++;
                     }
                     continue;
@@ -371,6 +492,9 @@ final class Bewerbung
                     'updated_at' => gmdate('c'),
                 ]);
                 $daten[$id] = '';
+                if ($schluessel !== '|') {
+                    $nachName[$schluessel] = $id;
+                }
                 $neu++;
             }
         }
