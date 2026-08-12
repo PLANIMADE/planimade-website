@@ -157,9 +157,12 @@ export default function Bewerbung() {
           type="button"
           className="btn btn-ghost text-xs"
           onClick={async () => {
-            const { neu } = await api.bewerbungNachschub();
+            const { neu, ergaenzt } = await api.bewerbungNachschub();
             setDaten(await api.bewerbung());
-            toast(neu > 0 ? `${neu} neue Einträge aus der Datei` : 'Nichts Neues in der Datei');
+            const teile = [];
+            if (neu > 0) teile.push(`${neu} neue Einträge`);
+            if (ergaenzt > 0) teile.push(`${ergaenzt}× fehlende Angaben ergänzt`);
+            toast(teile.length ? teile.join(', ') : 'Nichts Neues in der Datei');
           }}
         >
           Nachschub aus Datei

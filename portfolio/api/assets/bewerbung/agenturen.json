@@ -1,1952 +1,3478 @@
 {
- "version": 1,
- "regionen": [
-  {
-   "id": "wt",
-   "km": "0 km",
-   "city": "Wuppertal"
-  },
-  {
-   "id": "berg",
-   "km": "12–30 km",
-   "city": "Bergisches Land & Ennepe-Ruhr"
-  },
-  {
-   "id": "me",
-   "km": "20–25 km",
-   "city": "Kreis Mettmann"
-  },
-  {
-   "id": "dd",
-   "km": "30 km",
-   "city": "Düsseldorf & Ratingen"
-  },
-  {
-   "id": "ruhr",
-   "km": "35 km",
-   "city": "Essen & Ruhrgebiet"
-  },
-  {
-   "id": "rhein",
-   "km": "32–40 km",
-   "city": "Neuss · Leverkusen · Monheim"
-  },
-  {
-   "id": "koeln",
-   "km": "50 km",
-   "city": "Köln"
-  }
- ],
- "agenturen": [
-  {
-   "id": "idnwrk",
-   "r": "wt",
-   "n": "IDEENWERK GmbH",
-   "c": "Wuppertal (Bornberg 25, 42109)",
-   "d": 0,
-   "u": "https://www.idnwrk.com",
-   "f": [
-    "Brand Design",
-    "Print",
-    "Webdesign",
-    "Online-Marketing"
-   ],
-   "p": "Bewerbungen über Jobs-Seite",
-   "e": "jobs@idnwrk.com",
-   "flag": "Offene Stelle: Mediengestalter/in · Kommunikationsdesigner/in (Teilzeit)"
-  },
-  {
-   "id": "wppt",
-   "r": "wt",
-   "n": "wppt:kommunikation GmbH",
-   "c": "Wuppertal (Treppenstr. 17–19, 42115)",
-   "d": 0,
-   "u": "https://wppt.de",
-   "f": [
-    "Corporate Design",
-    "Grafik & Web",
-    "Corporate Publishing",
-    "Fotografie"
-   ],
-   "p": "Rob Fährmann, Süleyman Kayaalp, Marc Freudenhammer (GF)",
-   "e": "direkt@wppt.de",
-   "flag": "Mehrfach Red Dot / iF Design Award"
-  },
-  {
-   "id": "coc",
-   "r": "wt",
-   "n": "Club of Communication GmbH",
-   "c": "Wuppertal (Friedrich-Ebert-Str. 153, 42117)",
-   "d": 0,
-   "u": "https://www.club-of-communication.de",
-   "f": [
-    "Branding",
-    "Corporate Design",
-    "Markenstrategie"
-   ],
-   "p": "Burkhard Nobbe (GF); Cornelia Schütte (Dipl. Kommunikationsdesignerin)",
-   "e": "team@club-of-communication.de"
-  },
-  {
-   "id": "pixel",
-   "r": "wt",
-   "n": "PixelProduction GmbH & Co. KG",
-   "c": "Wuppertal (Vorm Eichholz 2, 42119)",
-   "d": 0,
-   "u": "https://pixelproduction.de",
-   "f": [
-    "Corporate Design",
-    "UX/Webdesign",
-    "Grafikdesign",
-    "Video",
-    "3D-Visualisierung"
-   ],
-   "p": "Axel Kurz (GF/Gründer), Sebastian Koch (GF)",
-   "e": "info@pixelproduction.de",
-   "flag": "~40 Mitarbeitende · eigene Jobseite · 3D im Portfolio"
-  },
-  {
-   "id": "mumbeck",
-   "r": "wt",
-   "n": "MUMBECK – Agentur für Werbung GmbH",
-   "c": "Wuppertal (Schlieffenstr. 60, 42329)",
-   "d": 0,
-   "u": "https://www.mumbeck.de",
-   "f": [
-    "Print A–Z",
-    "Verpackungsgestaltung",
-    "Webdesign",
-    "Barrierefreie PDF"
-   ],
-   "p": "Geschäftsführung (inhabergeführt seit 1982)",
-   "e": "mail@mumbeck.de"
-  },
-  {
-   "id": "abeler",
-   "r": "wt",
-   "n": "abeler bollmann werbeagentur GmbH",
-   "c": "Wuppertal (Hofaue 59, 42103)",
-   "d": 0,
-   "u": "https://abelerbollmann.de",
-   "f": [
-    "Kommunikation",
-    "Konzeption",
-    "Werbung"
-   ],
-   "p": "Sönke Bollmann (vertretungsberechtigter Gesellschafter)",
-   "e": "kontakt@abelerbollmann.de"
-  },
-  {
-   "id": "drbook",
-   "r": "wt",
-   "n": "dr book ®",
-   "c": "Wuppertal (Innenstadt)",
-   "d": 0,
-   "u": "https://www.dr-book.com",
-   "f": [
-    "Grafikdesign",
-    "Webdesign",
-    "Werbefilm",
-    "PR",
-    "Social Media"
-   ],
-   "p": "Inhabergeführt",
-   "e": "job@dr-book.de",
-   "flag": "Eigene Bewerbungsadresse · Film & Drohne im Haus"
-  },
-  {
-   "id": "pechschwarz",
-   "r": "wt",
-   "n": "pechschwarz Media GmbH",
-   "c": "Wuppertal (Max-Planck-Str. 19, 42277) · Büro Düsseldorf",
-   "d": 0,
-   "u": "https://pechschwarz.com",
-   "f": [
-    "Branding",
-    "Corporate Design",
-    "UX-Design",
-    "Webdesign",
-    "Imagefilm",
-    "Fotografie"
-   ],
-   "p": "Inhabergeführt",
-   "e": null,
-   "flag": "Sitz Wuppertal — tritt aber auch als Düsseldorfer Agentur auf"
-  },
-  {
-   "id": "gv",
-   "r": "wt",
-   "n": "GV Design (Graffunder & Venne)",
-   "c": "Wuppertal",
-   "d": 0,
-   "u": "https://www.gv-design.de",
-   "f": [
-    "Corporate Design",
-    "Corporate Architecture",
-    "Produktdesign",
-    "3D"
-   ],
-   "p": "Gabriele Graffunder & Partner Venne",
-   "e": null
-  },
-  {
-   "id": "fischer",
-   "r": "berg",
-   "n": "Werbestudio Fischer",
-   "c": "Schwelm (Mittelstr. 16, 58332)",
-   "d": 12,
-   "u": "https://www.werbestudio-fischer.com",
-   "f": [
-    "Werbeagentur",
-    "Fahrzeugwerbung",
-    "Messebau",
-    "Außenwerbung"
-   ],
-   "p": "Inhaber Fischer",
-   "e": "info@werbestudio-fischer.com"
-  },
-  {
-   "id": "biermeier",
-   "r": "berg",
-   "n": "Biermeier & Schlingensiepen",
-   "c": "Schwelm",
-   "d": 12,
-   "u": "https://www.werbeagentur-biermeierschlingensiepen.de",
-   "f": [
-    "Webdesign",
-    "Foto",
-    "Video",
-    "Drohne",
-    "Social Media"
-   ],
-   "p": "Biermeier & Schlingensiepen",
-   "e": null
-  },
-  {
-   "id": "scholemann",
-   "r": "berg",
-   "n": "design scholemann",
-   "c": "Gevelsberg",
-   "d": 15,
-   "u": "https://www.design-scholemann.de",
-   "f": [
-    "Grafikdesign",
-    "Webdesign",
-    "Corporate Design"
-   ],
-   "p": "Inhaber Scholemann (seit über 20 Jahren)",
-   "e": null
-  },
-  {
-   "id": "roccomedia",
-   "r": "berg",
-   "n": "Roccomedia",
-   "c": "Gevelsberg",
-   "d": 15,
-   "u": "https://roccomedia.de",
-   "f": [
-    "Branding",
-    "Kampagnen",
-    "Webdesign",
-    "SEO"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "jaeger",
-   "r": "berg",
-   "n": "jaegermediagroup",
-   "c": "Gevelsberg",
-   "d": 15,
-   "u": "https://jaegermediagroup.de",
-   "f": [
-    "Webdesign",
-    "Marketing",
-    "SEO"
-   ],
-   "p": "Inhaber Jäger",
-   "e": null
-  },
-  {
-   "id": "echtanders",
-   "r": "berg",
-   "n": "echtanders",
-   "c": "Hagen / Gevelsberg",
-   "d": 20,
-   "u": "https://echtanders.de",
-   "f": [
-    "Grafikdesign",
-    "Werbetechnik",
-    "Webdesign",
-    "Branding"
-   ],
-   "p": "Inhaber",
-   "e": null
-  },
-  {
-   "id": "orangesugar",
-   "r": "berg",
-   "n": "Orange Sugar",
-   "c": "Hagen",
-   "d": 30,
-   "u": "https://orange-sugar.de",
-   "f": [
-    "Kommunikationsdesign",
-    "Grafikdesign",
-    "Fotografie",
-    "Branding"
-   ],
-   "p": "Inhaber",
-   "e": null
-  },
-  {
-   "id": "schmidt",
-   "r": "berg",
-   "n": "büro schmidt",
-   "c": "Solingen",
-   "d": 15,
-   "u": "https://www.bueroschmidt.de",
-   "f": [
-    "Corporate Design",
-    "Webdesign",
-    "Print"
-   ],
-   "p": "Inhaber/Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "2vision",
-   "r": "berg",
-   "n": "2 Vision Werbeagentur e.K.",
-   "c": "Solingen (Brucknerstr. 119a, 42655)",
-   "d": 15,
-   "u": "https://www.2vision.de",
-   "f": [
-    "Verpackungsdesign",
-    "Brandmanagement",
-    "Corporate Design",
-    "Digital"
-   ],
-   "p": "Lucie Aycan (Firmeninhaberin); Birgit Berger (kreative Beratung)",
-   "e": "info@2vision.de"
-  },
-  {
-   "id": "3iq",
-   "r": "berg",
-   "n": "3-iQ Werbeagentur",
-   "c": "Solingen (Untenhöhscheid 16, 42657)",
-   "d": 15,
-   "u": "https://www.3-iq.de",
-   "f": [
-    "Grafikdesign",
-    "Printdesign",
-    "Webdesign"
-   ],
-   "p": "Geschäftsführung",
-   "e": "info@3-iq.de"
-  },
-  {
-   "id": "creativum",
-   "r": "berg",
-   "n": "CREATIVUM",
-   "c": "Solingen (Fürker Str. 47, 42697)",
-   "d": 15,
-   "u": "https://www.creativum.org",
-   "f": [
-    "Visuelle Kommunikation",
-    "Konzeption",
-    "Kreation",
-    "Full Service"
-   ],
-   "p": "Sven Werner (Geschäftsführer, Konzeption & Kreation)",
-   "e": "hallo@creativum.org"
-  },
-  {
-   "id": "mantz",
-   "r": "berg",
-   "n": "Mantz Werbeagentur",
-   "c": "Solingen",
-   "d": 15,
-   "u": "https://mantz-werbeagentur.de",
-   "f": [
-    "Full Service",
-    "Werbekonzepte",
-    "Print",
-    "Web"
-   ],
-   "p": "Inhaber Mantz",
-   "e": null
-  },
-  {
-   "id": "berger",
-   "r": "berg",
-   "n": "Berger+Partner Werbeagentur GmbH",
-   "c": "Solingen",
-   "d": 15,
-   "u": "https://www.berger-u-partner.de",
-   "f": [
-    "Corporate Design",
-    "Geschäftsausstattung",
-    "Messe",
-    "TV-Spots"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "deus",
-   "r": "berg",
-   "n": "deus werbung",
-   "c": "Solingen (Scheidter Str. 23, 42653)",
-   "d": 15,
-   "u": "https://deus-werbung.de",
-   "f": [
-    "Grafikstudio",
-    "Produktionsbüro",
-    "Klassische Werbung"
-   ],
-   "p": "Andreas Deus (Inhaber)",
-   "e": null
-  },
-  {
-   "id": "ludewigs",
-   "r": "berg",
-   "n": "LUDEWIGSKONZEPT",
-   "c": "Solingen",
-   "d": 15,
-   "u": "https://www.ludewigskonzept.de",
-   "f": [
-    "Design & Kommunikation",
-    "Print",
-    "Web",
-    "Kampagnen"
-   ],
-   "p": "Inhaber Ludewigs",
-   "e": null
-  },
-  {
-   "id": "printmedias",
-   "r": "berg",
-   "n": "PRINTMEDIAS GmbH",
-   "c": "Solingen",
-   "d": 15,
-   "u": "https://www.printmedias.de",
-   "f": [
-    "Branding",
-    "Logo & CD",
-    "Webdesign",
-    "Print"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "muellerschmitz",
-   "r": "berg",
-   "n": "Müller & Schmitz GmbH",
-   "c": "Remscheid (Martin-Luther-Str. 6, 42853)",
-   "d": 20,
-   "u": "https://mueller-schmitz.de",
-   "f": [
-    "Full Service",
-    "Web",
-    "Print",
-    "Design",
-    "Foto"
-   ],
-   "p": "Geschäftsführung (seit 1972)",
-   "e": "info@mueller-schmitz.de"
-  },
-  {
-   "id": "blickfang",
-   "r": "berg",
-   "n": "blickfang-design",
-   "c": "Remscheid",
-   "d": 20,
-   "u": "https://blickfang-design.net",
-   "f": [
-    "Corporate Design",
-    "Logo",
-    "Webdesign",
-    "Marketing"
-   ],
-   "p": "Inhaber",
-   "e": null
-  },
-  {
-   "id": "bandorski",
-   "r": "berg",
-   "n": "BANDORSKI",
-   "c": "Velbert",
-   "d": 20,
-   "u": "https://www.bandorski.com",
-   "f": [
-    "Corporate Design",
-    "Webdesign",
-    "Fotografie",
-    "Editorial"
-   ],
-   "p": "Markus Bandorski (Inhaber)",
-   "e": null
-  },
-  {
-   "id": "pmd",
-   "r": "berg",
-   "n": "pmd – Pro Mod Deters GmbH",
-   "c": "Velbert",
-   "d": 20,
-   "u": "https://pmd-agentur.de",
-   "f": [
-    "Full Service",
-    "Web",
-    "Print"
-   ],
-   "p": "Familie Deters (familiengeführt)",
-   "e": null
-  },
-  {
-   "id": "kolbe",
-   "r": "berg",
-   "n": "Werbedesign Kolbe",
-   "c": "Velbert",
-   "d": 20,
-   "u": "https://www.werbedesign-kolbe.de",
-   "f": [
-    "Corporate Design",
-    "Grafikdesign",
-    "Illustration",
-    "Werbemedien"
-   ],
-   "p": "Inhaber Kolbe",
-   "e": null
-  },
-  {
-   "id": "kuerten",
-   "r": "me",
-   "n": "KÜRTEN DESIGN",
-   "c": "Mettmann",
-   "d": 20,
-   "u": "https://kuerten-design.de",
-   "f": [
-    "Logodesign",
-    "Webdesign",
-    "Grafikdesign",
-    "Kreativkonzeption"
-   ],
-   "p": "Herr Kürten (Inhaber)",
-   "e": null
-  },
-  {
-   "id": "loose",
-   "r": "me",
-   "n": "loosemedia",
-   "c": "Erkrath (Gerhart-Hauptmann-Str. 43, 40699)",
-   "d": 22,
-   "u": "https://loose-media.de",
-   "f": [
-    "Grafikdesign",
-    "Webdesign",
-    "Werbung für KMU"
-   ],
-   "p": "Inhaber Loose (seit 2003)",
-   "e": null
-  },
-  {
-   "id": "arttec",
-   "r": "me",
-   "n": "art@tec – Agentur für Design & Webkommunikation",
-   "c": "Hilden",
-   "d": 25,
-   "u": "https://www.art-at-tec.de",
-   "f": [
-    "Grafikdesign",
-    "Corporate Design",
-    "Webdesign",
-    "Animationsdesign"
-   ],
-   "p": "Inhaber/Geschäftsführung",
-   "e": null,
-   "flag": "Animationsdesign im Leistungsportfolio"
-  },
-  {
-   "id": "cdoc",
-   "r": "me",
-   "n": "cdoc-creative",
-   "c": "Hilden",
-   "d": 25,
-   "u": "https://www.cdoc-creative.de",
-   "f": [
-    "Grafikdesign",
-    "Webdesign",
-    "Mediendesign"
-   ],
-   "p": "Inhaber",
-   "e": null
-  },
-  {
-   "id": "frisch",
-   "r": "dd",
-   "n": "Frisch ans Werk",
-   "c": "Ratingen",
-   "d": 30,
-   "u": "https://www.frischanswerk.de",
-   "f": [
-    "Corporate Design",
-    "Print",
-    "Fotografie",
-    "Web",
-    "Raumgestaltung"
-   ],
-   "p": "Designbüro-Leitung",
-   "e": null
-  },
-  {
-   "id": "koenigs",
-   "r": "dd",
-   "n": "Königs Design",
-   "c": "Ratingen",
-   "d": 30,
-   "u": "https://koenigs-design.com",
-   "f": [
-    "Grafikdesign",
-    "Webdesign",
-    "Fotografie",
-    "Film"
-   ],
-   "p": "Inhaber Königs",
-   "e": null
-  },
-  {
-   "id": "creneo",
-   "r": "dd",
-   "n": "CRENEO",
-   "c": "Düsseldorf (Kaiserswerther Str.)",
-   "d": 30,
-   "u": "https://www.creneo.com",
-   "f": [
-    "Branding",
-    "Corporate Design",
-    "Markensysteme",
-    "Strategie"
-   ],
-   "p": "Geschäftsführung (inhabergeführt seit 2009)",
-   "e": "hello@creneo.com"
-  },
-  {
-   "id": "rothkopf",
-   "r": "dd",
-   "n": "Rothkopf & Huberty Werbeagentur GmbH",
-   "c": "Düsseldorf (Kirchfeldstr. 149, 40215)",
-   "d": 30,
-   "u": "https://www.rothkopf-huberty.de",
-   "f": [
-    "Werbung",
-    "Kampagnen",
-    "Design",
-    "Digital"
-   ],
-   "p": "Frank Rothkopf, Marc Lütkemeier (GF)",
-   "e": "info@rothkopf-huberty.de",
-   "flag": "Hat eine eigene Jobs-Seite"
-  },
-  {
-   "id": "piratas",
-   "r": "dd",
-   "n": "piratas Werbeagentur GmbH + Co. KG",
-   "c": "Düsseldorf (Schwanenhöfe, Erkrather Str. 228A)",
-   "d": 30,
-   "u": "https://www.piratas-duesseldorf.de",
-   "f": [
-    "Werbung",
-    "Kampagnen",
-    "Design"
-   ],
-   "p": "Achim Esser, Andreas Bredendiek (GF)",
-   "e": "kontakt@piratas.de"
-  },
-  {
-   "id": "nextao",
-   "r": "dd",
-   "n": "nextao",
-   "c": "Düsseldorf (Königsallee 27, 40212)",
-   "d": 30,
-   "u": "https://nextao.de",
-   "f": [
-    "Werbung",
-    "Digital",
-    "Marketing"
-   ],
-   "p": "Franziska Davidt (Geschäftsführerin)",
-   "e": "info@nextao.de"
-  },
-  {
-   "id": "blueprint",
-   "r": "dd",
-   "n": "blueprint advertising (SK Connect GmbH)",
-   "c": "Düsseldorf (Kaiserswerther Str. 215)",
-   "d": 30,
-   "u": "https://www.blueprint-ad.de",
-   "f": [
-    "Werbung",
-    "Kampagnen",
-    "Print"
-   ],
-   "p": "Stefan Kögel (Geschäftsführer)",
-   "e": "info@blueprint-ad.de"
-  },
-  {
-   "id": "wiehl",
-   "r": "dd",
-   "n": "Wiehl, Co.",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://www.wiehl-co.com",
-   "f": [
-    "Design",
-    "Branding",
-    "Art Direction"
-   ],
-   "p": "Inhaber Wiehl",
-   "e": "info@wiehl-co.com"
-  },
-  {
-   "id": "markenzeichen",
-   "r": "dd",
-   "n": "Markenzeichen GmbH",
-   "c": "Düsseldorf / Frankfurt",
-   "d": 30,
-   "u": "https://markenzeichen.de",
-   "f": [
-    "Markenkommunikation",
-    "Corporate Design",
-    "Kampagnen"
-   ],
-   "p": "Geschäftsführung",
-   "e": "info@markenzeichen.de"
-  },
-  {
-   "id": "psg",
-   "r": "dd",
-   "n": "Peter Schmidt Group",
-   "c": "Düsseldorf (+ Hamburg, Frankfurt, München)",
-   "d": 30,
-   "u": "http://www.peter-schmidt-group.de",
-   "f": [
-    "Brand Design",
-    "Packaging",
-    "Corporate Design",
-    "Digital"
-   ],
-   "p": "Bewerbungen zentral",
-   "e": "info@peter-schmidt-group.de",
-   "flag": "Große Marken-Designagentur — formaler Prozess"
-  },
-  {
-   "id": "metadesign",
-   "r": "dd",
-   "n": "MetaDesign GmbH",
-   "c": "Düsseldorf / Berlin",
-   "d": 30,
-   "u": "https://metadesign.com/",
-   "f": [
-    "Brand Strategy",
-    "Corporate Design",
-    "Design Systems"
-   ],
-   "p": "Bewerbungen zentral Berlin",
-   "e": "mail.ber@metadesign.com",
-   "flag": "Netzwerkagentur"
-  },
-  {
-   "id": "designiert",
-   "r": "dd",
-   "n": "designiert / Lockstoff Design",
-   "c": "Düsseldorf / Meerbusch",
-   "d": 30,
-   "u": "https://www.designiert.de",
-   "f": [
-    "Corporate Identity",
-    "Corporate Design",
-    "Digital Branding"
-   ],
-   "p": "Niklas Webelhaus (geschäftsführender Gesellschafter, lehrt an der HS Düsseldorf)",
-   "e": null
-  },
-  {
-   "id": "fundament",
-   "r": "dd",
-   "n": "BÜRO FUNDAMENT",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://buerofundament.de",
-   "f": [
-    "Markendesign",
-    "Markenstrategie",
-    "Websites",
-    "Kampagnen"
-   ],
-   "p": "Inhaber/Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "g31",
-   "r": "dd",
-   "n": "g31 Design & Branding",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://g31.design",
-   "f": [
-    "Brand Identity",
-    "Kampagnen",
-    "Digital Applications"
-   ],
-   "p": "Creative Direction",
-   "e": null
-  },
-  {
-   "id": "distinctive",
-   "r": "dd",
-   "n": "DISTINCTIVE (DSTNCTVE)",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://distinctive.de",
-   "f": [
-    "Branding",
-    "Corporate Identity",
-    "Naming",
-    "Corporate Design"
-   ],
-   "p": "Creative Direction / GF",
-   "e": null
-  },
-  {
-   "id": "zierquadrat",
-   "r": "dd",
-   "n": "Zierquadrat",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://zierquadrat.de",
-   "f": [
-    "Branding",
-    "Corporate Design",
-    "Logodesign",
-    "Webdesign"
-   ],
-   "p": "Inhaber/Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "hwl",
-   "r": "dd",
-   "n": "HWL Werbeagentur GmbH",
-   "c": "Düsseldorf (Düsselthaler Str. 8, 40211)",
-   "d": 30,
-   "u": "https://hwl-agentur.de",
-   "f": [
-    "Werbung",
-    "Design",
-    "Kommunikation"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "werbejunge",
-   "r": "dd",
-   "n": "werbejunge",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://werbejunge.de",
-   "f": [
-    "Webdesign",
-    "Print",
-    "Online-Marketing",
-    "Broschüren"
-   ],
-   "p": "Inhabergeführt (über 13 Jahre)",
-   "e": null
-  },
-  {
-   "id": "p2media",
-   "r": "dd",
-   "n": "p2 media",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://www.p2media.de",
-   "f": [
-    "Grafikdesign",
-    "Konzeption",
-    "Fotografie",
-    "Web"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "remjnd",
-   "r": "dd",
-   "n": "REMJND",
-   "c": "bei Düsseldorf",
-   "d": 30,
-   "u": "https://remjnd.com",
-   "f": [
-    "Markenentwicklung",
-    "Digitaler Content",
-    "Filmproduktion"
-   ],
-   "p": "Inhabergeführt",
-   "e": null
-  },
-  {
-   "id": "belly",
-   "r": "dd",
-   "n": "Belly Creative Studios",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://bellystudios.de",
-   "f": [
-    "Corporate Design",
-    "Film",
-    "Bewegtbild",
-    "Branding"
-   ],
-   "p": "Gründerteam aus Kreativen & Filmemacher:innen",
-   "e": null,
-   "flag": "Film/Bewegtbild-Schwerpunkt"
-  },
-  {
-   "id": "webweisend",
-   "r": "dd",
-   "n": "Webweisend Media GmbH",
-   "c": "Düsseldorf-Heerdt (nahe Neuss)",
-   "d": 30,
-   "u": "https://www.media-company.eu",
-   "f": [
-    "Markenkommunikation",
-    "Design",
-    "Programmierung"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "robinfrank",
-   "r": "dd",
-   "n": "Studio Robin Frank",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://studiorobinfrank.de",
-   "f": [
-    "Branding",
-    "Corporate Design",
-    "Packaging",
-    "Barrierefreies Design"
-   ],
-   "p": "Robin Frank (Inhaber)",
-   "e": null,
-   "flag": "Ein-Personen-Studio"
-  },
-  {
-   "id": "mintley",
-   "r": "dd",
-   "n": "mintley",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://www.mintley.com",
-   "f": [
-    "Branding",
-    "Design Systems",
-    "Digitalagentur",
-    "Positionierung"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "capture",
-   "r": "dd",
-   "n": "Capture Media GmbH",
-   "c": "Düsseldorf (Rethelstr. 64, 40237)",
-   "d": 30,
-   "u": "https://www.behance.net/capturemediagmbh",
-   "f": [
-    "Motion Design",
-    "3D & CGI",
-    "Unreal / Echtzeit-3D",
-    "Filmproduktion",
-    "AR",
-    "Messe & Event"
-   ],
-   "p": "Team aus Strategie, Design, Motion Design, 3D-Artists und Developern",
-   "e": null,
-   "flag": "Achtung: Insolvenzverfahren seit 10/2024 — Status vor Bewerbung prüfen"
-  },
-  {
-   "id": "blueworld",
-   "r": "dd",
-   "n": "blueworld.studio",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://www.blueworld.studio",
-   "f": [
-    "3D-Animation",
-    "Motion Design",
-    "3D-Visualisierung",
-    "Simulation"
-   ],
-   "p": "Studio-Leitung",
-   "e": null,
-   "flag": "Reines 3D-/Motion-Studio — direkter Treffer für dein Profil"
-  },
-  {
-   "id": "imotion",
-   "r": "dd",
-   "n": "i-motion",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://www.i-motion.tv",
-   "f": [
-    "Motion Design",
-    "2D Animation",
-    "3D Animation",
-    "Postproduktion"
-   ],
-   "p": "Studio-Leitung",
-   "e": null
-  },
-  {
-   "id": "adi3d",
-   "r": "dd",
-   "n": "ADI 3D STUDIO",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://adi-3d.de",
-   "f": [
-    "3D-Visualisierung",
-    "3D-Animation",
-    "Werbung"
-   ],
-   "p": "Studio-Inhaber",
-   "e": null
-  },
-  {
-   "id": "neuland",
-   "r": "dd",
-   "n": "NEULAND GmbH",
-   "c": "Düsseldorf (Mintropstr. 14–16, 40215)",
-   "d": 30,
-   "u": "https://neuland-films.com",
-   "f": [
-    "Filmproduktion",
-    "Imagefilm",
-    "Animation",
-    "Fotografie",
-    "KI-gestützte Bildsprache"
-   ],
-   "p": "Peter Schilling (Geschäftsführer)",
-   "e": "info@neuland-films.com"
-  },
-  {
-   "id": "kraft",
-   "r": "dd",
-   "n": "Kraft Pictures",
-   "c": "Düsseldorf (Germaniastr. 22, 40223)",
-   "d": 30,
-   "u": "https://kraft-pictures.com",
-   "f": [
-    "Werbefilm",
-    "Imagefilm",
-    "Erklärfilm & Animation",
-    "Motion Design",
-    "3D-Rendering",
-    "Postproduktion"
-   ],
-   "p": "Daniel Kraft (Ansprechpartner, Gründer — seit 2009, über 15 Jahre)",
-   "e": "mail@kraft-pictures.com",
-   "flag": "Sucht laut Website aktiv neue Talente — Initiativbewerbung ausdrücklich erwünscht"
-  },
-  {
-   "id": "neiser",
-   "r": "dd",
-   "n": "NEISER Filmproduktion",
-   "c": "Düsseldorf (Schinkelstr. 52, 40211)",
-   "d": 30,
-   "u": "https://www.neiser.com",
-   "f": [
-    "TV-Spots",
-    "Imagefilm",
-    "Werbefilm",
-    "Studio",
-    "Animation",
-    "Sound Design"
-   ],
-   "p": "Tim Neiser (Inhaber)",
-   "e": null,
-   "flag": "International ausgezeichnet: Cannes Lions, New York Festivals, Effie"
-  },
-  {
-   "id": "fiumu",
-   "r": "dd",
-   "n": "FIUMU",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://fiumu.de",
-   "f": [
-    "Imagefilm",
-    "Videoproduktion",
-    "Visual Storytelling"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "filmschere",
-   "r": "dd",
-   "n": "Filmschere",
-   "c": "Düsseldorf (Düsselstr. 25, 40219)",
-   "d": 30,
-   "u": "https://www.filmschere.de",
-   "f": [
-    "Imagefilm",
-    "Industriefilm",
-    "Werbefilm",
-    "Musikvideo",
-    "Fashionfilm"
-   ],
-   "p": "Produktionsteam-Leitung",
-   "e": "myfilm@filmschere.de"
-  },
-  {
-   "id": "cheesecake",
-   "r": "dd",
-   "n": "cheesecake film",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://cheesecake-film.de",
-   "f": [
-    "Imagefilm",
-    "Werbespot",
-    "Erklärvideo",
-    "Messefilm",
-    "Storyboard"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "vidego",
-   "r": "dd",
-   "n": "Vidego Media Group",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://www.vidego.de",
-   "f": [
-    "Videoproduktion",
-    "3D-Animation",
-    "Erklärfilm",
-    "Livestreaming"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "fellner",
-   "r": "dd",
-   "n": "fellnermedia",
-   "c": "Düsseldorf",
-   "d": 30,
-   "u": "https://www.fellnermedia.de",
-   "f": [
-    "Werbefilm",
-    "TV-Spot",
-    "Imagefilm",
-    "Animation",
-    "Drohne"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "31m",
-   "r": "ruhr",
-   "n": "31M Design- und Werbeagentur",
-   "c": "Essen (Bredeneyer Wasserturm)",
-   "d": 35,
-   "u": "https://31m.de",
-   "f": [
-    "Corporate Design",
-    "Kampagnen",
-    "Websites",
-    "Magazine",
-    "Film & Foto"
-   ],
-   "p": "Geschäftsführung (gegr. 2005)",
-   "e": null
-  },
-  {
-   "id": "hdgg",
-   "r": "ruhr",
-   "n": "Haus des guten Geschmacks",
-   "c": "Essen (Emilienstr. 4, 45128)",
-   "d": 35,
-   "u": "https://www.hausdesgutengeschmacks.de",
-   "f": [
-    "Corporate Design",
-    "Websites",
-    "Kampagnen"
-   ],
-   "p": "Inhaber/Geschäftsführung",
-   "e": "info@hausdesgutengeschmacks.de"
-  },
-  {
-   "id": "esy",
-   "r": "ruhr",
-   "n": "ESY Agentur",
-   "c": "Essen",
-   "d": 35,
-   "u": "https://esy-agentur.de",
-   "f": [
-    "Branding",
-    "Corporate Design",
-    "Webdesign",
-    "SEO/SEA"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "k3",
-   "r": "ruhr",
-   "n": "Agentur K3",
-   "c": "Essen",
-   "d": 35,
-   "u": "https://www.agentur-k3.de",
-   "f": [
-    "Corporate Design",
-    "Markenentwicklung",
-    "Start-ups"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "goldners",
-   "r": "rhein",
-   "n": "goldners – Werbeagentur | Druckerei | Fotografie",
-   "c": "Monheim am Rhein",
-   "d": 32,
-   "u": "https://goldners.de",
-   "f": [
-    "Corporate Design",
-    "Webdesign",
-    "Print",
-    "Fotografie"
-   ],
-   "p": "Inhaber",
-   "e": null
-  },
-  {
-   "id": "designb3",
-   "r": "rhein",
-   "n": "DESIGN B3",
-   "c": "Leverkusen",
-   "d": 40,
-   "u": "https://www.designb3.de",
-   "f": [
-    "Logo & CD",
-    "Print",
-    "Web",
-    "Marketingkonzepte"
-   ],
-   "p": "Nici Heimroth & Gunna Holz (Inhaber)",
-   "e": null
-  },
-  {
-   "id": "markoon",
-   "r": "rhein",
-   "n": "markoon",
-   "c": "Leverkusen",
-   "d": 40,
-   "u": "https://www.markoon.de",
-   "f": [
-    "Corporate Design",
-    "Webshop",
-    "Contentstrategie"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "oveleon",
-   "r": "rhein",
-   "n": "Oveleon",
-   "c": "Leverkusen / Neuss",
-   "d": 40,
-   "u": "https://www.oveleon.de",
-   "f": [
-    "Corporate Design",
-    "Webdesign",
-    "Softwarelösungen"
-   ],
-   "p": "Geschäftsführung",
-   "e": null,
-   "flag": "Deutlicher Technik-Anteil"
-  },
-  {
-   "id": "art4art",
-   "r": "rhein",
-   "n": "art4artdesign",
-   "c": "Neuss",
-   "d": 40,
-   "u": "https://www.art4artdesign.com",
-   "f": [
-    "Grafikdesign & Print",
-    "Webdesign",
-    "Corporate Identity"
-   ],
-   "p": "Inhabergeführt seit 1995",
-   "e": null
-  },
-  {
-   "id": "sons",
-   "r": "koeln",
-   "n": "sons of ipanema",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://www.sonsofipanema.de",
-   "f": [
-    "Grafikdesign",
-    "Illustration",
-    "Art Direction",
-    "Branding",
-    "Animation"
-   ],
-   "p": "Studio-Leitung",
-   "e": null,
-   "flag": "Animation & Motion im Leistungsprofil"
-  },
-  {
-   "id": "milk",
-   "r": "koeln",
-   "n": "Milk Design",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://milkdesign.de",
-   "f": [
-    "Corporate Design",
-    "Branding",
-    "Digital"
-   ],
-   "p": "Geschäftsführung",
-   "e": "info@milkdesign.de"
-  },
-  {
-   "id": "polylog",
-   "r": "koeln",
-   "n": "Studio Polylog",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://www.studio-polylog.com",
-   "f": [
-    "Corporate Design",
-    "Editorial",
-    "Digital"
-   ],
-   "p": "Studio-Leitung",
-   "e": "mail@studio-polylog.com"
-  },
-  {
-   "id": "mir",
-   "r": "koeln",
-   "n": "Mir Media",
-   "c": "Köln",
-   "d": 50,
-   "u": "http://www.mir.de",
-   "f": [
-    "Corporate Design",
-    "Digital",
-    "Kampagnen"
-   ],
-   "p": "Geschäftsführung",
-   "e": "hello@mir.de"
-  },
-  {
-   "id": "studio3000",
-   "r": "koeln",
-   "n": "Studio 3000",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://studio3000.de",
-   "f": [
-    "Markenentwicklung",
-    "Branding",
-    "Websites"
-   ],
-   "p": "Studio-Leitung",
-   "e": "mail@studio3000.de"
-  },
-  {
-   "id": "dumbo",
-   "r": "koeln",
-   "n": "Dumbo",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://dumbo.design",
-   "f": [
-    "Design",
-    "Branding"
-   ],
-   "p": "Studio-Leitung",
-   "e": "mail@dumbo.design"
-  },
-  {
-   "id": "dayy",
-   "r": "koeln",
-   "n": "Dayy",
-   "c": "Köln / Berlin",
-   "d": 50,
-   "u": "https://www.dayy.com",
-   "f": [
-    "Design",
-    "Branding",
-    "Digital"
-   ],
-   "p": "Geschäftsführung",
-   "e": "info@dayy.com"
-  },
-  {
-   "id": "denkwerk",
-   "r": "koeln",
-   "n": "Denkwerk",
-   "c": "Köln (+ Berlin, Hamburg, München)",
-   "d": 50,
-   "u": "https://www.denkwerk.com/de",
-   "f": [
-    "Digital Design",
-    "Brand Experience",
-    "Produktentwicklung"
-   ],
-   "p": "Bewerbungen zentral",
-   "e": "hello@denkwerk.com",
-   "flag": "Größere Digitalagentur"
-  },
-  {
-   "id": "vrej",
-   "r": "koeln",
-   "n": "Vrej Designbüro",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://www.vrej.de",
-   "f": [
-    "Kommunikationsdesign",
-    "Corporate Design",
-    "Editorial"
-   ],
-   "p": "Inhaber (GbR)",
-   "e": "info@vrej.de"
-  },
-  {
-   "id": "tth",
-   "r": "koeln",
-   "n": "Type Type Hype",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://www.typetypehype.de",
-   "f": [
-    "Typografie",
-    "Branding",
-    "Design"
-   ],
-   "p": "Studio-Gründer (GbR)",
-   "e": "hello@typetypehype.de"
-  },
-  {
-   "id": "luett",
-   "r": "koeln",
-   "n": "luett",
-   "c": "Köln / Düsseldorf",
-   "d": 50,
-   "u": "https://www.studio-luett.de",
-   "f": [
-    "Branding",
-    "Design",
-    "Kreativstudio"
-   ],
-   "p": "Inhabergeführt (gegr. 2023)",
-   "e": "hallo@studio-luett.de"
-  },
-  {
-   "id": "schwarzmatt",
-   "r": "koeln",
-   "n": "Schwarz+Matt",
-   "c": "Köln / Dortmund",
-   "d": 50,
-   "u": "https://www.schwarz-matt.com",
-   "f": [
-    "Markenstrategie",
-    "Corporate Design",
-    "Brand Experience"
-   ],
-   "p": "Geschäftsführung",
-   "e": "info@schwarz-matt.com"
-  },
-  {
-   "id": "radikant",
-   "r": "koeln",
-   "n": "Radikant",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://www.radikant.com",
-   "f": [
-    "Brand Strategy",
-    "Corporate Design",
-    "UI/UX",
-    "Design Systems"
-   ],
-   "p": "Creative Direction",
-   "e": null,
-   "flag": "Referenzen u. a. DEVK, Aktion Mensch, Telekom"
-  },
-  {
-   "id": "sevn",
-   "r": "koeln",
-   "n": "SEVN",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://sevn.de",
-   "f": [
-    "Branding",
-    "Corporate Design",
-    "Kampagnen"
-   ],
-   "p": "Creative Direction",
-   "e": null,
-   "flag": "Corporate Design für REWE digital"
-  },
-  {
-   "id": "kirch",
-   "r": "koeln",
-   "n": "Kirch & Kriewald",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://www.kirchundkriewald.de",
-   "f": [
-    "Branding",
-    "Rebranding",
-    "Corporate Design",
-    "Webflow"
-   ],
-   "p": "Inhaber Kirch & Kriewald",
-   "e": null
-  },
-  {
-   "id": "echoecho",
-   "r": "koeln",
-   "n": "EchoEcho Studio",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://www.echoecho.studio",
-   "f": [
-    "Markenstrategie",
-    "Naming",
-    "Corporate Design"
-   ],
-   "p": "Creative Direction",
-   "e": null
-  },
-  {
-   "id": "u53",
-   "r": "koeln",
-   "n": "büro u-53",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://bueroident.de",
-   "f": [
-    "Kommunikationsdesign",
-    "Markendesign",
-    "Webdesign",
-    "Illustration"
-   ],
-   "p": "Studio-Inhaber",
-   "e": null
-  },
-  {
-   "id": "todesign",
-   "r": "koeln",
-   "n": "to-design",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://www.to-design.de",
-   "f": [
-    "Corporate Design",
-    "Corporate Language",
-    "Webdesign",
-    "Video"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  },
-  {
-   "id": "3punkt",
-   "r": "koeln",
-   "n": "3PUNKTDESIGN",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://www.3punktdesign.de",
-   "f": [
-    "Branding",
-    "Corporate Design",
-    "Print",
-    "Websites"
-   ],
-   "p": "Dirk Schmitter (Inhaber & Designer)",
-   "e": null
-  },
-  {
-   "id": "bohlen",
-   "r": "koeln",
-   "n": "Bohlen Design",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://www.bohlen-design.de",
-   "f": [
-    "Webdesign",
-    "Branding",
-    "Corporate Design",
-    "Print"
-   ],
-   "p": "Inhaber Bohlen",
-   "e": null
-  },
-  {
-   "id": "zacher",
-   "r": "koeln",
-   "n": "zacher media GmbH",
-   "c": "Köln",
-   "d": 50,
-   "u": "https://zachermedia.de",
-   "f": [
-    "Corporate Design",
-    "Logodesign",
-    "Social-Media-Grafik"
-   ],
-   "p": "Geschäftsführung",
-   "e": null
-  }
- ],
- "stellen": [
-  {
-   "id": "j-idnwrk",
-   "role": "Mediengestalter/in · Kommunikationsdesigner/in (Teilzeit)",
-   "co": "IDEENWERK GmbH",
-   "loc": "Wuppertal",
-   "d": 0,
-   "tags": [
-    "Agentur",
-    "Print",
-    "Web",
-    "Brand Design"
-   ],
-   "fit": true,
-   "url": "https://www.idnwrk.com/jobs/",
-   "note": "Direkt auf der Agenturseite ausgeschrieben, Bewerbung an jobs@idnwrk.com"
-  },
-  {
-   "id": "j-storch",
-   "role": "Mediengestalter / Grafikdesigner Verpackung & Artworks (befristet)",
-   "co": "Storch-Ciret Holding GmbH",
-   "loc": "Wuppertal",
-   "d": 0,
-   "tags": [
-    "Industrie",
-    "Packaging",
-    "Artwork",
-    "CI"
-   ],
-   "url": null,
-   "note": "Werkzeughersteller. Artworks und Layouts für Marketing und Verpackung."
-  },
-  {
-   "id": "j-fare",
-   "role": "Grafiker/in für Bilddatenbank und KI-gestützte Bildproduktion",
-   "co": "FARE – Guenther Fassbender GmbH",
-   "loc": "Remscheid",
-   "d": 20,
-   "tags": [
-    "Industrie",
-    "Bildproduktion",
-    "KI-Tools",
-    "Photoshop"
-   ],
-   "fit": true,
-   "url": null,
-   "note": "Bildgenerierung mit Firefly/Midjourney/Stable Diffusion plus manuelle PSD-Nachbearbeitung."
-  },
-  {
-   "id": "j-pfeiffer",
-   "role": "Grafiker / Mediengestalter — Druckvorstufe (Teilzeit)",
-   "co": "Helmut Pfeiffer GmbH & Co. KG",
-   "loc": "Hückeswagen",
-   "d": 25,
-   "tags": [
-    "Druckvorstufe",
-    "Print",
-    "Teilzeit"
-   ],
-   "url": null,
-   "note": "Reinzeichnung und Druckvorstufe."
-  },
-  {
-   "id": "j-elementa",
-   "role": "Grafikdesigner*in mit Organisationstalent",
-   "co": "Elementa GmbH",
-   "loc": "Hilden",
-   "d": 25,
-   "tags": [
-    "Artwork",
-    "Verpackung",
-    "Marketing",
-    "CI"
-   ],
-   "url": null,
-   "note": "Artworks und Layouts für Marketing- und Verpackungsthemen."
-  },
-  {
-   "id": "j-silag",
-   "role": "Mediengestalter/in Digital- und Printmedien",
-   "co": "SILAG Handel GmbH",
-   "loc": "Langenfeld",
-   "d": 35,
-   "tags": [
-    "Handel",
-    "Layout",
-    "Reinzeichnung"
-   ],
-   "url": null,
-   "note": "Schnelle Layout- und Reinzeichnungsarbeit."
-  },
-  {
-   "id": "j-carcoustics",
-   "role": "Marketing & Graphics Specialist (Teil- oder Vollzeit)",
-   "co": "Carcoustics",
-   "loc": "Leverkusen",
-   "d": 40,
-   "tags": [
-    "Industrie",
-    "Marketing",
-    "Grafik"
-   ],
-   "url": null,
-   "note": "Automotive-Zulieferer, Marketing-Grafik im Haus."
-  },
-  {
-   "id": "j-vdp",
-   "role": "Satz- und Layoutspezialist — Print und digitale Medien",
-   "co": "Verlag Deutsche Polizeiliteratur GmbH",
-   "loc": "Hilden",
-   "d": 25,
-   "tags": [
-    "Verlag",
-    "Satz",
-    "Layout",
-    "Print"
-   ],
-   "url": null,
-   "note": "Fachverlag/Medienhaus, Herstellungsabteilung."
-  },
-  {
-   "id": "j-adc",
-   "role": "Mediengestalter / Grafikdesigner (m/w/d), Vollzeit",
-   "co": "ADC Blackfire Entertainment GmbH",
-   "loc": "Ratingen",
-   "d": 30,
-   "tags": [
-    "Games",
-    "Marketing",
-    "Grafikdatenbank"
-   ],
-   "fit": true,
-   "url": null,
-   "note": "Distributor für Brett- und Sammelkartenspiele, Homeoffice möglich. Thematisch nah an deinem eigenen Projekt."
-  },
-  {
-   "id": "j-capture",
-   "role": "Motion Designer mit Art-Direction-DNA",
-   "co": "Capture Media GmbH",
-   "loc": "Düsseldorf",
-   "d": 30,
-   "tags": [
-    "Motion Design",
-    "3D",
-    "Events",
-    "Installationen"
-   ],
-   "fit": true,
-   "url": null,
-   "note": "Motion Design und 3D für Events, Installationen und Live Experiences. Bester Match zu deinem 3D-Profil."
-  },
-  {
-   "id": "j-ridder",
-   "role": "Grafikdesigner / Content Creator",
-   "co": "RIDDER WERKE",
-   "loc": "Düsseldorf",
-   "d": 30,
-   "tags": [
-    "Kampagnen",
-    "Social Media",
-    "Bewegtbild",
-    "Web"
-   ],
-   "url": null,
-   "note": "Visuelle Ideen für Kampagnen, Social Media, Websites, Bewegtbild."
-  },
-  {
-   "id": "j-mymuesli",
-   "role": "Grafikdesigner*in",
-   "co": "mymuesli AG",
-   "loc": "Düsseldorf",
-   "d": 30,
-   "tags": [
-    "Marke",
-    "E-Commerce",
-    "Motion",
-    "Adobe CC"
-   ],
-   "fit": true,
-   "url": null,
-   "note": "Inhouse-Kreativteam. Anzeige nannte Figma, Adobe CC, KI-Tools und Interesse an Video/Animation/Motion."
-  },
-  {
-   "id": "j-onlinedialog",
-   "role": "Content Creator (auch Ausbildungsplätze)",
-   "co": "OnlineDialog",
-   "loc": "Düsseldorf (Schwanenhöfe)",
-   "d": 30,
-   "tags": [
-    "Content",
-    "Bild & Ton",
-    "Digital"
-   ],
-   "url": null,
-   "note": "Kreativareal Schwanenhöfe, Betreuung von Top-Marken."
-  },
-  {
-   "id": "j-hnc",
-   "role": "Grafik- / Packaging Designer",
-   "co": "HNC Healthy Nutrition Company GmbH",
-   "loc": "Bergisch Gladbach · Köln · Leverkusen",
-   "d": 45,
-   "tags": [
-    "Packaging",
-    "Marke",
-    "Print",
-    "Social Media"
-   ],
-   "url": null,
-   "note": "Produktneueinführung mit viel Gestaltungsspielraum. Teilweise Homeoffice."
-  },
-  {
-   "id": "j-hochtief",
-   "role": "Werkstudent Grafikdesign",
-   "co": "HOCHTIEF",
-   "loc": "Essen",
-   "d": 35,
-   "tags": [
-    "Konzern",
-    "Werkstudium",
-    "InDesign",
-    "Premiere"
-   ],
-   "url": null,
-   "note": "Nur relevant, falls Werkstudentenstatus in Frage kommt."
-  },
-  {
-   "id": "j-europa",
-   "role": "Ausbildung Medienkauffrau/-mann Digital und Print",
-   "co": "Verlag Europa-Lehrmittel",
-   "loc": "Haan",
-   "d": 15,
-   "tags": [
-    "Verlag",
-    "Ausbildung"
-   ],
-   "url": null,
-   "note": "Für dich vermutlich nicht passend — aber der Verlag sitzt 15 km entfernt und hat eine Medienabteilung."
-  }
- ],
- "links": [
-  {
-   "url": "https://de.indeed.com/q-mediengestalter-l-wuppertal-jobs.html",
-   "quelle": "Indeed",
-   "titel": "Mediengestalter · Wuppertal",
-   "hinweis": "Radius auf der Seite auf 50 km stellen"
-  },
-  {
-   "url": "https://de.indeed.com/q-grafik-design-l-wuppertal-jobs.html",
-   "quelle": "Indeed",
-   "titel": "Grafikdesign · Wuppertal",
-   "hinweis": "Breiteste Trefferbasis"
-  },
-  {
-   "url": "https://de.indeed.com/Motion-Design-Jobs-in-D%C3%BCsseldorf",
-   "quelle": "Indeed",
-   "titel": "Motion Design · Düsseldorf",
-   "hinweis": "Für die 3D-/Bewegtbild-Schiene"
-  },
-  {
-   "url": "https://www.stepstone.de/jobs/mediengestalter/in-wuppertal",
-   "quelle": "Stepstone",
-   "titel": "Mediengestalter · Wuppertal",
-   "hinweis": "Umkreisfilter links einstellbar"
-  },
-  {
-   "url": "https://www.stepstone.de/jobs/grafik-designer/in-wuppertal",
-   "quelle": "Stepstone",
-   "titel": "Grafikdesigner · Wuppertal",
-   "hinweis": "Mehr Industrie- und Konzernstellen"
-  },
-  {
-   "url": "https://www.stepstone.de/jobs/kommunikationsdesign/in-wuppertal",
-   "quelle": "Stepstone",
-   "titel": "Kommunikationsdesign · Wuppertal",
-   "hinweis": "Andere Treffer als „Mediengestalter“"
-  },
-  {
-   "url": "https://www.stepstone.de/jobs/motion-design/in-d%C3%BCsseldorf",
-   "quelle": "Stepstone",
-   "titel": "Motion Design · Düsseldorf",
-   "hinweis": "Inkl. 3D Artist und Postproduktion"
-  },
-  {
-   "url": "https://www.designmadeingermany.de/jobs/suche/mediengestalter/",
-   "quelle": "Design made in Germany",
-   "titel": "Mediengestalter · bundesweit",
-   "hinweis": "Reine Design-Jobbörse, wenig Streuverlust"
-  },
-  {
-   "url": "https://www.designmadeingermany.de/jobs/suche/d%C3%BCsseldorf/",
-   "quelle": "Design made in Germany",
-   "titel": "Designer-Jobs · Düsseldorf",
-   "hinweis": "Hier posten die guten Studios"
-  },
-  {
-   "url": "https://www.designmadeingermany.de/jobs/suche/k%C3%B6ln/",
-   "quelle": "Design made in Germany",
-   "titel": "Designer-Jobs · Köln",
-   "hinweis": "Zweitwichtigster Markt für dich"
-  },
-  {
-   "url": "https://dasauge.de/sta/Grafik-Designer/Remscheid/",
-   "quelle": "dasauge",
-   "titel": "Grafikdesigner · Bergisches Land",
-   "hinweis": "Ort in der Suchmaske anpassbar"
-  },
-  {
-   "url": "https://www.jobs-in-wuppertal.de/stellenanzeigen/mediengestalter-wuppertal",
-   "quelle": "jobs-in-wuppertal",
-   "titel": "Mediengestalter · lokal",
-   "hinweis": "Kleine lokale Arbeitgeber, sonst unsichtbar"
-  }
- ]
+  "version": 3,
+  "regionen": [
+    {
+      "id": "wt",
+      "km": "0 km",
+      "city": "Wuppertal"
+    },
+    {
+      "id": "berg",
+      "km": "12–30 km",
+      "city": "Bergisches Land & Ennepe-Ruhr"
+    },
+    {
+      "id": "me",
+      "km": "20–25 km",
+      "city": "Kreis Mettmann"
+    },
+    {
+      "id": "dd",
+      "km": "30 km",
+      "city": "Düsseldorf & Ratingen"
+    },
+    {
+      "id": "ruhr",
+      "km": "35 km",
+      "city": "Essen & Ruhrgebiet"
+    },
+    {
+      "id": "rhein",
+      "km": "32–40 km",
+      "city": "Neuss · Leverkusen · Monheim"
+    },
+    {
+      "id": "koeln",
+      "km": "50 km",
+      "city": "Köln"
+    }
+  ],
+  "agenturen": [
+    {
+      "id": "idnwrk",
+      "r": "wt",
+      "n": "IDEENWERK GmbH",
+      "c": "Wuppertal (Bornberg 25, 42109)",
+      "d": 0,
+      "u": "https://www.idnwrk.com",
+      "f": [
+        "Brand Design",
+        "Print",
+        "Webdesign",
+        "Online-Marketing"
+      ],
+      "p": "Bewerbungen über Jobs-Seite",
+      "e": "jobs@idnwrk.com",
+      "flag": "Offene Stelle: Mediengestalter/in · Kommunikationsdesigner/in (Teilzeit)"
+    },
+    {
+      "id": "wppt",
+      "r": "wt",
+      "n": "wppt:kommunikation GmbH",
+      "c": "Wuppertal (Treppenstr. 17–19, 42115)",
+      "d": 0,
+      "u": "https://wppt.de",
+      "f": [
+        "Corporate Design",
+        "Grafik & Web",
+        "Corporate Publishing",
+        "Fotografie"
+      ],
+      "p": "Rob Fährmann, Süleyman Kayaalp, Marc Freudenhammer (GF)",
+      "e": "direkt@wppt.de",
+      "flag": "Mehrfach Red Dot / iF Design Award"
+    },
+    {
+      "id": "coc",
+      "r": "wt",
+      "n": "Club of Communication GmbH",
+      "c": "Wuppertal (Friedrich-Ebert-Str. 153, 42117)",
+      "d": 0,
+      "u": "https://www.club-of-communication.de",
+      "f": [
+        "Branding",
+        "Corporate Design",
+        "Markenstrategie"
+      ],
+      "p": "Burkhard Nobbe (GF); Cornelia Schütte (Dipl. Kommunikationsdesignerin)",
+      "e": "team@club-of-communication.de"
+    },
+    {
+      "id": "pixel",
+      "r": "wt",
+      "n": "PixelProduction GmbH & Co. KG",
+      "c": "Wuppertal (Vorm Eichholz 2, 42119)",
+      "d": 0,
+      "u": "https://pixelproduction.de",
+      "f": [
+        "Corporate Design",
+        "UX/Webdesign",
+        "Grafikdesign",
+        "Video",
+        "3D-Visualisierung"
+      ],
+      "p": "Axel Kurz (GF/Gründer), Sebastian Koch (GF)",
+      "e": "info@pixelproduction.de",
+      "flag": "~40 Mitarbeitende · eigene Jobseite · 3D im Portfolio"
+    },
+    {
+      "id": "mumbeck",
+      "r": "wt",
+      "n": "MUMBECK – Agentur für Werbung GmbH",
+      "c": "Wuppertal (Schlieffenstr. 60, 42329)",
+      "d": 0,
+      "u": "https://www.mumbeck.de",
+      "f": [
+        "Print A–Z",
+        "Verpackungsgestaltung",
+        "Webdesign",
+        "Barrierefreie PDF"
+      ],
+      "p": "Geschäftsführung (inhabergeführt seit 1982)",
+      "e": "mail@mumbeck.de"
+    },
+    {
+      "id": "abeler",
+      "r": "wt",
+      "n": "abeler bollmann werbeagentur GmbH",
+      "c": "Wuppertal (Hofaue 59, 42103)",
+      "d": 0,
+      "u": "https://abelerbollmann.de",
+      "f": [
+        "Kommunikation",
+        "Konzeption",
+        "Werbung"
+      ],
+      "p": "Sönke Bollmann (vertretungsberechtigter Gesellschafter)",
+      "e": "kontakt@abelerbollmann.de"
+    },
+    {
+      "id": "drbook",
+      "r": "wt",
+      "n": "dr book ®",
+      "c": "Wuppertal (Innenstadt)",
+      "d": 0,
+      "u": "https://www.dr-book.com",
+      "f": [
+        "Grafikdesign",
+        "Webdesign",
+        "Werbefilm",
+        "PR",
+        "Social Media"
+      ],
+      "p": "Inhabergeführt",
+      "e": "job@dr-book.de",
+      "flag": "Eigene Bewerbungsadresse · Film & Drohne im Haus"
+    },
+    {
+      "id": "pechschwarz",
+      "r": "wt",
+      "n": "pechschwarz Media GmbH",
+      "c": "Wuppertal (Max-Planck-Str. 19, 42277) · Büro Düsseldorf",
+      "d": 0,
+      "u": "https://pechschwarz.com",
+      "f": [
+        "Branding",
+        "Corporate Design",
+        "UX-Design",
+        "Webdesign",
+        "Imagefilm",
+        "Fotografie"
+      ],
+      "p": "Inhabergeführt",
+      "e": "info@pechschwarz.com",
+      "flag": "Sitz Wuppertal — tritt aber auch als Düsseldorfer Agentur auf"
+    },
+    {
+      "id": "gv",
+      "r": "wt",
+      "n": "GV Design (Graffunder & Venne)",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://www.gv-design.de",
+      "f": [
+        "Corporate Design",
+        "Corporate Architecture",
+        "Produktdesign",
+        "3D"
+      ],
+      "p": "Gabriele Graffunder & Partner Venne",
+      "e": "post@gv-design.de"
+    },
+    {
+      "id": "fischer",
+      "r": "berg",
+      "n": "Werbestudio Fischer",
+      "c": "Schwelm (Mittelstr. 16, 58332)",
+      "d": 12,
+      "u": "https://www.werbestudio-fischer.com",
+      "f": [
+        "Werbeagentur",
+        "Fahrzeugwerbung",
+        "Messebau",
+        "Außenwerbung"
+      ],
+      "p": "Inhaber Fischer",
+      "e": "info@werbestudio-fischer.com"
+    },
+    {
+      "id": "biermeier",
+      "r": "berg",
+      "n": "Biermeier & Schlingensiepen",
+      "c": "Schwelm",
+      "d": 12,
+      "u": "https://www.werbeagentur-biermeierschlingensiepen.de",
+      "f": [
+        "Webdesign",
+        "Foto",
+        "Video",
+        "Drohne",
+        "Social Media"
+      ],
+      "p": "Biermeier & Schlingensiepen",
+      "e": null
+    },
+    {
+      "id": "scholemann",
+      "r": "berg",
+      "n": "design scholemann",
+      "c": "Gevelsberg",
+      "d": 15,
+      "u": "https://www.design-scholemann.de",
+      "f": [
+        "Grafikdesign",
+        "Webdesign",
+        "Corporate Design"
+      ],
+      "p": "Inhaber Scholemann (seit über 20 Jahren)",
+      "e": "info@design-scholemann.de"
+    },
+    {
+      "id": "roccomedia",
+      "r": "berg",
+      "n": "Roccomedia",
+      "c": "Gevelsberg",
+      "d": 15,
+      "u": "https://roccomedia.de",
+      "f": [
+        "Branding",
+        "Kampagnen",
+        "Webdesign",
+        "SEO"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@roccomedia.de"
+    },
+    {
+      "id": "jaeger",
+      "r": "berg",
+      "n": "jaegermediagroup",
+      "c": "Gevelsberg",
+      "d": 15,
+      "u": "https://jaegermediagroup.de",
+      "f": [
+        "Webdesign",
+        "Marketing",
+        "SEO"
+      ],
+      "p": "Inhaber Jäger",
+      "e": "service@jaegermediagroup.de"
+    },
+    {
+      "id": "echtanders",
+      "r": "berg",
+      "n": "echtanders",
+      "c": "Hagen / Gevelsberg",
+      "d": 20,
+      "u": "https://echtanders.de",
+      "f": [
+        "Grafikdesign",
+        "Werbetechnik",
+        "Webdesign",
+        "Branding"
+      ],
+      "p": "Inhaber",
+      "e": "p.lenz@echtanders.de"
+    },
+    {
+      "id": "orangesugar",
+      "r": "berg",
+      "n": "Orange Sugar",
+      "c": "Hagen",
+      "d": 30,
+      "u": "https://orange-sugar.de",
+      "f": [
+        "Kommunikationsdesign",
+        "Grafikdesign",
+        "Fotografie",
+        "Branding"
+      ],
+      "p": "Inhaber",
+      "e": "info@orange-sugar.de"
+    },
+    {
+      "id": "schmidt",
+      "r": "berg",
+      "n": "büro schmidt",
+      "c": "Solingen",
+      "d": 15,
+      "u": "https://www.bueroschmidt.de",
+      "f": [
+        "Corporate Design",
+        "Webdesign",
+        "Print"
+      ],
+      "p": "Inhaber/Geschäftsführung",
+      "e": "info@bueroschmidt.de"
+    },
+    {
+      "id": "2vision",
+      "r": "berg",
+      "n": "2 Vision Werbeagentur e.K.",
+      "c": "Solingen (Brucknerstr. 119a, 42655)",
+      "d": 15,
+      "u": "https://www.2vision.de",
+      "f": [
+        "Verpackungsdesign",
+        "Brandmanagement",
+        "Corporate Design",
+        "Digital"
+      ],
+      "p": "Lucie Aycan (Firmeninhaberin); Birgit Berger (kreative Beratung)",
+      "e": "info@2vision.de"
+    },
+    {
+      "id": "3iq",
+      "r": "berg",
+      "n": "3-iQ Werbeagentur",
+      "c": "Solingen (Untenhöhscheid 16, 42657)",
+      "d": 15,
+      "u": "https://www.3-iq.de",
+      "f": [
+        "Grafikdesign",
+        "Printdesign",
+        "Webdesign"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@3-iq.de"
+    },
+    {
+      "id": "creativum",
+      "r": "berg",
+      "n": "CREATIVUM",
+      "c": "Solingen (Fürker Str. 47, 42697)",
+      "d": 15,
+      "u": "https://www.creativum.org",
+      "f": [
+        "Visuelle Kommunikation",
+        "Konzeption",
+        "Kreation",
+        "Full Service"
+      ],
+      "p": "Sven Werner (Geschäftsführer, Konzeption & Kreation)",
+      "e": "hallo@creativum.org"
+    },
+    {
+      "id": "mantz",
+      "r": "berg",
+      "n": "Mantz Werbeagentur",
+      "c": "Solingen",
+      "d": 15,
+      "u": "https://mantz-werbeagentur.de",
+      "f": [
+        "Full Service",
+        "Werbekonzepte",
+        "Print",
+        "Web"
+      ],
+      "p": "Inhaber Mantz",
+      "e": "info@mantz-werbeagentur.de"
+    },
+    {
+      "id": "berger",
+      "r": "berg",
+      "n": "Berger+Partner Werbeagentur GmbH",
+      "c": "Solingen",
+      "d": 15,
+      "u": "https://www.berger-u-partner.de",
+      "f": [
+        "Corporate Design",
+        "Geschäftsausstattung",
+        "Messe",
+        "TV-Spots"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@berger-u-partner.de"
+    },
+    {
+      "id": "deus",
+      "r": "berg",
+      "n": "deus werbung",
+      "c": "Solingen (Scheidter Str. 23, 42653)",
+      "d": 15,
+      "u": "https://deus-werbung.de",
+      "f": [
+        "Grafikstudio",
+        "Produktionsbüro",
+        "Klassische Werbung"
+      ],
+      "p": "Andreas Deus (Inhaber)",
+      "e": "post@deus-werbung.de"
+    },
+    {
+      "id": "ludewigs",
+      "r": "berg",
+      "n": "LUDEWIGSKONZEPT",
+      "c": "Solingen",
+      "d": 15,
+      "u": "https://www.ludewigskonzept.de",
+      "f": [
+        "Design & Kommunikation",
+        "Print",
+        "Web",
+        "Kampagnen"
+      ],
+      "p": "Inhaber Ludewigs",
+      "e": "mail@ludewigskonzept.de"
+    },
+    {
+      "id": "printmedias",
+      "r": "berg",
+      "n": "PRINTMEDIAS GmbH",
+      "c": "Solingen",
+      "d": 15,
+      "u": "https://www.printmedias.de",
+      "f": [
+        "Branding",
+        "Logo & CD",
+        "Webdesign",
+        "Print"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@printmedias.de"
+    },
+    {
+      "id": "muellerschmitz",
+      "r": "berg",
+      "n": "Müller & Schmitz GmbH",
+      "c": "Remscheid (Martin-Luther-Str. 6, 42853)",
+      "d": 20,
+      "u": "https://mueller-schmitz.de",
+      "f": [
+        "Full Service",
+        "Web",
+        "Print",
+        "Design",
+        "Foto"
+      ],
+      "p": "Geschäftsführung (seit 1972)",
+      "e": "info@mueller-schmitz.de"
+    },
+    {
+      "id": "blickfang",
+      "r": "berg",
+      "n": "blickfang-design",
+      "c": "Remscheid",
+      "d": 20,
+      "u": "https://blickfang-design.net",
+      "f": [
+        "Corporate Design",
+        "Logo",
+        "Webdesign",
+        "Marketing"
+      ],
+      "p": "Inhaber",
+      "e": "mail@blickfang-design.net"
+    },
+    {
+      "id": "bandorski",
+      "r": "berg",
+      "n": "BANDORSKI",
+      "c": "Velbert",
+      "d": 20,
+      "u": "https://www.bandorski.com",
+      "f": [
+        "Corporate Design",
+        "Webdesign",
+        "Fotografie",
+        "Editorial"
+      ],
+      "p": "Markus Bandorski (Inhaber)",
+      "e": "post@bandorski.com"
+    },
+    {
+      "id": "pmd",
+      "r": "berg",
+      "n": "pmd – Pro Mod Deters GmbH",
+      "c": "Velbert",
+      "d": 20,
+      "u": "https://pmd-agentur.de",
+      "f": [
+        "Full Service",
+        "Web",
+        "Print"
+      ],
+      "p": "Familie Deters (familiengeführt)",
+      "e": "info@pmd-agentur.de"
+    },
+    {
+      "id": "kolbe",
+      "r": "berg",
+      "n": "Werbedesign Kolbe",
+      "c": "Velbert",
+      "d": 20,
+      "u": "https://www.werbedesign-kolbe.de",
+      "f": [
+        "Corporate Design",
+        "Grafikdesign",
+        "Illustration",
+        "Werbemedien"
+      ],
+      "p": "Inhaber Kolbe",
+      "e": "kolbe@werbedesign-kolbe.de"
+    },
+    {
+      "id": "kuerten",
+      "r": "me",
+      "n": "KÜRTEN DESIGN",
+      "c": "Mettmann",
+      "d": 20,
+      "u": "https://kuerten-design.de",
+      "f": [
+        "Logodesign",
+        "Webdesign",
+        "Grafikdesign",
+        "Kreativkonzeption"
+      ],
+      "p": "Herr Kürten (Inhaber)",
+      "e": "mk@kuerten-design.de"
+    },
+    {
+      "id": "loose",
+      "r": "me",
+      "n": "loosemedia",
+      "c": "Erkrath (Gerhart-Hauptmann-Str. 43, 40699)",
+      "d": 22,
+      "u": "https://loose-media.de",
+      "f": [
+        "Grafikdesign",
+        "Webdesign",
+        "Werbung für KMU"
+      ],
+      "p": "Inhaber Loose (seit 2003)",
+      "e": "info@loose-media.de"
+    },
+    {
+      "id": "arttec",
+      "r": "me",
+      "n": "art@tec – Agentur für Design & Webkommunikation",
+      "c": "Hilden",
+      "d": 25,
+      "u": "https://www.art-at-tec.de",
+      "f": [
+        "Grafikdesign",
+        "Corporate Design",
+        "Webdesign",
+        "Animationsdesign"
+      ],
+      "p": "Inhaber/Geschäftsführung",
+      "e": "info@art-at-tec.de",
+      "flag": "Animationsdesign im Leistungsportfolio"
+    },
+    {
+      "id": "cdoc",
+      "r": "me",
+      "n": "cdoc-creative",
+      "c": "Hilden",
+      "d": 25,
+      "u": "https://www.cdoc-creative.de",
+      "f": [
+        "Grafikdesign",
+        "Webdesign",
+        "Mediendesign"
+      ],
+      "p": "Inhaber",
+      "e": "info@cdoc-creative.de"
+    },
+    {
+      "id": "frisch",
+      "r": "dd",
+      "n": "Frisch ans Werk",
+      "c": "Ratingen",
+      "d": 30,
+      "u": "https://www.frischanswerk.de",
+      "f": [
+        "Corporate Design",
+        "Print",
+        "Fotografie",
+        "Web",
+        "Raumgestaltung"
+      ],
+      "p": "Designbüro-Leitung",
+      "e": "post@frischanswerk.de"
+    },
+    {
+      "id": "koenigs",
+      "r": "dd",
+      "n": "Königs Design",
+      "c": "Ratingen",
+      "d": 30,
+      "u": "https://koenigs-design.com",
+      "f": [
+        "Grafikdesign",
+        "Webdesign",
+        "Fotografie",
+        "Film"
+      ],
+      "p": "Inhaber Königs",
+      "e": "info@koenigs-design.com"
+    },
+    {
+      "id": "creneo",
+      "r": "dd",
+      "n": "CRENEO",
+      "c": "Düsseldorf (Kaiserswerther Str.)",
+      "d": 30,
+      "u": "https://www.creneo.com",
+      "f": [
+        "Branding",
+        "Corporate Design",
+        "Markensysteme",
+        "Strategie"
+      ],
+      "p": "Geschäftsführung (inhabergeführt seit 2009)",
+      "e": "hello@creneo.com"
+    },
+    {
+      "id": "rothkopf",
+      "r": "dd",
+      "n": "Rothkopf & Huberty Werbeagentur GmbH",
+      "c": "Düsseldorf (Kirchfeldstr. 149, 40215)",
+      "d": 30,
+      "u": "https://www.rothkopf-huberty.de",
+      "f": [
+        "Werbung",
+        "Kampagnen",
+        "Design",
+        "Digital"
+      ],
+      "p": "Frank Rothkopf, Marc Lütkemeier (GF)",
+      "e": "info@rothkopf-huberty.de",
+      "flag": "Hat eine eigene Jobs-Seite"
+    },
+    {
+      "id": "piratas",
+      "r": "dd",
+      "n": "piratas Werbeagentur GmbH + Co. KG",
+      "c": "Düsseldorf (Schwanenhöfe, Erkrather Str. 228A)",
+      "d": 30,
+      "u": "https://www.piratas-duesseldorf.de",
+      "f": [
+        "Werbung",
+        "Kampagnen",
+        "Design"
+      ],
+      "p": "Achim Esser, Andreas Bredendiek (GF)",
+      "e": "kontakt@piratas.de"
+    },
+    {
+      "id": "nextao",
+      "r": "dd",
+      "n": "nextao",
+      "c": "Düsseldorf (Königsallee 27, 40212)",
+      "d": 30,
+      "u": "https://nextao.de",
+      "f": [
+        "Werbung",
+        "Digital",
+        "Marketing"
+      ],
+      "p": "Franziska Davidt (Geschäftsführerin)",
+      "e": "info@nextao.de"
+    },
+    {
+      "id": "blueprint",
+      "r": "dd",
+      "n": "blueprint advertising (SK Connect GmbH)",
+      "c": "Düsseldorf (Kaiserswerther Str. 215)",
+      "d": 30,
+      "u": "https://www.blueprint-ad.de",
+      "f": [
+        "Werbung",
+        "Kampagnen",
+        "Print"
+      ],
+      "p": "Stefan Kögel (Geschäftsführer)",
+      "e": "info@blueprint-ad.de"
+    },
+    {
+      "id": "wiehl",
+      "r": "dd",
+      "n": "Wiehl, Co.",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://www.wiehl-co.com",
+      "f": [
+        "Design",
+        "Branding",
+        "Art Direction"
+      ],
+      "p": "Inhaber Wiehl",
+      "e": "info@wiehl-co.com"
+    },
+    {
+      "id": "markenzeichen",
+      "r": "dd",
+      "n": "Markenzeichen GmbH",
+      "c": "Düsseldorf / Frankfurt",
+      "d": 30,
+      "u": "https://markenzeichen.de",
+      "f": [
+        "Markenkommunikation",
+        "Corporate Design",
+        "Kampagnen"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@markenzeichen.de"
+    },
+    {
+      "id": "psg",
+      "r": "dd",
+      "n": "Peter Schmidt Group",
+      "c": "Düsseldorf (+ Hamburg, Frankfurt, München)",
+      "d": 30,
+      "u": "http://www.peter-schmidt-group.de",
+      "f": [
+        "Brand Design",
+        "Packaging",
+        "Corporate Design",
+        "Digital"
+      ],
+      "p": "Bewerbungen zentral",
+      "e": "info@peter-schmidt-group.de",
+      "flag": "Große Marken-Designagentur — formaler Prozess"
+    },
+    {
+      "id": "metadesign",
+      "r": "dd",
+      "n": "MetaDesign GmbH",
+      "c": "Düsseldorf / Berlin",
+      "d": 30,
+      "u": "https://metadesign.com/",
+      "f": [
+        "Brand Strategy",
+        "Corporate Design",
+        "Design Systems"
+      ],
+      "p": "Bewerbungen zentral Berlin",
+      "e": "mail.ber@metadesign.com",
+      "flag": "Netzwerkagentur"
+    },
+    {
+      "id": "designiert",
+      "r": "dd",
+      "n": "designiert / Lockstoff Design",
+      "c": "Düsseldorf / Meerbusch",
+      "d": 30,
+      "u": "https://www.designiert.de",
+      "f": [
+        "Corporate Identity",
+        "Corporate Design",
+        "Digital Branding"
+      ],
+      "p": "Niklas Webelhaus (geschäftsführender Gesellschafter, lehrt an der HS Düsseldorf)",
+      "e": "welcome@designiert.de"
+    },
+    {
+      "id": "fundament",
+      "r": "dd",
+      "n": "BÜRO FUNDAMENT",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://buerofundament.de",
+      "f": [
+        "Markendesign",
+        "Markenstrategie",
+        "Websites",
+        "Kampagnen"
+      ],
+      "p": "Inhaber/Geschäftsführung",
+      "e": "info@buerofundament.de"
+    },
+    {
+      "id": "g31",
+      "r": "dd",
+      "n": "g31 Design & Branding",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://g31.design",
+      "f": [
+        "Brand Identity",
+        "Kampagnen",
+        "Digital Applications"
+      ],
+      "p": "Creative Direction",
+      "e": "mail@g31.design"
+    },
+    {
+      "id": "distinctive",
+      "r": "dd",
+      "n": "DISTINCTIVE (DSTNCTVE)",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://distinctive.de",
+      "f": [
+        "Branding",
+        "Corporate Identity",
+        "Naming",
+        "Corporate Design"
+      ],
+      "p": "Creative Direction / GF",
+      "e": "info@distinctive.de"
+    },
+    {
+      "id": "zierquadrat",
+      "r": "dd",
+      "n": "Zierquadrat",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://zierquadrat.de",
+      "f": [
+        "Branding",
+        "Corporate Design",
+        "Logodesign",
+        "Webdesign"
+      ],
+      "p": "Inhaber/Geschäftsführung",
+      "e": "post@zierquadrat.de"
+    },
+    {
+      "id": "hwl",
+      "r": "dd",
+      "n": "HWL Werbeagentur GmbH",
+      "c": "Düsseldorf (Düsselthaler Str. 8, 40211)",
+      "d": 30,
+      "u": "https://hwl-agentur.de",
+      "f": [
+        "Werbung",
+        "Design",
+        "Kommunikation"
+      ],
+      "p": "Geschäftsführung",
+      "e": "service@hwl-agentur.de"
+    },
+    {
+      "id": "werbejunge",
+      "r": "dd",
+      "n": "werbejunge",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://werbejunge.de",
+      "f": [
+        "Webdesign",
+        "Print",
+        "Online-Marketing",
+        "Broschüren"
+      ],
+      "p": "Inhabergeführt (über 13 Jahre)",
+      "e": "hallo@werbejunge.de"
+    },
+    {
+      "id": "p2media",
+      "r": "dd",
+      "n": "p2 media",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://www.p2media.de",
+      "f": [
+        "Grafikdesign",
+        "Konzeption",
+        "Fotografie",
+        "Web"
+      ],
+      "p": "Geschäftsführung",
+      "e": "kontakt@p2media.de"
+    },
+    {
+      "id": "remjnd",
+      "r": "dd",
+      "n": "REMJND",
+      "c": "bei Düsseldorf",
+      "d": 30,
+      "u": "https://remjnd.com",
+      "f": [
+        "Markenentwicklung",
+        "Digitaler Content",
+        "Filmproduktion"
+      ],
+      "p": "Inhabergeführt",
+      "e": "hello@remjnd.com"
+    },
+    {
+      "id": "belly",
+      "r": "dd",
+      "n": "Belly Creative Studios",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://bellystudios.de",
+      "f": [
+        "Corporate Design",
+        "Film",
+        "Bewegtbild",
+        "Branding"
+      ],
+      "p": "Gründerteam aus Kreativen & Filmemacher:innen",
+      "e": "hi@bellystudios.de",
+      "flag": "Film/Bewegtbild-Schwerpunkt"
+    },
+    {
+      "id": "webweisend",
+      "r": "dd",
+      "n": "Webweisend Media GmbH",
+      "c": "Düsseldorf-Heerdt (nahe Neuss)",
+      "d": 30,
+      "u": "https://www.media-company.eu",
+      "f": [
+        "Markenkommunikation",
+        "Design",
+        "Programmierung"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@media-company.eu"
+    },
+    {
+      "id": "robinfrank",
+      "r": "dd",
+      "n": "Studio Robin Frank",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://studiorobinfrank.de",
+      "f": [
+        "Branding",
+        "Corporate Design",
+        "Packaging",
+        "Barrierefreies Design"
+      ],
+      "p": "Robin Frank (Inhaber)",
+      "e": "design@studiorobinfrank.de",
+      "flag": "Ein-Personen-Studio"
+    },
+    {
+      "id": "mintley",
+      "r": "dd",
+      "n": "mintley",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://www.mintley.com",
+      "f": [
+        "Branding",
+        "Design Systems",
+        "Digitalagentur",
+        "Positionierung"
+      ],
+      "p": "Geschäftsführung",
+      "e": "hello@mintley.com"
+    },
+    {
+      "id": "capture",
+      "r": "dd",
+      "n": "Capture Media GmbH",
+      "c": "Düsseldorf (Rethelstr. 64, 40237)",
+      "d": 30,
+      "u": "https://capturemedia.de",
+      "f": [
+        "Motion Design",
+        "3D & CGI",
+        "Unreal / Echtzeit-3D",
+        "Filmproduktion",
+        "AR",
+        "Messe & Event"
+      ],
+      "p": "Team aus Strategie, Design, Motion Design, 3D-Artists und Developern",
+      "e": "info@capturemedia.de",
+      "flag": "Achtung: Insolvenzverfahren seit 10/2024 — Status vor Bewerbung prüfen"
+    },
+    {
+      "id": "blueworld",
+      "r": "dd",
+      "n": "blueworld.studio",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://www.blueworld.studio",
+      "f": [
+        "3D-Animation",
+        "Motion Design",
+        "3D-Visualisierung",
+        "Simulation"
+      ],
+      "p": "Studio-Leitung",
+      "e": "info@blueworld.studio",
+      "flag": "Reines 3D-/Motion-Studio — direkter Treffer für dein Profil"
+    },
+    {
+      "id": "imotion",
+      "r": "dd",
+      "n": "i-motion",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://www.i-motion.tv",
+      "f": [
+        "Motion Design",
+        "2D Animation",
+        "3D Animation",
+        "Postproduktion"
+      ],
+      "p": "Studio-Leitung",
+      "e": "kontakt@i-motion.tv"
+    },
+    {
+      "id": "adi3d",
+      "r": "dd",
+      "n": "ADI 3D STUDIO",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://adi-3d.de",
+      "f": [
+        "3D-Visualisierung",
+        "3D-Animation",
+        "Werbung"
+      ],
+      "p": "Studio-Inhaber",
+      "e": "contact@adi-3d.de"
+    },
+    {
+      "id": "neuland",
+      "r": "dd",
+      "n": "NEULAND GmbH",
+      "c": "Düsseldorf (Mintropstr. 14–16, 40215)",
+      "d": 30,
+      "u": "https://neuland-films.com",
+      "f": [
+        "Filmproduktion",
+        "Imagefilm",
+        "Animation",
+        "Fotografie",
+        "KI-gestützte Bildsprache"
+      ],
+      "p": "Peter Schilling (Geschäftsführer)",
+      "e": "info@neuland-films.com"
+    },
+    {
+      "id": "kraft",
+      "r": "dd",
+      "n": "Kraft Pictures",
+      "c": "Düsseldorf (Germaniastr. 22, 40223)",
+      "d": 30,
+      "u": "https://kraft-pictures.com",
+      "f": [
+        "Werbefilm",
+        "Imagefilm",
+        "Erklärfilm & Animation",
+        "Motion Design",
+        "3D-Rendering",
+        "Postproduktion"
+      ],
+      "p": "Daniel Kraft (Ansprechpartner, Gründer — seit 2009, über 15 Jahre)",
+      "e": "mail@kraft-pictures.com",
+      "flag": "Sucht laut Website aktiv neue Talente — Initiativbewerbung ausdrücklich erwünscht"
+    },
+    {
+      "id": "neiser",
+      "r": "dd",
+      "n": "NEISER Filmproduktion",
+      "c": "Düsseldorf (Schinkelstr. 52, 40211)",
+      "d": 30,
+      "u": "https://www.neiser.com",
+      "f": [
+        "TV-Spots",
+        "Imagefilm",
+        "Werbefilm",
+        "Studio",
+        "Animation",
+        "Sound Design"
+      ],
+      "p": "Tim Neiser (Inhaber)",
+      "e": "info@neiser.com",
+      "flag": "International ausgezeichnet: Cannes Lions, New York Festivals, Effie"
+    },
+    {
+      "id": "fiumu",
+      "r": "dd",
+      "n": "FIUMU",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://fiumu.de",
+      "f": [
+        "Imagefilm",
+        "Videoproduktion",
+        "Visual Storytelling"
+      ],
+      "p": "Geschäftsführung",
+      "e": "hello@fiumu.de"
+    },
+    {
+      "id": "filmschere",
+      "r": "dd",
+      "n": "Filmschere",
+      "c": "Düsseldorf (Düsselstr. 25, 40219)",
+      "d": 30,
+      "u": "https://www.filmschere.de",
+      "f": [
+        "Imagefilm",
+        "Industriefilm",
+        "Werbefilm",
+        "Musikvideo",
+        "Fashionfilm"
+      ],
+      "p": "Produktionsteam-Leitung",
+      "e": "myfilm@filmschere.de"
+    },
+    {
+      "id": "cheesecake",
+      "r": "dd",
+      "n": "cheesecake film",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://cheesecake-film.de",
+      "f": [
+        "Imagefilm",
+        "Werbespot",
+        "Erklärvideo",
+        "Messefilm",
+        "Storyboard"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@cheesecake-film.de"
+    },
+    {
+      "id": "vidego",
+      "r": "dd",
+      "n": "Vidego Media Group",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://www.vidego.de",
+      "f": [
+        "Videoproduktion",
+        "3D-Animation",
+        "Erklärfilm",
+        "Livestreaming"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@vidego.de"
+    },
+    {
+      "id": "fellner",
+      "r": "dd",
+      "n": "fellnermedia",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://www.fellnermedia.de",
+      "f": [
+        "Werbefilm",
+        "TV-Spot",
+        "Imagefilm",
+        "Animation",
+        "Drohne"
+      ],
+      "p": "Geschäftsführung",
+      "e": "anfrage@fellnermedia.de"
+    },
+    {
+      "id": "31m",
+      "r": "ruhr",
+      "n": "31M Design- und Werbeagentur",
+      "c": "Essen (Bredeneyer Wasserturm)",
+      "d": 35,
+      "u": "https://31m.de",
+      "f": [
+        "Corporate Design",
+        "Kampagnen",
+        "Websites",
+        "Magazine",
+        "Film & Foto"
+      ],
+      "p": "Geschäftsführung (gegr. 2005)",
+      "e": "kommunikation@31m.de"
+    },
+    {
+      "id": "hdgg",
+      "r": "ruhr",
+      "n": "Haus des guten Geschmacks",
+      "c": "Essen (Emilienstr. 4, 45128)",
+      "d": 35,
+      "u": "https://www.hausdesgutengeschmacks.de",
+      "f": [
+        "Corporate Design",
+        "Websites",
+        "Kampagnen"
+      ],
+      "p": "Inhaber/Geschäftsführung",
+      "e": "info@hausdesgutengeschmacks.de"
+    },
+    {
+      "id": "esy",
+      "r": "ruhr",
+      "n": "ESY Agentur",
+      "c": "Essen",
+      "d": 35,
+      "u": "https://esy-agentur.de",
+      "f": [
+        "Branding",
+        "Corporate Design",
+        "Webdesign",
+        "SEO/SEA"
+      ],
+      "p": "Geschäftsführung",
+      "e": "hello@esy-agentur.de"
+    },
+    {
+      "id": "k3",
+      "r": "ruhr",
+      "n": "Agentur K3",
+      "c": "Essen",
+      "d": 35,
+      "u": "https://www.agentur-k3.de",
+      "f": [
+        "Corporate Design",
+        "Markenentwicklung",
+        "Start-ups"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@agentur-k3.de"
+    },
+    {
+      "id": "goldners",
+      "r": "rhein",
+      "n": "goldners – Werbeagentur | Druckerei | Fotografie",
+      "c": "Monheim am Rhein",
+      "d": 32,
+      "u": "https://goldners.de",
+      "f": [
+        "Corporate Design",
+        "Webdesign",
+        "Print",
+        "Fotografie"
+      ],
+      "p": "Inhaber",
+      "e": "info@goldners.de"
+    },
+    {
+      "id": "designb3",
+      "r": "rhein",
+      "n": "DESIGN B3",
+      "c": "Leverkusen",
+      "d": 40,
+      "u": "https://www.designb3.de",
+      "f": [
+        "Logo & CD",
+        "Print",
+        "Web",
+        "Marketingkonzepte"
+      ],
+      "p": "Nici Heimroth & Gunna Holz (Inhaber)",
+      "e": "mail@designb3.de"
+    },
+    {
+      "id": "markoon",
+      "r": "rhein",
+      "n": "markoon",
+      "c": "Leverkusen",
+      "d": 40,
+      "u": "https://www.markoon.de",
+      "f": [
+        "Corporate Design",
+        "Webshop",
+        "Contentstrategie"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@markoon.de"
+    },
+    {
+      "id": "oveleon",
+      "r": "rhein",
+      "n": "Oveleon",
+      "c": "Leverkusen / Neuss",
+      "d": 40,
+      "u": "https://www.oveleon.de",
+      "f": [
+        "Corporate Design",
+        "Webdesign",
+        "Softwarelösungen"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@oveleon.de",
+      "flag": "Deutlicher Technik-Anteil"
+    },
+    {
+      "id": "art4art",
+      "r": "rhein",
+      "n": "art4artdesign",
+      "c": "Neuss",
+      "d": 40,
+      "u": "https://www.art4artdesign.com",
+      "f": [
+        "Grafikdesign & Print",
+        "Webdesign",
+        "Corporate Identity"
+      ],
+      "p": "Inhabergeführt seit 1995",
+      "e": "knappe@art4artdesign.com"
+    },
+    {
+      "id": "sons",
+      "r": "koeln",
+      "n": "sons of ipanema",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://www.sonsofipanema.de",
+      "f": [
+        "Grafikdesign",
+        "Illustration",
+        "Art Direction",
+        "Branding",
+        "Animation"
+      ],
+      "p": "Studio-Leitung",
+      "e": "post@sonsofipanema.de",
+      "flag": "Animation & Motion im Leistungsprofil"
+    },
+    {
+      "id": "milk",
+      "r": "koeln",
+      "n": "Milk Design",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://milkdesign.de",
+      "f": [
+        "Corporate Design",
+        "Branding",
+        "Digital"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@milkdesign.de"
+    },
+    {
+      "id": "polylog",
+      "r": "koeln",
+      "n": "Studio Polylog",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://www.studio-polylog.com",
+      "f": [
+        "Corporate Design",
+        "Editorial",
+        "Digital"
+      ],
+      "p": "Studio-Leitung",
+      "e": "mail@studio-polylog.com"
+    },
+    {
+      "id": "mir",
+      "r": "koeln",
+      "n": "Mir Media",
+      "c": "Köln",
+      "d": 50,
+      "u": "http://www.mir.de",
+      "f": [
+        "Corporate Design",
+        "Digital",
+        "Kampagnen"
+      ],
+      "p": "Geschäftsführung",
+      "e": "hello@mir.de"
+    },
+    {
+      "id": "studio3000",
+      "r": "koeln",
+      "n": "Studio 3000",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://studio3000.de",
+      "f": [
+        "Markenentwicklung",
+        "Branding",
+        "Websites"
+      ],
+      "p": "Studio-Leitung",
+      "e": "mail@studio3000.de"
+    },
+    {
+      "id": "dumbo",
+      "r": "koeln",
+      "n": "Dumbo",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://dumbo.design",
+      "f": [
+        "Design",
+        "Branding"
+      ],
+      "p": "Studio-Leitung",
+      "e": "mail@dumbo.design"
+    },
+    {
+      "id": "dayy",
+      "r": "koeln",
+      "n": "Dayy",
+      "c": "Köln / Berlin",
+      "d": 50,
+      "u": "https://www.dayy.com",
+      "f": [
+        "Design",
+        "Branding",
+        "Digital"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@dayy.com"
+    },
+    {
+      "id": "denkwerk",
+      "r": "koeln",
+      "n": "Denkwerk",
+      "c": "Köln (+ Berlin, Hamburg, München)",
+      "d": 50,
+      "u": "https://www.denkwerk.com/de",
+      "f": [
+        "Digital Design",
+        "Brand Experience",
+        "Produktentwicklung"
+      ],
+      "p": "Bewerbungen zentral",
+      "e": "hello@denkwerk.com",
+      "flag": "Größere Digitalagentur"
+    },
+    {
+      "id": "vrej",
+      "r": "koeln",
+      "n": "Vrej Designbüro",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://www.vrej.de",
+      "f": [
+        "Kommunikationsdesign",
+        "Corporate Design",
+        "Editorial"
+      ],
+      "p": "Inhaber (GbR)",
+      "e": "info@vrej.de"
+    },
+    {
+      "id": "tth",
+      "r": "koeln",
+      "n": "Type Type Hype",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://www.typetypehype.de",
+      "f": [
+        "Typografie",
+        "Branding",
+        "Design"
+      ],
+      "p": "Studio-Gründer (GbR)",
+      "e": "hello@typetypehype.de"
+    },
+    {
+      "id": "luett",
+      "r": "koeln",
+      "n": "luett",
+      "c": "Köln / Düsseldorf",
+      "d": 50,
+      "u": "https://www.studio-luett.de",
+      "f": [
+        "Branding",
+        "Design",
+        "Kreativstudio"
+      ],
+      "p": "Inhabergeführt (gegr. 2023)",
+      "e": "hallo@studio-luett.de"
+    },
+    {
+      "id": "schwarzmatt",
+      "r": "koeln",
+      "n": "Schwarz+Matt",
+      "c": "Köln / Dortmund",
+      "d": 50,
+      "u": "https://www.schwarz-matt.com",
+      "f": [
+        "Markenstrategie",
+        "Corporate Design",
+        "Brand Experience"
+      ],
+      "p": "Geschäftsführung",
+      "e": "info@schwarz-matt.com"
+    },
+    {
+      "id": "radikant",
+      "r": "koeln",
+      "n": "Radikant",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://www.radikant.com",
+      "f": [
+        "Brand Strategy",
+        "Corporate Design",
+        "UI/UX",
+        "Design Systems"
+      ],
+      "p": "Creative Direction",
+      "e": "mail@radikant.com",
+      "flag": "Referenzen u. a. DEVK, Aktion Mensch, Telekom"
+    },
+    {
+      "id": "sevn",
+      "r": "koeln",
+      "n": "SEVN",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://sevn.de",
+      "f": [
+        "Branding",
+        "Corporate Design",
+        "Kampagnen"
+      ],
+      "p": "Creative Direction",
+      "e": "info@sevn.de",
+      "flag": "Corporate Design für REWE digital"
+    },
+    {
+      "id": "kirch",
+      "r": "koeln",
+      "n": "Kirch & Kriewald",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://www.kirchundkriewald.de",
+      "f": [
+        "Branding",
+        "Rebranding",
+        "Corporate Design",
+        "Webflow"
+      ],
+      "p": "Inhaber Kirch & Kriewald",
+      "e": "info@kirchundkriewald.de"
+    },
+    {
+      "id": "echoecho",
+      "r": "koeln",
+      "n": "EchoEcho Studio",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://www.echoecho.studio",
+      "f": [
+        "Markenstrategie",
+        "Naming",
+        "Corporate Design"
+      ],
+      "p": "Creative Direction",
+      "e": "jobs@echoecho.studio"
+    },
+    {
+      "id": "u53",
+      "r": "koeln",
+      "n": "büro u-53",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://bueroident.de",
+      "f": [
+        "Kommunikationsdesign",
+        "Markendesign",
+        "Webdesign",
+        "Illustration"
+      ],
+      "p": "Studio-Inhaber",
+      "e": "hallo@bueroident.de"
+    },
+    {
+      "id": "todesign",
+      "r": "koeln",
+      "n": "to-design",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://www.to-design.de",
+      "f": [
+        "Corporate Design",
+        "Corporate Language",
+        "Webdesign",
+        "Video"
+      ],
+      "p": "Geschäftsführung",
+      "e": "mail@to-design.de"
+    },
+    {
+      "id": "3punkt",
+      "r": "koeln",
+      "n": "3PUNKTDESIGN",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://www.3punktdesign.de",
+      "f": [
+        "Branding",
+        "Corporate Design",
+        "Print",
+        "Websites"
+      ],
+      "p": "Dirk Schmitter (Inhaber & Designer)",
+      "e": "hallo@3punktdesign.de"
+    },
+    {
+      "id": "bohlen",
+      "r": "koeln",
+      "n": "Bohlen Design",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://www.bohlen-design.de",
+      "f": [
+        "Webdesign",
+        "Branding",
+        "Corporate Design",
+        "Print"
+      ],
+      "p": "Inhaber Bohlen",
+      "e": "mail@bohlen-design.de"
+    },
+    {
+      "id": "zacher",
+      "r": "koeln",
+      "n": "zacher media GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://zachermedia.de",
+      "f": [
+        "Corporate Design",
+        "Logodesign",
+        "Social-Media-Grafik"
+      ],
+      "p": "Geschäftsführung",
+      "e": "kontakt@zachermedia.de"
+    },
+    {
+      "id": "2pm",
+      "r": "ruhr",
+      "n": "2pm Kommunikation GmbH",
+      "c": "Oberhausen",
+      "d": 35,
+      "u": "https://2pm.com",
+      "f": [
+        "Animation",
+        "Film & Video",
+        "Web & Digital",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@2pm.com",
+      "flag": ""
+    },
+    {
+      "id": "3danimation",
+      "r": "dd",
+      "n": "3D-Präsentation",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://3d-animation.de",
+      "f": [
+        "3D & Visualisierung",
+        "Animation",
+        "Messe & Event"
+      ],
+      "p": "",
+      "e": "info@3d-animation.de",
+      "flag": ""
+    },
+    {
+      "id": "agenturalbrech",
+      "r": "ruhr",
+      "n": "Albrecht: Agentur für Unternehmensdarstellung",
+      "c": "Bochum",
+      "d": 35,
+      "u": "https://agenturalbrecht.de",
+      "f": [
+        "Film & Video",
+        "Web & Digital",
+        "Print"
+      ],
+      "p": "",
+      "e": "info@agenturalbrecht.de",
+      "flag": ""
+    },
+    {
+      "id": "archprodesign",
+      "r": "dd",
+      "n": "archprodesign",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://archprodesign.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@archprodesign.de",
+      "flag": ""
+    },
+    {
+      "id": "aspekte",
+      "r": "koeln",
+      "n": "aspekte kommunikation gmbh",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://aspekte.com",
+      "f": [
+        "3D & Visualisierung",
+        "Animation",
+        "Branding",
+        "Grafikdesign",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@aspekte.com",
+      "flag": ""
+    },
+    {
+      "id": "derart",
+      "r": "koeln",
+      "n": "atelier derArt GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://derart.com",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@derart.com",
+      "flag": ""
+    },
+    {
+      "id": "augenscheinfil",
+      "r": "koeln",
+      "n": "augenschein Filmproduktion GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://augenschein-filmproduktion.de",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "info@augenschein-filmproduktion.de",
+      "flag": ""
+    },
+    {
+      "id": "bdesign",
+      "r": "ruhr",
+      "n": "B Design GmbH",
+      "c": "Essen",
+      "d": 35,
+      "u": "https://bdesign.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital",
+        "Fotografie",
+        "Messe & Event"
+      ],
+      "p": "",
+      "e": "info@bdesign.de",
+      "flag": ""
+    },
+    {
+      "id": "beckelproducti",
+      "r": "berg",
+      "n": "beckel production",
+      "c": "Solingen",
+      "d": 20,
+      "u": "https://beckelproduction.de",
+      "f": [
+        "Film & Video",
+        "Fotografie"
+      ],
+      "p": "",
+      "e": "info@beckelproduction.de",
+      "flag": ""
+    },
+    {
+      "id": "blackfishfilms",
+      "r": "dd",
+      "n": "Blackfish Films - Filmproduktion Düsseldorf",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://blackfish-films.com",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "mail@blackfish-films.com",
+      "flag": ""
+    },
+    {
+      "id": "brandit",
+      "r": "koeln",
+      "n": "BRANDIT Strategie & Design GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://brandit.de",
+      "f": [
+        "Branding",
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@brandit.de",
+      "flag": ""
+    },
+    {
+      "id": "creativgmbh",
+      "r": "wt",
+      "n": "Creativ Design Werbeagentur GmbH",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://creativ-gmbh.de",
+      "f": [
+        "Branding",
+        "Grafikdesign",
+        "Web & Digital",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@creativ-gmbh.de",
+      "flag": ""
+    },
+    {
+      "id": "creativeframe",
+      "r": "berg",
+      "n": "creativeframe",
+      "c": "Wermelskirchen",
+      "d": 20,
+      "u": "https://creativeframe.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@creativeframe.de",
+      "flag": ""
+    },
+    {
+      "id": "csgmdesign",
+      "r": "me",
+      "n": "csgmDesign",
+      "c": "Wülfrath",
+      "d": 22,
+      "u": "https://csgmdesign.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@csgmdesign.de",
+      "flag": ""
+    },
+    {
+      "id": "dplusb",
+      "r": "koeln",
+      "n": "Debüser & Bee Werbeagentur GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://dplusb.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "bee@dplusb.de",
+      "flag": ""
+    },
+    {
+      "id": "desundweb",
+      "r": "me",
+      "n": "Design und Web Leszek Schluter",
+      "c": "Langenfeld",
+      "d": 22,
+      "u": "https://desundweb.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@desundweb.de",
+      "flag": ""
+    },
+    {
+      "id": "designatics",
+      "r": "koeln",
+      "n": "designatics production GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://designatics.de",
+      "f": [
+        "Grafikdesign",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@designatics.de",
+      "flag": ""
+    },
+    {
+      "id": "mayerle",
+      "r": "koeln",
+      "n": "designbuero mayerle,",
+      "c": "Bergisch Gladbach",
+      "d": 50,
+      "u": "https://mayerle.design",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "mail@mayerle.design",
+      "flag": ""
+    },
+    {
+      "id": "diegandi",
+      "r": "koeln",
+      "n": "DIEGANDI GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://diegandi.de",
+      "f": [
+        "Film & Video",
+        "Messe & Event",
+        "Produktdesign"
+      ],
+      "p": "",
+      "e": "contact@diegandi.de",
+      "flag": ""
+    },
+    {
+      "id": "dvdesign",
+      "r": "berg",
+      "n": "DVDesign GmbH",
+      "c": "Sprockhövel",
+      "d": 20,
+      "u": "https://dvdesign.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@dvdesign.de",
+      "flag": ""
+    },
+    {
+      "id": "ego3d",
+      "r": "ruhr",
+      "n": "EGO3D",
+      "c": "Mülheim",
+      "d": 35,
+      "u": "https://ego-3d.de",
+      "f": [
+        "3D & Visualisierung"
+      ],
+      "p": "",
+      "e": "info@ego-3d.de",
+      "flag": ""
+    },
+    {
+      "id": "eyecatcher",
+      "r": "koeln",
+      "n": "eyecatcher Medienproduktion GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://eye-catcher.de",
+      "f": [
+        "Animation",
+        "Film & Video",
+        "Postproduktion",
+        "Grafikdesign",
+        "Messe & Event"
+      ],
+      "p": "",
+      "e": "info@eye-catcher.de",
+      "flag": ""
+    },
+    {
+      "id": "eyedeas",
+      "r": "rhein",
+      "n": "eye!deas mediendesign",
+      "c": "Kaarst",
+      "d": 35,
+      "u": "https://eyedeas.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "kontakt@eyedeas.de",
+      "flag": ""
+    },
+    {
+      "id": "filmmanufaktur",
+      "r": "koeln",
+      "n": "film-manufaktur",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://film-manufaktur.de",
+      "f": [
+        "Film & Video",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "post@film-manufaktur.de",
+      "flag": ""
+    },
+    {
+      "id": "filmswish",
+      "r": "ruhr",
+      "n": "Filmswish Filmproduktion",
+      "c": "Bochum",
+      "d": 35,
+      "u": "https://filmswish.de",
+      "f": [
+        "Film & Video",
+        "Messe & Event",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@filmswish.de",
+      "flag": ""
+    },
+    {
+      "id": "filmwerk",
+      "r": "koeln",
+      "n": "Filmwerk services GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://filmwerk.com",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "info@filmwerk.com",
+      "flag": ""
+    },
+    {
+      "id": "floez",
+      "r": "ruhr",
+      "n": "Flöz Industrie Design GmbH",
+      "c": "Essen",
+      "d": 35,
+      "u": "https://floez.de",
+      "f": [
+        "Grafikdesign",
+        "Print",
+        "Kommunikation",
+        "Produktdesign"
+      ],
+      "p": "",
+      "e": "info@floez.de",
+      "flag": ""
+    },
+    {
+      "id": "fromabovefilm",
+      "r": "berg",
+      "n": "From Above Film",
+      "c": "Wermelskirchen",
+      "d": 20,
+      "u": "https://from-above-film.de",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "lukas-zecher@from-above-film.de",
+      "flag": ""
+    },
+    {
+      "id": "futur2design",
+      "r": "koeln",
+      "n": "Futur 2 Design",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://futur2-design.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "wenning@futur2-design.de",
+      "flag": ""
+    },
+    {
+      "id": "imspannungsfel",
+      "r": "me",
+      "n": "Grafik-Studio Im Spannungsfeld",
+      "c": "Mettmann",
+      "d": 22,
+      "u": "https://im-spannungsfeld.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@im-spannungsfeld.de",
+      "flag": ""
+    },
+    {
+      "id": "moritzdunkel",
+      "r": "koeln",
+      "n": "Grafikdesign Moritz Dunkel",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://moritzdunkel.de",
+      "f": [
+        "Branding",
+        "Grafikdesign",
+        "Web & Digital",
+        "Print"
+      ],
+      "p": "",
+      "e": "info@moritzdunkel.de",
+      "flag": ""
+    },
+    {
+      "id": "grafikwerkstat",
+      "r": "wt",
+      "n": "Grafikwerkstatt Wuppertal",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://grafikwerkstatt-wuppertal.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "kontakt@grafikwerkstatt-wuppertal.de",
+      "flag": ""
+    },
+    {
+      "id": "hueneburg",
+      "r": "dd",
+      "n": "HÜNEBURG film ∣ media production",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://hueneburg.de",
+      "f": [
+        "Film & Video",
+        "Web & Digital",
+        "Messe & Event",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@hueneburg.de",
+      "flag": ""
+    },
+    {
+      "id": "ilovesolution",
+      "r": "dd",
+      "n": "ilovesolution - Webdesign & SEO Düsseldorf",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://ilovesolution.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital",
+        "Fotografie",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "hello@ilovesolution.de",
+      "flag": ""
+    },
+    {
+      "id": "infinitymedia",
+      "r": "berg",
+      "n": "infinity media by Fabian Bauer",
+      "c": "Solingen",
+      "d": 20,
+      "u": "https://infinitymedia.nrw",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@infinitymedia.nrw",
+      "flag": ""
+    },
+    {
+      "id": "intevi",
+      "r": "koeln",
+      "n": "INTEVI Werbeagentur GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://intevi.de",
+      "f": [
+        "Grafikdesign",
+        "Print",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@intevi.de",
+      "flag": ""
+    },
+    {
+      "id": "kochessen",
+      "r": "ruhr",
+      "n": "KOCH ESSEN Kommunikation + Design GmbH",
+      "c": "Essen",
+      "d": 35,
+      "u": "https://koch-essen.de",
+      "f": [
+        "Grafikdesign",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "bewerbung@koch-essen.de",
+      "flag": ""
+    },
+    {
+      "id": "konturenreich",
+      "r": "koeln",
+      "n": "Konturenreich",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://konturenreich.de",
+      "f": [
+        "Grafikdesign",
+        "Print",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@konturenreich.de",
+      "flag": ""
+    },
+    {
+      "id": "skillsforyou",
+      "r": "koeln",
+      "n": "Kristin Kill SKILLS FOR YOU - Medienkompetenz für Dich,",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://skillsforyou.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@skillsforyou.de",
+      "flag": ""
+    },
+    {
+      "id": "kswkom",
+      "r": "dd",
+      "n": "KrollSchmidWolf Kommunikation GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://ksw-kom.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "ksw@ksw-kom.de",
+      "flag": ""
+    },
+    {
+      "id": "lemontime",
+      "r": "koeln",
+      "n": "Lemon Time GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://lemon-time.com",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@lemon-time.com",
+      "flag": ""
+    },
+    {
+      "id": "mangostudios",
+      "r": "koeln",
+      "n": "mango studios Christoph Bette",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://mango-studios.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@mango-studios.de",
+      "flag": ""
+    },
+    {
+      "id": "mannermedia",
+      "r": "koeln",
+      "n": "Manner Werbeagentur",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://mannermedia.de",
+      "f": [
+        "Branding",
+        "Grafikdesign",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "office@mannermedia.de",
+      "flag": ""
+    },
+    {
+      "id": "marketinggilde",
+      "r": "dd",
+      "n": "Marketing Gilde",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://marketing-gilde.de",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "hallo@marketing-gilde.de",
+      "flag": ""
+    },
+    {
+      "id": "mediabrandcast",
+      "r": "rhein",
+      "n": "mediabrandcast GmbH",
+      "c": "Leverkusen",
+      "d": 35,
+      "u": "https://mediabrandcast.com",
+      "f": [
+        "Branding"
+      ],
+      "p": "",
+      "e": "me@mediabrandcast.com",
+      "flag": ""
+    },
+    {
+      "id": "motivfilm",
+      "r": "koeln",
+      "n": "Motivfilm",
+      "c": "Bergisch Gladbach",
+      "d": 50,
+      "u": "https://motivfilm.de",
+      "f": [
+        "Film & Video",
+        "Branding"
+      ],
+      "p": "",
+      "e": "info@motivfilm.de",
+      "flag": ""
+    },
+    {
+      "id": "mwkkoeln",
+      "r": "koeln",
+      "n": "MWK Zimmermann & Hähnel GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://mwk-koeln.de",
+      "f": [
+        "Print",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@mwk-koeln.de",
+      "flag": ""
+    },
+    {
+      "id": "netlop",
+      "r": "koeln",
+      "n": "netlop Marketing Agentur",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://netlop.de",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@netlop.de",
+      "flag": ""
+    },
+    {
+      "id": "onelio",
+      "r": "dd",
+      "n": "Onelio Werbeagentur GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://onelio.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital",
+        "Print",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@onelio.de",
+      "flag": ""
+    },
+    {
+      "id": "peregrinefilms",
+      "r": "me",
+      "n": "PEREGRINE FILMS GmbH",
+      "c": "Langenfeld",
+      "d": 22,
+      "u": "https://peregrine-films.com",
+      "f": [
+        "Film & Video",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@peregrine-films.com",
+      "flag": ""
+    },
+    {
+      "id": "pispirit",
+      "r": "koeln",
+      "n": "PI_spirit Production International GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://pi-spirit.de",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "info@pi-spirit.de",
+      "flag": ""
+    },
+    {
+      "id": "products",
+      "r": "ruhr",
+      "n": "productsdesign Stefan Wulf und Martin Loskyll GbR",
+      "c": "Essen",
+      "d": 35,
+      "u": "https://products.design",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@products.design",
+      "flag": ""
+    },
+    {
+      "id": "publicvision",
+      "r": "dd",
+      "n": "Public Vision KG",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://public-vision.de",
+      "f": [
+        "Film & Video",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@public-vision.de",
+      "flag": ""
+    },
+    {
+      "id": "rebus",
+      "r": "koeln",
+      "n": "Rebus.Media",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://rebus.media",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@rebus.media",
+      "flag": ""
+    },
+    {
+      "id": "reindesign",
+      "r": "koeln",
+      "n": "reindesign GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://reindesign.net",
+      "f": [
+        "Grafikdesign",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@reindesign.net",
+      "flag": ""
+    },
+    {
+      "id": "rheingeist",
+      "r": "me",
+      "n": "Rheingeist Werbeagentur - Engels & Schreiber GbR",
+      "c": "Langenfeld",
+      "d": 22,
+      "u": "https://rheingeist.de",
+      "f": [
+        "Grafikdesign",
+        "Print"
+      ],
+      "p": "",
+      "e": "info@rheingeist.de",
+      "flag": ""
+    },
+    {
+      "id": "rohdeheise",
+      "r": "berg",
+      "n": "rohdeheise kommunikation",
+      "c": "Solingen",
+      "d": 20,
+      "u": "https://rohdeheise.de",
+      "f": [
+        "Film & Video",
+        "Branding",
+        "Grafikdesign",
+        "Web & Digital",
+        "Fotografie"
+      ],
+      "p": "",
+      "e": "mail@rohdeheise.de",
+      "flag": ""
+    },
+    {
+      "id": "royaldesign",
+      "r": "koeln",
+      "n": "Royal Design Werbeagentur GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://royal-design.com",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "kontakt@royal-design.com",
+      "flag": ""
+    },
+    {
+      "id": "rrsteps",
+      "r": "ruhr",
+      "n": "RRsteps - Agentur für Mediengestaltung",
+      "c": "Essen",
+      "d": 35,
+      "u": "https://rrsteps.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital",
+        "Print"
+      ],
+      "p": "",
+      "e": "info@rrsteps.de",
+      "flag": ""
+    },
+    {
+      "id": "schacht32",
+      "r": "ruhr",
+      "n": "Schacht32 GmbH für digitale Markenkommunikation",
+      "c": "Bochum",
+      "d": 35,
+      "u": "https://schacht32.com",
+      "f": [
+        "Web & Digital",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@schacht32.com",
+      "flag": ""
+    },
+    {
+      "id": "saltandpicture",
+      "r": "dd",
+      "n": "Schulz und Neumann GbR",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://saltandpictures.de",
+      "f": [
+        "Film & Video",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "mail@saltandpictures.de",
+      "flag": ""
+    },
+    {
+      "id": "screenworks",
+      "r": "koeln",
+      "n": "Screenworks Köln GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://screenworks.tv",
+      "f": [
+        "3D & Visualisierung",
+        "Animation",
+        "Film & Video",
+        "Grafikdesign",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "karriere@screenworks.tv",
+      "flag": ""
+    },
+    {
+      "id": "sellbound",
+      "r": "koeln",
+      "n": "SELLBOUND: Agentur für MedienDesign",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://sellbound.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@sellbound.de",
+      "flag": ""
+    },
+    {
+      "id": "kaffeeundapfel",
+      "r": "me",
+      "n": "Silke Schwardtmann Kaffee und Apfel Mediengestaltung",
+      "c": "Velbert",
+      "d": 22,
+      "u": "https://kaffee-und-apfel.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "kontakt@kaffee-und-apfel.de",
+      "flag": ""
+    },
+    {
+      "id": "studiobmedia",
+      "r": "ruhr",
+      "n": "studio b media GmbH",
+      "c": "Essen",
+      "d": 35,
+      "u": "https://studio-b-media.de",
+      "f": [
+        "Film & Video",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@studio-b-media.de",
+      "flag": ""
+    },
+    {
+      "id": "tvlogic",
+      "r": "koeln",
+      "n": "TV Logic UG",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://tv-logic.de",
+      "f": [
+        "Film & Video",
+        "Postproduktion",
+        "Produktdesign"
+      ],
+      "p": "",
+      "e": "info@tv-logic.de",
+      "flag": ""
+    },
+    {
+      "id": "tvtmedia",
+      "r": "koeln",
+      "n": "TVT.media GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://tvtmedia.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@tvtmedia.de",
+      "flag": ""
+    },
+    {
+      "id": "vialagentur",
+      "r": "dd",
+      "n": "VIAL Kreativagentur GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://vial-agentur.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "hello@vial-agentur.de",
+      "flag": ""
+    },
+    {
+      "id": "var",
+      "r": "koeln",
+      "n": "von Aichberger & Roenneke Neue Medien GmbH",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://va-r.de",
+      "f": [
+        "3D & Visualisierung",
+        "Film & Video",
+        "Web & Digital",
+        "Fotografie"
+      ],
+      "p": "",
+      "e": "info@va-r.de",
+      "flag": ""
+    },
+    {
+      "id": "webtrailer",
+      "r": "ruhr",
+      "n": "WebTrailer-Videoproduktion",
+      "c": "Essen",
+      "d": 35,
+      "u": "https://webtrailer.net",
+      "f": [
+        "Film & Video",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@webtrailer.net",
+      "flag": ""
+    },
+    {
+      "id": "werbago",
+      "r": "berg",
+      "n": "WERBAGO GmbH",
+      "c": "Solingen",
+      "d": 20,
+      "u": "https://werbago.com",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@werbago.com",
+      "flag": ""
+    },
+    {
+      "id": "werbungspira",
+      "r": "ruhr",
+      "n": "Werbung Spira",
+      "c": "Essen",
+      "d": 35,
+      "u": "https://werbung-spira.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital",
+        "Print",
+        "Messe & Event",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@werbung-spira.de",
+      "flag": ""
+    },
+    {
+      "id": "yolo",
+      "r": "dd",
+      "n": "yolo productions GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://yolo.productions",
+      "f": [
+        "Film & Video",
+        "Fotografie",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "contact@yolo.productions",
+      "flag": ""
+    },
+    {
+      "id": "zuk",
+      "r": "koeln",
+      "n": "zuk. B2B Werbeagentur",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://zuk.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@zuk.de",
+      "flag": ""
+    },
+    {
+      "id": "aberhamdesign",
+      "r": "dd",
+      "n": "ABERHAM Design",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://aberham-design.de",
+      "f": [
+        "Grafikdesign",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@aberham-design.de",
+      "flag": ""
+    },
+    {
+      "id": "artikeldesign",
+      "r": "berg",
+      "n": "ARTIKEL-Design® Bergfeld + Schwan Artikel GmbH",
+      "c": "Remscheid",
+      "d": 20,
+      "u": "https://artikel-design.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@artikel-design.de",
+      "flag": ""
+    },
+    {
+      "id": "3dgmbh",
+      "r": "berg",
+      "n": "Buchmüller 3D GmbH",
+      "c": "Solingen",
+      "d": 20,
+      "u": "https://3d-gmbh.de",
+      "f": [
+        "3D & Visualisierung"
+      ],
+      "p": "",
+      "e": "post@3d-gmbh.de",
+      "flag": ""
+    },
+    {
+      "id": "bunse05",
+      "r": "berg",
+      "n": "Bunse05 Industrial Design",
+      "c": "Hagen",
+      "d": 20,
+      "u": "https://bunse05.de",
+      "f": [
+        "Grafikdesign",
+        "Produktdesign"
+      ],
+      "p": "",
+      "e": "info@bunse05.de",
+      "flag": ""
+    },
+    {
+      "id": "buntebilder",
+      "r": "dd",
+      "n": "bunte bilder, Dirk Fried Karnath",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://bunte-bilder.net",
+      "f": [
+        "3D & Visualisierung",
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "mail@bunte-bilder.net",
+      "flag": ""
+    },
+    {
+      "id": "caesarundcleo",
+      "r": "dd",
+      "n": "Caesar + Cleo GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://caesarundcleo.de",
+      "f": [
+        "Animation",
+        "Film & Video",
+        "Postproduktion",
+        "Grafikdesign",
+        "Fotografie"
+      ],
+      "p": "",
+      "e": "contact@caesarundcleo.de",
+      "flag": ""
+    },
+    {
+      "id": "chamaeleondv",
+      "r": "dd",
+      "n": "Chamaeleon Digital Vision GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://chamaeleon-dv.de",
+      "f": [
+        "Film & Video",
+        "Postproduktion",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@chamaeleon-dv.de",
+      "flag": ""
+    },
+    {
+      "id": "eberharter",
+      "r": "dd",
+      "n": "Eberharter Werbeagentur",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://eberharter.com",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@eberharter.com",
+      "flag": ""
+    },
+    {
+      "id": "fischenich",
+      "r": "berg",
+      "n": "Fischenich GmbH",
+      "c": "Hückeswagen",
+      "d": 20,
+      "u": "https://fischenich.de",
+      "f": [
+        "Film & Video",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "hallo@fischenich.de",
+      "flag": ""
+    },
+    {
+      "id": "kmiio",
+      "r": "me",
+      "n": "kmiio GbR",
+      "c": "Erkrath",
+      "d": 22,
+      "u": "https://kmiio.com",
+      "f": [
+        "Branding",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "hello@kmiio.com",
+      "flag": ""
+    },
+    {
+      "id": "kpluskonzept",
+      "r": "dd",
+      "n": "kplus konzept GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://kplus-konzept.de",
+      "f": [
+        "Grafikdesign",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "bewerbungen@kplus-konzept.de",
+      "flag": ""
+    },
+    {
+      "id": "kurzkurzdesign",
+      "r": "berg",
+      "n": "Kurz Kurz Design",
+      "c": "Solingen",
+      "d": 20,
+      "u": "https://kurz-kurz-design.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@kurz-kurz-design.de",
+      "flag": ""
+    },
+    {
+      "id": "menadwork",
+      "r": "dd",
+      "n": "menadwork kommunikation gmbh",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://menadwork.com",
+      "f": [
+        "Animation",
+        "Web & Digital",
+        "Messe & Event",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "hello@menadwork.com",
+      "flag": ""
+    },
+    {
+      "id": "naumilkat",
+      "r": "dd",
+      "n": "Naumilkat – Agentur für Kommunikation und Design",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://naumilkat.com",
+      "f": [
+        "Branding",
+        "Grafikdesign",
+        "Messe & Event",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@naumilkat.com",
+      "flag": ""
+    },
+    {
+      "id": "scheidsteger",
+      "r": "me",
+      "n": "Scheidsteger Medien GmbH & Co. KG",
+      "c": "Velbert",
+      "d": 22,
+      "u": "https://scheidsteger.net",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@scheidsteger.net",
+      "flag": ""
+    },
+    {
+      "id": "241",
+      "r": "dd",
+      "n": "twentyfourone // motionpicture",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://24-1.com",
+      "f": [
+        "Animation",
+        "Postproduktion"
+      ],
+      "p": "",
+      "e": "mail@24-1.com",
+      "flag": ""
+    },
+    {
+      "id": "westermannmess",
+      "r": "me",
+      "n": "Westermann GmbH",
+      "c": "Langenfeld",
+      "d": 22,
+      "u": "https://westermann-messebau.de",
+      "f": [
+        "Grafikdesign",
+        "Messe & Event"
+      ],
+      "p": "",
+      "e": "info@westermann-messebau.de",
+      "flag": ""
+    },
+    {
+      "id": "3dgrafix",
+      "r": "koeln",
+      "n": "3Dgrafix Animation Studio",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://3dgrafix.de",
+      "f": [
+        "3D & Visualisierung",
+        "Animation"
+      ],
+      "p": "",
+      "e": "info@3dgrafix.de",
+      "flag": ""
+    },
+    {
+      "id": "schmitzweiss",
+      "r": "me",
+      "n": "Schmitz-Weiss Werbeagentur",
+      "c": "Langenfeld",
+      "d": 22,
+      "u": "https://schmitzweiss.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "office@schmitzweiss.de",
+      "flag": ""
+    },
+    {
+      "id": "xpertise",
+      "r": "me",
+      "n": "Xpertise Werbeagentur",
+      "c": "Langenfeld",
+      "d": 22,
+      "u": "https://xpertise.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "a.wolf@xpertise.de",
+      "flag": ""
+    },
+    {
+      "id": "4ddwerbeagentu",
+      "r": "dd",
+      "n": "4DD communication",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://4dd-werbeagentur.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "mail@4dd.de",
+      "flag": ""
+    },
+    {
+      "id": "carpeevent",
+      "r": "koeln",
+      "n": "carpe event productions",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://carpe-event.de",
+      "f": [
+        "Film & Video",
+        "Messe & Event"
+      ],
+      "p": "",
+      "e": "ad@cepk.de",
+      "flag": ""
+    },
+    {
+      "id": "cinematicstudi",
+      "r": "koeln",
+      "n": "Cinematic Studios",
+      "c": "Köln",
+      "d": 50,
+      "u": "https://cinematicstudios.company",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "info@cinematicstudios.de",
+      "flag": ""
+    },
+    {
+      "id": "cadcramer",
+      "r": "koeln",
+      "n": "Cramer Animation Design",
+      "c": "Bergisch Gladbach",
+      "d": 50,
+      "u": "https://cadcramer.de",
+      "f": [
+        "3D & Visualisierung",
+        "Animation",
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "3d-animationen@gmx.de",
+      "flag": ""
+    },
+    {
+      "id": "schumacherfilm",
+      "r": "rhein",
+      "n": "schumacherfilm",
+      "c": "Neuss",
+      "d": 35,
+      "u": "https://schumacherfilm.de",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "schumacherfilm@gmx.de",
+      "flag": ""
+    },
+    {
+      "id": "pixelflix",
+      "r": "wt",
+      "n": "Pixelflix Architekturvisualisierung",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://pixelflix.de",
+      "f": [
+        "3D & Visualisierung"
+      ],
+      "p": "",
+      "e": "info@pixelflix.de",
+      "flag": ""
+    },
+    {
+      "id": "opticaleffects",
+      "r": "berg",
+      "n": "optical effects fiebig und partner",
+      "c": "Solingen",
+      "d": 20,
+      "u": "https://optical-effects.net",
+      "f": [
+        "3D & Visualisierung",
+        "Animation"
+      ],
+      "p": "",
+      "e": "kontakt@optical-effects.de",
+      "flag": ""
+    }
+  ],
+  "stellen": [
+    {
+      "id": "j-idnwrk",
+      "role": "Mediengestalter/in · Kommunikationsdesigner/in (Teilzeit)",
+      "co": "IDEENWERK GmbH",
+      "loc": "Wuppertal",
+      "d": 0,
+      "tags": [
+        "Agentur",
+        "Print",
+        "Web",
+        "Brand Design"
+      ],
+      "fit": true,
+      "url": "https://www.idnwrk.com/jobs/",
+      "note": "Direkt auf der Agenturseite ausgeschrieben, Bewerbung an jobs@idnwrk.com"
+    },
+    {
+      "id": "j-storch",
+      "role": "Mediengestalter / Grafikdesigner Verpackung & Artworks (befristet)",
+      "co": "Storch-Ciret Holding GmbH",
+      "loc": "Wuppertal",
+      "d": 0,
+      "tags": [
+        "Industrie",
+        "Packaging",
+        "Artwork",
+        "CI"
+      ],
+      "url": null,
+      "note": "Werkzeughersteller. Artworks und Layouts für Marketing und Verpackung."
+    },
+    {
+      "id": "j-fare",
+      "role": "Grafiker/in für Bilddatenbank und KI-gestützte Bildproduktion",
+      "co": "FARE – Guenther Fassbender GmbH",
+      "loc": "Remscheid",
+      "d": 20,
+      "tags": [
+        "Industrie",
+        "Bildproduktion",
+        "KI-Tools",
+        "Photoshop"
+      ],
+      "fit": true,
+      "url": null,
+      "note": "Bildgenerierung mit Firefly/Midjourney/Stable Diffusion plus manuelle PSD-Nachbearbeitung."
+    },
+    {
+      "id": "j-pfeiffer",
+      "role": "Grafiker / Mediengestalter — Druckvorstufe (Teilzeit)",
+      "co": "Helmut Pfeiffer GmbH & Co. KG",
+      "loc": "Hückeswagen",
+      "d": 25,
+      "tags": [
+        "Druckvorstufe",
+        "Print",
+        "Teilzeit"
+      ],
+      "url": null,
+      "note": "Reinzeichnung und Druckvorstufe."
+    },
+    {
+      "id": "j-elementa",
+      "role": "Grafikdesigner*in mit Organisationstalent",
+      "co": "Elementa GmbH",
+      "loc": "Hilden",
+      "d": 25,
+      "tags": [
+        "Artwork",
+        "Verpackung",
+        "Marketing",
+        "CI"
+      ],
+      "url": null,
+      "note": "Artworks und Layouts für Marketing- und Verpackungsthemen."
+    },
+    {
+      "id": "j-silag",
+      "role": "Mediengestalter/in Digital- und Printmedien",
+      "co": "SILAG Handel GmbH",
+      "loc": "Langenfeld",
+      "d": 35,
+      "tags": [
+        "Handel",
+        "Layout",
+        "Reinzeichnung"
+      ],
+      "url": null,
+      "note": "Schnelle Layout- und Reinzeichnungsarbeit."
+    },
+    {
+      "id": "j-carcoustics",
+      "role": "Marketing & Graphics Specialist (Teil- oder Vollzeit)",
+      "co": "Carcoustics",
+      "loc": "Leverkusen",
+      "d": 40,
+      "tags": [
+        "Industrie",
+        "Marketing",
+        "Grafik"
+      ],
+      "url": null,
+      "note": "Automotive-Zulieferer, Marketing-Grafik im Haus."
+    },
+    {
+      "id": "j-vdp",
+      "role": "Satz- und Layoutspezialist — Print und digitale Medien",
+      "co": "Verlag Deutsche Polizeiliteratur GmbH",
+      "loc": "Hilden",
+      "d": 25,
+      "tags": [
+        "Verlag",
+        "Satz",
+        "Layout",
+        "Print"
+      ],
+      "url": null,
+      "note": "Fachverlag/Medienhaus, Herstellungsabteilung."
+    },
+    {
+      "id": "j-adc",
+      "role": "Mediengestalter / Grafikdesigner (m/w/d), Vollzeit",
+      "co": "ADC Blackfire Entertainment GmbH",
+      "loc": "Ratingen",
+      "d": 30,
+      "tags": [
+        "Games",
+        "Marketing",
+        "Grafikdatenbank"
+      ],
+      "fit": true,
+      "url": null,
+      "note": "Distributor für Brett- und Sammelkartenspiele, Homeoffice möglich. Thematisch nah an deinem eigenen Projekt."
+    },
+    {
+      "id": "j-capture",
+      "role": "Motion Designer mit Art-Direction-DNA",
+      "co": "Capture Media GmbH",
+      "loc": "Düsseldorf",
+      "d": 30,
+      "tags": [
+        "Motion Design",
+        "3D",
+        "Events",
+        "Installationen"
+      ],
+      "fit": true,
+      "url": null,
+      "note": "Motion Design und 3D für Events, Installationen und Live Experiences. Bester Match zu deinem 3D-Profil."
+    },
+    {
+      "id": "j-ridder",
+      "role": "Grafikdesigner / Content Creator",
+      "co": "RIDDER WERKE",
+      "loc": "Düsseldorf",
+      "d": 30,
+      "tags": [
+        "Kampagnen",
+        "Social Media",
+        "Bewegtbild",
+        "Web"
+      ],
+      "url": null,
+      "note": "Visuelle Ideen für Kampagnen, Social Media, Websites, Bewegtbild."
+    },
+    {
+      "id": "j-mymuesli",
+      "role": "Grafikdesigner*in",
+      "co": "mymuesli AG",
+      "loc": "Düsseldorf",
+      "d": 30,
+      "tags": [
+        "Marke",
+        "E-Commerce",
+        "Motion",
+        "Adobe CC"
+      ],
+      "fit": true,
+      "url": null,
+      "note": "Inhouse-Kreativteam. Anzeige nannte Figma, Adobe CC, KI-Tools und Interesse an Video/Animation/Motion."
+    },
+    {
+      "id": "j-onlinedialog",
+      "role": "Content Creator (auch Ausbildungsplätze)",
+      "co": "OnlineDialog",
+      "loc": "Düsseldorf (Schwanenhöfe)",
+      "d": 30,
+      "tags": [
+        "Content",
+        "Bild & Ton",
+        "Digital"
+      ],
+      "url": null,
+      "note": "Kreativareal Schwanenhöfe, Betreuung von Top-Marken."
+    },
+    {
+      "id": "j-hnc",
+      "role": "Grafik- / Packaging Designer",
+      "co": "HNC Healthy Nutrition Company GmbH",
+      "loc": "Bergisch Gladbach · Köln · Leverkusen",
+      "d": 45,
+      "tags": [
+        "Packaging",
+        "Marke",
+        "Print",
+        "Social Media"
+      ],
+      "url": null,
+      "note": "Produktneueinführung mit viel Gestaltungsspielraum. Teilweise Homeoffice."
+    },
+    {
+      "id": "j-hochtief",
+      "role": "Werkstudent Grafikdesign",
+      "co": "HOCHTIEF",
+      "loc": "Essen",
+      "d": 35,
+      "tags": [
+        "Konzern",
+        "Werkstudium",
+        "InDesign",
+        "Premiere"
+      ],
+      "url": null,
+      "note": "Nur relevant, falls Werkstudentenstatus in Frage kommt."
+    },
+    {
+      "id": "j-europa",
+      "role": "Ausbildung Medienkauffrau/-mann Digital und Print",
+      "co": "Verlag Europa-Lehrmittel",
+      "loc": "Haan",
+      "d": 15,
+      "tags": [
+        "Verlag",
+        "Ausbildung"
+      ],
+      "url": null,
+      "note": "Für dich vermutlich nicht passend — aber der Verlag sitzt 15 km entfernt und hat eine Medienabteilung."
+    }
+  ],
+  "links": [
+    {
+      "url": "https://de.indeed.com/q-mediengestalter-l-wuppertal-jobs.html",
+      "quelle": "Indeed",
+      "titel": "Mediengestalter · Wuppertal",
+      "hinweis": "Radius auf der Seite auf 50 km stellen"
+    },
+    {
+      "url": "https://de.indeed.com/q-grafik-design-l-wuppertal-jobs.html",
+      "quelle": "Indeed",
+      "titel": "Grafikdesign · Wuppertal",
+      "hinweis": "Breiteste Trefferbasis"
+    },
+    {
+      "url": "https://de.indeed.com/Motion-Design-Jobs-in-D%C3%BCsseldorf",
+      "quelle": "Indeed",
+      "titel": "Motion Design · Düsseldorf",
+      "hinweis": "Für die 3D-/Bewegtbild-Schiene"
+    },
+    {
+      "url": "https://www.stepstone.de/jobs/mediengestalter/in-wuppertal",
+      "quelle": "Stepstone",
+      "titel": "Mediengestalter · Wuppertal",
+      "hinweis": "Umkreisfilter links einstellbar"
+    },
+    {
+      "url": "https://www.stepstone.de/jobs/grafik-designer/in-wuppertal",
+      "quelle": "Stepstone",
+      "titel": "Grafikdesigner · Wuppertal",
+      "hinweis": "Mehr Industrie- und Konzernstellen"
+    },
+    {
+      "url": "https://www.stepstone.de/jobs/kommunikationsdesign/in-wuppertal",
+      "quelle": "Stepstone",
+      "titel": "Kommunikationsdesign · Wuppertal",
+      "hinweis": "Andere Treffer als „Mediengestalter“"
+    },
+    {
+      "url": "https://www.stepstone.de/jobs/motion-design/in-d%C3%BCsseldorf",
+      "quelle": "Stepstone",
+      "titel": "Motion Design · Düsseldorf",
+      "hinweis": "Inkl. 3D Artist und Postproduktion"
+    },
+    {
+      "url": "https://www.designmadeingermany.de/jobs/suche/mediengestalter/",
+      "quelle": "Design made in Germany",
+      "titel": "Mediengestalter · bundesweit",
+      "hinweis": "Reine Design-Jobbörse, wenig Streuverlust"
+    },
+    {
+      "url": "https://www.designmadeingermany.de/jobs/suche/d%C3%BCsseldorf/",
+      "quelle": "Design made in Germany",
+      "titel": "Designer-Jobs · Düsseldorf",
+      "hinweis": "Hier posten die guten Studios"
+    },
+    {
+      "url": "https://www.designmadeingermany.de/jobs/suche/k%C3%B6ln/",
+      "quelle": "Design made in Germany",
+      "titel": "Designer-Jobs · Köln",
+      "hinweis": "Zweitwichtigster Markt für dich"
+    },
+    {
+      "url": "https://dasauge.de/sta/Grafik-Designer/Remscheid/",
+      "quelle": "dasauge",
+      "titel": "Grafikdesigner · Bergisches Land",
+      "hinweis": "Ort in der Suchmaske anpassbar"
+    },
+    {
+      "url": "https://www.jobs-in-wuppertal.de/stellenanzeigen/mediengestalter-wuppertal",
+      "quelle": "jobs-in-wuppertal",
+      "titel": "Mediengestalter · lokal",
+      "hinweis": "Kleine lokale Arbeitgeber, sonst unsichtbar"
+    }
+  ]
 }

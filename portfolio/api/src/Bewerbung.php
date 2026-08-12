@@ -17,7 +17,8 @@ namespace App;
  *  – Die **Stammdaten** (Name, Stadt, Schwerpunkte, Adresse) kommen aus
  *    `assets/bewerbung/agenturen.json`. Diese Datei bleibt von Hand
  *    pflegbar; „Nachschub einlesen" ergänzt daraus, was in der Datenbank
- *    fehlt, und fasst Bestehendes nicht an.
+ *    fehlt: neue Agenturen und leere Felder bei bekannten. Was schon
+ *    dasteht, wird nie überschrieben.
  *  – Der **Stand** (Status, Notiz, Kontaktdatum) gehört in die Datenbank.
  *    Er darf nie von einem Dateiupdate überschrieben werden.
  *
@@ -326,26 +327,39 @@ final class Bewerbung
     /**
      * Ergänzt, was in der Datei steht und in der Datenbank fehlt.
      *
-     * Bestehende Einträge bleiben unangetastet – dort hängen Notizen und
-     * Status dran, und die sind mehr wert als eine aktualisierte Adresse.
+     * Zwei Fälle: Eine Agentur, die es hier noch gar nicht gibt, kommt neu
+     * dazu. Eine, die es schon gibt, behält alles Eingetragene – nur leere
+     * Felder werden aus der Datei aufgefüllt. So kommt eine nachgetragene
+     * E-Mail-Adresse an, ohne dass eine von Hand korrigierte Angabe wieder
+     * von der Datei überbügelt wird. Status, Notiz und Kontaktdatum liegen
+     * in eigenen Spalten und werden hier ohnehin nicht berührt.
      *
-     * @return array{neu: int}
+     * @return array{neu: int, ergaenzt: int}
      */
     public function nachschub(): array
     {
         $stamm = $this->datei();
-        $bekannt = $this->db->all('SELECT id FROM bewerbung_eintraege');
-        $ids = array_column($bekannt, 'id');
+        $bekannt = $this->db->all('SELECT id, daten FROM bewerbung_eintraege');
+        $daten = array_column($bekannt, 'daten', 'id');
         $neu = 0;
+        $ergaenzt = 0;
 
         foreach ([['agenturen', 'agentur'], ['stellen', 'stelle']] as [$feld, $typ]) {
             foreach ($stamm[$feld] ?? [] as $eintrag) {
                 $id = (string) ($eintrag['id'] ?? '');
-                if ($id === '' || in_array($id, $ids, true)) {
+                if ($id === '') {
                     continue;
                 }
 
                 unset($eintrag['id']);
+
+                if (array_key_exists($id, $daten)) {
+                    if ($this->fehlendesAuffuellen($id, (string) $daten[$id], $eintrag)) {
+                        $ergaenzt++;
+                    }
+                    continue;
+                }
+
                 $this->db->insert('bewerbung_eintraege', [
                     'id' => $id,
                     'typ' => $typ,
@@ -356,11 +370,54 @@ final class Bewerbung
                     'kontakt_am' => '',
                     'updated_at' => gmdate('c'),
                 ]);
+                $daten[$id] = '';
                 $neu++;
             }
         }
 
-        return ['neu' => $neu];
+        return ['neu' => $neu, 'ergaenzt' => $ergaenzt];
+    }
+
+    /**
+     * Füllt leere Felder eines bestehenden Eintrags aus der Datei auf.
+     *
+     * „Leer" heißt: nicht vorhanden, null, leerer Text oder leere Liste.
+     * Alles andere bleibt, wie es ist.
+     */
+    private function fehlendesAuffuellen(string $id, string $roh, array $ausDatei): bool
+    {
+        $vorhanden = json_decode($roh, true);
+        if (!is_array($vorhanden)) {
+            return false;
+        }
+
+        $geaendert = false;
+        foreach ($ausDatei as $feld => $wert) {
+            if ($wert === null || $wert === '' || $wert === []) {
+                continue;
+            }
+
+            $alt = $vorhanden[$feld] ?? null;
+            if ($alt !== null && $alt !== '' && $alt !== []) {
+                continue;
+            }
+
+            $vorhanden[$feld] = $wert;
+            $geaendert = true;
+        }
+
+        if (!$geaendert) {
+            return false;
+        }
+
+        $this->db->update(
+            'bewerbung_eintraege',
+            ['daten' => json_encode($vorhanden, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 'updated_at' => gmdate('c')],
+            'id = :id',
+            ['id' => $id]
+        );
+
+        return true;
     }
 
     /**

@@ -464,7 +464,7 @@ export const api = {
     }),
   bewerbungLoeschen: (id: string) =>
     request<void>(`bewerbung/eintrag/${encodeURIComponent(id)}`, { method: 'DELETE' }),
-  bewerbungNachschub: () => request<{ neu: number }>('bewerbung/nachschub', { method: 'POST' }),
+  bewerbungNachschub: () => request<{ neu: number; ergaenzt: number }>('bewerbung/nachschub', { method: 'POST' }),
   bewerbungImport: (sicherung: unknown) =>
     request<{ 'übernommen': number; unbekannt: number }>('bewerbung/import', {
       method: 'POST',
