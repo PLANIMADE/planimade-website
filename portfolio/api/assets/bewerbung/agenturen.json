@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "regionen": [
     {
       "id": "wt",
@@ -3810,6 +3810,1296 @@
       ],
       "p": "",
       "e": "mail@mehr.gmbh",
+      "flag": ""
+    },
+    {
+      "id": "simadesign",
+      "r": "berg",
+      "n": "SiMa Design",
+      "c": "Solingen",
+      "d": 15,
+      "u": "https://simadesign.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@simadesign.de",
+      "flag": ""
+    },
+    {
+      "id": "studiostadtwal",
+      "r": "me",
+      "n": "Studio Stadtwald",
+      "c": "Mettmann",
+      "d": 20,
+      "u": "https://studiostadtwald.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@studiostadtwald.de",
+      "flag": ""
+    },
+    {
+      "id": "janphilipps",
+      "r": "dd",
+      "n": "Jan Philipps - Webdesign Düsseldorf | SEA & SEO Freelancer",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://janphilipps.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "kontakt@janphilipps.de",
+      "flag": ""
+    },
+    {
+      "id": "mediacrowd",
+      "r": "berg",
+      "n": "mediaCrowd",
+      "c": "Schwelm",
+      "d": 15,
+      "u": "https://mediacrowd.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@mediacrowd.de",
+      "flag": ""
+    },
+    {
+      "id": "brandpepper",
+      "r": "dd",
+      "n": "Brandpepper GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://brandpepper.de",
+      "f": [
+        "Branding"
+      ],
+      "p": "",
+      "e": "claudia.giese@brandpepper.de",
+      "flag": ""
+    },
+    {
+      "id": "atarisafari",
+      "r": "dd",
+      "n": "atarisafari medienproduktion",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://atarisafari.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "post@atarisafari.de",
+      "flag": ""
+    },
+    {
+      "id": "18quadrat",
+      "r": "dd",
+      "n": "Kira Pasenau ACHTZEHN QUADRAT heimat für design",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://18quadrat.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@18quadrat.de",
+      "flag": ""
+    },
+    {
+      "id": "dkmvideoproduc",
+      "r": "dd",
+      "n": "DKM VIDEO PRODUCTION | Videograf",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://dkmvideoproduction.com",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "hello@dkmvideoproduction.com",
+      "flag": ""
+    },
+    {
+      "id": "brandingbrothe",
+      "r": "dd",
+      "n": "Branding Brothers",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://brandingbrothers.de",
+      "f": [
+        "Branding"
+      ],
+      "p": "",
+      "e": "victor@brandingbrothers.de",
+      "flag": ""
+    },
+    {
+      "id": "bonbonstudio",
+      "r": "dd",
+      "n": "bonbon studio",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://bonbonstudio.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "post@bonbonstudio.de",
+      "flag": ""
+    },
+    {
+      "id": "10eg",
+      "r": "dd",
+      "n": "10eG visual Gesellschaft für Kommunikationsdesign mbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://10eg.com",
+      "f": [
+        "Grafikdesign",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@10eg.com",
+      "flag": ""
+    },
+    {
+      "id": "fabulafilm",
+      "r": "berg",
+      "n": "Fabula Film GmbH",
+      "c": "Schwelm",
+      "d": 15,
+      "u": "https://fabula-film.de",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "info@fabula-film.de",
+      "flag": ""
+    },
+    {
+      "id": "klausassmann",
+      "r": "dd",
+      "n": "Klaus Aßmann Illustration",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://klaus-assmann.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@klaus-assmann.de",
+      "flag": ""
+    },
+    {
+      "id": "sgp",
+      "r": "berg",
+      "n": "SGP | Werbeagentur & Webdesign",
+      "c": "Remscheid",
+      "d": 15,
+      "u": "https://sgp.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@sgp.de",
+      "flag": ""
+    },
+    {
+      "id": "berkodesign",
+      "r": "dd",
+      "n": "Berko Design",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://berkodesign.com",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@berkodesign.com",
+      "flag": ""
+    },
+    {
+      "id": "wehrenddesign",
+      "r": "dd",
+      "n": "design u. konzept Wolfgang Wehrend Diplom Designer Designer",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://wehrend-design.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@wehrend-design.de",
+      "flag": ""
+    },
+    {
+      "id": "katapultkreati",
+      "r": "dd",
+      "n": "KATAPULT Kreativbüro",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://katapult-kreativ.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@katapult-kreativ.de",
+      "flag": ""
+    },
+    {
+      "id": "grauwertdesign",
+      "r": "dd",
+      "n": "Gabi Konczak grauwert Kommunikationsdesign",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://grauwert-design.de",
+      "f": [
+        "Grafikdesign",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "gk@grauwert-design.de",
+      "flag": ""
+    },
+    {
+      "id": "rudasstudios",
+      "r": "dd",
+      "n": "Rudas Studios KG",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://rudas-studios.com",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@rudas-studios.com",
+      "flag": ""
+    },
+    {
+      "id": "rottmann",
+      "r": "dd",
+      "n": "Rottmann Kommunikation,",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://rottmann.com",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "rottmann@rottmann.com",
+      "flag": ""
+    },
+    {
+      "id": "kruershofdigit",
+      "r": "dd",
+      "n": "Krüershof Digital",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://kruershof-digital.de",
+      "f": [
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@kruershof-digital.de",
+      "flag": ""
+    },
+    {
+      "id": "aswebworld",
+      "r": "berg",
+      "n": "as-webworld. Sabine Aust Webdesign",
+      "c": "Remscheid",
+      "d": 15,
+      "u": "https://as-webworld.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "kontakt@as-webworld.de",
+      "flag": ""
+    },
+    {
+      "id": "matthesweiler",
+      "r": "dd",
+      "n": "Matthes Weiler Online und klassische Kommunikation",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://matthesweiler.de",
+      "f": [
+        "Web & Digital",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "hallo@matthesweiler.de",
+      "flag": ""
+    },
+    {
+      "id": "kukzeitraffer",
+      "r": "dd",
+      "n": "Kukulies & Kollegen GmbH Kommunikation & Konzept",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://kukzeitraffer.de",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@kukzeitraffer.de",
+      "flag": ""
+    },
+    {
+      "id": "goondesign",
+      "r": "me",
+      "n": "Hans Re",
+      "c": "Haan",
+      "d": 20,
+      "u": "https://go-on-design.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "mail@go-on-design.de",
+      "flag": ""
+    },
+    {
+      "id": "bauermedien",
+      "r": "berg",
+      "n": "BAUeR Web- & Mediendesign",
+      "c": "Ennepetal",
+      "d": 15,
+      "u": "https://bauer-medien.design",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "kontakt@bauer-medien.design",
+      "flag": ""
+    },
+    {
+      "id": "digitalhype",
+      "r": "dd",
+      "n": "digitalhype UG (haftungsbeschränkt)",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://digitalhype.de",
+      "f": [
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "hello@digitalhype.de",
+      "flag": ""
+    },
+    {
+      "id": "visualcosmos",
+      "r": "dd",
+      "n": "°visualcosmos",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://visualcosmos.com",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@visualcosmos.com",
+      "flag": ""
+    },
+    {
+      "id": "hillendesign",
+      "r": "dd",
+      "n": "Hillendesign",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://hillendesign.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@hillendesign.de",
+      "flag": ""
+    },
+    {
+      "id": "telescopefilm",
+      "r": "dd",
+      "n": "Telescope Film, Helmut Brüker",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://telescope-film.de",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "helmut.brueker@telescope-film.de",
+      "flag": ""
+    },
+    {
+      "id": "bionicsystems",
+      "r": "dd",
+      "n": "Bionic Systems Fürst und Haust GbR Grafik",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://bionic-systems.com",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@bionic-systems.com",
+      "flag": ""
+    },
+    {
+      "id": "kzwoelf",
+      "r": "dd",
+      "n": "K 12 Agentur für Kommunikation und Innovation",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://k-zwoelf.com",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "kontakt@k-zwoelf.com",
+      "flag": ""
+    },
+    {
+      "id": "akaarchitektur",
+      "r": "dd",
+      "n": "AKA Architekturkommunikation",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://aka-architekturkommunikation.eu",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@aka-architekturkommunikation.eu",
+      "flag": ""
+    },
+    {
+      "id": "passgmbh",
+      "r": "berg",
+      "n": "PASS-Präsentations- und Animationsstudio Stahl GmbH",
+      "c": "Ennepetal",
+      "d": 15,
+      "u": "https://pass-gmbh.de",
+      "f": [
+        "Animation & VFX",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@pass-gmbh.de",
+      "flag": ""
+    },
+    {
+      "id": "pixelroyale",
+      "r": "dd",
+      "n": "Pixel Royale - Webdesign aus Düsseldorf",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://pixelroyale.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@pixelroyale.de",
+      "flag": ""
+    },
+    {
+      "id": "zurloewendesig",
+      "r": "dd",
+      "n": "zurlöwendesign",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://zurloewendesign.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@zurloewendesign.de",
+      "flag": ""
+    },
+    {
+      "id": "magoproduction",
+      "r": "dd",
+      "n": "Magoproduction GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://magoproduction.com",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "jobs@magoproduction.com",
+      "flag": ""
+    },
+    {
+      "id": "allmediadesk",
+      "r": "dd",
+      "n": "AllMediaDesk",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://allmediadesk.com",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "hello@allmediadesk.com",
+      "flag": ""
+    },
+    {
+      "id": "gdstudio",
+      "r": "dd",
+      "n": "GD Grafik & Druck, Studio GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://gd-studio.de",
+      "f": [
+        "Grafikdesign",
+        "Print"
+      ],
+      "p": "",
+      "e": "info@gd-studio.de",
+      "flag": ""
+    },
+    {
+      "id": "ligam",
+      "r": "dd",
+      "n": "LIGA.M GmbH Marketingagentur",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://ligam.de",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "markus@ligam.de",
+      "flag": ""
+    },
+    {
+      "id": "lightburst",
+      "r": "dd",
+      "n": "LIGHTBURST event media design",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://lightburst.de",
+      "f": [
+        "Grafikdesign",
+        "Messe & Event"
+      ],
+      "p": "",
+      "e": "info@lightburst.de",
+      "flag": ""
+    },
+    {
+      "id": "xfilme",
+      "r": "dd",
+      "n": "X-Filme Creative Pool GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://x-filme.de",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "info@x-filme.de",
+      "flag": ""
+    },
+    {
+      "id": "ueoe",
+      "r": "dd",
+      "n": "ü,ö. Werbung, Design.",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://ueoe.de",
+      "f": [
+        "Grafikdesign",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "sparring@ueoe.de",
+      "flag": ""
+    },
+    {
+      "id": "designverign",
+      "r": "dd",
+      "n": "Designverign GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://designverign.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@designverign.de",
+      "flag": ""
+    },
+    {
+      "id": "hagee",
+      "r": "berg",
+      "n": "Hagee Konzept-Daten und Medien GmbH",
+      "c": "Remscheid",
+      "d": 15,
+      "u": "https://hagee.com",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "mail@hagee.com",
+      "flag": ""
+    },
+    {
+      "id": "schlichtpartne",
+      "r": "dd",
+      "n": "Agentur Schlicht und Partner",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://schlicht-partner.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "postkarte@schlicht-partner.de",
+      "flag": ""
+    },
+    {
+      "id": "dsigna",
+      "r": "berg",
+      "n": "DSIGNA - graphic design",
+      "c": "Ennepetal",
+      "d": 15,
+      "u": "https://dsigna.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "wow@dsigna.de",
+      "flag": ""
+    },
+    {
+      "id": "jujoschadesign",
+      "r": "dd",
+      "n": "JUJOSCHA design",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://jujoscha-design.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@jujoscha-design.de",
+      "flag": ""
+    },
+    {
+      "id": "fastdesign",
+      "r": "dd",
+      "n": "Fastdesign",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://fastdesign.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@fastdesign.de",
+      "flag": ""
+    },
+    {
+      "id": "diecodedesigne",
+      "r": "berg",
+      "n": "DIE CODEDESIGNER",
+      "c": "Gevelsberg",
+      "d": 15,
+      "u": "https://die-codedesigner.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@die-codedesigner.de",
+      "flag": ""
+    },
+    {
+      "id": "bwgtbld",
+      "r": "dd",
+      "n": "BWGTBLD -Büro für Film",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://bwgtbld.tv",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "contact@bwgtbld.tv",
+      "flag": ""
+    },
+    {
+      "id": "alexgoepel",
+      "r": "me",
+      "n": "Alexander Göpel - Grafikdesigner",
+      "c": "Haan",
+      "d": 20,
+      "u": "https://alex-goepel.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "hallo@alex-goepel.de",
+      "flag": ""
+    },
+    {
+      "id": "dauerwerbungfr",
+      "r": "dd",
+      "n": "Dauerwerbung Franke media e.K.",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://dauerwerbung-franke.media",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "anfragen@dauerwerbung-franke.media",
+      "flag": ""
+    },
+    {
+      "id": "engelmannkrysc",
+      "r": "dd",
+      "n": "Engelmann & Kryschak Werbeagentur GmbH Werbeagentur",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://engelmann-kryschak.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@engelmann-kryschak.de",
+      "flag": ""
+    },
+    {
+      "id": "designunit",
+      "r": "dd",
+      "n": "Thomas Hagenbucher Tekla Halbach Kommunikationsdesign",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://designunit.de",
+      "f": [
+        "Grafikdesign",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "mail@designunit.de",
+      "flag": ""
+    },
+    {
+      "id": "bremercreative",
+      "r": "dd",
+      "n": "bremercreative Webdesign",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://bremercreative.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@bremercreative.de",
+      "flag": ""
+    },
+    {
+      "id": "mensemedia",
+      "r": "dd",
+      "n": "mensemedia GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://mensemedia.net",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@mensemedia.net",
+      "flag": ""
+    },
+    {
+      "id": "justmemories",
+      "r": "me",
+      "n": "JUST MEMORIES - wedding films",
+      "c": "Haan",
+      "d": 20,
+      "u": "https://just-memories.de",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "post@just-memories.de",
+      "flag": ""
+    },
+    {
+      "id": "initialwerk",
+      "r": "dd",
+      "n": "Initialwerk GmbH - Agentur für Live-Kommunikation",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://initialwerk.de",
+      "f": [
+        "Messe & Event",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@initialwerk.de",
+      "flag": ""
+    },
+    {
+      "id": "naturepicsfilm",
+      "r": "dd",
+      "n": "NaturePicsFilm",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://naturepicsfilms.com",
+      "f": [
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "mail@naturepicsfilms.com",
+      "flag": ""
+    },
+    {
+      "id": "wiedemeierkomm",
+      "r": "dd",
+      "n": "Wiedemeier Kommunikation GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://wiedemeier-kommunikation.de",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "wiedemeier@wiedemeier-kommunikation.de",
+      "flag": ""
+    },
+    {
+      "id": "multimediadesi",
+      "r": "dd",
+      "n": "multimediadesign.net Atelier für Kommunikation",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://multimediadesign.net",
+      "f": [
+        "Grafikdesign",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@multimediadesign.net",
+      "flag": ""
+    },
+    {
+      "id": "alexanderschwa",
+      "r": "dd",
+      "n": "Alexander Schwarze Webdesign",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://alexander-schwarze.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@alexander-schwarze.de",
+      "flag": ""
+    },
+    {
+      "id": "dreiddesign",
+      "r": "dd",
+      "n": "3D Design Jürgen Mühle Designagentur",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://drei-d-design.de",
+      "f": [
+        "3D & Visualisierung",
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@drei-d-design.de",
+      "flag": ""
+    },
+    {
+      "id": "creampictures",
+      "r": "dd",
+      "n": "cream digital pictures GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://creampictures.com",
+      "f": [
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "jobs@creampictures.com",
+      "flag": ""
+    },
+    {
+      "id": "pepperpoint",
+      "r": "berg",
+      "n": "pepper:point GbR Werbeagentur",
+      "c": "Gevelsberg",
+      "d": 15,
+      "u": "https://pepperpoint.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "post@pepperpoint.de",
+      "flag": ""
+    },
+    {
+      "id": "theklick",
+      "r": "dd",
+      "n": "the klick - Internetagentur",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://theklick.de",
+      "f": [
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@theklick.de",
+      "flag": ""
+    },
+    {
+      "id": "granataepfel",
+      "r": "dd",
+      "n": "Grantäpfel Kommunikation",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://granataepfel.com",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@granataepfel.com",
+      "flag": ""
+    },
+    {
+      "id": "grafikfueralle",
+      "r": "dd",
+      "n": "GRAFIK FÜR ALLE",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://grafik-fuer-alle.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "kontakt@grafik-fuer-alle.de",
+      "flag": ""
+    },
+    {
+      "id": "esn",
+      "r": "dd",
+      "n": "e.s.n Agentur für Produktion und Werbung GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://e-s-n.net",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "agentur@e-s-n.net",
+      "flag": ""
+    },
+    {
+      "id": "demedia",
+      "r": "dd",
+      "n": "De-Media GmbH Information Kommunikation Medien",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://de-media.de",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@de-media.de",
+      "flag": ""
+    },
+    {
+      "id": "aundomedien",
+      "r": "dd",
+      "n": "A & O Medien GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://aundo-medien.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@aundo-medien.de",
+      "flag": ""
+    },
+    {
+      "id": "talklick",
+      "r": "dd",
+      "n": "talklick media design",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://talklick.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@talklick.de",
+      "flag": ""
+    },
+    {
+      "id": "lovelypixel",
+      "r": "dd",
+      "n": "Scheuermann Lovely Pixel Mediensesign Multimediadesign",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://lovely-pixel.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "mail@lovely-pixel.de",
+      "flag": ""
+    },
+    {
+      "id": "80grad",
+      "r": "dd",
+      "n": "80 GRAD | Agentur für Digitale Kommunikation",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://80-grad.de",
+      "f": [
+        "Web & Digital",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "kontakt@80-grad.de",
+      "flag": ""
+    },
+    {
+      "id": "premieremedia",
+      "r": "dd",
+      "n": "Premiere Media",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://premieremedia.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@premieremedia.de",
+      "flag": ""
+    },
+    {
+      "id": "studioignatov",
+      "r": "dd",
+      "n": "Studio Ignatov GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://studioignatov.com",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@studioignatov.com",
+      "flag": ""
+    },
+    {
+      "id": "thebureau",
+      "r": "dd",
+      "n": "B/G Bureau German - The BUREAU Werbeagentur",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://thebureau.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "hello@thebureau.de",
+      "flag": ""
+    },
+    {
+      "id": "rim",
+      "r": "berg",
+      "n": "RIM GmbH Agentur für Internetdienstleistungen",
+      "c": "Ennepetal",
+      "d": 15,
+      "u": "https://rim.de",
+      "f": [
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@rim.de",
+      "flag": ""
+    },
+    {
+      "id": "wolfbiere",
+      "r": "wt",
+      "n": "Wolf & Biere",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://wolfbiere.de",
+      "f": [
+        "Kommunikation",
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "hello@wolfbiere.de",
+      "flag": ""
+    },
+    {
+      "id": "laboro",
+      "r": "wt",
+      "n": "Laboro Consulting",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://laboro.de",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "wuppertal@laboro.de",
+      "flag": ""
+    },
+    {
+      "id": "adtention",
+      "r": "wt",
+      "n": "adtention Werbeagentur",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://adtention.de",
+      "f": [
+        "Kommunikation",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "service@adtention.de",
+      "flag": ""
+    },
+    {
+      "id": "focussic",
+      "r": "wt",
+      "n": "focussic Design & Marketing",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://focussic.de",
+      "f": [
+        "Grafikdesign",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@focussic.de",
+      "flag": ""
+    },
+    {
+      "id": "ipanema2c",
+      "r": "wt",
+      "n": "ipanema2c brand communication",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://ipanema2c.de",
+      "f": [
+        "Branding",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@ipanema2c.de",
+      "flag": ""
+    },
+    {
+      "id": "twocream",
+      "r": "wt",
+      "n": "twocream creativemedia",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://twocream.com",
+      "f": [
+        "Film & Video",
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@twocream.com",
+      "flag": ""
+    },
+    {
+      "id": "projektxl",
+      "r": "wt",
+      "n": "PROJEKT_XL",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://projekt-xl.de",
+      "f": [
+        "Grafikdesign",
+        "Print"
+      ],
+      "p": "",
+      "e": "info@projekt-xl.de",
+      "flag": ""
+    },
+    {
+      "id": "boros",
+      "r": "wt",
+      "n": "BOROS Agentur für Kommunikation",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://boros.de",
+      "f": [
+        "Branding",
+        "Kommunikation",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "b@boros.de",
+      "flag": ""
+    },
+    {
+      "id": "pixelgold",
+      "r": "wt",
+      "n": "Pixelgold",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://pixelgold.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@pixelgold.de",
+      "flag": ""
+    },
+    {
+      "id": "vielfein",
+      "r": "wt",
+      "n": "Vielfein Designagentur",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://vielfein.de",
+      "f": [
+        "Grafikdesign",
+        "Branding"
+      ],
+      "p": "",
+      "e": "konkret@vielfein.de",
+      "flag": ""
+    },
+    {
+      "id": "schlasse",
+      "r": "rhein",
+      "n": "Schlasse B2B-Kommunikation",
+      "c": "Monheim am Rhein",
+      "d": 35,
+      "u": "https://schlasse.de",
+      "f": [
+        "Kommunikation",
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "hello@schlasse.de",
       "flag": ""
     }
   ],
