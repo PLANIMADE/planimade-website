@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "regionen": [
     {
       "id": "wt",
@@ -3158,6 +3158,658 @@
       ],
       "p": "",
       "e": "kontakt@optical-effects.de",
+      "flag": ""
+    },
+    {
+      "id": "3dscansolution",
+      "r": "dd",
+      "n": "3DScan Solutions GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://3dscan-solutions.de",
+      "f": [
+        "3D & Visualisierung"
+      ],
+      "p": "",
+      "e": "bw@3dscan-solutions.de",
+      "flag": ""
+    },
+    {
+      "id": "squareonegmbh",
+      "r": "dd",
+      "n": "Agentur für Produktentwicklung Squareone GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://squareonegmbh.de",
+      "f": [
+        "Produktdesign"
+      ],
+      "p": "",
+      "e": "info@squareonegmbh.de",
+      "flag": ""
+    },
+    {
+      "id": "annafy",
+      "r": "dd",
+      "n": "Annafy Branding Agency",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://annafy.de",
+      "f": [
+        "Branding"
+      ],
+      "p": "",
+      "e": "info@annafy.de",
+      "flag": ""
+    },
+    {
+      "id": "audioversum",
+      "r": "dd",
+      "n": "Audioversum GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://audioversum.de",
+      "f": [
+        "Animation & VFX",
+        "Film & Video",
+        "Ton",
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "mail@audioversum.de",
+      "flag": ""
+    },
+    {
+      "id": "bmrdesign",
+      "r": "dd",
+      "n": "Brößke, Meyer & Ruf GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://bmr-design.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "hello@bmr-design.de",
+      "flag": ""
+    },
+    {
+      "id": "chiari",
+      "r": "dd",
+      "n": "CHIARI GmbH - Agentur für Markenkommunikation",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://chiari.de",
+      "f": [
+        "Branding",
+        "Grafikdesign",
+        "Messe & Event",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@chiari.de",
+      "flag": ""
+    },
+    {
+      "id": "coolpack",
+      "r": "dd",
+      "n": "Coolpack",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://coolpack.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "webdesign@coolpack.de",
+      "flag": ""
+    },
+    {
+      "id": "elbeeichhorn",
+      "r": "dd",
+      "n": "Elbe Eichhorn / Produktdesign und Produktentwicklung",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://elbeeichhorn.com",
+      "f": [
+        "Grafikdesign",
+        "Produktdesign"
+      ],
+      "p": "",
+      "e": "sion@elbeeichhorn.com",
+      "flag": ""
+    },
+    {
+      "id": "federmannkampc",
+      "r": "wt",
+      "n": "Federmann und Kampcyzk design gmbh",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://federmann-kampczyk.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@federmann-kampczyk.de",
+      "flag": ""
+    },
+    {
+      "id": "hallmannmesseb",
+      "r": "dd",
+      "n": "hallmann Messebau-Gesellschaft mbH & Co.KG",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://hallmann-messebau.de",
+      "f": [
+        "Messe & Event"
+      ],
+      "p": "",
+      "e": "info@hallmann-messebau.de",
+      "flag": ""
+    },
+    {
+      "id": "hannesmayer",
+      "r": "wt",
+      "n": "Hannes Mayer Design",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://hannes-mayer.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@hannes-mayer.de",
+      "flag": ""
+    },
+    {
+      "id": "hektorrydzewsk",
+      "r": "dd",
+      "n": "Hektor + Rydzewski Bild + Ton Produktion GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://hektor-rydzewski.de",
+      "f": [
+        "Film & Video",
+        "Ton"
+      ],
+      "p": "",
+      "e": "bewerbung@hektor-rydzewski.de",
+      "flag": ""
+    },
+    {
+      "id": "petrasoeltzer",
+      "r": "dd",
+      "n": "Kommunikationsdesign Petra Soeltzer",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://petrasoeltzer.de",
+      "f": [
+        "Grafikdesign",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "mail@petrasoeltzer.de",
+      "flag": ""
+    },
+    {
+      "id": "medivas",
+      "r": "wt",
+      "n": "Medivas Gesellschaft für audiovisuelle Medientechnik mbH & Co. KG",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://medivas.de",
+      "f": [
+        "Ton"
+      ],
+      "p": "",
+      "e": "info@medivas.de",
+      "flag": ""
+    },
+    {
+      "id": "pemedia",
+      "r": "dd",
+      "n": "pemedia GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://pemedia.de",
+      "f": [
+        "Film & Video",
+        "Grafikdesign",
+        "Web & Digital",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@pemedia.de",
+      "flag": ""
+    },
+    {
+      "id": "rootsconsultan",
+      "r": "dd",
+      "n": "ROOTS Brand Strategy Consultants GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://roots-consultants.com",
+      "f": [
+        "Branding"
+      ],
+      "p": "",
+      "e": "info@roots-consultants.com",
+      "flag": ""
+    },
+    {
+      "id": "studiozmkd",
+      "r": "wt",
+      "n": "Studio ZMKD",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://studio-zmkd.de",
+      "f": [
+        "Branding",
+        "Grafikdesign",
+        "Web & Digital",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "mail@studio-zmkd.de",
+      "flag": ""
+    },
+    {
+      "id": "talsand",
+      "r": "dd",
+      "n": "talsand GmbH & Co. KG",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://talsand.eu",
+      "f": [
+        "3D & Visualisierung",
+        "Grafikdesign",
+        "Web & Digital",
+        "Messe & Event"
+      ],
+      "p": "",
+      "e": "info@talsand.eu",
+      "flag": ""
+    },
+    {
+      "id": "tdonline",
+      "r": "dd",
+      "n": "Type Design Gesellschaft für Typografie und Design mbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://td-online.de",
+      "f": [
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "info@td-online.de",
+      "flag": ""
+    },
+    {
+      "id": "unikat",
+      "r": "wt",
+      "n": "Unikat Werbeagentur GmbH",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://unikat.net",
+      "f": [
+        "Branding",
+        "Grafikdesign",
+        "Print & Packaging",
+        "Messe & Event",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@unikat.net",
+      "flag": ""
+    },
+    {
+      "id": "zummars",
+      "r": "dd",
+      "n": "ZUMMARS",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://zummars.de",
+      "f": [
+        "3D & Visualisierung",
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "ichwill@zummars.de",
+      "flag": ""
+    },
+    {
+      "id": "acdcommunicati",
+      "r": "dd",
+      "n": "ACD Communication GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://acd-communication.de",
+      "f": [
+        "Branding",
+        "Grafikdesign",
+        "Web & Digital",
+        "Print & Packaging",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@acd-communication.de",
+      "flag": ""
+    },
+    {
+      "id": "appsoluts",
+      "r": "dd",
+      "n": "Appsoluts GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://appsoluts.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "jobs@appsoluts.de",
+      "flag": ""
+    },
+    {
+      "id": "april5",
+      "r": "dd",
+      "n": "April5 GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://april5.de",
+      "f": [
+        "3D & Visualisierung",
+        "Branding",
+        "Grafikdesign",
+        "Print & Packaging"
+      ],
+      "p": "",
+      "e": "hello@april5.de",
+      "flag": ""
+    },
+    {
+      "id": "bbdo",
+      "r": "dd",
+      "n": "BBDO Germany GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://bbdo.de",
+      "f": [
+        "Branding",
+        "Messe & Event",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@bbdo.de",
+      "flag": ""
+    },
+    {
+      "id": "crossactive",
+      "r": "dd",
+      "n": "crossactive GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://crossactive.de",
+      "f": [
+        "Branding",
+        "Grafikdesign",
+        "Web & Digital",
+        "Print & Packaging"
+      ],
+      "p": "",
+      "e": "hello@crossactive.de",
+      "flag": ""
+    },
+    {
+      "id": "digiboxgmbh",
+      "r": "dd",
+      "n": "DIGIBOX Gesellschaft für digitale Text- und Bildverarbeitung m.b.H.",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://digiboxgmbh.de",
+      "f": [
+        "Grafikdesign",
+        "Web & Digital",
+        "Print & Packaging"
+      ],
+      "p": "",
+      "e": "hello@digiboxgmbh.de",
+      "flag": ""
+    },
+    {
+      "id": "gretchenfrage",
+      "r": "dd",
+      "n": "Gretchenfrage! Agentur für kreative Antworten GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://gretchenfrage.com",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@gretchenfrage.com",
+      "flag": ""
+    },
+    {
+      "id": "groundstudios",
+      "r": "dd",
+      "n": "GROUND STUDIOS GMBH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://ground-studios.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@ground-studios.de",
+      "flag": ""
+    },
+    {
+      "id": "heesen",
+      "r": "dd",
+      "n": "heesen.digital",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://heesen.digital",
+      "f": [
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@heesen.digital",
+      "flag": ""
+    },
+    {
+      "id": "kronsteg",
+      "r": "dd",
+      "n": "Kronsteg GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://kronsteg.de",
+      "f": [
+        "Web & Digital"
+      ],
+      "p": "",
+      "e": "info@kronsteg.de",
+      "flag": ""
+    },
+    {
+      "id": "mlsadvertising",
+      "r": "dd",
+      "n": "MLS Advertising – Eine Marke der ORDERLY International Trading GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://mls-advertising.com",
+      "f": [
+        "Branding",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "wl@mls-advertising.com",
+      "flag": ""
+    },
+    {
+      "id": "ntk",
+      "r": "dd",
+      "n": "nowakteufelknyrim GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://n-t-k.de",
+      "f": [
+        "Branding",
+        "Grafikdesign",
+        "Web & Digital",
+        "Messe & Event"
+      ],
+      "p": "",
+      "e": "email@n-t-k.de",
+      "flag": ""
+    },
+    {
+      "id": "prahlrecke",
+      "r": "dd",
+      "n": "Prahl Recke Gesellschaft für Marken- und Firmen-Profile mbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://prahl-recke.de",
+      "f": [
+        "Branding",
+        "Grafikdesign",
+        "Messe & Event",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@prahl-recke.de",
+      "flag": ""
+    },
+    {
+      "id": "punctumpr",
+      "r": "dd",
+      "n": "punctum pr-agentur GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://punctum-pr.de",
+      "f": [
+        "Web & Digital",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "pr@punctum-pr.de",
+      "flag": ""
+    },
+    {
+      "id": "sooii",
+      "r": "wt",
+      "n": "sooii GmbH",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://sooii.de",
+      "f": [
+        "3D & Visualisierung",
+        "Grafikdesign"
+      ],
+      "p": "",
+      "e": "hello@sooii.de",
+      "flag": ""
+    },
+    {
+      "id": "takeitmedia",
+      "r": "dd",
+      "n": "TAKE IT MEDIA GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://take-it-media.com",
+      "f": [
+        "Animation & VFX",
+        "Film & Video"
+      ],
+      "p": "",
+      "e": "kontakt@take-it-media.com",
+      "flag": ""
+    },
+    {
+      "id": "virtualrepubli",
+      "r": "dd",
+      "n": "virtual republic animation and visual effects GmbH",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://virtualrepublic.org",
+      "f": [
+        "Animation & VFX"
+      ],
+      "p": "",
+      "e": "embassy@virtualrepublic.org",
+      "flag": ""
+    },
+    {
+      "id": "vokdams",
+      "r": "wt",
+      "n": "VOK DAMS Events",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://vokdams.de",
+      "f": [
+        "Messe & Event",
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@vokdams.de",
+      "flag": ""
+    },
+    {
+      "id": "proficenter",
+      "r": "wt",
+      "n": "Profi Center Werbeagentur",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://profi-center.com",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "profi-center@t-online.de",
+      "flag": ""
+    },
+    {
+      "id": "jacomedia",
+      "r": "wt",
+      "n": "Jaco Media",
+      "c": "Wuppertal",
+      "d": 0,
+      "u": "https://jaco-media.de",
+      "f": [
+        "Agentur"
+      ],
+      "p": "",
+      "e": "info@jacoedo.de",
+      "flag": ""
+    },
+    {
+      "id": "advancemarkt",
+      "r": "dd",
+      "n": "Advance Marktkommunikation",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://advance-markt.de",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "info@advance-markt.com",
+      "flag": ""
+    },
+    {
+      "id": "mehrplus",
+      "r": "dd",
+      "n": "MEHR. Kommunikationsgesellschaft",
+      "c": "Düsseldorf",
+      "d": 30,
+      "u": "https://mehrplus.com",
+      "f": [
+        "Kommunikation"
+      ],
+      "p": "",
+      "e": "mail@mehr.gmbh",
       "flag": ""
     }
   ],
