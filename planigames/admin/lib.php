@@ -9,7 +9,7 @@ const PG_MEDIA_DIR   = __DIR__ . '/../media';
 const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
 const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
 const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip'];
-const PG_ADMIN_V     = '61';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
+const PG_ADMIN_V     = '63';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -484,11 +484,19 @@ function pg_trash_add($collection, $field, $item){
 }
 // Diff beim Speichern: aus dem alten Stand entfernte slug-Einträge sichern.
 function pg_trash_capture($collection, $field, $oldData, $newData){
-  $newSlugs = [];
-  foreach (($newData[$field] ?? []) as $it) if (!empty($it['slug'])) $newSlugs[$it['slug']] = true;
+  $newSlugs = []; $newTitles = [];
+  foreach (($newData[$field] ?? []) as $it) {
+    if (!is_array($it)) continue;
+    if (!empty($it['slug'])) $newSlugs[$it['slug']] = true;
+    $t = mb_strtolower(trim((string) ($it['title'] ?? '')));
+    if ($t !== '') $newTitles[$t] = true;
+  }
   foreach (($oldData[$field] ?? []) as $it) {
+    if (!is_array($it)) continue;
     $sl = $it['slug'] ?? '';
-    if ($sl !== '' && empty($newSlugs[$sl])) pg_trash_add($collection, $field, $it);
+    $t = mb_strtolower(trim((string) ($it['title'] ?? '')));
+    // nur wirklich entfernte Einträge sichern – nicht solche, deren Adresse/Slug sich nur geändert hat
+    if ($sl !== '' && empty($newSlugs[$sl]) && ($t === '' || empty($newTitles[$t]))) pg_trash_add($collection, $field, $it);
   }
 }
 
@@ -531,7 +539,8 @@ function pg_backup_list(){
     foreach (scandir(PG_BACKUP_DIR) as $f) {
       if (substr($f, -5) !== '.json') continue;
       $p = PG_BACKUP_DIR . '/' . $f;
-      $out[] = ['name' => $f, 'size' => (int) @filesize($p), 'time' => (int) @filemtime($p), 'auto' => strncmp($f, 'auto-', 5) === 0];
+      $kind = strncmp($f, 'auto-', 5) === 0 ? 'auto' : (strncmp($f, 'safety-', 7) === 0 ? 'safety' : 'manual');
+      $out[] = ['name' => $f, 'size' => (int) @filesize($p), 'time' => (int) @filemtime($p), 'auto' => $kind === 'auto', 'kind' => $kind];
     }
     usort($out, fn($a, $b) => $b['time'] <=> $a['time']);
   }
@@ -541,13 +550,13 @@ function pg_backup_last_auto_time(){
   foreach (pg_backup_list() as $b) if ($b['auto']) return $b['time'];
   return 0;
 }
-function pg_backup_name_ok($name){ return $name === basename($name) && (bool) preg_match('/^(auto|manual)-[0-9\-]+\.json$/', $name); }
+function pg_backup_name_ok($name){ return $name === basename($name) && (bool) preg_match('/^(auto|manual|safety)-[0-9\-]+\.json$/', $name); }
 // Snapshot schreiben + rotieren; gibt Dateinamen zurück
 function pg_backup_write($prefix = 'auto'){
   if (!is_dir(PG_BACKUP_DIR)) @mkdir(PG_BACKUP_DIR, 0775, true);
   $ht = PG_BACKUP_DIR . '/.htaccess';
   if (!is_file($ht)) @file_put_contents($ht, "Require all denied\nOptions -Indexes\n");
-  $name = ($prefix === 'manual' ? 'manual-' . date('Y-m-d-His') : 'auto-' . date('Y-m-d')) . '.json';
+  $name = ($prefix === 'manual' ? 'manual-' . date('Y-m-d-His') : ($prefix === 'safety' ? 'safety-' . date('Y-m-d-His') : 'auto-' . date('Y-m-d'))) . '.json';
   $json = json_encode(pg_backup_build(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
   $ok = @file_put_contents(PG_BACKUP_DIR . '/' . $name, $json) !== false;
   pg_backup_rotate();
@@ -555,10 +564,11 @@ function pg_backup_write($prefix = 'auto'){
 }
 // pro Typ nur die jeweils neuesten behalten
 function pg_backup_rotate(){
-  $auto = []; $manual = [];
-  foreach (pg_backup_list() as $b) { if ($b['auto']) $auto[] = $b; else $manual[] = $b; }
+  $auto = []; $manual = []; $safety = [];
+  foreach (pg_backup_list() as $b) { if ($b['kind'] === 'auto') $auto[] = $b; elseif ($b['kind'] === 'safety') $safety[] = $b; else $manual[] = $b; }
   foreach (array_slice($auto, PG_BACKUP_KEEP_AUTO) as $b) @unlink(PG_BACKUP_DIR . '/' . $b['name']);
   foreach (array_slice($manual, PG_BACKUP_KEEP_MANUAL) as $b) @unlink(PG_BACKUP_DIR . '/' . $b['name']);
+  foreach (array_slice($safety, 8) as $b) @unlink(PG_BACKUP_DIR . '/' . $b['name']);   // Sicherungen vor Umzügen: 8 behalten
 }
 // beim Admin-Aufruf: fällig? dann sichern (täglicher Dateiname => idempotent bei Parallelzugriff)
 function pg_backup_auto_maybe(){
@@ -1200,6 +1210,7 @@ function pg_view_topbar($SCHEMA, $active){
   // aktiven Eintrag + Gruppe für die Brotkrumen finden
   $crumbGroup = 'Übersicht';
   foreach ($nav as [$gl, $items]) foreach ($items as $it) if ($it[0] === $route) $crumbGroup = $gl !== '' ? $gl : 'Übersicht';
+  if (!empty($GLOBALS['pg_crumb_group'])) $crumbGroup = (string) $GLOBALS['pg_crumb_group'];
   $title = $GLOBALS['pg_page_title'] ?? 'Admin';
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
   $u = pg_current_user() ?: [];
@@ -1365,7 +1376,7 @@ function pg_translate_value($f, $val){
   $w = $f['widget'];
   if (in_array($w, ['select','date','image','file','color','number','boolean'], true)) return $val;
   if (!empty($f['slug'])) return $val;
-  if (preg_match('/url$/i', $f['name']) || in_array($f['name'], ['email','accent','accent2','game','slug','icon','emoji'], true)) return $val;
+  if (in_array($w, ['string','text','markdown'], true) && !pg_i18n_translatable($f)) return $val;
   switch ($w) {
     case 'string': case 'text': case 'markdown':
       return pg_translate_text((string)$val);
@@ -1409,7 +1420,7 @@ function pg_i18n_value($f, $dval, $eval){
   $w = $f['widget'] ?? '';
   if (in_array($w, ['select','date','datetime','image','file','color','number','boolean'], true)) return [0, 0];
   if (!empty($f['slug'])) return [0, 0];
-  if (preg_match('/url$/i', $f['name'] ?? '') || in_array($f['name'] ?? '', ['email','accent','accent2','game','slug','icon','emoji'], true)) return [0, 0];
+  if (in_array($w, ['string','text','markdown'], true) && !pg_i18n_translatable($f)) return [0, 0];
   switch ($w) {
     case 'string': case 'text': case 'markdown':
       if (trim((string) $dval) === '') return [0, 0];          // auf Deutsch leer = nichts zu übersetzen
@@ -1460,7 +1471,8 @@ function pg_i18n_report($SCHEMA){
     $enFile = pg_lang_file($coll['file'], 'en');
     $enExists = is_file($enFile);
     $en = $enExists ? pg_load_json($enFile) : [];
-    [$t, $m] = pg_i18n_count($coll['fields'] ?? [], is_array($de) ? $de : [], is_array($en) ? $en : []);
+    $de = is_array($de) ? $de : [];
+    [$t, $m] = pg_i18n_count($coll['fields'] ?? [], $de, pg_i18n_align($coll['fields'] ?? [], $de, is_array($en) ? $en : []));
     if ($t === 0) continue;                                      // nichts Übersetzbares → uninteressant
     $rows[$key] = ['label' => $coll['label'], 'icon' => $coll['icon'] ?? '📄',
       'total' => $t, 'missing' => $m, 'enExists' => $enExists];
@@ -1755,13 +1767,35 @@ function pg_render_blocks($f, $items, $name, $pathKey){
   return $h;
 }
 
+function pg_block_icon($type){
+  return ['hero' => 'image', 'richtext' => 'devlog', 'features' => 'star', 'gallery' => 'image', 'trailer' => 'play',
+          'quotes' => 'chat', 'stats' => 'chart', 'roadmap' => 'route', 'faq' => 'help', 'countdown' => 'clock',
+          'cta' => 'mega', 'download' => 'download', 'requirements' => 'server', 'storewidget' => 'ext',
+          'suggestions' => 'bulb', 'waitlist' => 'list', 'lore' => 'book', 'spacer' => 'move'][$type] ?? 'cockpit';
+}
+// Kurzinfo eines Blocks für die eingeklappte Zeile (Überschrift o. Ä.)
+function pg_block_meta($type, $item){
+  if (!is_array($item)) return '';
+  foreach (['heading', 'kicker', 'tagline', 'label', 'text', 'body'] as $k) {
+    $v = trim(preg_replace('/\s+/', ' ', strip_tags((string) ($item[$k] ?? ''))));
+    if ($v !== '') return mb_strimwidth($v, 0, 70, '…');
+  }
+  foreach (['items', 'images', 'builds', 'scenes'] as $k) if (!empty($item[$k]) && is_array($item[$k])) return count($item[$k]) . ' Einträge';
+  return '';
+}
 function pg_render_block_item($f, $type, $item, $prefix, $pathKey, $idx){
   $tdef = $f['types'][$type];
   $inner = pg_render_fields($tdef['fields'], is_array($item) ? $item : [], $prefix, $pathKey . '.' . $type);
-  return '<div class="item block" data-item>'
+  $hidden = is_array($item) && !empty($item['hidden']);
+  $meta = pg_block_meta($type, $item);
+  return '<div class="item block' . ($hidden ? ' is-hidden' : '') . '" data-item data-block-type="' . pg_h($type) . '">'
        . '<input type="hidden" name="' . pg_h($prefix) . '[type]" value="' . pg_h($type) . '">'
+       . '<input type="hidden" name="' . pg_h($prefix) . '[hidden]" value="' . ($hidden ? '1' : '0') . '" data-hidden-input>'
        . '<div class="item-bar"><span class="grip" data-grip>⠿</span>'
-       . '<span class="item-sum block-label">▣ ' . pg_h($tdef['label']) . '</span>'
+       . '<span class="blk-ic">' . pg_icon(pg_block_icon($type)) . '</span>'
+       . '<span class="item-sum block-label"><b>' . pg_h($tdef['label']) . '</b>'
+       . '<small data-block-meta>' . ($hidden ? 'ausgeblendet · ' : '') . pg_h($meta) . '</small></span>'
+       . '<button type="button" class="vis-switch' . ($hidden ? '' : ' on') . '" data-block-vis title="Auf der Website zeigen / ausblenden (ohne zu löschen)" aria-pressed="' . ($hidden ? 'false' : 'true') . '"><span></span></button>'
        . '<span class="item-tools">'
        . '<button type="button" data-up title="nach oben">↑</button>'
        . '<button type="button" data-down title="nach unten">↓</button>'
@@ -1790,8 +1824,12 @@ function pg_normalize_field($f, $val, $siblingRaw = []){
     case 'boolean':
       return !empty($val) && $val !== '0' && $val !== 'false';
     case 'number':
-      if ($val === null || $val === '') return $f['default'] ?? 0;
-      return (0 + $val) == (int)$val ? (int)$val : (float)$val;
+      // Leer = „nicht gesetzt“ (z. B. Logo-Position → Standard). Früher wurde daraus 0 –
+      // dadurch sprang das Logo in die Ecke. Felder mit Standardwert bekommen weiterhin den Standard.
+      if ($val === null || (is_string($val) && trim($val) === '')) return $f['default'] ?? '';
+      if (is_array($val) || !is_numeric(str_replace(',', '.', (string) $val))) return $f['default'] ?? '';
+      $num = 0 + str_replace(',', '.', (string) $val);
+      return (float) $num == (int) $num ? (int) $num : (float) $num;
     case 'list':
       $items = is_array($val) ? array_values($val) : [];
       if (isset($f['field'])) { // Einzelwert-Liste
@@ -1811,7 +1849,9 @@ function pg_normalize_field($f, $val, $siblingRaw = []){
       foreach ($items as $it) {
         $type = $it['type'] ?? '';
         if (!isset($f['types'][$type])) continue;
-        $res[] = ['type' => $type] + pg_normalize_fields($f['types'][$type]['fields'], $it);
+        $blk = ['type' => $type] + pg_normalize_fields($f['types'][$type]['fields'], $it);
+        if (!empty($it['hidden']) && $it['hidden'] !== '0' && $it['hidden'] !== 'false') $blk['hidden'] = true;
+        $res[] = $blk;
       }
       return $res;
     case 'object':
@@ -1897,4 +1937,462 @@ function pg_media_large($bytes = 3145728){
   }
   arsort($out);
   return $out;
+}
+
+/* =====================================================================
+   SPIELE – Einzel-Bearbeitung, Reihenfolge, Web-Adresse (Slug) umziehen
+   Grundsatz: Es wird immer nur das betroffene Spiel geändert; alle anderen
+   Spiele und unbekannte Felder bleiben unangetastet.
+   ===================================================================== */
+const PG_GAMES_FILE     = __DIR__ . '/../data/games.json';
+const PG_REDIRECTS_FILE = __DIR__ . '/../data/redirects.json';
+const PG_SLUG_RX        = '/^[a-z0-9]+(?:-[a-z0-9]+)*$/';
+
+// Felder eines einzelnen Spiels (Listeneintrag „games“ im Schema)
+function pg_game_fields($SCHEMA){
+  foreach (($SCHEMA['games']['fields'] ?? []) as $f) if (($f['name'] ?? '') === 'games') return $f['fields'] ?? [];
+  return [];
+}
+// Ganze Spiele-Datei (DE oder EN) – andere Schlüssel bleiben erhalten
+function pg_games_data($lang = 'de'){
+  $file = $lang === 'en' ? pg_lang_file(PG_GAMES_FILE, 'en') : PG_GAMES_FILE;
+  $d = pg_load_json($file);
+  if (!isset($d['games']) || !is_array($d['games'])) $d['games'] = [];
+  $d['games'] = array_values($d['games']);
+  return $d;
+}
+function pg_games_save($d, $lang = 'de'){
+  $d['games'] = array_values($d['games']);
+  return pg_save_json($lang === 'en' ? pg_lang_file(PG_GAMES_FILE, 'en') : PG_GAMES_FILE, $d);
+}
+function pg_game_idx($games, $slug){
+  $slug = strtolower(trim((string) $slug));
+  if ($slug === '') return -1;
+  foreach ($games as $i => $g) if (is_array($g) && strtolower((string) ($g['slug'] ?? '')) === $slug) return $i;
+  return -1;
+}
+// Spiel über Position + Slug finden (robust, falls zwei Spiele denselben Slug hätten)
+function pg_game_locate($games, $idx, $slug){
+  $idx = (int) $idx;
+  if (isset($games[$idx]) && is_array($games[$idx]) && strtolower((string) ($games[$idx]['slug'] ?? '')) === strtolower((string) $slug)) return $idx;
+  return pg_game_idx($games, $slug);
+}
+// Passender Eintrag in der englischen Datei: gleicher Slug – sonst (Altbestand) gleiche Position,
+// sofern der Eintrag dort zu keinem anderen deutschen Spiel gehört.
+function pg_game_en_idx($enGames, $deGames, $slug, $deIdx){
+  $i = pg_game_idx($enGames, $slug);
+  if ($i >= 0) return $i;
+  if (isset($enGames[$deIdx]) && is_array($enGames[$deIdx])) {
+    $s = (string) ($enGames[$deIdx]['slug'] ?? '');
+    if ($s === '' || pg_game_idx($deGames, $s) < 0) return $deIdx;
+  }
+  return -1;
+}
+function pg_game_unique_slug($games, $base, $except = -1){
+  $base = pg_slugify($base) ?: 'spiel';
+  $s = $base; $n = 1;
+  while (true) {
+    $hit = pg_game_idx($games, $s);
+    if ($hit < 0 || $hit === $except) return $s;
+    $s = $base . '-' . (++$n);
+  }
+}
+// EN-Liste in die Reihenfolge der deutschen Spiele bringen (verwaiste EN-Einträge bleiben hinten erhalten)
+function pg_games_en_sorted($enGames, $deGames){
+  $used = []; $out = [];
+  foreach ($deGames as $di => $g) {
+    if (!is_array($g)) continue;
+    $ei = pg_game_en_idx($enGames, $deGames, $g['slug'] ?? '', $di);
+    if ($ei >= 0 && empty($used[$ei])) { $used[$ei] = true; $out[] = $enGames[$ei]; }
+  }
+  foreach ($enGames as $ei => $e) if (empty($used[$ei])) $out[] = $e;
+  return $out;
+}
+
+/* ---- Weiterleitungen alter Web-Adressen (öffentlich lesbar: data/redirects.json) ---- */
+function pg_redirects_load(){ $r = pg_load_json(PG_REDIRECTS_FILE); return is_array($r) ? $r : []; }
+function pg_redirect_add($type, $old, $new){
+  $r = pg_redirects_load();
+  $map = is_array($r[$type] ?? null) ? $r[$type] : [];
+  foreach ($map as $k => $v) if ($v === $old) $map[$k] = $new;   // Ketten auflösen: a→old wird a→new
+  unset($map[$new]);                                              // neue Adresse ist live → keine Weiterleitung
+  if ($old !== $new) $map[$old] = $new;
+  $r[$type] = $map;
+  return pg_save_json(PG_REDIRECTS_FILE, $r);
+}
+function pg_redirect_clear($type, $slug){
+  $r = pg_redirects_load();
+  if (!isset($r[$type][$slug])) return true;
+  unset($r[$type][$slug]);
+  return pg_save_json(PG_REDIRECTS_FILE, $r);
+}
+
+/* ---- Einzelnes Spiel speichern ---- */
+function pg_game_save_de($SCHEMA, $idx, $orig, $raw){
+  $d = pg_games_data('de');
+  $i = pg_game_locate($d['games'], $idx, $orig);
+  if ($i < 0) return [false, 'Dieses Spiel wurde inzwischen gelöscht oder umbenannt. Bitte die Seite neu laden.'];
+  $old = $d['games'][$i];
+  $raw = is_array($raw) ? $raw : [];
+  $raw['slug'] = (string) ($old['slug'] ?? '');                   // Web-Adresse nur über den eigenen Dialog
+  $new = pg_normalize_fields(pg_game_fields($SCHEMA), $raw);
+  if (($old['slug'] ?? '') !== '') $new['slug'] = $old['slug'];
+  $d['games'][$i] = $new + array_diff_key($old, $new);            // unbekannte Felder behalten
+  return [pg_games_save($d, 'de'), $d['games'][$i]];
+}
+function pg_game_save_en($SCHEMA, $idx, $orig, $raw, $sig){
+  $de = pg_games_data('de');
+  $i = pg_game_locate($de['games'], $idx, $orig);
+  if ($i < 0) return [false, 'Dieses Spiel wurde inzwischen gelöscht oder umbenannt. Bitte die Seite neu laden.'];
+  $fields = pg_game_fields($SCHEMA);
+  $deGame = $de['games'][$i];
+  if ($sig !== '' && $sig !== pg_i18n_signature($fields, $deGame))
+    return [false, 'Die deutsche Fassung wurde inzwischen umgebaut (Blöcke/Listen). Bitte die Seite neu laden – deine Eingaben sind sonst nicht eindeutig zuzuordnen.'];
+  $en = pg_games_data('en');
+  $ei = pg_game_en_idx($en['games'], $de['games'], $deGame['slug'] ?? '', $i);
+  $oldAligned = pg_i18n_align($fields, $deGame, $ei >= 0 ? $en['games'][$ei] : []);
+  $enGame = ['slug' => (string) ($deGame['slug'] ?? '')] + pg_i18n_from_post($fields, $deGame, is_array($raw) ? $raw : [], $oldAligned);
+  if ($ei >= 0) $en['games'][$ei] = $enGame; else $en['games'][] = $enGame;
+  $en['games'] = pg_games_en_sorted($en['games'], $de['games']);
+  return [pg_games_save($en, 'en'), $enGame];
+}
+
+/* ---- Reihenfolge (Drag & Drop in der Spieleliste) ---- */
+function pg_games_reorder($slugs){
+  $d = pg_games_data('de');
+  $rest = $d['games']; $out = [];
+  foreach ((array) $slugs as $s) {
+    $k = pg_game_idx($rest, $s);
+    if ($k >= 0) { $out[] = $rest[$k]; unset($rest[$k]); $rest = array_values($rest); }
+  }
+  foreach ($rest as $g) $out[] = $g;                              // nie ein Spiel verlieren
+  if (count($out) !== count($d['games'])) return false;
+  $d['games'] = $out;
+  $ok = pg_games_save($d, 'de');
+  $enFile = pg_lang_file(PG_GAMES_FILE, 'en');
+  if ($ok && is_file($enFile)) { $en = pg_games_data('en'); $en['games'] = pg_games_en_sorted($en['games'], $out); pg_games_save($en, 'en'); }
+  return $ok;
+}
+
+/* ---- Neu / Duplizieren / Löschen (→ Papierkorb) ---- */
+function pg_game_create($SCHEMA, $title){
+  $title = trim((string) $title);
+  if ($title === '') return [false, 'Bitte einen Titel eingeben.'];
+  $d = pg_games_data('de');
+  $slug = pg_game_unique_slug($d['games'], $title);
+  $g = pg_normalize_fields(pg_game_fields($SCHEMA), ['title' => $title, 'slug' => $slug, 'status' => 'development']);
+  $g['slug'] = $slug;
+  $g['blocks'] = [['type' => 'hero', 'tagline' => '', 'background' => '', 'backgroundMobile' => '', 'video' => '', 'poster' => '', 'ctaLabel' => 'Auf Steam wishlisten', 'trailerUrl' => ''],
+                  ['type' => 'richtext', 'kicker' => '', 'heading' => 'Über das Spiel', 'body' => '']];
+  $d['games'][] = $g;
+  if (!pg_games_save($d, 'de')) return [false, 'Konnte nicht speichern (Schreibrechte data/ prüfen).'];
+  pg_redirect_clear('games', $slug);
+  pg_log_activity('Spiel angelegt', $title);
+  return [true, $slug];
+}
+function pg_game_duplicate($idx, $orig){
+  $d = pg_games_data('de');
+  $i = pg_game_locate($d['games'], $idx, $orig);
+  if ($i < 0) return [false, 'Spiel nicht gefunden.'];
+  $copy = $d['games'][$i];
+  $copy['title'] = trim((string) ($copy['title'] ?? 'Spiel')) . ' (Kopie)';
+  $copy['slug'] = pg_game_unique_slug($d['games'], ($d['games'][$i]['slug'] ?? 'spiel') . '-kopie');
+  $copy['featured'] = false;
+  array_splice($d['games'], $i + 1, 0, [$copy]);
+  if (!pg_games_save($d, 'de')) return [false, 'Konnte nicht speichern.'];
+  pg_redirect_clear('games', $copy['slug']);
+  pg_log_activity('Spiel dupliziert', $copy['title']);
+  return [true, $copy['slug']];
+}
+function pg_game_delete($idx, $orig){
+  $d = pg_games_data('de');
+  $i = pg_game_locate($d['games'], $idx, $orig);
+  if ($i < 0) return [false, 'Spiel nicht gefunden.'];
+  $g = $d['games'][$i];
+  pg_trash_add('games', 'games', $g);                             // wiederherstellbar über den Papierkorb
+  array_splice($d['games'], $i, 1);
+  if (!pg_games_save($d, 'de')) return [false, 'Konnte nicht speichern.'];
+  pg_log_activity('Spiel in den Papierkorb', (string) ($g['title'] ?? $orig));
+  return [true, (string) ($g['title'] ?? $orig)];
+}
+
+/* ---- Was hängt alles an einer Spiel-Adresse? (für den Umzugs-Dialog) ---- */
+function pg_game_refs($slug){
+  $lo = strtolower((string) $slug);
+  $eq = fn($v) => strtolower(trim((string) $v)) === $lo;
+  $c = ['waitlist' => 0, 'suggestions' => 0, 'board' => 0, 'posts' => 0, 'views' => 0, 'en' => false];
+  foreach ((array) pg_load_json(PG_DATA_DIR . '/waitlist.json') as $e) if (is_array($e) && $eq($e['scope'] ?? '')) $c['waitlist']++;
+  foreach ((array) pg_load_json(PG_DATA_DIR . '/suggestions.json') as $e) if (is_array($e) && $eq($e['scope'] ?? '')) $c['suggestions']++;
+  foreach ((array) (pg_load_json(PG_BOARD_FILE)['boards'] ?? []) as $bd) {
+    if (!is_array($bd)) continue;
+    if ($eq($bd['game'] ?? '')) $c['board']++;
+    foreach ((array) ($bd['columns'] ?? []) as $col) foreach ((array) ($col['cards'] ?? []) as $card) if (is_array($card) && $eq($card['game'] ?? '')) $c['board']++;
+  }
+  foreach ((array) (pg_load_json(PG_DATA_DIR . '/patchnotes.json')['posts'] ?? []) as $p) if (is_array($p) && $eq($p['game'] ?? '')) $c['posts']++;
+  foreach ((array) (pg_load_json(PG_DATA_DIR . '/stats.json')['pages'] ?? []) as $k => $v) {
+    if (preg_match('/^(game|lore):(.+)$/i', (string) $k, $m) && strtolower($m[2]) === $lo) $c['views'] += (int) $v;
+  }
+  $en = pg_games_data('en'); $de = pg_games_data('de');
+  $c['en'] = pg_game_en_idx($en['games'], $de['games'], $slug, max(0, pg_game_idx($de['games'], $slug))) >= 0;
+  return $c;
+}
+
+/* ---- Web-Adresse ändern: zieht ALLE Verweise mit um + dauerhafte Weiterleitung ---- */
+function pg_game_rename($idx, $orig, $newRaw){
+  $new = pg_slugify($newRaw);
+  if ($new === '' || !preg_match(PG_SLUG_RX, $new)) return [false, 'Bitte nur Kleinbuchstaben, Zahlen und Bindestriche verwenden (z. B. frontliners).'];
+  $d = pg_games_data('de');
+  $i = pg_game_locate($d['games'], $idx, $orig);
+  if ($i < 0) return [false, 'Spiel nicht gefunden – bitte Seite neu laden.'];
+  $old = (string) ($d['games'][$i]['slug'] ?? '');
+  if ($old === $new) return [false, 'Das ist bereits die aktuelle Adresse.'];
+  if (pg_game_idx($d['games'], $new) >= 0) return [false, 'Diese Adresse benutzt schon ein anderes Spiel.'];
+  $lo = strtolower($old);
+  $eq = fn($v) => $lo !== '' && strtolower(trim((string) $v)) === $lo;
+
+  // 0) Sicherheitskopie ALLER Daten vor dem Umzug (Backups → „Sicherung vor Umzug“)
+  $snap = pg_backup_write('safety');
+  if ($snap === false) return [false, 'Sicherheitskopie konnte nicht angelegt werden – Umzug abgebrochen, nichts wurde geändert.'];
+
+  $c = ['waitlist' => 0, 'suggestions' => 0, 'board' => 0, 'posts' => 0, 'views' => 0, 'en' => 0];
+  // 1) Englische Fassung (vor dem DE-Umbau zuordnen)
+  $enFile = pg_lang_file(PG_GAMES_FILE, 'en');
+  if (is_file($enFile) && $old !== '') {
+    $en = pg_games_data('en');
+    $ei = pg_game_en_idx($en['games'], $d['games'], $old, $i);
+    if ($ei >= 0) { $en['games'][$ei]['slug'] = $new; if (pg_games_save($en, 'en')) $c['en'] = 1; }
+  }
+  // 2) Das Spiel selbst
+  $d['games'][$i]['slug'] = $new;
+  if (!pg_games_save($d, 'de')) return [false, 'Konnte games.json nicht speichern – bitte Schreibrechte prüfen. Sicherheitskopie: ' . $snap];
+  if ($old === '') { pg_log_activity('Web-Adresse gesetzt', (string) ($d['games'][$i]['title'] ?? '') . ': /' . $new); return [true, ['old' => $old, 'new' => $new, 'counts' => $c, 'backup' => $snap]]; }
+  // 3) Warteliste & Vorschläge (Feld „scope“)
+  foreach (['waitlist' => 'waitlist.json', 'suggestions' => 'suggestions.json'] as $k => $fn) {
+    $file = PG_DATA_DIR . '/' . $fn;
+    if (!is_file($file)) continue;
+    $list = pg_load_json($file); $n = 0;
+    foreach ($list as $j => $e) if (is_array($e) && $eq($e['scope'] ?? '')) { $list[$j]['scope'] = $new; $n++; }
+    if ($n && pg_save_json($file, $list)) $c[$k] = $n;
+  }
+  // 4) Planungs-Board (Boards + Karten)
+  if (is_file(PG_BOARD_FILE)) {
+    $b = pg_load_json(PG_BOARD_FILE); $n = 0;
+    if (isset($b['boards']) && is_array($b['boards'])) {
+      foreach ($b['boards'] as $bi => $bd) {
+        if (!is_array($bd)) continue;
+        if ($eq($bd['game'] ?? '')) { $b['boards'][$bi]['game'] = $new; $n++; }
+        foreach ((array) ($bd['columns'] ?? []) as $ci => $col) foreach ((array) ($col['cards'] ?? []) as $ki => $card)
+          if (is_array($card) && $eq($card['game'] ?? '')) { $b['boards'][$bi]['columns'][$ci]['cards'][$ki]['game'] = $new; $n++; }
+      }
+    }
+    if ($n && pg_save_json(PG_BOARD_FILE, $b)) $c['board'] = $n;
+  }
+  // 5) Devlog-Beiträge, die dem Spiel zugeordnet sind (DE + EN; auch Tag = alte Adresse)
+  foreach (['de', 'en'] as $lg) {
+    $file = pg_lang_file(PG_DATA_DIR . '/patchnotes.json', $lg);
+    if (!is_file($file)) continue;
+    $p = pg_load_json($file); $n = 0;
+    foreach ((array) ($p['posts'] ?? []) as $j => $post) {
+      if (!is_array($post)) continue;
+      if ($eq($post['game'] ?? '')) { $p['posts'][$j]['game'] = $new; $n++; }
+      if (is_array($post['tags'] ?? null)) foreach ($post['tags'] as $t => $tag) if ($eq($tag)) { $p['posts'][$j]['tags'][$t] = $new; }
+    }
+    if ($n && pg_save_json($file, $p) && $lg === 'de') $c['posts'] = $n;
+  }
+  // 6) Statistik: Aufrufe der Spiel- und Lore-Seite übernehmen (mit Sperre wie stats.php)
+  $sf = PG_DATA_DIR . '/stats.json';
+  if (is_file($sf) && ($fp = @fopen($sf, 'c+'))) {
+    flock($fp, LOCK_EX);
+    $s = json_decode(stream_get_contents($fp) ?: '{}', true);
+    if (is_array($s) && is_array($s['pages'] ?? null)) {
+      $moved = 0;
+      foreach ($s['pages'] as $k => $v) {
+        if (!preg_match('/^(game|lore):(.+)$/i', (string) $k, $m) || strtolower($m[2]) !== $lo) continue;
+        $nk = strtolower($m[1]) . ':' . $new;
+        $s['pages'][$nk] = (int) ($s['pages'][$nk] ?? 0) + (int) $v;
+        unset($s['pages'][$k]); $moved += (int) $v;
+      }
+      if ($moved) { ftruncate($fp, 0); rewind($fp); fwrite($fp, json_encode($s, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)); $c['views'] = $moved; }
+    }
+    flock($fp, LOCK_UN); fclose($fp);
+  }
+  // 7) Alte Adresse leitet dauerhaft weiter
+  pg_redirect_add('games', $old, $new);
+  pg_log_activity('Web-Adresse geändert', (string) ($d['games'][$i]['title'] ?? '') . ': /' . $old . ' → /' . $new);
+  return [true, ['old' => $old, 'new' => $new, 'counts' => $c, 'backup' => $snap]];
+}
+
+/* =====================================================================
+   ÜBERSETZUNG – EN an die deutsche Struktur ausrichten
+   Listen mit Slug → über den Slug, Blöcke → über Typ + Vorkommen,
+   sonst über die Position. Nur freie Texte sind übersetzbar.
+   ===================================================================== */
+function pg_i18n_translatable($f){
+  $w = $f['widget'] ?? '';
+  if (!in_array($w, ['string', 'text', 'markdown'], true)) return false;
+  if (!empty($f['slug'])) return false;
+  $n = $f['name'] ?? '';
+  if (preg_match('/url$/i', $n)) return false;
+  return !in_array($n, ['email', 'accent', 'accent2', 'game', 'slug', 'icon', 'emoji', 'youtube', 'itchEmbed', 'steamAppId', 'version'], true);
+}
+// Englische Werte in der Struktur der deutschen Daten (nur übersetzbare Felder + Identität)
+function pg_i18n_align($fields, $de, $en){
+  $de = is_array($de) ? $de : []; $en = is_array($en) ? $en : [];
+  $out = [];
+  foreach ($fields as $f) {
+    if (($f['widget'] ?? '') === 'heading' || empty($f['name'])) continue;
+    $n = $f['name'];
+    if (!array_key_exists($n, $de)) continue;
+    $v = pg_i18n_align_value($f, $de[$n], $en[$n] ?? null);
+    if ($v !== null) $out[$n] = $v;
+  }
+  return $out;
+}
+function pg_i18n_align_value($f, $dv, $ev){
+  switch ($f['widget'] ?? '') {
+    case 'object':
+      $r = pg_i18n_align($f['fields'] ?? [], $dv, $ev);
+      return $r ? $r : null;
+    case 'list':
+      if (!is_array($dv)) return null;
+      $dv = array_values($dv); $ev = is_array($ev) ? array_values($ev) : [];
+      if (isset($f['field'])) {
+        if (!pg_i18n_translatable($f['field'])) return null;
+        return array_map(fn($k) => is_scalar($ev[$k] ?? null) ? (string) $ev[$k] : '', array_keys($dv));
+      }
+      $deSlugs = [];
+      foreach ($dv as $it) if (is_array($it) && !empty($it['slug'])) $deSlugs[strtolower((string) $it['slug'])] = true;
+      $res = [];
+      foreach ($dv as $k => $it) {
+        $match = null;
+        if (is_array($it) && !empty($it['slug'])) {
+          foreach ($ev as $e) if (is_array($e) && strtolower((string) ($e['slug'] ?? '')) === strtolower((string) $it['slug'])) { $match = $e; break; }
+          if ($match === null && is_array($ev[$k] ?? null) && (empty($ev[$k]['slug']) || empty($deSlugs[strtolower((string) $ev[$k]['slug'])]))) $match = $ev[$k];
+          $res[] = ['slug' => (string) $it['slug']] + pg_i18n_align($f['fields'] ?? [], $it, $match);
+        } else {
+          $res[] = pg_i18n_align($f['fields'] ?? [], $it, is_array($ev[$k] ?? null) ? $ev[$k] : null);
+        }
+      }
+      return $res;
+    case 'blocks':
+      if (!is_array($dv)) return null;
+      $byType = [];
+      foreach ((is_array($ev) ? $ev : []) as $e) if (is_array($e) && !empty($e['type'])) $byType[$e['type']][] = $e;
+      $seen = []; $res = [];
+      foreach (array_values($dv) as $it) {
+        $t = is_array($it) ? (string) ($it['type'] ?? '') : '';
+        if (!isset($f['types'][$t])) continue;
+        $k = $seen[$t] = ($seen[$t] ?? 0) + 1;
+        $res[] = ['type' => $t] + pg_i18n_align($f['types'][$t]['fields'] ?? [], $it, $byType[$t][$k - 1] ?? null);
+      }
+      return $res;
+    default:
+      if (!pg_i18n_translatable($f)) return null;
+      return is_scalar($ev) ? (string) $ev : '';
+  }
+}
+// Gepostete EN-Texte → ausgerichtete EN-Daten (Struktur kommt IMMER aus Deutsch)
+function pg_i18n_from_post($fields, $de, $raw, $old = []){
+  $de = is_array($de) ? $de : []; $raw = is_array($raw) ? $raw : []; $old = is_array($old) ? $old : [];
+  $out = [];
+  foreach ($fields as $f) {
+    if (($f['widget'] ?? '') === 'heading' || empty($f['name'])) continue;
+    $n = $f['name'];
+    if (!array_key_exists($n, $de)) continue;
+    $dv = $de[$n]; $rv = $raw[$n] ?? null; $ov = $old[$n] ?? null;
+    switch ($f['widget']) {
+      case 'object':
+        $r = pg_i18n_from_post($f['fields'] ?? [], $dv, $rv, $ov);
+        if ($r) $out[$n] = $r;
+        break;
+      case 'list':
+        if (!is_array($dv)) break;
+        $dv = array_values($dv); $rv = is_array($rv) ? $rv : [];
+        if (isset($f['field'])) {
+          if (pg_i18n_translatable($f['field'])) $out[$n] = array_map(fn($k) => is_scalar($rv[$k] ?? null) ? trim((string) $rv[$k]) : (is_scalar($ov[$k] ?? null) ? (string) $ov[$k] : ''), array_keys($dv));
+          break;
+        }
+        $out[$n] = [];
+        foreach ($dv as $k => $it) {
+          $row = pg_i18n_from_post($f['fields'] ?? [], $it, $rv[$k] ?? [], is_array($ov) ? ($ov[$k] ?? []) : []);
+          if (is_array($it) && !empty($it['slug'])) $row = ['slug' => (string) $it['slug']] + $row;
+          $out[$n][] = $row;
+        }
+        break;
+      case 'blocks':
+        if (!is_array($dv)) break;
+        $rv = is_array($rv) ? $rv : []; $ov = is_array($ov) ? array_values($ov) : [];
+        $out[$n] = []; $ai = 0;
+        foreach (array_values($dv) as $k => $it) {
+          $t = is_array($it) ? (string) ($it['type'] ?? '') : '';
+          if (!isset($f['types'][$t])) continue;
+          $out[$n][] = ['type' => $t] + pg_i18n_from_post($f['types'][$t]['fields'] ?? [], $it, $rv[$k] ?? [], $ov[$ai++] ?? []);
+        }
+        break;
+      default:
+        if (pg_i18n_translatable($f)) $out[$n] = is_scalar($rv) ? trim((string) $rv) : (is_scalar($ov) ? (string) $ov : '');
+    }
+  }
+  return $out;
+}
+// Fingerabdruck der deutschen Struktur (Blocktypen, Listenlängen) – schützt EN-Speichern vor Verwechslung
+function pg_i18n_signature($fields, $de){
+  $walk = function ($fields, $d) use (&$walk) {
+    $s = '';
+    foreach ($fields as $f) {
+      if (($f['widget'] ?? '') === 'heading' || empty($f['name'])) continue;
+      $v = is_array($d) ? ($d[$f['name']] ?? null) : null;
+      if ($f['widget'] === 'object') $s .= '{' . $walk($f['fields'] ?? [], $v) . '}';
+      elseif ($f['widget'] === 'list') {
+        $s .= '[' . (is_array($v) ? count($v) : 0);
+        if (isset($f['fields']) && is_array($v)) foreach ($v as $it) $s .= '(' . $walk($f['fields'], $it) . ')';
+        $s .= ']';
+      } elseif ($f['widget'] === 'blocks') {
+        $s .= '<';
+        foreach ((is_array($v) ? $v : []) as $it) {
+          $t = is_array($it) ? (string) ($it['type'] ?? '') : '';
+          if (isset($f['types'][$t])) $s .= $t . '(' . $walk($f['types'][$t]['fields'] ?? [], $it) . ')';
+        }
+        $s .= '>';
+      }
+    }
+    return $s;
+  };
+  return substr(md5($walk($fields, $de)), 0, 12);
+}
+// Fehlende englische Texte automatisch füllen (vorhandene Übersetzungen bleiben unangetastet)
+function pg_i18n_fill_missing($fields, $de, $en, &$count){
+  $de = is_array($de) ? $de : []; $en = is_array($en) ? $en : [];
+  foreach ($fields as $f) {
+    if (($f['widget'] ?? '') === 'heading' || empty($f['name'])) continue;
+    $n = $f['name'];
+    if (!array_key_exists($n, $de)) continue;
+    $dv = $de[$n];
+    switch ($f['widget']) {
+      case 'object':
+        if (array_key_exists($n, $en)) $en[$n] = pg_i18n_fill_missing($f['fields'] ?? [], $dv, $en[$n], $count);
+        break;
+      case 'list':
+        if (!is_array($dv) || !is_array($en[$n] ?? null)) break;
+        foreach (array_values($dv) as $k => $it) {
+          if (isset($f['field'])) {
+            if (pg_i18n_translatable($f['field']) && trim((string) $it) !== '' && trim((string) ($en[$n][$k] ?? '')) === '') { $en[$n][$k] = pg_translate_text((string) $it); $count++; }
+          } elseif (isset($en[$n][$k])) $en[$n][$k] = pg_i18n_fill_missing($f['fields'] ?? [], $it, $en[$n][$k], $count);
+        }
+        break;
+      case 'blocks':
+        if (!is_array($dv) || !is_array($en[$n] ?? null)) break;
+        $k = 0;
+        foreach (array_values($dv) as $it) {
+          $t = is_array($it) ? (string) ($it['type'] ?? '') : '';
+          if (!isset($f['types'][$t])) continue;
+          if (isset($en[$n][$k])) $en[$n][$k] = pg_i18n_fill_missing($f['types'][$t]['fields'] ?? [], $it, $en[$n][$k], $count);
+          $k++;
+        }
+        break;
+      default:
+        if (pg_i18n_translatable($f) && trim((string) $dv) !== '' && trim((string) ($en[$n] ?? '')) === '') { $en[$n] = pg_translate_text((string) $dv); $count++; }
+    }
+  }
+  return $en;
 }

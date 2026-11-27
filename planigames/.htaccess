@@ -16,7 +16,7 @@ Options -Indexes
   # (Mail-Zugang, Passwörter, Wartelisten, Kontakte, Keys, Logs, künftige
   # Dateien) wird mit 403 abgewiesen. Steht bewusst HIER in der Root-Datei,
   # weil der data/-Ordner beim Deployment nicht hochgeladen wird.
-  RewriteRule ^data/(?!(?:studio|team|games|patchnotes|legal)(?:\.en)?\.json$) - [F,L,NC]
+  RewriteRule ^data/(?!(?:studio|team|games|patchnotes|legal|redirects)(?:\.en)?\.json$) - [F,L,NC]
   RewriteRule ^data/?$ - [F,L,NC]
 
   RewriteRule ^sitemap\.xml$ sitemap.php [L]

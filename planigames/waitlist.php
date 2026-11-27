@@ -12,7 +12,13 @@ require __DIR__ . '/admin/lib.php';
 header('Content-Type: application/json; charset=utf-8');
 $file = PG_DATA_DIR . '/waitlist.json';
 
-function pg_wl_scope($raw){ return preg_replace('/[^a-z0-9\-]/', '', strtolower((string) $raw)); }
+function pg_wl_scope($raw){
+  $s = preg_replace('/[^a-z0-9\-]/', '', strtolower((string) $raw));
+  // umbenanntes Spiel (alte Adresse aus einer noch offenen Seite) → neue Adresse
+  static $map = null;
+  if ($map === null) { $r = json_decode((string) @file_get_contents(__DIR__ . '/data/redirects.json'), true); $map = is_array($r['games'] ?? null) ? $r['games'] : []; }
+  return ($s !== '' && isset($map[$s]) && is_string($map[$s])) ? $map[$s] : $s;
+}
 /* Nur Einträge desselben Bereichs (für Ranking/Zählung). */
 function pg_wl_scoped($list, $scope){
   return array_values(array_filter($list, fn($e) => is_array($e) && !empty($e['email']) && pg_wl_scope($e['scope'] ?? '') === $scope));

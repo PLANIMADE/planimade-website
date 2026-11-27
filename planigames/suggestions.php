@@ -12,7 +12,13 @@ header('Content-Type: application/json; charset=utf-8');
 $file = PG_DATA_DIR . '/suggestions.json';
 
 /* Bereich (Spiel-Slug oder ""), auf nur erlaubte Zeichen begrenzt. */
-function pg_sugg_scope($raw){ return preg_replace('/[^a-z0-9\-]/', '', strtolower((string) $raw)); }
+function pg_sugg_scope($raw){
+  $s = preg_replace('/[^a-z0-9\-]/', '', strtolower((string) $raw));
+  // umbenanntes Spiel (alte Adresse aus einer noch offenen Seite) → neue Adresse
+  static $map = null;
+  if ($map === null) { $r = json_decode((string) @file_get_contents(__DIR__ . '/data/redirects.json'), true); $map = is_array($r['games'] ?? null) ? $r['games'] : []; }
+  return ($s !== '' && isset($map[$s]) && is_string($map[$s])) ? $map[$s] : $s;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   $scope = pg_sugg_scope($_GET['scope'] ?? '');

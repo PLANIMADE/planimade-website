@@ -12,6 +12,12 @@ $file = __DIR__ . '/data/stats.json';
 $page = (string) ($_POST['p'] ?? $_GET['p'] ?? '');
 $page = preg_replace('/[^a-z0-9:_\-]/i', '', substr($page, 0, 60));
 if ($page === '') $page = 'unbekannt';
+// Aufrufe über eine alte (umbenannte) Spiel-Adresse dem neuen Spiel zuordnen
+if (preg_match('/^(game|lore):(.+)$/i', $page, $pm)) {
+  $rd = json_decode((string) @file_get_contents(__DIR__ . '/data/redirects.json'), true);
+  $to = is_array($rd) ? ($rd['games'][strtolower($pm[2])] ?? '') : '';
+  if (is_string($to) && $to !== '') $page = strtolower($pm[1]) . ':' . $to;
+}
 
 // Einfache Bot-Bremse: nur zählen, wenn kein offensichtlicher Bot-UA
 $ua = strtolower($_SERVER['HTTP_USER_AGENT'] ?? '');

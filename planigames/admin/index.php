@@ -265,6 +265,57 @@ if (!pg_logged_in()) {
 // Ab hier: eingeloggt. Tägliches Auto-Backup anstoßen (cron-frei, idempotent).
 if (pg_is_owner()) pg_backup_auto_maybe();
 
+/* ---- Spiele: Aktionen der Spiele-Verwaltung (Master-Detail) ---- */
+if (in_array($action, ['game_create', 'game_duplicate', 'game_delete', 'game_rename', 'games_reorder', 'game_translate'], true)) {
+  if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: index.php?collection=games'); exit; }
+  pg_csrf_check();
+  if (!pg_can('games')) { http_response_code(403); exit('Keine Berechtigung.'); }
+  $gIdx = (int) ($_POST['idx'] ?? -1); $gOrig = (string) ($_POST['orig'] ?? '');
+  $back = fn($slug, $q = '') => 'index.php?collection=games' . ($slug !== '' ? '&game=' . rawurlencode($slug) : '') . $q;
+  if ($action === 'games_reorder') {
+    header('Content-Type: application/json');
+    $order = json_decode((string) ($_POST['order'] ?? '[]'), true);
+    echo json_encode(['ok' => is_array($order) && pg_games_reorder($order)]);
+    exit;
+  }
+  if ($action === 'game_create') {
+    [$ok, $res] = pg_game_create($SCHEMA, $_POST['title'] ?? '');
+    header('Location: ' . ($ok ? $back($res, '&created=1') : $back('', '&gerr=' . rawurlencode($res)))); exit;
+  }
+  if ($action === 'game_duplicate') {
+    [$ok, $res] = pg_game_duplicate($gIdx, $gOrig);
+    header('Location: ' . ($ok ? $back($res, '&duplicated=1') : $back($gOrig, '&gerr=' . rawurlencode($res)))); exit;
+  }
+  if ($action === 'game_delete') {
+    [$ok, $res] = pg_game_delete($gIdx, $gOrig);
+    header('Location: ' . ($ok ? $back('', '&deleted=' . rawurlencode($res)) : $back($gOrig, '&gerr=' . rawurlencode($res)))); exit;
+  }
+  if ($action === 'game_rename') {
+    [$ok, $res] = pg_game_rename($gIdx, $gOrig, $_POST['slug'] ?? '');
+    if (!$ok) { header('Location: ' . $back($gOrig, '&tab=settings&gerr=' . rawurlencode($res))); exit; }
+    $c = $res['counts'];
+    header('Location: ' . $back($res['new'], '&tab=settings&renamed=' . rawurlencode($res['old'])
+      . '&mc=' . rawurlencode(implode(',', [$c['waitlist'], $c['suggestions'], $c['board'], $c['posts'], $c['views'], $c['en']])))); exit;
+  }
+  if ($action === 'game_translate') {
+    @set_time_limit(180);
+    $de = pg_games_data('de');
+    $i = pg_game_locate($de['games'], $gIdx, $gOrig);
+    if ($i < 0) { header('Location: ' . $back('', '&gerr=' . rawurlencode('Spiel nicht gefunden.'))); exit; }
+    $fields = pg_game_fields($SCHEMA);
+    $en = pg_games_data('en');
+    $ei = pg_game_en_idx($en['games'], $de['games'], $de['games'][$i]['slug'] ?? '', $i);
+    $aligned = pg_i18n_align($fields, $de['games'][$i], $ei >= 0 ? $en['games'][$ei] : []);
+    $n = 0;
+    $filled = ['slug' => (string) ($de['games'][$i]['slug'] ?? '')] + pg_i18n_fill_missing($fields, $de['games'][$i], $aligned, $n);
+    if ($ei >= 0) $en['games'][$ei] = $filled; else $en['games'][] = $filled;
+    $en['games'] = pg_games_en_sorted($en['games'], $de['games']);
+    $ok = pg_games_save($en, 'en');
+    if ($ok) pg_log_activity('Gespeichert', 'Spiele · ' . ($de['games'][$i]['title'] ?? '') . ' (EN, automatisch übersetzt: ' . $n . ')');
+    header('Location: ' . $back((string) ($de['games'][$i]['slug'] ?? ''), '&lang=en&' . ($ok ? 'translated=' . $n : 'error=1'))); exit;
+  }
+}
+
 /* ---- Speichern ---- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
   pg_csrf_check();
@@ -272,6 +323,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
   if (!isset($SCHEMA[$key])) { http_response_code(404); exit('Unbekannter Bereich.'); }
   if (!pg_can($key)) { http_response_code(403); exit('Keine Berechtigung für diesen Bereich.'); }
   $lang = ($_POST['lang'] ?? 'de') === 'en' ? 'en' : 'de';
+
+  // Spiele: es wird nur DAS bearbeitete Spiel gespeichert – alle anderen bleiben unangetastet
+  if ($key === 'games' && isset($_POST['game_orig'])) {
+    $gIdx = (int) ($_POST['game_idx'] ?? -1); $gOrig = (string) $_POST['game_orig'];
+    [$ok, $res] = $lang === 'en'
+      ? pg_game_save_en($SCHEMA, $gIdx, $gOrig, $_POST['g'] ?? [], (string) ($_POST['game_sig'] ?? ''))
+      : pg_game_save_de($SCHEMA, $gIdx, $gOrig, $_POST['g'] ?? []);
+    if ($ok) pg_log_activity('Gespeichert', 'Spiele · ' . (is_array($res) ? ($res['title'] ?? $gOrig) : $gOrig) . ' (' . strtoupper($lang) . ')');
+    if (isset($_POST['ajax'])) {
+      header('Content-Type: application/json');
+      echo json_encode(['ok' => (bool) $ok, 'time' => date('H:i'), 'error' => $ok ? '' : (is_string($res) ? $res : 'Speichern fehlgeschlagen')]);
+      exit;
+    }
+    $tab = preg_replace('/[^a-z]/', '', (string) ($_POST['game_tab'] ?? ''));
+    header('Location: index.php?collection=games&game=' . rawurlencode($gOrig) . '&lang=' . $lang . ($tab !== '' ? '&tab=' . $tab : '')
+      . ($ok ? '&saved=1' : '&gerr=' . rawurlencode(is_string($res) ? $res : 'Speichern fehlgeschlagen')));
+    exit;
+  }
   $data = pg_normalize_fields($SCHEMA[$key]['fields'], $_POST['d'] ?? []);
 
   // Auto-Newsletter: veröffentlichte Patchnotes mit "notify" einmalig versenden (nur DE-Basis)
@@ -1613,7 +1682,7 @@ if (($_GET['view'] ?? '') === 'backup') {
     foreach ($snaps as $b) {
       $csrf = pg_h(pg_csrf());
       echo '<tr><td><code>' . pg_h($b['name']) . '</code></td>'
-         . '<td>' . ($b['auto'] ? 'Automatisch' : 'Manuell') . '</td>'
+         . '<td>' . (($b['kind'] ?? '') === 'safety' ? 'Vor Adress-Umzug' : ($b['auto'] ? 'Automatisch' : 'Manuell')) . '</td>'
          . '<td>' . number_format($b['size'] / 1024, 0, ',', '.') . ' KB</td>'
          . '<td>' . pg_h(date('d.m.Y H:i', $b['time'])) . '</td>'
          . '<td style="white-space:nowrap"><a class="btn-add" href="index.php?action=backup_download&file=' . urlencode($b['name']) . '">↓</a> '
@@ -1689,7 +1758,18 @@ if (($_GET['view'] ?? '') === 'trash') {
         if (isset($SCHEMA[$coll]) && pg_can($coll)) {
           $cur = pg_load_json($SCHEMA[$coll]['file']);
           if (!isset($cur[$field]) || !is_array($cur[$field])) $cur[$field] = [];
-          $cur[$field][] = $entry['item'];
+          $item = $entry['item'];
+          // Adresse inzwischen vergeben? → eindeutige Variante, damit nichts doppelt ist
+          if (is_array($item) && !empty($item['slug'])) {
+            $taken = array_map(fn($x) => is_array($x) ? strtolower((string) ($x['slug'] ?? '')) : '', $cur[$field]);
+            if (in_array(strtolower((string) $item['slug']), $taken, true)) {
+              $base = (string) $item['slug']; $n = 2;
+              while (in_array(strtolower($base . '-' . $n), $taken, true)) $n++;
+              $item['slug'] = $base . '-' . $n;
+            }
+            if ($coll === 'games') pg_redirect_clear('games', (string) $item['slug']);
+          }
+          $cur[$field][] = $item;
           pg_save_json($SCHEMA[$coll]['file'], $cur);
           pg_log_activity('Wiederhergestellt', $entry['title'] . ' (' . $coll . ')');
         }
@@ -2025,6 +2105,8 @@ if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
   if (!pg_can($key)) { header('Location: index.php'); exit; }
   $coll = $SCHEMA[$key];
   $lang = ($_GET['lang'] ?? 'de') === 'en' ? 'en' : 'de';
+  // Spiele: eigene Verwaltung (Liste + Einzel-Editor mit Reitern)
+  if ($key === 'games') { require __DIR__ . '/view-games.php'; pg_games_view($SCHEMA, $lang); exit; }
   $enFile = pg_lang_file($coll['file'], 'en');
   $enExists = is_file($enFile);
   // EN-Datei laden falls vorhanden, sonst Deutsch als Startvorlage übernehmen

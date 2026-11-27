@@ -1,11 +1,12 @@
 # Interne Daten NIEMALS ausliefern – Whitelist statt Sperrliste.
 # Öffentlich sind ausschließlich die Inhalts-JSONs, die die Website lädt
-# (studio, team, games, patchnotes, legal + deren .en-Varianten).
+# (studio, team, games, patchnotes, legal + deren .en-Varianten) sowie redirects.json
+# (Weiterleitungen umbenannter Spiele – enthält nur Web-Adressen).
 # Alles andere – Passwort-Hashes, Mail-Zugang, personenbezogene Daten,
 # Keys, Logs und jede künftig neu angelegte Datei – ist automatisch gesperrt.
 # (Zweite Schutzschicht; die erste steht in der Root-.htaccess.)
 Require all denied
-<FilesMatch "^(studio|team|games|patchnotes|legal)(\.en)?\.json$">
+<FilesMatch "^(studio|team|games|patchnotes|legal|redirects)(\.en)?\.json$">
   Require all granted
 </FilesMatch>
 Options -Indexes

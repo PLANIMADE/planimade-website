@@ -195,29 +195,30 @@ return [
     'file'  => __DIR__ . '/../data/games.json',
     'fields' => [
       ['name'=>'games','label'=>'Spiele','widget'=>'list','summary'=>'title','fields'=>[
-        ['widget'=>'heading','label'=>'Eckdaten'],
+        // „tab“ ordnet die Abschnitte den Reitern der Spiele-Verwaltung zu (settings · look · page)
+        ['widget'=>'heading','label'=>'Grunddaten','tab'=>'settings','hint'=>'Name, Kurzbeschreibung, Status & Store-Link.'],
         ['name'=>'title','label'=>'Titel','widget'=>'string'],
-        ['name'=>'slug','label'=>'Slug (URL)','widget'=>'string','slug'=>true,'hint'=>'Kleinbuchstaben & Bindestriche. Leer = automatisch aus Titel. Adresse: game.php?slug=…'],
+        ['name'=>'slug','label'=>'Web-Adresse (Slug)','widget'=>'string','slug'=>true,'hint'=>'Kleinbuchstaben & Bindestriche. Wird über „Ändern…“ geändert – dabei ziehen Warteliste, Vorschläge, Board, Devlog & Statistik automatisch mit um.'],
         ['name'=>'tagline','label'=>'Kurzbeschreibung / Tagline','widget'=>'text'],
         ['name'=>'status','label'=>'Status','widget'=>'select','default'=>'development','options'=>[
           'development'=>'In Entwicklung','announced'=>'Angekündigt','demo'=>'Demo verfügbar','early'=>'Early Access','released'=>'Veröffentlicht',
         ]],
-        ['widget'=>'heading','label'=>'Farben & Darstellung'],
+        ['name'=>'featured','label'=>'Auf der Startseite hervorheben','widget'=>'boolean'],
+        ['name'=>'wishlistUrl','label'=>'Wishlist / Store-Link','widget'=>'string','hint'=>'z. B. Steam-Seite. Erscheint als Haupt-Button im Kopfbereich.'],
+        ['widget'=>'heading','label'=>'Farben der Spielwelt','tab'=>'look','hint'=>'Buttons, Verläufe & Partikel der Spielseite.'],
         ['name'=>'accent','label'=>'Akzentfarbe','widget'=>'color','default'=>'#ff7d1a','hint'=>'Hauptfarbe der Game-Welt (HEX). Buttons & Verläufe.'],
         ['name'=>'accent2','label'=>'Zweitfarbe','widget'=>'color','default'=>'#e6a015','hint'=>'Zweite HEX-Farbe für Verläufe (Button-Ende). Wird hell → Schrift automatisch dunkel.'],
         ['name'=>'particleColor','label'=>'Partikelfarbe (Hintergrund)','widget'=>'color','default'=>'','hint'=>'Farbe der schwebenden Hintergrund-Partikel auf dieser Spielseite. Leer = Akzentfarbe.'],
-        ['name'=>'featured','label'=>'Hervorgehoben (Startseite)','widget'=>'boolean'],
-        ['widget'=>'heading','label'=>'Bilder & Logo'],
+        ['widget'=>'heading','label'=>'Cover & Logo','tab'=>'look','hint'=>'Bilder für Karten, Startseite und den Kopfbereich der Spielseite.'],
         ['name'=>'cover','label'=>'Cover-Bild','widget'=>'image','hint'=>'Querformat 16:10, ca. 1600×1000 px (JPG/WebP). Für Karten & Startseite.'],
         ['name'=>'coverAlt','label'=>'Cover – Alt-Text','widget'=>'string','hint'=>'Bildbeschreibung für SEO & Screenreader. Leer = Spieltitel.'],
-        ['name'=>'logo','label'=>'Logo (transparent)','widget'=>'image','hint'=>'Transparentes PNG, ca. 800×400 px – wird im Hero statt des Titels gezeigt.'],
-        ['name'=>'logoScale','label'=>'Logo-Größe (%)','widget'=>'number','default'=>100,'hint'=>'100 = Standard. Wirkt auf Hero & Startseiten-Card. z. B. 60 (kleiner) oder 160 (größer).'],
-        ['name'=>'logoPos','label'=>'Logo-Position im Hero (Desktop)','widget'=>'object','hint'=>'Gilt nur für große Bildschirme. Auf dem Handy steht das Logo immer im Standard (unten links), damit es nicht überlappt. Tipp: „🖼️ Logo platzieren“ öffnet eine Vorschau zum Ziehen.','fields'=>[
+        ['name'=>'logo','label'=>'Logo (transparent)','widget'=>'image','hint'=>'Transparentes PNG/SVG – wird im Kopfbereich statt des Titels gezeigt. Transparenter Rand wird beim Hochladen automatisch entfernt.'],
+        ['name'=>'logoScale','label'=>'Logo-Größe (%)','widget'=>'number','default'=>100,'hint'=>'100 = Standard. Wirkt auf Kopfbereich & Startseiten-Karte.'],
+        ['name'=>'logoPos','label'=>'Logo-Position im Kopfbereich (große Bildschirme)','widget'=>'object','hint'=>'Am einfachsten über „Logo platzieren“. Leer = Standard (über der Tagline). Auf dem Handy steht das Logo immer über dem Text.','fields'=>[
           ['name'=>'x','label'=>'X (%)','widget'=>'number','hint'=>'0 = links … 100 = rechts. Leer lassen = Standard.'],
           ['name'=>'y','label'=>'Y (%)','widget'=>'number','hint'=>'0 = oben … 100 = unten.'],
         ]],
-        ['name'=>'wishlistUrl','label'=>'Wishlist / Store-Link','widget'=>'string','hint'=>'z. B. Steam-Seite.'],
-        ['widget'=>'heading','label'=>'Spielseite · Inhalts-Blöcke','hint'=>'Der Seitenaufbau – Blöcke hinzufügen, sortieren & einklappen.'],
+        ['widget'=>'heading','label'=>'Seiten-Blöcke','tab'=>'page','hint'=>'Der Aufbau der Spielseite – Blöcke hinzufügen, sortieren, ausblenden.'],
         ['name'=>'blocks','label'=>'Seiten-Blöcke (Website-Builder)','widget'=>'blocks','types'=>[
           'hero'=>['label'=>'Hero (Kopfbereich)','fields'=>[
             ['name'=>'tagline','label'=>'Tagline (überschreibt Standard)','widget'=>'text'],
@@ -357,6 +358,7 @@ return [
             ['name'=>'size','label'=>'Höhe (px)','widget'=>'number','default'=>48],
           ]],
         ]],
+        ['widget'=>'heading','label'=>'Welt / Lore','tab'=>'page','hint'=>'Eigene Story-Seite für dieses Spiel (lore.html?slug=…).'],
         ['name'=>'lore','label'=>'Welt / Lore (eigene Story-Seite für dieses Spiel)','widget'=>'object',
           'hint'=>'Ausfüllen und oben den Block „Welt-Teaser" einsetzen, um darauf zu verlinken. Adresse: lore.html?slug=<Slug>.','fields'=>[
           ['name'=>'enabled','label'=>'Story-/Lore-Seite für dieses Spiel aktivieren','widget'=>'boolean','default'=>false],

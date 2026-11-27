@@ -412,6 +412,7 @@
 
   // ---- Game-Logo im Hero frei platzieren ----
   function injectLogoPlacers() {
+    if (document.querySelector("[data-open-placer]")) return;   // neue Spiele-Verwaltung hat den WYSIWYG-Platzierer
     document.querySelectorAll('input[name$="[logoPos][x]"]').forEach((xin) => {
       const body = xin.closest(".object-body");
       if (!body || body.querySelector("[data-logo-edit]")) return;
@@ -592,7 +593,16 @@
     const wrap = fileInput.closest("[data-media]");
     const textInput = wrap.querySelector("[data-media-input]");
     const status = wrap.querySelector(".media-status");
-    const file = fileInput.files[0];
+    let file = fileInput.files[0];
+    let trimNote = "";
+    // Spiel-Logo: transparenten Rand automatisch entfernen (macht Größe & Platzierung berechenbar)
+    if (textInput && textInput.name === "g[logo]" && window.pgTrimLogoFile) {
+      status.textContent = "Entfernt transparenten Rand …";
+      try {
+        const t = await window.pgTrimLogoFile(file);
+        if (t) { const cut = Math.round((1 - (t.box[2] - t.box[0]) * (t.box[3] - t.box[1])) * 100); file = t.file; trimNote = ' <span class="opt-note">· transparenter Rand entfernt (−' + cut + ' % Fläche)</span>'; }
+      } catch (err) {}
+    }
     status.textContent = "Lädt… (" + Math.round(file.size / 1024) + " KB)";
     const fd = new FormData();
     fd.append("csrf", csrf());
@@ -603,7 +613,8 @@
       if (j.error) { status.innerHTML = '<span class="up-err">' + j.error + "</span>"; }
       else {
         textInput.value = j.path;
-        status.innerHTML = '<a href="' + j.path + '" target="_blank" class="media-prev">' + j.path + "</a>" + optNote(j);
+        textInput.dispatchEvent(new Event("input", { bubbles: true }));
+        status.innerHTML = '<a href="' + j.path + '" target="_blank" class="media-prev">' + j.path + "</a>" + optNote(j) + trimNote;
       }
     } catch (err) {
       status.innerHTML = '<span class="up-err">Upload-Fehler</span>';
@@ -951,10 +962,12 @@
           dirty = false; setStatus("Gespeichert ✓", "ok"); toast("Automatisch gespeichert", "ok", 1800);
           if (j.sent) toast("📣 Newsletter an " + j.sent + " gesendet", "info", 4000);
           reloadPreview();
-        } else { setStatus("Fehler", "err"); toast("Speichern fehlgeschlagen", "err"); }
+        } else { setStatus("Fehler", "err"); toast(j.error || "Speichern fehlgeschlagen", "err", 6000); }
       } catch (e) { setStatus("Offline", "err"); }
       saving = false;
     }
+    // Für andere Funktionen (z. B. „Adresse ändern“): erst ungespeicherte Änderungen sichern
+    window.pgEditor = { isDirty: () => dirty, save: () => save() };
     // Manuelles Speichern: normal absenden, aber dirty zurücksetzen (kein Warn-Dialog)
     form.addEventListener("submit", () => { dirty = false; });
     addEventListener("beforeunload", (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
@@ -1051,6 +1064,560 @@
       if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) { e.preventDefault(); pal.hidden ? openPal() : closePal(); }
     });
   }
+
+
+  // =====================================================================
+  //  SPIELE-VERWALTUNG (Liste + Einzel-Editor mit Reitern)
+  // =====================================================================
+  const gEditor = document.querySelector("[data-game-editor]");
+  const gList = document.querySelector("[data-game-rows]");
+
+  // ---- Reiter ----
+  function showTab(tab, focusField) {
+    const root = document.querySelector(".gd");
+    if (!root || !root.querySelector(`[data-panel="${tab}"]`)) return;
+    root.querySelectorAll(".gd-tabs [data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
+    root.querySelectorAll(".gd-panel").forEach((p) => p.classList.toggle("on", p.dataset.panel === tab));
+    const inp = root.querySelector("[data-tab-input]"); if (inp) inp.value = tab;
+    try { const u = new URL(location.href); u.searchParams.set("tab", tab); ["saved", "created", "duplicated", "renamed", "mc", "gerr", "translated", "error"].forEach((k) => u.searchParams.delete(k)); history.replaceState(null, "", u); } catch {}
+    if (focusField) {
+      const box = root.querySelector(`[data-panel="${tab}"] [data-gfield="${focusField}"]`);
+      if (box) {
+        box.scrollIntoView({ behavior: "smooth", block: "center" });
+        box.classList.add("g-flash"); setTimeout(() => box.classList.remove("g-flash"), 1600);
+        const f = box.querySelector("input:not([type=hidden]), textarea, select"); if (f) setTimeout(() => f.focus({ preventScroll: true }), 350);
+      }
+    }
+  }
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest(".gd [data-tab]");
+    if (t) { e.preventDefault(); showTab(t.dataset.tab); return; }
+    const go = e.target.closest("[data-goto-tab]");
+    if (go) { e.preventDefault(); showTab(go.dataset.gotoTab, go.dataset.gotoField); }
+  });
+
+  // ---- Liste: Suche & Status-Filter ----
+  if (gList) {
+    const search = document.querySelector("[data-game-search]");
+    const filter = document.querySelector("[data-game-filter]");
+    let want = "";
+    const apply = () => {
+      const q = (search ? search.value : "").trim().toLowerCase();
+      gList.querySelectorAll(".gm-row").forEach((r) => {
+        const ok = (!q || (r.dataset.q || "").includes(q)) && (!want || r.dataset.status === want);
+        r.style.display = ok ? "" : "none";
+      });
+    };
+    if (search) search.addEventListener("input", apply);
+    if (filter) filter.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-gf]"); if (!b) return;
+      want = b.dataset.gf; filter.querySelectorAll("[data-gf]").forEach((x) => x.classList.toggle("on", x === b)); apply();
+    });
+
+    // ---- Reihenfolge per Ziehen (Griff rechts) → sofort gespeichert ----
+    let gd = null;
+    gList.addEventListener("pointerdown", (e) => {
+      const grip = e.target.closest("[data-game-grip]"); if (!grip) return;
+      const row = grip.closest(".gm-row"); if (!row) return;
+      e.preventDefault();
+      gd = { row, before: [...gList.querySelectorAll(".gm-row")].map((r) => r.dataset.slug).join("|") };
+      row.classList.add("dragging"); document.body.classList.add("is-dragging");
+      try { grip.setPointerCapture(e.pointerId); } catch {}
+    });
+    gList.addEventListener("pointermove", (e) => {
+      if (!gd) return;
+      e.preventDefault();
+      const rows = [...gList.querySelectorAll(".gm-row")].filter((r) => r !== gd.row);
+      let placed = false;
+      for (const r of rows) { const b = r.getBoundingClientRect(); if (e.clientY < b.top + b.height / 2) { gList.insertBefore(gd.row, r); placed = true; break; } }
+      if (!placed) gList.appendChild(gd.row);
+    });
+    const endGameDrag = async () => {
+      if (!gd) return;
+      const { row, before } = gd; gd = null;
+      row.classList.remove("dragging"); document.body.classList.remove("is-dragging");
+      const order = [...gList.querySelectorAll(".gm-row")].map((r) => r.dataset.slug);
+      if (order.join("|") === before) return;
+      const fd = new URLSearchParams(); fd.append("csrf", csrf()); fd.append("order", JSON.stringify(order));
+      try {
+        const r = await fetch("index.php?action=games_reorder", { method: "POST", body: fd });
+        const j = await r.json();
+        toast(j.ok ? "Reihenfolge gespeichert – so erscheint sie auch auf der Website" : "Reihenfolge konnte nicht gespeichert werden", j.ok ? "ok" : "err");
+      } catch { toast("Reihenfolge konnte nicht gespeichert werden", "err"); }
+    };
+    gList.addEventListener("pointerup", endGameDrag);
+    gList.addEventListener("pointercancel", endGameDrag);
+  }
+
+  // ---- Seiten-Blöcke: kompakt, ein-/ausblenden, Hinzufügen über Kacheln ----
+  document.querySelectorAll(".gd [data-blocks]").forEach((blocks) => {
+    blocks.querySelectorAll(":scope > [data-items] > [data-item]").forEach((it) => it.classList.add("folded"));
+    const sel = blocks.querySelector("[data-block-select]");
+    if (!sel) return;
+    const add = document.createElement("button");
+    add.type = "button"; add.className = "g-addblock";
+    add.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Block hinzufügen';
+    const pal = document.createElement("div");
+    pal.className = "g-palette"; pal.hidden = true;
+    const icons = { hero: "image", richtext: "devlog", features: "star", gallery: "image", trailer: "play", quotes: "chat", stats: "chart", roadmap: "route",
+      faq: "help", countdown: "clock", cta: "mega", download: "download", requirements: "server", storewidget: "ext", suggestions: "bulb", waitlist: "list", lore: "book", spacer: "move" };
+    pal.innerHTML = [...sel.options].map((o) => `<button type="button" data-add-type="${o.value}"><svg class="ic" aria-hidden="true"><use href="#i-${icons[o.value] || "cockpit"}"/></svg>${o.textContent}</button>`).join("");
+    blocks.appendChild(add); blocks.appendChild(pal);
+    add.addEventListener("click", () => { pal.hidden = !pal.hidden; });
+    pal.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-add-type]"); if (!b) return;
+      sel.value = b.dataset.addType; addBlock(blocks); pal.hidden = true;
+      setTimeout(() => document.querySelectorAll("textarea.md").forEach(enhanceMarkdown), 60);
+      const last = blocks.querySelector(":scope > [data-items] > [data-item]:last-child");
+      if (last) { last.scrollIntoView({ behavior: "smooth", block: "center" }); last.dispatchEvent(new Event("input", { bubbles: true })); }
+      toast("„" + b.textContent.trim() + "“ hinzugefügt – Inhalte eintragen und speichern", "info");
+    });
+  });
+  document.addEventListener("click", (e) => {
+    const sw = e.target.closest("[data-block-vis]");
+    if (!sw) return;
+    e.preventDefault();
+    const item = sw.closest("[data-item]");
+    const inp = item && item.querySelector(":scope > [data-hidden-input]");
+    if (!inp) return;
+    const hide = inp.value !== "1";
+    inp.value = hide ? "1" : "0";
+    sw.classList.toggle("on", !hide); sw.setAttribute("aria-pressed", String(!hide));
+    item.classList.toggle("is-hidden", hide);
+    const meta = item.querySelector("[data-block-meta]");
+    if (meta) meta.textContent = hide ? "ausgeblendet · " + meta.textContent.replace(/^ausgeblendet · /, "") : meta.textContent.replace(/^ausgeblendet · /, "");
+    inp.dispatchEvent(new Event("input", { bubbles: true }));
+    toast(hide ? "Block ausgeblendet – bleibt gespeichert, nur nicht sichtbar" : "Block wird wieder angezeigt", "info", 2200);
+  });
+
+  // ---- Dialoge ----
+  function openDialog(id) {
+    const d = document.getElementById(id); if (!d) return;
+    d.hidden = false;
+    const f = d.querySelector("[data-autofocus]"); if (f) setTimeout(() => { f.focus(); if (f.select) f.select(); }, 40);
+    d.dispatchEvent(new Event("pg:open"));
+  }
+  function closeDialogs() { document.querySelectorAll(".pg-modal-back:not([hidden])").forEach((d) => { d.hidden = true; }); }
+  window.pgOpenDialog = openDialog;
+  document.addEventListener("click", (e) => {
+    const o = e.target.closest("[data-open-dialog]");
+    if (o) { e.preventDefault(); openDialog(o.dataset.openDialog); return; }
+    if (e.target.closest(".pg-modal [data-close]") || e.target.classList.contains("pg-modal-back")) { e.preventDefault(); closeDialogs(); }
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.querySelector(".pg-modal-back:not([hidden])")) closeDialogs(); });
+
+  const slugify = (v) => String(v || "").toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/&/g, "-und-").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  // Neues Spiel: Adresse live anzeigen
+  const ngTitle = document.querySelector("[data-slug-source]"), ngPrev = document.querySelector("[data-slug-preview]");
+  if (ngTitle && ngPrev) ngTitle.addEventListener("input", () => { ngPrev.textContent = slugify(ngTitle.value) || "…"; });
+
+  // Web-Adresse ändern: prüfen + vorher ungespeicherte Änderungen sichern
+  const slugForm = document.querySelector("[data-slug-form]");
+  if (slugForm) {
+    const inp = slugForm.querySelector("[data-slug-input]"), err = slugForm.querySelector("[data-slug-err]"), btn = slugForm.querySelector("[data-slug-save]");
+    let taken = []; try { taken = JSON.parse(slugForm.dataset.taken || "[]"); } catch {}
+    const cur = slugForm.dataset.current || "";
+    const validate = () => {
+      const v = inp.value;
+      let m = "";
+      if (!v) m = "Bitte eine Adresse eingeben.";
+      else if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(v)) m = "Nur Kleinbuchstaben, Zahlen und einzelne Bindestriche (z. B. frontliners).";
+      else if (taken.includes(v)) m = "Diese Adresse benutzt schon ein anderes Spiel.";
+      else if (v === cur) m = "Das ist bereits die aktuelle Adresse.";
+      err.textContent = m; btn.disabled = !!m;
+      return !m;
+    };
+    inp.addEventListener("input", () => { const p = inp.selectionStart; inp.value = inp.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""); try { inp.setSelectionRange(p, p); } catch {} validate(); });
+    slugForm.closest(".pg-modal-back").addEventListener("pg:open", validate);
+    slugForm.addEventListener("submit", async (e) => {
+      if (!validate()) { e.preventDefault(); return; }
+      if (window.pgEditor && window.pgEditor.isDirty()) {
+        e.preventDefault(); btn.disabled = true; btn.textContent = "Speichert Änderungen …";
+        await window.pgEditor.save();
+        slugForm.submit();
+      } else { btn.disabled = true; btn.textContent = "Zieht um …"; }
+    });
+  }
+  // Formulare mit Sicherheitsabfrage (Löschen, Übersetzen)
+  document.querySelectorAll("form[data-confirm]").forEach((f) => f.addEventListener("submit", (e) => {
+    if (!confirm(f.dataset.confirm)) e.preventDefault();
+  }));
+
+  // ---- Live: Google-Vorschau & Logo-Status ----
+  if (gEditor) {
+    const tIn = gEditor.querySelector('[name="g[title]"]'), dIn = gEditor.querySelector('[name="g[tagline]"]');
+    const st = gEditor.querySelector("[data-serp-title]"), sd = gEditor.querySelector("[data-serp-desc]");
+    const upd = () => {
+      if (st && tIn) st.textContent = (tIn.value || "") + " — PLANIGAMES";
+      if (sd && dIn) { const v = dIn.value.trim(); sd.textContent = v.length > 158 ? v.slice(0, 157) + " …" : v; }
+    };
+    [tIn, dIn].forEach((x) => x && x.addEventListener("input", upd));
+    // Button-Vorschau mit den Spielfarben (gleiche Logik wie auf der Website)
+    const bp = gEditor.querySelector("[data-btn-prev]");
+    const a1 = gEditor.querySelector('[name="g[accent]"]'), a2 = gEditor.querySelector('[name="g[accent2]"]');
+    const bright = (h) => { const m = String(h || "").trim().replace("#", "").match(/^([0-9a-f]{3}|[0-9a-f]{6})$/i); if (!m) return 0; let x = m[1]; if (x.length === 3) x = x.split("").map((c) => c + c).join(""); return (parseInt(x.substr(0, 2), 16) * 299 + parseInt(x.substr(2, 2), 16) * 587 + parseInt(x.substr(4, 2), 16) * 114) / 1000; };
+    const updBtn = () => {
+      if (!bp) return;
+      const c1 = (a1 && /^#[0-9a-f]{6}$/i.test(a1.value) ? a1.value : "#ff7d1a"), c2 = (a2 && /^#[0-9a-f]{6}$/i.test(a2.value) ? a2.value : c1);
+      bp.style.background = `linear-gradient(110deg, ${c1}, ${c2})`;
+      bp.style.color = (bright(c1) + bright(c2)) / 2 > 176 ? "#1a0d00" : "#ffffff";
+    };
+    [a1, a2].forEach((x) => { if (!x) return; x.addEventListener("input", updBtn); const sw = x.previousElementSibling; if (sw) sw.addEventListener("input", () => setTimeout(updBtn, 0)); });
+    updBtn();
+    const logoIn = gEditor.querySelector('[name="g[logo]"]'), prev = gEditor.querySelector("[data-logo-prev]");
+    if (logoIn && prev) logoIn.addEventListener("input", () => {
+      const v = logoIn.value.split("#")[0].trim();
+      prev.innerHTML = v ? `<img src="${v.replace(/"/g, "%22")}" alt="">` : "<span>kein Logo</span>";
+    });
+  }
+
+
+  // =====================================================================
+  //  LOGO PLATZIEREN – die ECHTE Spielseite in echter Bildschirmgröße
+  //  (Rahmen mit ?_placer=1), gemessen werden nur die sichtbaren Logo-Pixel.
+  // =====================================================================
+  const VPS = { laptop: { w: 1366, h: 768, l: "Laptop" }, desktop: { w: 1920, h: 1080, l: "Full HD" }, wide: { w: 2560, h: 1440, l: "1440p" }, mobile: { w: 390, h: 844, l: "Handy" } };
+  const nextFrames = (w) => new Promise((r) => { const win = w || window; win.requestAnimationFrame(() => win.requestAnimationFrame(() => r())); });
+  const loadImg = (src) => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error("Bild nicht ladbar")); im.src = src; });
+  const isSvg = (n) => /\.svg($|[?#])/i.test(String(n || "")) || /svg/i.test(String(n && n.type || ""));
+
+  // Seitenverhältnis + Ausmaß des SVG (viewBox bzw. width/height)
+  function svgGeom(text) {
+    const doc = new DOMParser().parseFromString(text, "image/svg+xml");
+    const svg = doc.documentElement;
+    if (!svg || svg.nodeName.toLowerCase() !== "svg") return null;
+    // nur absolute Angaben (Zahl oder px) zählen – „100%“ o. Ä. bestimmt keine Größe
+    const num = (v) => { const m = String(v || "").trim().match(/^([\d.]+)(px)?$/i); const n = m ? parseFloat(m[1]) : 0; return isFinite(n) && n > 0 ? n : 0; };
+    let vb = (svg.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
+    const w = num(svg.getAttribute("width")), h = num(svg.getAttribute("height"));
+    if (vb.length !== 4 || vb.some((x) => !isFinite(x)) || vb[2] <= 0 || vb[3] <= 0) vb = w && h ? [0, 0, w, h] : null;
+    if (!vb) return null;
+    // Weichen feste Breite/Höhe vom viewBox-Verhältnis ab, rendert der Browser mit Rand → dann nicht zuschneiden
+    const skew = w && h ? Math.abs((w / h) / (vb[2] / vb[3]) - 1) > 0.01 : false;
+    return { doc, svg, vb, w, h, ar: w && h ? w / h : vb[2] / vb[3], skew };
+  }
+  // Sichtbarer Bereich (Alpha > 10) als Anteile 0..1 – für SVG und Rasterbilder
+  async function measureAlpha(src, ar, maxSide) {
+    const im = await loadImg(src);
+    let w = im.naturalWidth, h = im.naturalHeight;
+    if (ar) { const side = maxSide || 1600; if (ar >= 1) { w = side; h = Math.round(side / ar); } else { h = side; w = Math.round(side * ar); } }
+    if (!w || !h) { w = 1000; h = 500; }
+    const sc = Math.min(1, (maxSide || 1600) / Math.max(w, h));
+    const cw = Math.max(1, Math.round(w * sc)), ch = Math.max(1, Math.round(h * sc));
+    const c = document.createElement("canvas"); c.width = cw; c.height = ch;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(im, 0, 0, cw, ch);
+    let d; try { d = ctx.getImageData(0, 0, cw, ch).data; } catch (e) { return { box: [0, 0, 1, 1], ar: w / h, im }; }
+    let x0 = cw, y0 = ch, x1 = -1, y1 = -1;
+    for (let y = 0; y < ch; y++) { const row = y * cw * 4; for (let x = 0; x < cw; x++) if (d[row + x * 4 + 3] > 10) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+    return { box: x1 < 0 ? [0, 0, 1, 1] : [x0 / cw, y0 / ch, (x1 + 1) / cw, (y1 + 1) / ch], ar: w / h, im, cw, ch };
+  }
+  const _logoInfo = {};
+  async function logoInfo(url) {
+    if (_logoInfo[url]) return _logoInfo[url];
+    let ar = 0;
+    if (isSvg(url)) { try { const g = svgGeom(await (await fetch(url)).text()); if (g) ar = g.ar; } catch (e) {} }
+    try { return (_logoInfo[url] = await measureAlpha(url, ar)); } catch (e) { return { box: [0, 0, 1, 1], ar: ar || 2 }; }
+  }
+
+  // Transparenten Rand eines Logos abschneiden → neue Datei (oder null, wenn nichts zu tun ist)
+  async function trimLogoFile(file) {
+    const base = String(file.name || "logo").replace(/\.[^.]+$/, "").replace(/-trim$/, "") + "-trim";
+    if (isSvg(file.name) || isSvg(file)) {
+      const text = await file.text();
+      const g = svgGeom(text); if (!g || g.skew) return null;
+      const url = URL.createObjectURL(new Blob([text], { type: "image/svg+xml" }));
+      let m; try { m = await measureAlpha(url, g.ar, 2000); } finally { URL.revokeObjectURL(url); }
+      const [a, b, c, d] = m.box, pad = 0.004;
+      if ((c - a) * (d - b) > 0.94) return null;
+      const fx0 = Math.max(0, a - pad), fy0 = Math.max(0, b - pad), fx1 = Math.min(1, c + pad), fy1 = Math.min(1, d + pad);
+      const [vx, vy, vw, vh] = g.vb;
+      const nvb = [vx + fx0 * vw, vy + fy0 * vh, (fx1 - fx0) * vw, (fy1 - fy0) * vh].map((v) => +v.toFixed(3));
+      g.svg.setAttribute("viewBox", nvb.join(" "));
+      if (g.w && g.h) { g.svg.setAttribute("width", +(g.w * (fx1 - fx0)).toFixed(2)); g.svg.setAttribute("height", +(g.h * (fy1 - fy0)).toFixed(2)); }
+      g.svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      const out = new XMLSerializer().serializeToString(g.doc);
+      return { file: new File([out], base + ".svg", { type: "image/svg+xml" }), box: [fx0, fy0, fx1, fy1] };
+    }
+    if (!/^image\/(png|webp|gif)$/i.test(file.type || "") && !/\.(png|webp|gif)$/i.test(file.name || "")) return null;
+    const url = URL.createObjectURL(file);
+    try {
+      const im = await loadImg(url);
+      const W = im.naturalWidth, H = im.naturalHeight;
+      if (!W || !H || W * H > 40e6) return null;
+      const c = document.createElement("canvas"); c.width = W; c.height = H;
+      const ctx = c.getContext("2d", { willReadFrequently: true }); ctx.drawImage(im, 0, 0);
+      const d = ctx.getImageData(0, 0, W, H).data;
+      let x0 = W, y0 = H, x1 = -1, y1 = -1;
+      for (let y = 0; y < H; y++) { const row = y * W * 4; for (let x = 0; x < W; x++) if (d[row + x * 4 + 3] > 10) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+      if (x1 < 0) return null;
+      const p = Math.round(Math.max(W, H) * 0.004);
+      x0 = Math.max(0, x0 - p); y0 = Math.max(0, y0 - p); x1 = Math.min(W - 1, x1 + p); y1 = Math.min(H - 1, y1 + p);
+      const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+      if (cw * ch > 0.94 * W * H) return null;
+      const o = document.createElement("canvas"); o.width = cw; o.height = ch;
+      o.getContext("2d").drawImage(im, x0, y0, cw, ch, 0, 0, cw, ch);
+      const blob = await new Promise((r) => o.toBlob(r, "image/png"));
+      return blob ? { file: new File([blob], base + ".png", { type: "image/png" }), box: [x0 / W, y0 / H, (x1 + 1) / W, (y1 + 1) / H] } : null;
+    } finally { URL.revokeObjectURL(url); }
+  }
+  window.pgTrimLogoFile = trimLogoFile;
+  async function uploadFile(file) {
+    const fd = new FormData(); fd.append("csrf", csrf()); fd.append("file", file);
+    const r = await fetch("index.php?action=upload", { method: "POST", body: fd });
+    return r.json();
+  }
+
+  const PL = { vp: "desktop", pos: null, scale: 100, box: [0, 0, 1, 1], ar: 2, warn: {}, m: null, api: null, papi: null, s: 1, drag: null, logo: "" };
+  let plDlg = null;
+  function plEl(sel) { return plDlg.querySelector(sel); }
+  function buildPlacer() {
+    if (plDlg) return;
+    plDlg = document.createElement("div");
+    plDlg.className = "pg-modal-back"; plDlg.id = "dlg-placer"; plDlg.hidden = true;
+    plDlg.innerHTML = `<div class="pg-modal xl" role="dialog" aria-modal="true" aria-labelledby="pl-t">
+      <div class="pg-modal-h"><div><h3 id="pl-t">Logo platzieren</h3><p>Das ist die echte Spielseite in echter Bildschirmgröße – was du hier siehst, steht genau so auf der Website.</p></div>
+        <button type="button" class="icon-btn" data-close aria-label="Schließen"><svg class="ic"><use href="#i-x"/></svg></button></div>
+      <div class="placer-bar"><div class="g-seg" data-vp-seg></div><div class="placer-warn" data-pl-warn></div></div>
+      <div class="placer-tip" data-pl-tip hidden></div>
+      <div class="placer-wrap" data-pl-wrap><div class="placer-stage" data-pl-stage>
+        <iframe data-pl-frame title="Vorschau der Spielseite" tabindex="-1"></iframe>
+        <div class="placer-ov" data-pl-ov><div class="placer-sel" data-pl-sel hidden></div><div class="placer-guide v" data-pl-gv></div><div class="placer-guide h" data-pl-gh></div></div>
+        <div class="placer-load" data-pl-load>Lädt die Spielseite …</div></div></div>
+      <div class="placer-foot">
+        <label class="placer-range">Größe <input type="range" min="30" max="300" step="1" data-pl-size><b data-pl-sizeval>100 %</b></label>
+        <span class="placer-coords" data-pl-coords>Standard</span>
+        <span class="placer-note" data-pl-note></span>
+        <span class="sp"></span>
+        <button type="button" class="btn btn-ghost" data-pl-reset><svg class="ic"><use href="#i-undo"/></svg>Standard (über dem Text)</button>
+        <button type="button" class="btn btn-primary" data-pl-save><svg class="ic"><use href="#i-check"/></svg>Übernehmen</button>
+      </div></div>
+      <iframe data-pl-probe title="" aria-hidden="true" tabindex="-1" class="placer-probe"></iframe>`;
+    document.body.appendChild(plDlg);
+    plEl("[data-vp-seg]").addEventListener("click", (e) => { const b = e.target.closest("[data-vp]"); if (b) { PL.vp = b.dataset.vp; plRender(true); } });
+    const size = plEl("[data-pl-size]");
+    size.addEventListener("input", () => { PL.scale = +size.value; plApply({ logoScale: PL.scale }); });
+    size.addEventListener("change", plCheckAll);
+    plEl("[data-pl-reset]").addEventListener("click", () => { PL.pos = null; plApply({ logoPos: { x: "", y: "" } }); plCheckAll(); toast("Standard: Logo steht über der Tagline", "info", 2000); });
+    plEl("[data-pl-save]").addEventListener("click", plSave);
+    const ov = plEl("[data-pl-ov]");
+    ov.addEventListener("pointerdown", plDown); ov.addEventListener("pointermove", plMove);
+    ov.addEventListener("pointerup", plUp); ov.addEventListener("pointercancel", plUp);
+    addEventListener("resize", () => { if (plDlg && !plDlg.hidden) plRender(true); });
+    // Schließen → Rahmen leeren (spart Rechenleistung)
+    new MutationObserver(() => { if (plDlg.hidden) { plEl("[data-pl-frame]").src = "about:blank"; plEl("[data-pl-probe]").src = "about:blank"; PL.api = PL.papi = null; } })
+      .observe(plDlg, { attributes: true, attributeFilter: ["hidden"] });
+  }
+  function plFormPatch() {
+    const v = (n) => { const el = gEditor.querySelector(`[name="g[${n}]"]`); return el ? el.value : undefined; };
+    const p = { title: v("title"), tagline: v("tagline"), status: v("status"), accent: v("accent"), accent2: v("accent2"), wishlistUrl: v("wishlistUrl"), cover: v("cover"), logo: PL.logo };
+    Object.keys(p).forEach((k) => p[k] === undefined && delete p[k]);
+    const hero = [...gEditor.querySelectorAll('[data-item][data-block-type="hero"]')].find((it) => (it.querySelector(":scope > [data-hidden-input]") || {}).value !== "1");
+    if (hero) { const h = {}; ["tagline", "background", "backgroundMobile", "video", "poster", "ctaLabel", "trailerUrl"].forEach((k) => { const el = hero.querySelector(`[name$="[${k}]"]`); if (el) h[k] = el.value; }); p.hero = h; }
+    p.logoScale = PL.scale; p.logoPos = PL.pos ? { ...PL.pos } : { x: "", y: "" };
+    return p;
+  }
+  async function plWaitApi(frame) {
+    for (let i = 0; i < 200; i++) {
+      try { const w = frame.contentWindow; if (w && w.PLANIGAMES && w.PLANIGAMES.placer) return w.PLANIGAMES.placer; } catch (e) { return null; }
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    return null;
+  }
+  async function plWaitImg(frame) {
+    try { const img = frame.contentDocument.querySelector('[data-hero-logo="float"], [data-hero-logo="inline"]'); if (img && img.decode) await img.decode().catch(() => {}); } catch (e) {}
+  }
+  function plVis(m) {
+    const f = m && m.float; if (!f) return null;
+    const ar = PL.ar || (f.w / f.h);
+    let iw = f.w, ih = f.h;
+    if (f.w / f.h > ar) iw = f.h * ar; else ih = f.w / ar;
+    const ix = f.x + (f.w - iw) / 2, iy = f.y + (f.h - ih) / 2, b = PL.box;
+    return { x: ix + b[0] * iw, y: iy + b[1] * ih, w: (b[2] - b[0]) * iw, h: (b[3] - b[1]) * ih };
+  }
+  function plHits(m) {
+    const r = plVis(m); if (!r) return [];
+    const out = Object.entries(m.hits || {}).filter(([, b]) => b && r.x < b.x + b.w && r.x + r.w > b.x && r.y < b.y + b.h && r.y + r.h > b.y).map(([k]) => k);
+    const s = m.section;
+    if (r.x < 0 || r.x + r.w > m.vw || (s && (r.y < s.y || r.y + r.h > s.y + s.h))) out.push("Bildrand");
+    return out;
+  }
+  function plFit() {
+    const vp = VPS[PL.vp], wrap = plEl("[data-pl-wrap]"), frame = plEl("[data-pl-frame]"), stage = plEl("[data-pl-stage]");
+    const availW = Math.max(200, wrap.clientWidth - 32), availH = Math.max(220, Math.min(innerHeight * 0.58, 660));
+    PL.s = Math.min(availW / vp.w, availH / vp.h);
+    frame.style.width = vp.w + "px"; frame.style.height = vp.h + "px"; frame.style.transform = `scale(${PL.s})`;
+    stage.style.width = Math.round(vp.w * PL.s) + "px"; stage.style.height = Math.round(vp.h * PL.s) + "px";
+  }
+  function plDraw() {
+    const m = PL.m, s = PL.s, sel = plEl("[data-pl-sel]"), ov = plEl("[data-pl-ov]");
+    const mobile = VPS[PL.vp].w < 768;
+    ov.querySelectorAll(".placer-hit").forEach((e) => e.remove());
+    const r = !mobile && PL.pos ? plVis(m) : null;
+    sel.hidden = !r;
+    if (r) Object.assign(sel.style, { left: r.x * s + "px", top: r.y * s + "px", width: r.w * s + "px", height: r.h * s + "px" });
+    const hits = mobile || !PL.pos ? [] : plHits(m);
+    hits.forEach((k) => { const b = m.hits[k]; if (!b) return; const d = document.createElement("div"); d.className = "placer-hit"; Object.assign(d.style, { left: b.x * s + "px", top: b.y * s + "px", width: b.w * s + "px", height: b.h * s + "px" }); ov.appendChild(d); });
+    ov.classList.toggle("free", !mobile && !PL.pos);
+    ov.classList.toggle("mobile", mobile);
+    const w = plEl("[data-pl-warn]");
+    if (mobile) { w.className = "placer-warn ok"; w.innerHTML = '<svg class="ic"><use href="#i-check"/></svg>Handy: Logo steht automatisch über dem Text'; }
+    else if (!PL.pos) { w.className = "placer-warn ok"; w.innerHTML = '<svg class="ic"><use href="#i-check"/></svg>Standard: Logo steht über der Tagline'; }
+    else { w.className = "placer-warn " + (hits.length ? "bad" : "ok"); w.innerHTML = hits.length ? '<svg class="ic"><use href="#i-alert"/></svg>Überdeckt: ' + hits.join(", ") : '<svg class="ic"><use href="#i-check"/></svg>Frei · nichts wird verdeckt'; }
+    plEl("[data-pl-coords]").textContent = PL.pos ? `x ${PL.pos.x} · y ${PL.pos.y}` : "Standard";
+    plEl("[data-pl-size]").value = PL.scale; plEl("[data-pl-sizeval]").textContent = PL.scale + " %";
+    plEl("[data-pl-note]").innerHTML = mobile ? "" : (PL.pos ? '<svg class="ic"><use href="#i-move"/></svg>Logo anfassen und ziehen · mittig rastet ein' : '<svg class="ic"><use href="#i-move"/></svg>Zum freien Platzieren ins Bild klicken');
+  }
+  function plSeg() {
+    plEl("[data-vp-seg]").innerHTML = Object.entries(VPS).map(([k, v]) => {
+      const w = PL.warn[k];
+      const dot = k === "mobile" ? "" : `<span class="vdot${w && w.length ? " warn" : ""}" title="${w && w.length ? "Überdeckt: " + w.join(", ") : "frei"}"></span>`;
+      return `<button type="button" class="${PL.vp === k ? "on" : ""}" data-vp="${k}">${dot}${v.l}<span class="n">${v.w}</span></button>`;
+    }).join("");
+  }
+  async function plRender(resize) {
+    if (!PL.api) return;
+    const frame = plEl("[data-pl-frame]");
+    if (resize) { plFit(); await nextFrames(frame.contentWindow); }
+    PL.m = PL.api.measure();
+    plSeg(); plDraw();
+  }
+  async function plApply(patch) {
+    if (!PL.api) return;
+    PL.m = PL.api.update(patch);
+    await plWaitImg(plEl("[data-pl-frame]"));
+    PL.m = PL.api.measure();
+    plDraw();
+  }
+  let plChecking = 0;
+  async function plCheckAll() {
+    if (!PL.papi) return;
+    const run = ++plChecking, probe = plEl("[data-pl-probe]");
+    PL.papi.update(plFormPatch());
+    await plWaitImg(probe);
+    for (const k of ["laptop", "desktop", "wide"]) {
+      if (run !== plChecking || !PL.papi) return;
+      probe.style.width = VPS[k].w + "px"; probe.style.height = VPS[k].h + "px";
+      await nextFrames(probe.contentWindow);
+      PL.warn[k] = PL.pos ? plHits(PL.papi.measure()) : [];
+    }
+    plSeg();
+  }
+  const plPt = (e) => { const r = plEl("[data-pl-stage]").getBoundingClientRect(); return { x: (e.clientX - r.left) / PL.s, y: (e.clientY - r.top) / PL.s }; };
+  const clampP = (v) => Math.round(Math.min(100, Math.max(0, v)));
+  function plDown(e) {
+    if (!PL.api || !PL.m || VPS[PL.vp].w < 768 || !PL.m.section) return;
+    const p = plPt(e), sec = PL.m.section;
+    if (!PL.pos) {
+      PL.pos = { x: clampP((p.x - sec.x) / sec.w * 100), y: clampP((p.y - sec.y) / sec.h * 100) };
+      plApply({ logoPos: { ...PL.pos } }).then(plCheckAll);
+      return;
+    }
+    const f = PL.m.float; if (!f) return;
+    const pad = 12;
+    if (p.x < f.x - pad || p.x > f.x + f.w + pad || p.y < f.y - pad || p.y > f.y + f.h + pad) return;
+    e.preventDefault();
+    PL.drag = { dx: p.x - (sec.x + PL.pos.x / 100 * sec.w), dy: p.y - (sec.y + PL.pos.y / 100 * sec.h) };
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+    plEl("[data-pl-ov]").classList.add("grabbing");
+  }
+  function plMove(e) {
+    if (!PL.api || !PL.m) return;
+    const ov = plEl("[data-pl-ov]");
+    if (!PL.drag) {   // Mauszeiger: „Greifen“ über dem Logo
+      const p = plPt(e), f = PL.m.float;
+      ov.classList.toggle("can-grab", !!(f && PL.pos && p.x >= f.x && p.x <= f.x + f.w && p.y >= f.y && p.y <= f.y + f.h));
+      return;
+    }
+    const p = plPt(e), sec = PL.m.section;
+    let x = (p.x - PL.drag.dx - sec.x) / sec.w * 100, y = (p.y - PL.drag.dy - sec.y) / sec.h * 100;
+    const sx = Math.abs(x - 50) < 1.5, sy = Math.abs(y - 50) < 1.5;
+    if (sx) x = 50; if (sy) y = 50;
+    const gv = plEl("[data-pl-gv]"), gh = plEl("[data-pl-gh]");
+    gv.classList.toggle("show", sx); gh.classList.toggle("show", sy);
+    gv.style.left = (sec.x + sec.w / 2) * PL.s + "px"; gh.style.top = (sec.y + sec.h / 2) * PL.s + "px";
+    PL.pos = { x: clampP(x), y: clampP(y) };
+    PL.m = PL.api.move(PL.pos.x, PL.pos.y);
+    plDraw();
+  }
+  function plUp() {
+    if (!PL.drag) return;
+    PL.drag = null;
+    plEl("[data-pl-ov]").classList.remove("grabbing");
+    plEl("[data-pl-gv]").classList.remove("show"); plEl("[data-pl-gh]").classList.remove("show");
+    plCheckAll();
+  }
+  function plTip() {
+    const b = PL.box, pad = Math.round((1 - (b[2] - b[0]) * (b[3] - b[1])) * 100), tip = plEl("[data-pl-tip]");
+    tip.hidden = pad < 35;
+    tip.innerHTML = `<svg class="ic"><use href="#i-spark"/></svg><span>Diese Logo-Datei besteht zu <b>${pad} %</b> aus transparentem Rand. Gemessen wird nur der sichtbare Teil – mit „Rand entfernen“ wird eine zugeschnittene Kopie angelegt (die Größe wird so angepasst, dass das Logo gleich groß bleibt).</span><button type="button" class="btn btn-sm" data-pl-trim>Rand entfernen</button>`;
+    const btn = tip.querySelector("[data-pl-trim]");
+    if (btn) btn.addEventListener("click", plTrim);
+  }
+  async function plTrim(e) {
+    const btn = e.currentTarget; btn.disabled = true; btn.textContent = "Schneidet zu …";
+    try {
+      const res = await fetch(PL.logo); const blob = await res.blob();
+      const name = PL.logo.split("/").pop() || "logo.png";
+      const t = await trimLogoFile(new File([blob], name, { type: blob.type }));
+      if (!t) { toast("Kein nennenswerter Rand gefunden.", "info"); btn.disabled = false; btn.textContent = "Rand entfernen"; return; }
+      const j = await uploadFile(t.file);
+      if (!j || !j.path) throw new Error((j && j.error) || "Upload fehlgeschlagen");
+      const keep = t.box[3] - t.box[1];                     // sichtbare Höhe bleibt gleich
+      PL.scale = Math.round(Math.min(300, Math.max(30, PL.scale * keep)));
+      PL.logo = j.path;
+      const info = await logoInfo(PL.logo); PL.box = info.box; PL.ar = info.ar;
+      const li = gEditor.querySelector('[name="g[logo]"]'); if (li) { li.value = j.path; li.dispatchEvent(new Event("input", { bubbles: true })); }
+      const st = li && li.closest("[data-media]") && li.closest("[data-media]").querySelector(".media-status");
+      if (st) st.innerHTML = '<a href="' + j.path + '" target="_blank" class="media-prev">' + j.path + "</a>";
+      await plApply({ logo: PL.logo, logoScale: PL.scale });
+      if (PL.papi) PL.papi.update({ logo: PL.logo });
+      plTip(); plCheckAll();
+      toast("Rand entfernt – neue Datei " + j.path.split("/").pop() + ". Größe auf " + PL.scale + " % angepasst.", "ok", 4500);
+    } catch (err) { toast("Zuschneiden fehlgeschlagen: " + err.message, "err"); btn.disabled = false; btn.textContent = "Rand entfernen"; }
+  }
+  function plSave() {
+    const q = (n) => gEditor.querySelector(`[name="g[${n}]"]`);
+    const fx = q("logoPos][x"), fy = q("logoPos][y"), fs = q("logoScale");
+    if (fx) fx.value = PL.pos ? PL.pos.x : ""; if (fy) fy.value = PL.pos ? PL.pos.y : ""; if (fs) fs.value = PL.scale;
+    [fx, fy, fs].forEach((i) => i && i.dispatchEvent(new Event("input", { bubbles: true })));
+    const stTxt = gEditor.querySelector("[data-logo-state]"), scTxt = gEditor.querySelector("[data-logo-scale]");
+    if (stTxt) stTxt.textContent = PL.pos ? `Frei platziert · x ${PL.pos.x} %, y ${PL.pos.y} %` : "Standard · steht über der Tagline";
+    if (scTxt) scTxt.textContent = PL.scale;
+    const bad = Object.entries(PL.warn).filter(([, v]) => v && v.length).map(([k]) => VPS[k].l);
+    plDlg.hidden = true;
+    toast(PL.pos && bad.length ? "Übernommen · Hinweis: überdeckt etwas auf " + bad.join(", ") : "Übernommen · passt auf allen Bildschirmgrößen", PL.pos && bad.length ? "info" : "ok", 4200);
+  }
+  async function openPlacer() {
+    if (!gEditor) return;
+    const li = gEditor.querySelector('[name="g[logo]"]');
+    PL.logo = li ? li.value.split("#")[0].trim() : "";
+    if (!PL.logo) { toast("Bitte zuerst ein Logo hochladen oder auswählen.", "info"); return; }
+    if (window.pgEditor && window.pgEditor.isDirty()) await window.pgEditor.save();   // Vorschau = aktueller Stand
+    buildPlacer();
+    const v = (n) => (gEditor.querySelector(`[name="g[${n}]"]`) || {}).value;
+    const x = v("logoPos][x"), y = v("logoPos][y");
+    PL.pos = x !== "" && y !== "" && x != null && y != null && !isNaN(+x) && !isNaN(+y) ? { x: clampP(+x), y: clampP(+y) } : null;
+    PL.scale = Math.round(Math.min(300, Math.max(30, +v("logoScale") || 100)));
+    PL.vp = innerWidth < 860 ? "mobile" : "desktop"; PL.warn = {}; PL.api = PL.papi = null; PL.m = null;
+    plDlg.hidden = false;
+    plEl("[data-pl-load]").hidden = false;
+    plFit(); plSeg();
+    const slug = (gEditor.querySelector('[name="game_orig"]') || {}).value || "";
+    const src = "../game.php?slug=" + encodeURIComponent(slug) + "&_placer=1&_t=" + Date.now();
+    const frame = plEl("[data-pl-frame]"), probe = plEl("[data-pl-probe]");
+    frame.src = src; probe.src = src;
+    const info = await logoInfo(PL.logo); PL.box = info.box; PL.ar = info.ar;
+    plTip();
+    PL.api = await plWaitApi(frame);
+    if (!PL.api) { plEl("[data-pl-load]").textContent = "Die Spielseite konnte nicht geladen werden."; return; }
+    await plApply(plFormPatch());
+    plEl("[data-pl-load]").hidden = true;
+    await plRender(true);
+    PL.papi = await plWaitApi(probe);
+    plCheckAll();
+  }
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-open-placer]")) { e.preventDefault(); openPlacer(); } });
 
   // ---- Tastatur-Shortcuts ----
   function primarySaveButton() {

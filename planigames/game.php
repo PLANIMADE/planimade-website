@@ -1,4 +1,20 @@
-<!DOCTYPE html>
+<?php
+// Umbenannte Spiele: alte Adresse dauerhaft (301) auf die neue weiterleiten. Unbekannte Adresse → 404.
+(function () {
+    $slug = preg_replace('/[^a-z0-9\-]/', '', strtolower((string) ($_GET['slug'] ?? '')));
+    if ($slug === '') { header('Location: games.html', true, 302); exit; }
+    $games = json_decode((string) @file_get_contents(__DIR__ . '/data/games.json'), true);
+    if (!is_array($games) || !is_array($games['games'] ?? null)) return;        // Daten nicht lesbar → Seite normal ausliefern
+    foreach ($games['games'] as $g) if (is_array($g) && strtolower((string) ($g['slug'] ?? '')) === $slug) return;
+    $map = json_decode((string) @file_get_contents(__DIR__ . '/data/redirects.json'), true);
+    $to = is_array($map) ? ($map['games'][$slug] ?? '') : '';
+    if (is_string($to) && $to !== '' && preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $to)) {
+        $q = $_GET; $q['slug'] = $to;
+        header('Location: game.php?' . http_build_query($q), true, 301); exit;
+    }
+    http_response_code(404);
+})();
+?><!DOCTYPE html>
 <html lang="de" class="select-none">
 <head>
     <meta charset="UTF-8">
@@ -19,9 +35,9 @@
             display: ['"Clash Display"', 'Archivo', 'sans-serif'],
         } } } };
     </script>
-    <link rel="stylesheet" href="assets/planigames.css?v=50">
+    <link rel="stylesheet" href="assets/planigames.css?v=51">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="assets/app.js?v=50" defer></script>
+    <script src="assets/app.js?v=51" defer></script>
 </head>
 <body data-page="game" class="bg-[#050505] text-zinc-100 font-sans antialiased overflow-x-hidden noise-bg grain-overlay">
 

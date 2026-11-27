@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "50";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "51";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
@@ -123,6 +123,9 @@
     }
 
     const qs = new URLSearchParams(location.search);
+    // In einem Rahmen (Admin-Vorschau / Logo-Platzierung) zählen Aufrufe nicht in die Statistik.
+    const IN_FRAME = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+    const PLACER = IN_FRAME && qs.has("_placer");   // Logo-Platzierung im Admin: nur Kopfbereich, ohne Extras
 
     /* =========================================================
        0) SPRACHE (i18n) — DE / EN
@@ -212,19 +215,54 @@
         $$("[data-i18n]", root).forEach(el => { el.textContent = t(el.dataset.i18n); });
         $$("[data-i18n-ph]", root).forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
     }
-    // Tiefen-Merge: englische Werte über deutsche legen, leeres EN fällt auf DE zurück
-    function mergeLang(de, en) {
+    // Tiefen-Merge: englische TEXTE über die deutsche Basis legen.
+    // - Aufbau (Reihenfolge, Blöcke, Ein/Aus, Bilder, Farben, Links, Zahlen) kommt IMMER aus Deutsch.
+    // - Einträge mit Adresse (Spiele, Beiträge) werden über den Slug zugeordnet, Blöcke über Typ +
+    //   Vorkommen – so passt EN auch dann noch, wenn auf Deutsch umsortiert oder ergänzt wurde.
+    // - Leeres Englisch fällt auf Deutsch zurück.
+    const SHARED_KEYS = new Set(["type", "slug", "hidden", "status", "align", "platform", "effect", "density", "game",
+        "steamAppId", "itchEmbed", "youtube", "version", "publishAt", "draft", "notify", "featured", "enabled",
+        "icon", "emoji", "email", "accent", "accent2", "particleColor", "logoScale"]);
+    const looksShared = (v) => /^(\/|https?:\/\/|www\.|#|data:|mailto:|tel:)/i.test(v)
+        || /\.(png|jpe?g|webp|gif|svg|avif|mp4|webm|mov|zip|pdf)(\?[^#]*)?(#.*)?$/i.test(v)
+        || /^\d{4}-\d{2}-\d{2}/.test(v);
+    function mergeLang(de, en, key) {
         if (en === undefined || en === null || en === "") return de;
         if (Array.isArray(de)) {
             if (!Array.isArray(en)) return de;
-            return de.map((d, i) => mergeLang(d, en[i]));
+            const isObj = (x) => x && typeof x === "object" && !Array.isArray(x);
+            if (de.some(d => isObj(d) && d.slug)) {                       // Spiele, Beiträge …
+                const deSlugs = new Set(de.filter(isObj).map(d => String(d.slug || "").toLowerCase()));
+                return de.map((d, i) => {
+                    if (!isObj(d) || !d.slug) return mergeLang(d, en[i]);
+                    const s = String(d.slug).toLowerCase();
+                    let e = en.find(x => isObj(x) && String(x.slug || "").toLowerCase() === s);
+                    // Altbestand: gleiche Position, wenn der EN-Eintrag zu keinem deutschen gehört (z. B. alte Adresse)
+                    if (!e && isObj(en[i]) && (!en[i].slug || !deSlugs.has(String(en[i].slug).toLowerCase()))) e = en[i];
+                    return mergeLang(d, e);
+                });
+            }
+            if (de.some(d => isObj(d) && d.type)) {                       // Seiten-Blöcke
+                const byType = {}, seen = {};
+                en.forEach(x => { if (isObj(x) && x.type) (byType[x.type] = byType[x.type] || []).push(x); });
+                return de.map(d => {
+                    if (!isObj(d) || !d.type) return d;
+                    const k = seen[d.type] = (seen[d.type] || 0) + 1;
+                    return mergeLang(d, (byType[d.type] || [])[k - 1]);
+                });
+            }
+            return de.map((d, i) => mergeLang(d, en[i], key));
         }
         if (de && typeof de === "object") {
-            const out = Array.isArray(de) ? [] : { ...de };
-            for (const k of Object.keys(de)) out[k] = mergeLang(de[k], en ? en[k] : undefined);
+            if (typeof en !== "object" || Array.isArray(en)) return de;
+            const out = { ...de };
+            for (const k of Object.keys(de)) out[k] = SHARED_KEYS.has(k) ? de[k] : mergeLang(de[k], en[k], k);
             return out;
         }
-        return en; // Skalar: EN gewinnt (wenn nicht leer, s. o.)
+        if (typeof de === "number" || typeof de === "boolean") return de;   // Zahlen & Schalter: immer DE
+        if (typeof en !== "string") return de;
+        if (looksShared(en) || (typeof de === "string" && de !== "" && looksShared(de))) return de;   // Bilder, Dateien, Links, Farben, Datum
+        return en;
     }
 
     /* =========================================================
@@ -251,6 +289,7 @@
     function initBackgroundFX() {
         const layer = $("#fx-layer");
         if (!layer) return;
+        if (PLACER) { layer.innerHTML = ""; return; }
         const cfg = (DATA.studio && DATA.studio.background) || {};
         const eff = cfg.effect || "particles";
         if (eff !== "particles" && eff !== "particles_only") { layer.innerHTML = ""; return; }  // nur Glow / aus -> keine Partikel
@@ -1054,17 +1093,23 @@
     async function renderGame() {
         await loadData("games", "patchnotes");
         const games = (DATA.games && DATA.games.games) || [];
-        const slug = qs.get("slug");
-        const g = games.find(x => x.slug === slug) || games[0];
+        const slug = String(qs.get("slug") || "").toLowerCase();
+        const g = games.find(x => String(x.slug || "").toLowerCase() === slug);
         const root = $("[data-game-root]");
         if (!root) return;
-        if (!g) { root.innerHTML = notFound(t("nf_text")); return; }
+        if (!g) {
+            if (slug && await followRedirect("games", slug)) return;   // umbenannt → neue Adresse
+            root.innerHTML = notFound(t("nf_text"));
+            $("[data-game-patchnotes-section]")?.remove();
+            return;
+        }
 
         applyAccent(g.accent || "#8b5cf6", g.accent2 || "#22d3ee");
         setParticleColor(g.particleColor || g.accent);   // Partikel an die Spielwelt anpassen
         document.title = `${g.title} — PLANIGAMES`;
 
-        const blocks = Array.isArray(g.blocks) ? g.blocks : [];
+        // ausgeblendete Blöcke bleiben gespeichert, werden aber nicht gezeigt
+        const blocks = (Array.isArray(g.blocks) ? g.blocks : []).filter(b => b && !b.hidden);
         root.innerHTML = blocks.map((b, i) => renderBlock(b, g, i)).join("");
 
         // Patch Notes dieses Spiels anhängen (falls Platzhalter vorhanden)
@@ -1176,25 +1221,25 @@
         // Logo im Textfluss (Standard bzw. immer auf dem Handy, damit es nicht überlappt).
         // Auf dem Handy mittig -> bündig mit dem ebenfalls zentrierten Text.
         const inlineLogo = (cls) => g.logo
-            ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-6 object-contain object-center md:object-left mx-auto md:mx-0 reveal ${cls}" style="height:${Math.round(150 * ls)}px;width:auto;max-width:100%">`
-            : `<h1 class="font-display text-6xl md:text-8xl font-extrabold text-white mb-6 reveal-on ${cls}"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`;
+            ? `<img data-hero-logo="inline" src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-6 object-contain object-center md:object-left mx-auto md:mx-0 reveal ${cls}" style="height:${Math.round(150 * ls)}px;width:auto;max-width:100%">`
+            : `<h1 data-hero-logo="title" class="font-display text-6xl md:text-8xl font-extrabold text-white mb-6 reveal-on ${cls}"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`;
         // Frei platziertes Logo nur auf großen Bildschirmen (absolut, blockiert keine Klicks).
         const floatLogo = pos
-            ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="hidden md:block absolute object-contain pointer-events-none reveal z-[2]" style="left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);height:clamp(${Math.round(64 * ls)}px, ${(18 * ls).toFixed(1)}vh, ${Math.round(150 * ls)}px);width:auto;max-width:80vw">`
+            ? `<img data-hero-logo="float" src="${esc(g.logo)}" alt="${esc(g.title)}" class="hidden md:block absolute object-contain pointer-events-none reveal z-[2]" style="left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);height:clamp(${Math.round(64 * ls)}px, ${(18 * ls).toFixed(1)}vh, ${Math.round(150 * ls)}px);width:auto;max-width:80vw">`
             : "";
         // Bei gesetzter Desktop-Position: Inline-Logo nur auf dem Handy. Sonst immer.
         const inlineTitle = pos ? inlineLogo("md:hidden") : inlineLogo("");
         return `
-        <section class="relative min-h-[88vh] flex items-end overflow-hidden">
+        <section data-hero class="relative min-h-[88vh] flex items-end overflow-hidden">
             ${media}
             <div class="absolute inset-0" style="background:linear-gradient(to top, var(--bg) 4%, color-mix(in srgb, var(--accent) 18%, transparent) 55%, rgba(0,0,0,.35))"></div>
             <div class="absolute inset-0 bg-black/30"></div>
             ${floatLogo}
             <div class="relative max-w-6xl mx-auto w-full px-6 pb-16 md:pb-24 text-center md:text-left">
-                <div class="mb-6 reveal-on flex justify-center md:justify-start">${statusBadge(g.status)}</div>
+                <div data-hero-badge class="mb-6 reveal-on flex justify-center md:justify-start">${statusBadge(g.status)}</div>
                 ${inlineTitle}
-                <p class="text-xl md:text-2xl text-zinc-200 max-w-2xl mx-auto md:mx-0 mb-9 reveal">${esc(b.tagline || g.tagline || "")}</p>
-                <div class="flex flex-wrap justify-center md:justify-start gap-3 reveal">
+                <p data-hero-tagline class="text-xl md:text-2xl text-zinc-200 max-w-2xl mx-auto md:mx-0 mb-9 reveal">${esc(b.tagline || g.tagline || "")}</p>
+                <div data-hero-btns class="flex flex-wrap justify-center md:justify-start gap-3 reveal">
                     ${g.wishlistUrl ? `<a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold">${esc(b.ctaLabel || t("wishlist"))}</a>` : ""}
                     ${b.trailerUrl ? `<a href="${esc(b.trailerUrl)}" target="_blank" rel="noopener" class="btn-ghost magnetic px-8 py-4 rounded-full font-semibold inline-flex items-center gap-2">▶ ${LANG === "en" ? "Watch trailer" : "Trailer ansehen"}</a>` : ""}
                 </div>
@@ -1769,8 +1814,9 @@
         if (!root) return;
         const en = LANG === "en";
         const games = (DATA.games && DATA.games.games) || [];
-        const slug = qs.get("slug");
-        const g = games.find(x => x.slug === slug) || null;
+        const slug = String(qs.get("slug") || "").toLowerCase();
+        const g = games.find(x => String(x.slug || "").toLowerCase() === slug) || null;
+        if (!g && slug && await followRedirect("games", slug)) return;
         const d = (g && g.lore) || {};
         if (!g || !d.enabled) {
             document.title = (en ? "World" : "Welt") + " — PLANIGAMES";
@@ -1948,6 +1994,19 @@
                 </div>
             </section>`;
         observeReveals(root);
+    }
+
+    // Umbenannte Spiele: alte Adresse → neue (data/redirects.json wird nur bei Bedarf geladen)
+    async function followRedirect(type, slug) {
+        try {
+            const map = await fetchJSON("data/redirects.json");
+            const to = map && map[type] && map[type][slug];
+            if (!to || typeof to !== "string" || to === slug) return false;
+            const u = new URL(location.href);
+            u.searchParams.set("slug", to);
+            location.replace(u.toString());
+            return true;
+        } catch (e) { return false; }
     }
 
     function notFound(msg) {
@@ -2584,6 +2643,7 @@
                 contact: renderContact,
             }[page] || (() => {}))();
         } catch (e) { try { console.error("PLANIGAMES Seiten-Render-Fehler:", e); } catch {} }
+        if (PLACER && page === "game") { initPlacerMode(); return; }
         // Studio-Daten für den Footer sicherstellen (auch ohne Home)
         if (!DATA.studio) await loadData("studio");
         fillStudioFooter();
@@ -2598,6 +2658,64 @@
         initBadges();
         trackView();
         if (qs.has("diag")) renderDiag();
+    }
+
+    /* ---------- Logo-Platzierung im Admin (?_placer=1, nur im Rahmen) ----------
+       Das Admin zeigt die ECHTE Spielseite in Bildschirmgröße und steuert den Kopfbereich
+       über window.PLANIGAMES.placer: update() baut den Hero mit geänderten Werten neu,
+       move() verschiebt das Logo, measure() liefert die Lage aller Elemente. */
+    function initPlacerMode() {
+        const st = document.createElement("style");
+        st.textContent = ".reveal,.reveal-on,.line-inner,[data-hero] *{opacity:1!important;transform:none;transition:none!important;animation:none!important}"
+            + "[data-hero-logo=float]{transform:translate(-50%,-50%)!important}#cookie-banner,.pg-mascot,#fx-layer,#cursor-ring,#cursor-dot,#scroll-progress{display:none!important}"
+            + "html,body{overflow:hidden!important}*{cursor:default!important}";
+        document.head.appendChild(st);
+        const games = (DATA.games && DATA.games.games) || [];
+        const slug = String(qs.get("slug") || "").toLowerCase();
+        const base = games.find(x => String(x.slug || "").toLowerCase() === slug);
+        if (!base) return;
+        let cur = JSON.parse(JSON.stringify(base));
+        const heroBlock = () => (cur.blocks || []).find(b => b && b.type === "hero" && !b.hidden) || { type: "hero" };
+        const rect = (el) => { if (!el) return null; const r = el.getBoundingClientRect(); return r.width || r.height ? { x: r.left, y: r.top, w: r.width, h: r.height } : null; };
+        (window.PLANIGAMES = window.PLANIGAMES || {}).placer = {
+            update(patch) {
+                const p = patch || {};
+                const { hero, ...rest } = p;
+                cur = { ...cur, ...rest };
+                if (hero) { const hb = heroBlock(); Object.assign(hb, hero); if (!(cur.blocks || []).includes(hb)) cur.blocks = [hb, ...(cur.blocks || [])]; }
+                applyAccent(cur.accent || "#8b5cf6", cur.accent2 || "#22d3ee");
+                const old = document.querySelector("[data-hero]");
+                const tmp = document.createElement("div");
+                tmp.innerHTML = blockHero(heroBlock(), cur).trim();
+                const sec = tmp.firstElementChild;
+                if (old) old.replaceWith(sec); else document.querySelector("[data-game-root]")?.prepend(sec);
+                return this.measure();
+            },
+            move(x, y) {
+                const img = document.querySelector('[data-hero-logo="float"]');
+                if (img) { img.style.left = x + "%"; img.style.top = y + "%"; }
+                return this.measure();
+            },
+            measure() {
+                const img = document.querySelector('[data-hero-logo="float"]');
+                const vis = (el) => el && getComputedStyle(el).display !== "none" ? el : null;
+                const hdr = document.getElementById("site-header");
+                return {
+                    vw: window.innerWidth, vh: window.innerHeight,
+                    section: rect(document.querySelector("[data-hero]")),
+                    float: rect(vis(img)), nat: img ? { w: img.naturalWidth, h: img.naturalHeight, done: img.complete } : null,
+                    inline: rect(vis(document.querySelector('[data-hero-logo="inline"], [data-hero-logo="title"]'))),
+                    hits: {
+                        "Status-Badge": rect(document.querySelector("[data-hero-badge] > *")),
+                        "Tagline": rect(document.querySelector("[data-hero-tagline]")),
+                        "Buttons": rect(document.querySelector("[data-hero-btns]")),
+                        "Kopfzeile (Menü)": rect(hdr),
+                    },
+                };
+            },
+            ready: true,
+        };
+        document.documentElement.classList.add("pg-placer");
     }
 
     // Selbst-Diagnose: ?diag=1 an die URL hängen → zeigt, was wirklich live ist.
@@ -2663,6 +2781,7 @@
 
     // Datenschutzfreundliche Statistik: nur aggregierter Seitenaufruf (kein Cookie, keine IP)
     function trackView() {
+        if (IN_FRAME) return;   // Admin-Vorschau / Logo-Platzierung nicht mitzählen
         try {
             const page = document.body.dataset.page || "page";
             const slug = qs.get("slug");
