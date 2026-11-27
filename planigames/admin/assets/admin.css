@@ -1623,3 +1623,12 @@ a.mx-att:hover{border-color:var(--accent-line)}
   .sig-grid{grid-template-columns:1fr}
 }
 .rte-area{position:relative}
+
+/* PLANIGAMES-Logo (Studio-Logo) als Marke */
+.brand-mark.is-img{background:none;box-shadow:none;overflow:visible}
+.brand-mark.is-img img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 4px 10px rgba(255,125,26,.25))}
+.auth-card .brand{display:flex;align-items:center;gap:10px}
+.auth-card .brand .brand-mark{width:30px;height:30px;flex:none}
+.cmp-sigon{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2);white-space:nowrap;cursor:pointer;flex:none}
+.sig-from{font-size:12px;color:var(--muted);margin:-4px 0 10px}
+.sig-from b{color:var(--ink2);font-weight:600}

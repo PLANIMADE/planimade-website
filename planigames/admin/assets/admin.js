@@ -2,7 +2,17 @@
 (() => {
   "use strict";
   let uid = Date.now() % 1000000;
-  const csrf = () => (document.querySelector('input[name="csrf"]') || {}).value || "";
+  // Sicherheits-Token: steht auf jeder Admin-Seite im <head> (auch dort, wo es kein Formular gibt)
+  const csrf = () => (document.querySelector('meta[name="csrf-token"]') || {}).content || (document.querySelector('input[name="csrf"]') || {}).value || "";
+  // Antwort sicher als JSON lesen – bei Server-Fehlern verständliche Meldung statt „not valid JSON“
+  async function readJson(r) {
+    const t = await r.text();
+    try { return JSON.parse(t); } catch (e) {
+      const msg = t.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
+      return { ok: false, error: msg || ("Server-Fehler " + r.status) };
+    }
+  }
+  window.pgReadJson = readJson;
 
   // Admin als installierbare App (Homescreen): Service Worker registrieren (nur über HTTPS).
   if ("serviceWorker" in navigator && location.protocol === "https:") {
@@ -198,7 +208,7 @@
     document.body.appendChild(ov);
     try {
       const r = await fetch("index.php?action=medialist");
-      const j = await r.json();
+      const j = await readJson(r);
       const grid = ov.querySelector("[data-pick-grid]");
       const files = (j && j.files) || [];
       grid.innerHTML = files.length
@@ -218,7 +228,7 @@
       try {
         const r = await fetch("index.php?action=notif_counts", { headers: { "X-Requested-With": "fetch" } });
         if (!r.ok) return;
-        const j = await r.json();
+        const j = await readJson(r);
         const c = j.counts || {}, notes = j.notes || {};
         setBadge(document.querySelector("[data-notif-total]"), c.total);
         ["mail", "contacts", "comments", "subs"].forEach((k) => {
@@ -556,7 +566,7 @@
         try {
           const fd = new FormData(); fd.append("csrf", csrf()); fd.append("file", file);
           const r = await fetch("index.php?action=upload", { method: "POST", body: fd });
-          const j = await r.json();
+          const j = await readJson(r);
           repl = j && j.path ? "![](" + j.path + ")" : "![⚠️ " + ((j && j.error) || "Upload-Fehler") + "]()";
         } catch (err) { repl = "![⚠️ Upload-Fehler]()"; }
         ta.value = ta.value.replace(token, repl);
@@ -609,7 +619,7 @@
     fd.append("file", file);
     try {
       const r = await fetch("index.php?action=upload", { method: "POST", body: fd });
-      const j = await r.json();
+      const j = await readJson(r);
       if (j.error) { status.innerHTML = '<span class="up-err">' + j.error + "</span>"; }
       else {
         textInput.value = j.path;
@@ -722,6 +732,8 @@
       if (compose.hasAttribute("data-html")) fd.append("html", "1");
       const sigSel = compose.querySelector("[data-sig-select]");
       if (sigSel) fd.append("sig", sigSel.value);
+      const sigOn = compose.querySelector("[data-sig-on]");
+      if (sigOn) { fd.append("with_sig_sent", "1"); if (sigOn.checked) fd.append("with_sig", "1"); }
       try {
         const r = await fetch("mail.php?action=preview", { method: "POST", body: fd });
         frame.srcdoc = await r.text();
@@ -732,6 +744,8 @@
     if (input) input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(render, 350); });
     const sigSelP = compose.querySelector("[data-sig-select]");
     if (sigSelP) sigSelP.addEventListener("change", render);
+    const sigOnP = compose.querySelector("[data-sig-on]");
+    if (sigOnP) sigOnP.addEventListener("change", render);
     window.pgMailPreview = render;
     render();
 
@@ -769,7 +783,7 @@
       fd.append("file", file);
       try {
         const r = await fetch("index.php?action=upload", { method: "POST", body: fd });
-        const j = await r.json();
+        const j = await readJson(r);
         if (j.error) { status.innerHTML = '<span class="up-err">' + j.error + "</span>"; }
         else { status.innerHTML = "✓ Hochgeladen" + optNote(j) + " — Seite wird aktualisiert…"; setTimeout(() => location.reload(), j.optimized ? 1100 : 200); }
       } catch { status.innerHTML = '<span class="up-err">Upload-Fehler</span>'; }
@@ -878,7 +892,7 @@
     fd.append("csrf", csrf()); fd.append("card", card); fd.append("i", i);
     try {
       const r = await fetch("index.php?action=board_toggle", { method: "POST", body: fd });
-      const j = await r.json();
+      const j = await readJson(r);
       if (!j.ok) return;
       const on = item.classList.toggle("done");
       item.querySelector(".kb-chk-box").textContent = on ? "✓" : "";
@@ -963,7 +977,7 @@
       fd.append("save", "1"); fd.append("ajax", "1");
       try {
         const r = await fetch("index.php", { method: "POST", body: fd, headers: { "X-Requested-With": "fetch" } });
-        const j = await r.json();
+        const j = await readJson(r);
         if (j.ok) {
           dirty = false; setStatus("Gespeichert ✓", "ok"); toast("Automatisch gespeichert", "ok", 1800);
           if (j.sent) toast("📣 Newsletter an " + j.sent + " gesendet", "info", 4000);
@@ -1146,8 +1160,8 @@
       if (order.join("|") === before) return;
       const fd = new URLSearchParams(); fd.append("csrf", csrf()); fd.append("order", JSON.stringify(order));
       try {
-        const r = await fetch("index.php?action=games_reorder", { method: "POST", body: fd });
-        const j = await r.json();
+        const r = await fetch("index.php?action=games_reorder", { method: "POST", body: fd, headers: { "X-Requested-With": "fetch" } });
+        const j = await readJson(r);
         toast(j.ok ? "Reihenfolge gespeichert – so erscheint sie auch auf der Website" : "Reihenfolge konnte nicht gespeichert werden", j.ok ? "ok" : "err");
       } catch { toast("Reihenfolge konnte nicht gespeichert werden", "err"); }
     };
@@ -1370,8 +1384,8 @@
   window.pgTrimLogoFile = trimLogoFile;
   async function uploadFile(file) {
     const fd = new FormData(); fd.append("csrf", csrf()); fd.append("file", file);
-    const r = await fetch("index.php?action=upload", { method: "POST", body: fd });
-    return r.json();
+    const r = await fetch("index.php?action=upload", { method: "POST", body: fd, headers: { "X-Requested-With": "fetch" } });
+    return readJson(r);
   }
 
   const PL = { vp: "desktop", pos: null, scale: 100, box: [0, 0, 1, 1], ar: 2, warn: {}, m: null, api: null, papi: null, s: 1, drag: null, logo: "" };
@@ -1816,12 +1830,20 @@
     let SD = { sigs: [], mine: "", team: [] }; try { SD = JSON.parse(sigData.textContent); } catch (e) {}
     const listEl = sigDlg.querySelector("[data-sig-list]");
     let rows = [], mineIdx = -1;
-    const fields = [["label", "Bezeichnung", "z. B. Dominik"], ["name", "Name", "Dominic Majewski"], ["role", "Rolle / Titel", "Founder · PLANIGAMES"], ["closing", "Grußzeile", "Beste Grüße"], ["email", "Eigene E-Mail (optional)", "Leer = Studio-Adresse"], ["phone", "Telefon (optional)", "+49 …"]];
+    const fields = [["label", "Bezeichnung", "z. B. Dominik"], ["name", "Name", "Dominic Majewski"], ["role", "Rolle / Titel", "Founder · PLANIGAMES"], ["closing", "Grußzeile", "Beste Grüße"], ["email", "Absender-Adresse", "z. B. dominik@planigames.com · leer = Studio-Adresse"], ["phone", "Telefon (optional)", "+49 …"]];
+    const st = SD.studio || { name: "PLANIGAMES", email: "" };
+    const fromLine = (r) => {
+      const studio = r.id === "studio";
+      const name = !studio && r.name ? r.name + " | " + st.name : st.name;
+      const mail = !studio && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email || "") ? r.email : st.email;
+      return "Erscheint beim Empfänger als <b>" + escHtml(name) + "</b> &lt;" + escHtml(mail) + "&gt; · Antworten gehen an " + escHtml(mail);
+    };
     const draw = () => {
       listEl.innerHTML = rows.length ? rows.map((r, i) => `<div class="sig-card" data-i="${i}">
           <div class="sig-card-h"><b>${escHtml(r.label || r.name || "Neue Signatur")}</b>
             <label class="sig-mine"><input type="radio" name="sig-mine" value="${i}" ${mineIdx === i ? "checked" : ""}> Mein Standard</label>
             <button type="button" class="icon-btn sm" data-sig-del="${i}" title="Löschen" aria-label="Löschen"><svg class="ic"><use href="#i-trash"/></svg></button></div>
+          <div class="sig-from" data-sig-from>${fromLine(r)}</div>
           <div class="sig-grid">${fields.map(([k, l, ph]) => `<label class="field"><span class="flabel">${l}</span><input type="text" data-k="${k}" value="${escHtml(r[k] || "")}" placeholder="${escHtml(ph)}"></label>`).join("")}</div></div>`).join("")
         + `<label class="sig-none"><input type="radio" name="sig-mine" value="-1" ${mineIdx === -1 ? "checked" : ""}> Standardmäßig ohne Signatur schreiben</label>`
         : '<p class="hint">Noch keine Signatur – lege eine an oder übernimm sie aus den Team-Profilen.</p>';
@@ -1832,7 +1854,13 @@
       draw(); sigDlg.hidden = false;
     };
     document.addEventListener("click", (e) => { if (e.target.closest("[data-open-sigs]")) { e.preventDefault(); open(); } });
-    listEl.addEventListener("input", (e) => { const inp = e.target.closest("[data-k]"); if (!inp) return; const i = +inp.closest("[data-i]").dataset.i; rows[i][inp.dataset.k] = inp.value; if (inp.dataset.k === "label" || inp.dataset.k === "name") inp.closest(".sig-card").querySelector(".sig-card-h b").textContent = rows[i].label || rows[i].name || "Neue Signatur"; });
+    listEl.addEventListener("input", (e) => {
+      const inp = e.target.closest("[data-k]"); if (!inp) return;
+      const card = inp.closest(".sig-card"), i = +card.dataset.i;
+      rows[i][inp.dataset.k] = inp.value;
+      if (inp.dataset.k === "label" || inp.dataset.k === "name") card.querySelector(".sig-card-h b").textContent = rows[i].label || rows[i].name || "Neue Signatur";
+      card.querySelector("[data-sig-from]").innerHTML = fromLine(rows[i]);
+    });
     listEl.addEventListener("change", (e) => { if (e.target.name === "sig-mine") mineIdx = +e.target.value; });
     listEl.addEventListener("click", (e) => {
       const d = e.target.closest("[data-sig-del]"); if (!d) return;
@@ -1857,13 +1885,13 @@
       const btn = e.currentTarget; btn.disabled = true;
       const fd = new URLSearchParams(); fd.append("csrf", csrf()); fd.append("sigs", JSON.stringify(rows)); fd.append("mine", String(mineIdx));
       try {
-        const r = await fetch("mail.php?action=sigs_save", { method: "POST", body: fd });
-        const j = await r.json();
+        const r = await fetch("mail.php?action=sigs_save", { method: "POST", body: fd, headers: { "X-Requested-With": "fetch" } });
+        const j = await readJson(r);
         if (!j.ok) throw new Error(j.error || "Fehler");
         SD.sigs = j.sigs; SD.mine = j.default;
         document.querySelectorAll("[data-sig-select]").forEach((sel) => {
           const cur = sel.value;
-          sel.innerHTML = '<option value="">Keine Signatur</option>' + j.sigs.map((x) => `<option value="${escHtml(x.id)}">${escHtml(x.label + (x.name && x.name !== x.label ? " · " + x.name : ""))}</option>`).join("");
+          sel.innerHTML = (j.options || []).map((o) => `<option value="${escHtml(o.id)}">${escHtml(o.text)}</option>`).join("");
           sel.value = j.sigs.some((x) => x.id === cur) ? cur : (j.default || "");
           sel.dispatchEvent(new Event("change", { bubbles: true }));
         });

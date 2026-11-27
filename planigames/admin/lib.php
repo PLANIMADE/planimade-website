@@ -774,6 +774,12 @@ function pg_mail_signature_default(){
     if ((string) $u['mail_sig'] === '') return '';
     if (pg_mail_signature_find($u['mail_sig'])) return (string) $u['mail_sig'];
   }
+  // noch nichts gewählt: Profil mit derselben E-Mail bzw. demselben Namen wie die Anmeldung
+  if ($u) {
+    $ue = strtolower(trim((string) ($u['email'] ?? ''))); $un = mb_strtolower(trim((string) ($u['name'] ?? '')));
+    foreach ($sigs as $x) if ($ue !== '' && strtolower(trim((string) $x['email'])) === $ue) return (string) $x['id'];
+    foreach ($sigs as $x) if ($un !== '' && (string) $x['id'] !== 'studio' && mb_strtolower(trim((string) $x['name'])) === $un) return (string) $x['id'];
+  }
   $c = pg_mail_config();
   if (($c['sig_enabled'] ?? true) === false && !isset($c['signatures'])) return '';
   if (!empty($c['sig_default']) && pg_mail_signature_find($c['sig_default'])) return (string) $c['sig_default'];
@@ -804,6 +810,20 @@ function pg_mail_signature_set_default($id){
   $users = pg_users_load(); $hit = false;
   foreach ($users as $k => $u) if (strtolower((string) ($u['email'] ?? '')) === strtolower($me)) { $users[$k]['mail_sig'] = (string) $id; $hit = true; }
   return $hit && pg_users_save($users);
+}
+
+/* Absender eines Profils: [Name, Adresse, Antwort-Adresse, persönlich?]
+   - Studio-Profil (oder ohne eigene Adresse): Studio-Adresse
+   - Person mit Adresse: „Name | PLANIGAMES“ <persönliche Adresse>, Antworten gehen an sie */
+function pg_mail_sender($sig){
+  [$studioName, $studioEmail] = pg_mail_from();
+  if (!is_array($sig)) $sig = $sig === '' || $sig === null ? null : pg_mail_signature_find($sig);
+  if (!$sig || (string) ($sig['id'] ?? '') === 'studio') return [$studioName, $studioEmail, $studioEmail, false];
+  $name = trim((string) ($sig['name'] ?? ''));
+  $label = $name !== '' ? $name . ' | ' . $studioName : $studioName;
+  $email = trim((string) ($sig['email'] ?? ''));
+  if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) return [$label, $email, $email, true];
+  return [$label, $studioEmail, $studioEmail, false];
 }
 
 /* Gebrandete Signatur (HTML) – $sig = Signatur-Array, ID oder null (= Standard des Admins). */
@@ -1030,7 +1050,7 @@ function pg_mail_from(){
 /* ---- Postausgang / Gesendet (lokal protokollieren, was aus dem Dashboard rausging) ---- */
 const PG_MAIL_SENT_FILE = __DIR__ . '/../data/mail_sent.json';
 function pg_mail_sent_load(){ $l = pg_load_json(PG_MAIL_SENT_FILE); return is_array($l) ? $l : []; }
-function pg_mail_sent_log($to, $subject, $html, $atts = []){
+function pg_mail_sent_log($to, $subject, $html, $atts = [], $from = ''){
   $list = pg_mail_sent_load();
   $id = bin2hex(random_bytes(5));
   $row = [
@@ -1041,6 +1061,7 @@ function pg_mail_sent_log($to, $subject, $html, $atts = []){
     'date'    => date('c'),
     'by'      => (string) (pg_current_email() ?: ''),
   ];
+  if ($from !== '') $row['from'] = mb_substr((string) $from, 0, 200);
   // Anhänge nur als Liste (Name + Größe) merken – die Dateien selbst liegen nicht im Protokoll
   if ($atts) $row['atts'] = array_map(fn($a) => ['name' => (string) ($a['name'] ?? ''), 'size' => (int) strlen((string) ($a['data'] ?? ''))], $atts);
   array_unshift($list, $row);
@@ -1080,6 +1101,10 @@ function pg_mail_mime($html, $text, $atts = []){
    $opts: text (eigener Text-Teil), attachments (s. pg_mail_mime), headers (z. B. In-Reply-To). */
 function pg_send_mail($to, $subject, $html, $replyTo = '', $opts = []){
   [$fromName, $fromEmail] = pg_mail_from();
+  $studioEmail = $fromEmail;
+  if (!empty($opts['from_name'])) $fromName = str_replace(["\r", "\n"], ' ', (string) $opts['from_name']);
+  if (!empty($opts['from_email']) && filter_var($opts['from_email'], FILTER_VALIDATE_EMAIL)) $fromEmail = (string) $opts['from_email'];
+  $GLOBALS['pg_mail_last'] = ['from' => $fromEmail, 'fallback' => false];
   $text = isset($opts['text']) ? (string) $opts['text'] : pg_mail_html_to_text($html);
   [$ctype, $body] = pg_mail_mime($html, $text, $opts['attachments'] ?? []);
   $extra = '';
@@ -1088,7 +1113,13 @@ function pg_send_mail($to, $subject, $html, $replyTo = '', $opts = []){
     if ($k !== '' && trim($v) !== '') $extra .= $k . ': ' . $v . "\r\n";
   }
   if (pg_mail_configured_send()) {
-    return pg_smtp_send($to, $subject, $ctype, $body, $fromName, $fromEmail, $replyTo, $extra);
+    $ok = pg_smtp_send($to, $subject, $ctype, $body, $fromName, $fromEmail, $replyTo, $extra);
+    // Persönliche Adresse vom Mailserver abgelehnt? → über die Studio-Adresse senden, Antworten an die Person
+    if (!$ok && strcasecmp($fromEmail, $studioEmail) !== 0) {
+      $ok = pg_smtp_send($to, $subject, $ctype, $body, $fromName, $studioEmail, $replyTo ?: $fromEmail, $extra);
+      if ($ok) $GLOBALS['pg_mail_last'] = ['from' => $studioEmail, 'fallback' => true];
+    }
+    return $ok;
   }
   // Fallback: PHP mail()
   $fn = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
@@ -1136,9 +1167,11 @@ function pg_smtp_send($to, $subject, $ctype, $mimeBody, $fromName, $fromEmail, $
     if ($code($cmd(base64_encode($c['smtp_user']))) !== 334) { fclose($fp); return false; }
     if ($code($cmd(base64_encode($c['smtp_pass']))) !== 235) { fclose($fp); return false; }
   }
-  if ($code($cmd('MAIL FROM:<' . $fromEmail . '>')) !== 250) $ok = false;
-  if ($code($cmd('RCPT TO:<' . $to . '>')) >= 400) $ok = false;
-  if ($code($cmd('DATA')) !== 354) $ok = false;
+  // Bei Ablehnung sofort sauber abbrechen (kein halber Versand)
+  $abort = function () use ($cmd, $fp) { $cmd('RSET'); $cmd('QUIT'); fclose($fp); return false; };
+  if ($code($cmd('MAIL FROM:<' . $fromEmail . '>')) !== 250) return $abort();
+  if ($code($cmd('RCPT TO:<' . $to . '>')) >= 400) return $abort();
+  if ($code($cmd('DATA')) !== 354) return $abort();
 
   $fn = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
   $subj = '=?UTF-8?B?' . base64_encode($subject) . '?=';
@@ -1367,7 +1400,6 @@ function pg_nav_model($SCHEMA){
   if (pg_is_owner()) $ops[] = ['v:keys', 'index.php?view=keys', 'key', 'Keys & Presse', 0, false];
   $tools = [
     ['v:board', 'index.php?view=board', 'kanban', 'Planungs-Board', 0, false],
-    ['vault', 'vault.php', 'vault', 'Blueprint Vault', 0, false],
     ['v:media', 'index.php?view=media', 'image', 'Medien', 0, false],
     ['v:stats', 'index.php?view=stats', 'chart', 'Statistik', 0, false],
     ['v:seo', 'index.php?view=seo', 'globe', 'SEO-Assistent', 0, false],
@@ -1386,6 +1418,19 @@ function pg_nav_model($SCHEMA){
   ], fn($g) => !empty($g[1])));
 }
 
+// PLANIGAMES-Logo (Studio-Einstellungen) für das Admin – relativer Pfad oder ''
+function pg_brand_logo(){
+  static $l = null;
+  if ($l !== null) return $l;
+  $s = pg_load_json(PG_DATA_DIR . '/studio.json');
+  $logo = trim(explode('#', (string) ($s['logo'] ?? ''))[0]);
+  if ($logo === '') return $l = '';
+  return $l = preg_match('#^https?://#i', $logo) ? $logo : '../' . ltrim($logo, '/');
+}
+function pg_brand_mark(){
+  $logo = pg_brand_logo();
+  return $logo !== '' ? '<span class="brand-mark is-img"><img src="' . pg_h($logo) . '" alt=""></span>' : '<span class="brand-mark"><i></i></span>';
+}
 function pg_view_head($title){
   $GLOBALS['pg_page_title'] = (string) $title;
   // Admin als installierbare App (nur Backend): Manifest + Apple-Tags + App-Icon
@@ -1396,6 +1441,8 @@ function pg_view_head($title){
      . '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
      . '<meta name="theme-color" content="#08080a">'
+     . (pg_brand_logo() !== '' ? '<link rel="icon" href="' . pg_h(pg_brand_logo()) . '">' : '')
+     . '<meta name="csrf-token" content="' . pg_h(pg_csrf()) . '">'
      . '<link rel="manifest" href="manifest.php">'
      . '<link rel="apple-touch-icon" href="' . pg_h($appIcon) . '">'
      . '<meta name="apple-mobile-web-app-capable" content="yes">'
@@ -1428,7 +1475,7 @@ function pg_view_topbar($SCHEMA, $active){
   echo '<div class="pg-app">';
   // ---- Seitenleiste ----
   echo '<aside class="side" id="side" aria-label="Hauptnavigation">';
-  echo '<a class="brand" href="index.php"><span class="brand-mark"><i></i></span><span><span class="brand-name">PLANI<b>GAMES</b></span><span class="brand-sub">Studio-Cockpit</span></span></a>';
+  echo '<a class="brand" href="index.php">' . pg_brand_mark() . '<span><span class="brand-name">PLANI<b>GAMES</b></span><span class="brand-sub">Studio-Cockpit</span></span></a>';
   echo '<button type="button" class="side-search" data-open-palette>' . pg_icon('search') . 'Suchen &amp; springen<kbd>⌘K</kbd></button>';
   foreach ($nav as [$gl, $items]) {
     echo '<div class="nav-group">' . ($gl !== '' ? '<div class="nav-label">' . pg_h($gl) . '</div>' : '');
@@ -1688,8 +1735,16 @@ function pg_i18n_report($SCHEMA){
 
 /* ---------------- CSRF ---------------- */
 function pg_csrf(){ if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(18)); return $_SESSION['csrf']; }
+function pg_wants_json(){
+  return (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== '') || stripos((string) ($_SERVER['HTTP_ACCEPT'] ?? ''), 'json') !== false;
+}
 function pg_csrf_check(){
-  if (!hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) { http_response_code(400); exit('Ungültiges Sicherheits-Token. Bitte Seite neu laden.'); }
+  $sent = (string) ($_POST['csrf'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
+  if (hash_equals($_SESSION['csrf'] ?? '', $sent) && $sent !== '') return;
+  http_response_code(400);
+  $msg = 'Ungültiges Sicherheits-Token. Bitte Seite neu laden.';
+  if (pg_wants_json()) { header('Content-Type: application/json; charset=utf-8'); exit(json_encode(['ok' => false, 'error' => $msg], JSON_UNESCAPED_UNICODE)); }
+  exit($msg);
 }
 
 /* ---------------- JSON I/O ---------------- */

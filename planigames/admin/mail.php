@@ -32,7 +32,7 @@ if ($action === 'preview') {
     : "Hier steht deine Nachricht …\n\nSchreib links los – die Vorschau aktualisiert sich live."; }
   echo $mode === 'newsletter'
     ? pg_mail_build_newsletter($message, pg_unsub_link('beispiel@abonnent.de'), ['html' => $isHtml])
-    : pg_mail_build_personal($message, ['html' => $isHtml, 'sig' => isset($_POST['sig']) ? (string) $_POST['sig'] : null]);
+    : pg_mail_build_personal($message, ['html' => $isHtml, 'sig' => isset($_POST['sig']) ? (empty($_POST['with_sig']) && isset($_POST['with_sig_sent']) ? '' : (string) $_POST['sig']) : null]);
   exit;
 }
 
@@ -103,7 +103,10 @@ if ($action === 'sigs_save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     pg_mail_signature_set_default($mi < 0 ? '' : (string) ($saved[$mi]['id'] ?? ''));
   }
   pg_log_activity('Signaturen gespeichert', count($saved) . ' Signatur(en)');
-  echo json_encode(['ok' => true, 'sigs' => $saved, 'default' => pg_mail_signature_default()], JSON_UNESCAPED_UNICODE);
+  [$stN, $stE] = pg_mail_from();
+  $opts = array_filter($saved, fn($x) => (string) $x['id'] === 'studio') ? [] : [['id' => '', 'text' => $stN . ' · ' . $stE]];
+  foreach ($saved as $x) { [$sn, $se] = pg_mail_sender($x); $opts[] = ['id' => $x['id'], 'text' => (((string) $x['id'] !== 'studio' && $x['name'] !== '') ? $x['name'] : ($x['label'] ?: $sn)) . ' · ' . $se]; }
+  echo json_encode(['ok' => true, 'sigs' => $saved, 'default' => pg_mail_signature_default(), 'options' => $opts], JSON_UNESCAPED_UNICODE);
   exit;
 }
 
@@ -140,8 +143,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_mail'])) {
   $msgHtml = pg_mail_sanitize_html((string) ($_POST['message_html'] ?? ''));
   if (trim(strip_tags($msgHtml)) === '' && trim((string) ($_POST['message'] ?? '')) !== '') $msgHtml = nl2br(pg_h(trim($_POST['message'])));   // ohne JavaScript
   $sig = (string) ($_POST['sig'] ?? '');
+  $withSig = !isset($_POST['with_sig_sent']) || !empty($_POST['with_sig']);   // ohne JavaScript: Signatur an
   $replyUid = (int) ($_POST['reply_uid'] ?? 0); $fwdUid = (int) ($_POST['fwd_uid'] ?? 0);
-  $draft = ['to' => $to, 'subject' => $subject, 'html' => $msgHtml, 'sig' => $sig, 'reply_uid' => $replyUid, 'fwd_uid' => $fwdUid];
+  $draft = ['to' => $to, 'subject' => $subject, 'html' => $msgHtml, 'sig' => $sig, 'with_sig' => $withSig, 'reply_uid' => $replyUid, 'fwd_uid' => $fwdUid];
   $err = '';
   if (!filter_var($to, FILTER_VALIDATE_EMAIL)) $err = 'Bitte eine gültige Empfänger-Adresse eingeben.';
   elseif ($subject === '' || trim(strip_tags($msgHtml)) === '') $err = 'Betreff und Nachricht dürfen nicht leer sein.';
@@ -181,10 +185,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_mail'])) {
     }
   }
   if ($err === '') {
-    $html = pg_mail_build_personal($msgHtml, ['html' => true, 'sig' => $sig]);
-    $ok = pg_send_mail($to, $subject, $html, pg_mail_from()[1], ['attachments' => $atts, 'headers' => $hdrs]);
+    $html = pg_mail_build_personal($msgHtml, ['html' => true, 'sig' => $withSig ? $sig : '']);
+    [$fName, $fEmail, $fReply] = pg_mail_sender($sig);
+    $ok = pg_send_mail($to, $subject, $html, $fReply, ['attachments' => $atts, 'headers' => $hdrs, 'from_name' => $fName, 'from_email' => $fEmail]);
     if ($ok) {
-      $sid = pg_mail_sent_log($to, $subject, $html, $atts);
+      $sid = pg_mail_sent_log($to, $subject, $html, $atts, $fName . ' <' . ($GLOBALS['pg_mail_last']['from'] ?? $fEmail) . '>');
+      if (!empty($GLOBALS['pg_mail_last']['fallback'])) $_SESSION['pg_mail_note'] = 'Der Mailserver hat ' . $fEmail . ' als Absender nicht zugelassen – die Mail ging über die Studio-Adresse raus, Antworten landen trotzdem bei ' . $fEmail . '.';
       pg_log_activity('E-Mail gesendet', $to . ($atts ? ' · ' . (count($atts) === 1 ? '1 Anhang' : count($atts) . ' Anhänge') : ''));
       header('Location: mail.php?tab=sent&id=' . $sid . '&sent=1');   // kein doppeltes Senden beim Neuladen
       exit;
@@ -231,6 +237,7 @@ pg_view_head($titles[$tab]);
 pg_view_topbar($SCHEMA, 'mail');
 echo $flash;
 if (isset($_GET['sent'])) echo '<div class="flash ok">✓ Nachricht gesendet' . (pg_mail_configured_send() ? ' (per SMTP).' : ' (über den Server).') . '</div>';
+if (!empty($_SESSION['pg_mail_note'])) { echo '<div class="flash ok">' . pg_h($_SESSION['pg_mail_note']) . '</div>'; unset($_SESSION['pg_mail_note']); }
 
 $sel = ($tab === 'inbox' && (int) ($_GET['uid'] ?? 0)) || ($tab === 'sent' && preg_replace('/[^a-f0-9]/', '', $_GET['id'] ?? '') !== '');
 $wide = in_array($tab, ['compose', 'newsletter', 'settings'], true);
@@ -362,7 +369,7 @@ if ($tab === 'sent') {
       $by = (string) ($row['by'] ?? '');
       $readHtml .= '<div class="mx-read-h"><a class="btn btn-ghost btn-sm mx-back" href="mail.php?tab=sent">' . pg_icon('back') . 'Zurück</a>'
         . '<h2>' . pg_h($row['subject'] ?: '(kein Betreff)') . '</h2>'
-        . '<div class="mx-from"><span class="avatar">' . pg_icon('send') . '</span><div><b>An: ' . pg_h($row['to']) . '</b><span>' . pg_h(date('d.m.Y · H:i', strtotime($row['date'] ?? 'now') ?: time())) . ($by !== '' ? ' · von ' . pg_h($by) : '') . '</span></div>'
+        . '<div class="mx-from"><span class="avatar">' . pg_icon('send') . '</span><div><b>An: ' . pg_h($row['to']) . '</b><span>' . (!empty($row['from']) ? 'Von: ' . pg_h($row['from']) . ' · ' : '') . pg_h(date('d.m.Y · H:i', strtotime($row['date'] ?? 'now') ?: time())) . ($by !== '' ? ' · gesendet von ' . pg_h($by) : '') . '</span></div>'
         . (!$isNl && filter_var($row['to'], FILTER_VALIDATE_EMAIL) ? '<div class="mx-acts"><a class="btn btn-sm" href="mail.php?tab=compose&to=' . urlencode($row['to']) . '">' . pg_icon('edit') . 'Neue Mail an diese Adresse</a></div>' : '')
         . '</div></div>';
       $readHtml .= '<iframe class="mx-frame dark" src="mail.php?action=sentbody&id=' . urlencode($row['id']) . '" sandbox="allow-popups allow-popups-to-escape-sandbox" title="Gesendete Nachricht"></iframe>';
@@ -450,6 +457,8 @@ if ($tab === 'compose') {
   }
   $sigs = pg_mail_signatures();
   $sigSel = $draft !== null ? (string) ($draft['sig'] ?? '') : pg_mail_signature_default();
+  $withSigOn = $draft !== null ? !empty($draft['with_sig']) : true;
+  [$studioName, $studioMail] = pg_mail_from();
   $maxUp = min(PG_MAIL_ATT_MAX, (int) (pg_ini_bytes(ini_get('upload_max_filesize')) ?: PG_MAIL_ATT_MAX), (int) (pg_ini_bytes(ini_get('post_max_size')) ?: PG_MAIL_ATT_MAX));
   echo '<form method="post" enctype="multipart/form-data" class="ck-card mx-compose" data-composer data-mail-compose data-mode="compose" data-html data-max="' . $maxUp . '">';
   echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '"><input type="hidden" name="send_mail" value="1">'
@@ -459,10 +468,15 @@ if ($tab === 'compose') {
   echo '<div class="cmp-fields">'
      . '<label class="cmp-row"><span>An</span><input type="email" name="to" value="' . pg_h($to) . '" placeholder="empfaenger@beispiel.de" required autocomplete="email"></label>'
      . '<label class="cmp-row"><span>Betreff</span><input type="text" name="subject" value="' . pg_h($subject) . '" required></label>'
-     . '<div class="cmp-row"><span>Signatur</span><select name="sig" data-sig-select>'
-     . '<option value=""' . ($sigSel === '' ? ' selected' : '') . '>Keine Signatur</option>';
-  foreach ($sigs as $sg) echo '<option value="' . pg_h($sg['id']) . '"' . ($sigSel === (string) $sg['id'] ? ' selected' : '') . '>' . pg_h($sg['label'] . ($sg['name'] !== '' && $sg['name'] !== $sg['label'] ? ' · ' . $sg['name'] : '')) . '</option>';
-  echo '</select><button type="button" class="btn btn-sm btn-ghost" data-open-sigs>Verwalten…</button></div></div>';
+     . '<div class="cmp-row"><span>Von</span><select name="sig" data-sig-select title="Absender &amp; Signatur">'
+     . (array_filter($sigs, fn($x) => (string) $x['id'] === 'studio') ? '' : '<option value=""' . ($sigSel === '' ? ' selected' : '') . '>' . pg_h($studioName . ' · ' . $studioMail) . '</option>');
+  foreach ($sigs as $sg) {
+    [$sn, $se] = pg_mail_sender($sg);
+    if ((string) $sg['id'] === 'studio') $sn = ($sg['label'] ?: $studioName);
+    echo '<option value="' . pg_h($sg['id']) . '"' . ($sigSel === (string) $sg['id'] ? ' selected' : '') . '>' . pg_h(($sg['name'] !== '' && (string) $sg['id'] !== 'studio' ? $sg['name'] : $sn) . ' · ' . $se) . '</option>';
+  }
+  echo '</select><label class="cmp-sigon" title="Signatur unter die Nachricht setzen"><input type="hidden" name="with_sig_sent" value="1"><input type="checkbox" name="with_sig" value="1"' . ($withSigOn ? ' checked' : '') . ' data-sig-on> Signatur</label>'
+     . '<button type="button" class="btn btn-sm btn-ghost" data-open-sigs>Verwalten…</button></div></div>';
   echo pg_mx_editor($html, true);
   // Anhänge
   echo '<div class="cmp-atts" data-atts><label class="cmp-drop" data-drop>' . pg_icon('clip') . '<span><b>Dateien anhängen</b> – hierher ziehen oder klicken · zusammen bis ' . pg_fmt_bytes($maxUp) . '</span>'
@@ -544,12 +558,13 @@ $mine = pg_mail_signature_default();
 $team = array_values(array_filter(array_map(fn($m) => is_array($m) ? ['name' => (string) ($m['name'] ?? ''), 'role' => (string) ($m['role'] ?? '')] : null,
           (array) (pg_load_json(PG_DATA_DIR . '/team.json')['members'] ?? [])), fn($m) => $m && $m['name'] !== ''));
 echo '<div class="pg-modal-back" id="dlg-sigs" hidden><div class="pg-modal lg" role="dialog" aria-modal="true" aria-labelledby="dlg-sigs-t">'
-   . '<div class="pg-modal-h"><div><h3 id="dlg-sigs-t">Signaturen</h3><p>Erscheinen unter deinen Mails – E-Mail, Website &amp; Social-Links kommen automatisch aus den Studio-Einstellungen.</p></div>'
+   . '<div class="pg-modal-h"><div><h3 id="dlg-sigs-t">Absender &amp; Signaturen</h3><p>Jedes Profil legt fest, von welcher Adresse eine Mail kommt und welche Signatur darunter steht. Website &amp; Social-Links kommen aus den Studio-Einstellungen.</p></div>'
    . '<button type="button" class="icon-btn" data-close aria-label="Schließen">' . pg_icon('x') . '</button></div>'
    . '<div class="pg-modal-b"><div class="sig-list" data-sig-list></div>'
    . '<div class="sig-add"><button type="button" class="btn btn-sm" data-sig-add>' . pg_icon('plus') . 'Signatur</button>'
    . ($team ? '<button type="button" class="btn btn-sm btn-ghost" data-sig-team>' . pg_icon('user') . 'Aus Team-Profilen übernehmen</button>' : '') . '</div></div>'
    . '<div class="pg-modal-f"><span class="hint">„Mein Standard“ gilt nur für dich.</span><span class="sp"></span><button type="button" class="btn btn-ghost" data-close>Abbrechen</button>'
    . '<button type="button" class="btn btn-primary" data-sig-save>' . pg_icon('check') . 'Speichern</button></div></div></div>';
-echo '<script type="application/json" id="pg-sigs-data">' . json_encode(['sigs' => $sigs, 'mine' => $mine, 'team' => $team], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) . '</script>';
+[$stN0, $stE0] = pg_mail_from();
+echo '<script type="application/json" id="pg-sigs-data">' . json_encode(['sigs' => $sigs, 'mine' => $mine, 'team' => $team, 'studio' => ['name' => $stN0, 'email' => $stE0]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) . '</script>';
 pg_view_foot();

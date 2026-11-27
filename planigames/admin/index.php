@@ -116,7 +116,7 @@ if ($action === 'register') {
   if (!$inv) {
     pg_view_head('Einladung');
     echo '<div class="auth"><div class="auth-card">';
-    echo '<div class="brand"><span class="diamond"></span> PLANI<span class="grad">GAMES</span> · Admin</div>';
+    echo '<div class="brand">' . pg_brand_mark() . '<span>PLANI<span class="grad">GAMES</span> · Admin</span></div>';
     echo '<h1>Einladung ungültig</h1>';
     echo '<p class="muted">Dieser Einladungslink ist ungültig oder abgelaufen. Bitte den Owner um eine neue Einladung.</p>';
     echo '<a class="btn-primary" href="index.php" style="display:inline-block;margin-top:1rem;text-decoration:none">Zum Login</a>';
@@ -139,7 +139,7 @@ if ($action === 'register') {
   }
   pg_view_head('Registrieren');
   echo '<div class="auth"><div class="auth-card">';
-  echo '<div class="brand"><span class="diamond"></span> PLANI<span class="grad">GAMES</span> · Admin</div>';
+  echo '<div class="brand">' . pg_brand_mark() . '<span>PLANI<span class="grad">GAMES</span> · Admin</span></div>';
   echo '<h1>Konto erstellen</h1>';
   echo '<p class="muted">Du wurdest als Teammitglied eingeladen. Lege dein Passwort fest für:</p>';
   echo '<p style="margin:.3rem 0 0;font-weight:600">' . pg_h($inv['email']) . '</p>';
@@ -173,7 +173,7 @@ if (!pg_users_exist()) {
   }
   pg_view_head('Einrichten');
   echo '<div class="auth"><div class="auth-card">';
-  echo '<div class="brand"><span class="diamond"></span> PLANI<span class="grad">GAMES</span> · Admin</div>';
+  echo '<div class="brand">' . pg_brand_mark() . '<span>PLANI<span class="grad">GAMES</span> · Admin</span></div>';
   echo '<h1>Willkommen! Erstelle dein Konto</h1>';
   echo '<p class="muted">Das ist das Owner-Konto. Du kannst später weitere Teammitglieder per E-Mail einladen.</p>';
   if ($err) echo '<p class="err">' . pg_h($err) . '</p>';
@@ -239,7 +239,7 @@ if (!pg_logged_in()) {
 
   pg_view_head('Login');
   echo '<div class="auth"><div class="auth-card">';
-  echo '<div class="brand"><span class="diamond"></span> PLANI<span class="grad">GAMES</span> · Admin</div>';
+  echo '<div class="brand">' . pg_brand_mark() . '<span>PLANI<span class="grad">GAMES</span> · Admin</span></div>';
   if ($stage === '2fa') {
     echo '<h1>Bestätigung</h1>';
     echo '<p class="muted" style="margin:-.4rem 0 1rem;font-size:.88rem">Gib den 6-stelligen Code aus deiner Authenticator-App ein.</p>';
