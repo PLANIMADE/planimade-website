@@ -9,7 +9,7 @@ const PG_MEDIA_DIR   = __DIR__ . '/../media';
 const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
 const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
 const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip'];
-const PG_ADMIN_V     = '67';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
+const PG_ADMIN_V     = '71';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -139,6 +139,67 @@ function pg_mail_unread_live($maxAge = 20){
   $n = is_array($unseen) ? count($unseen) : 0;
   pg_mail_unread_store($n);
   return $n;
+}
+
+/* ---------------- Neue Nachrichten fürs Cockpit (Postfach + Kontaktformular) ----------------
+   Das Cockpit zeigt sofort den zuletzt bekannten Stand (data/mail_preview.json) und holt
+   im Hintergrund frisch vom Mailserver (action=ck_inbox) – die Seite wartet nie auf IMAP. */
+const PG_MAIL_PREVIEW_FILE = __DIR__ . '/../data/mail_preview.json';
+function pg_inbox_preview_cached(){
+  $c = pg_load_json(PG_MAIL_PREVIEW_FILE);
+  return ['time' => (int) ($c['time'] ?? 0), 'items' => array_values(array_filter((array) ($c['items'] ?? []), 'is_array'))];
+}
+function pg_inbox_preview_store($items){
+  $keep = [];
+  foreach (array_slice((array) $items, 0, 10) as $it) $keep[] = array_intersect_key((array) $it, array_flip(['uid', 'subject', 'from', 'from_email', 'date', 'seen']));
+  pg_save_json(PG_MAIL_PREVIEW_FILE, ['time' => time(), 'items' => $keep]);
+}
+// frisch vom Mailserver (gedrosselt); gibt [items, unread] zurück
+function pg_inbox_preview_live($maxAge = 60){
+  $c = pg_inbox_preview_cached();
+  if (time() - $c['time'] < $maxAge) return [$c['items'], pg_mail_unread_cached()];
+  if (!pg_imap_available() || !pg_mail_configured_recv()) return [$c['items'], pg_mail_unread_cached()];
+  $mbox = pg_imap_connect('INBOX');
+  if (!$mbox) return [$c['items'], pg_mail_unread_cached()];
+  $list = pg_imap_list($mbox, 10, 0);
+  $unseen = @imap_search($mbox, 'UNSEEN');
+  @imap_close($mbox);
+  pg_inbox_preview_store($list['items']);
+  pg_mail_unread_store(is_array($unseen) ? count($unseen) : 0);
+  return [$list['items'], is_array($unseen) ? count($unseen) : 0];
+}
+// Gemeinsame Liste: ungelesene Mails & neue Kontaktanfragen zuerst, dann die letzten gelesenen (gedimmt)
+function pg_ck_messages($mailItems, $max = 6){
+  $rows = [];
+  if (pg_can('mail')) foreach ((array) $mailItems as $m) {
+    $rows[] = ['src' => 'mail', 'name' => (string) ($m['from'] ?? ''), 'email' => (string) ($m['from_email'] ?? ''), 'subject' => (string) ($m['subject'] ?? ''),
+               'text' => '', 'time' => (int) ($m['date'] ?? 0), 'unread' => empty($m['seen']), 'href' => 'mail.php?tab=inbox&uid=' . (int) ($m['uid'] ?? 0)];
+  }
+  if (pg_can('contacts')) foreach ((array) pg_load_json(PG_DATA_DIR . '/contacts.json') as $i => $r) {
+    if (!is_array($r)) continue;
+    $rows[] = ['src' => 'contact', 'name' => (string) ($r['name'] ?? ''), 'email' => (string) ($r['email'] ?? ''), 'subject' => (string) ($r['subject'] ?? 'Kontaktanfrage'),
+               'text' => (string) ($r['message'] ?? ''), 'time' => strtotime((string) ($r['date'] ?? '')) ?: 0, 'unread' => empty($r['read']), 'href' => 'index.php?view=contacts#c' . $i];
+  }
+  usort($rows, fn($a, $b) => ($b['unread'] <=> $a['unread']) ?: ($b['time'] <=> $a['time']));
+  $unread = array_values(array_filter($rows, fn($r) => $r['unread']));
+  $show = array_slice($unread, 0, $max);
+  if (count($show) < 3) $show = array_merge($show, array_slice(array_values(array_filter($rows, fn($r) => !$r['unread'])), 0, 3 - count($show)));
+  if (!$show) return '<div class="ck-msg-empty">' . pg_icon('check') . '<b>Keine Nachrichten.</b><span>Neue Mails und Kontaktanfragen erscheinen hier sofort.</span></div>';
+  $h = '<ul class="ck-msgs">';
+  foreach ($show as $r) {
+    $nm = trim($r['name']) !== '' ? $r['name'] : ($r['email'] !== '' ? $r['email'] : 'Unbekannt');
+    $ini = mb_strtoupper(mb_substr(preg_replace('/[^\p{L}\p{N}]/u', '', $nm) ?: '?', 0, 1));
+    $hue = hexdec(substr(md5(strtolower($r['email'] ?: $nm)), 0, 2)) / 255 * 360;
+    $h .= '<li><a class="ck-msg' . ($r['unread'] ? ' is-new' : '') . '" href="' . pg_h($r['href']) . '">'
+        . '<span class="ck-av" style="--h:' . (int) $hue . '">' . pg_h($ini) . '</span>'
+        . '<span class="ck-msg-tx"><span class="ck-msg-top"><b>' . pg_h(mb_strimwidth($nm, 0, 40, '…')) . '</b>'
+        . '<span class="ck-src ' . $r['src'] . '">' . ($r['src'] === 'mail' ? pg_icon('mail') . 'Postfach' : pg_icon('inbox') . 'Kontaktformular') . '</span>'
+        . '<span class="ck-msg-time">' . ($r['time'] ? pg_h(pg_time_ago($r['time'])) : '') . '</span></span>'
+        . '<span class="ck-msg-sub">' . pg_h(mb_strimwidth($r['subject'] !== '' ? $r['subject'] : '(kein Betreff)', 0, 90, '…')) . '</span>'
+        . ($r['text'] !== '' ? '<span class="ck-msg-pre">' . pg_h(mb_strimwidth(preg_replace('/\s+/u', ' ', $r['text']), 0, 140, '…')) . '</span>' : '')
+        . '</span>' . ($r['unread'] ? '<i class="ck-dot" title="ungelesen"></i>' : '') . '</a></li>';
+  }
+  return $h . '</ul>';
 }
 
 /* ---------------- Benachrichtigungen (Allrounder) ---------------- */

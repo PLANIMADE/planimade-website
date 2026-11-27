@@ -281,6 +281,7 @@ if ($tab === 'inbox') {
       $list = pg_imap_list($mbox, $per, ($page - 1) * $per);
       $unseen = @imap_search($mbox, 'UNSEEN');
       pg_mail_unread_store(is_array($unseen) ? count($unseen) : 0);
+      if ($page === 1 && $folder === 'INBOX') pg_inbox_preview_store($list['items']);   // fürs Cockpit („Neue Nachrichten“)
       // Lesebereich
       if ($uid) {
         $hdr = @imap_fetch_overview($mbox, (string) $uid, FT_UID);

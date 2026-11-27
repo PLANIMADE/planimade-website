@@ -2125,6 +2125,26 @@
     });
   })();
 
+  /* ---- Cockpit: Nachrichten im Hintergrund aktualisieren, weitere Aufgaben aufklappen ---- */
+  (function cockpit() {
+    const box = document.querySelector(".ck-inbox[data-ck-refresh]");
+    if (box) {
+      const sync = box.querySelector("[data-ck-sync]");
+      fetch("index.php?action=ck_inbox", { headers: { "X-Requested-With": "fetch" } }).then(readJson).then((j) => {
+        if (sync) sync.hidden = true;
+        if (!j || !j.ok) return;
+        const list = box.querySelector("[data-ck-msgs]");
+        if (list && typeof j.html === "string") list.innerHTML = j.html;
+        const c = box.querySelector("[data-ck-unread]");
+        if (c) { c.textContent = j.unread; c.classList.toggle("zero", !j.unread); }
+      }).catch(() => { if (sync) sync.hidden = true; });
+    }
+    document.querySelectorAll("[data-ck-showmore]").forEach((b) => b.addEventListener("click", () => {
+      b.closest(".ck-tasks").querySelectorAll(".ck-more-item").forEach((li) => { li.hidden = false; });
+      b.remove();
+    }));
+  })();
+
   // ---- Tastatur-Shortcuts ----
   function primarySaveButton() {
     return document.querySelector('[data-tr-savebar] button[type="submit"]')

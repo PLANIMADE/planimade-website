@@ -30,6 +30,17 @@ if ($action === 'notif_counts') {
   exit;
 }
 
+/* ---- Cockpit: „Neue Nachrichten“ frisch vom Mailserver (im Hintergrund) ---- */
+if ($action === 'ck_inbox') {
+  header('Content-Type: application/json; charset=utf-8');
+  if (!pg_logged_in()) { http_response_code(403); exit('{"ok":false,"error":"Nicht eingeloggt"}'); }
+  session_write_close();                                    // IMAP darf andere Admin-Seiten nicht blockieren
+  [$items, $mailUnread] = pg_can('mail') ? pg_inbox_preview_live(45) : [[], 0];
+  $contUnread = pg_can('contacts') ? pg_contacts_unread() : 0;
+  echo json_encode(['ok' => true, 'html' => pg_ck_messages($items), 'unread' => ($mailUnread ?: 0) + $contUnread, 'mail' => $mailUnread, 'contacts' => $contUnread], JSON_UNESCAPED_UNICODE);
+  exit;
+}
+
 /* ---- Medien-Liste (für „Aus Bibliothek wählen") ---- */
 if ($action === 'medialist') {
   header('Content-Type: application/json');
@@ -2227,15 +2238,10 @@ $scopeName = fn($sc) => $sc === '' ? 'Startseite' : ($gameTitle[strtolower((stri
 /* ── „Heute wichtig": priorisierte Aufgaben aus allen Bereichen ── */
 $todo = [];   // [icon, ton, titel, info, link, button]
 $sec = pg_selfcheck_data();
-if (($sec['exposed'] ?? null) === true) {
-  $todo[] = ['alert', 'danger', 'Interne Daten sind öffentlich erreichbar', 'Die neuen .htaccess-Dateien (Root + data/) per FTP hochladen – dann verschwindet dieser Hinweis.', '', ''];
-}
-if ($canMail && ($n = pg_mail_unread_cached())) $todo[] = ['mail', 'accent', $n . ' ungelesene E-Mail' . ($n === 1 ? '' : 's'), 'im Postfach', 'mail.php', 'Öffnen'];
-if ($canCont && ($n = pg_contacts_unread())) {
-  $last = '';
-  foreach (array_reverse((array) pg_load_json(PG_DATA_DIR . '/contacts.json')) as $r) if (is_array($r) && empty($r['read'])) { $last = (string) ($r['subject'] ?? $r['name'] ?? ''); break; }
-  $todo[] = ['inbox', 'violet', $n . ' neue Kontaktanfrage' . ($n === 1 ? '' : 'n'), $last !== '' ? 'Betreff: „' . mb_strimwidth($last, 0, 60, '…') . '“' : 'über das Kontaktformular', 'index.php?view=contacts', 'Antworten'];
-}
+$alarm = ($sec['exposed'] ?? null) === true;   // wird als Banner ganz oben gezeigt
+// Ungelesene Mails & Kontaktanfragen stehen prominent unter „Neue Nachrichten“ (nicht doppelt als Aufgabe)
+$mailUnread = $canMail ? pg_mail_unread_cached() : 0;
+$contUnread = $canCont ? pg_contacts_unread() : 0;
 if ($canCont && ($n = pg_suggestions_pending())) {
   $by = [];
   foreach ($sugg as $s) if (empty($s['approved'])) { $k = $scopeName((string) ($s['scope'] ?? '')); $by[$k] = ($by[$k] ?? 0) + 1; }
@@ -2263,9 +2269,13 @@ $i18n = pg_tr_report($SCHEMA);
 foreach ($i18n as $k => $r) $i18n[$k]['open'] = $r['outdated'] + $r['missing'] + $r['unchecked'];
 $gaps = array_filter($i18n, fn($r) => $r['open'] > 0);
 uasort($gaps, fn($a, $b) => $b['open'] <=> $a['open']);
+$trAuto = !empty(pg_tr_settings()['auto']);
 foreach (array_slice($gaps, 0, 2, true) as $k => $r) {
-  $bits = array_filter([$r['outdated'] ? $r['outdated'] . ' veraltet' : '', $r['missing'] ? $r['missing'] . ' fehlen' : '', $r['unchecked'] ? $r['unchecked'] . ' ungeprüft' : '']);
-  $todo[] = ['globe', 'info', $r['label'] . ': Englisch nachziehen', implode(' · ', $bits) . (!empty(pg_tr_settings()['auto']) && ($r['outdated'] + $r['missing']) ? ' – wird automatisch übersetzt' : ''), 'index.php?collection=' . rawurlencode($k) . '&lang=en', 'Ansehen'];
+  // bei automatischem Nachziehen nur melden, was wirklich jemand ansehen muss (ungeprüfte Altbestände)
+  $need = $trAuto ? $r['unchecked'] : $r['open'];
+  if (!$need) continue;
+  $bits = array_filter([!$trAuto && $r['outdated'] ? $r['outdated'] . ' veraltet' : '', !$trAuto && $r['missing'] ? $r['missing'] . ' fehlen' : '', $r['unchecked'] ? $r['unchecked'] . ' ungeprüft' : '']);
+  $todo[] = ['globe', 'info', $r['label'] . ': Englisch prüfen', implode(' · ', $bits), 'index.php?collection=' . rawurlencode($k) . '&lang=en', 'Ansehen'];
 }
 if ($me && !pg_user_has_2fa($me)) $todo[] = ['shield', 'warn', 'Zwei-Faktor-Anmeldung aktivieren', 'schützt dein Konto zusätzlich zum Passwort', 'index.php?view=account', 'Einrichten'];
 $backups = $isOwner ? pg_backup_list() : [];
@@ -2279,36 +2289,24 @@ $nTodo = count($todo);
 /* ── Kopf ── */
 $fmtDate = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'][(int) date('w')] . ', ' . (int) date('j') . '. '
   . ['', 'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'][(int) date('n')];
+$nNew = $mailUnread + $contUnread;
+$leadBits = [];
+if ($nNew) $leadBits[] = '<b>' . $nNew . ' neue Nachricht' . ($nNew === 1 ? '' : 'en') . '</b>';
+if ($nTodo) $leadBits[] = '<b>' . $nTodo . ' Aufgabe' . ($nTodo === 1 ? '' : 'n') . '</b>';
 echo '<div class="ck">';
 echo '<div class="ck-hello"><div><div class="ck-eyebrow">' . pg_h($fmtDate) . '</div>'
    . '<h1 class="ck-title">' . pg_h(pg_greeting()) . ($firstName !== '' ? ', ' . pg_h($firstName) : '') . ' 👋</h1>'
-   . '<p class="ck-lead">' . ($nTodo ? '<b>' . $nTodo . ' ' . ($nTodo === 1 ? 'Ding braucht' : 'Dinge brauchen') . '</b> heute deine Aufmerksamkeit — alles andere läuft.' : 'Alles erledigt — nichts wartet auf dich. Zeit fürs Spiel! 🎮') . '</p></div>';
+   . '<p class="ck-lead">' . ($leadBits ? implode(' und ', $leadBits) . ' warten auf dich — alles andere läuft.' : 'Alles erledigt — nichts wartet auf dich. Zeit fürs Spiel! 🎮') . '</p></div>';
 echo '<div class="ck-quick">';
 if ($canMail) echo '<a class="btn" href="mail.php?tab=compose">' . pg_icon('mail') . 'Mail schreiben</a>';
 if (pg_can('patchnotes')) echo '<a class="btn" href="index.php?collection=patchnotes">' . pg_icon('devlog') . 'Devlog-Beitrag</a>';
 if (pg_can('games')) echo '<a class="btn btn-primary" href="index.php?collection=games">' . pg_icon('game') . 'Spiele bearbeiten</a>';
 echo '</div></div>';
 
-/* ── Aufgaben + Kennzahlen ── */
-echo '<div class="ck-grid">';
-echo '<section class="ck-card ck-focus"><div class="ck-card-h"><span class="ck-card-t">' . pg_icon('zap') . 'Heute wichtig</span>'
-   . ($nTodo ? '<span class="ck-count">' . $nTodo . '</span><span class="ck-sort">nach Dringlichkeit sortiert</span>' : '') . '</div>';
-if ($todo) {
-  echo '<ul class="ck-todo">';
-  foreach ($todo as [$ic, $tone, $t, $m, $href, $cta]) {
-    $inner = '<span class="ck-todo-ic" style="color:' . $toneVar[$tone] . ';background:' . $toneSoft[$tone] . '">' . pg_icon($ic) . '</span>'
-       . '<span class="ck-todo-tx"><span class="ck-todo-t">' . pg_h($t) . '</span><span class="ck-todo-m">' . pg_h($m) . '</span></span>';
-    echo '<li' . ($tone === 'danger' ? ' class="is-danger"' : '') . '>' . ($href !== ''
-      ? '<a class="ck-todo-row" href="' . pg_h($href) . '">' . $inner . '<span class="btn btn-sm">' . pg_h($cta) . '</span>' . pg_icon('chev', 'ck-todo-go') . '</a>'
-      : '<div class="ck-todo-row">' . $inner . '</div>') . '</li>';
-  }
-  echo '</ul>';
-} else {
-  echo '<div class="ck-empty">' . pg_icon('check') . '<b>Alles erledigt.</b><span>Neue Mails, Anfragen, Vorschläge und fällige Karten erscheinen hier automatisch.</span></div>';
-}
-echo '</section>';
+if ($alarm) echo '<div class="ck-alarm" role="alert">' . pg_icon('alert') . '<div><b>Interne Daten sind öffentlich erreichbar</b>'
+   . '<span>Die neuen .htaccess-Dateien (im Hauptordner und in data/) per FTP hochladen – dann verschwindet dieser Hinweis.</span></div></div>';
 
-// Kennzahlen mit Verlauf
+/* ── Kennzahlen (groß) ── */
 $kpis = [];
 $vis14 = pg_stats_series($statDays, 14);
 $last7 = array_sum(array_slice($vis14, -7)); $prev7 = array_sum(array_slice($vis14, 0, 7));
@@ -2323,20 +2321,53 @@ if ($canSubs) {
 if ($canCont) {
   $kpis[] = ['bulb', 'Vorschläge', number_format(count($sugg), 0, ',', '.'), '+' . $sinceWeek($sugg), 'up', 'davon ' . pg_suggestions_pending() . ' offen', array_values(pg_daily_counts($sugg, 14)), '#ffc53d', 'index.php?view=suggestions'];
 }
-echo '<div class="ck-kpis">';
+echo '<div class="ck-kpis-wrap"><div class="ck-kpis" data-n="' . count($kpis) . '" title="Verlauf der letzten 14 Tage">';
 foreach ($kpis as [$ic, $label, $val, $d, $dir, $sub, $series, $col, $href]) {
-  echo '<a class="ck-card ck-kpi" href="' . pg_h($href) . '"><div class="ck-kpi-l">' . pg_icon($ic) . pg_h($label) . '</div>'
+  echo '<a class="ck-card ck-kpi" href="' . pg_h($href) . '"><div class="ck-kpi-l">' . pg_icon($ic) . pg_h($label) . pg_icon('chev', 'ck-kpi-go') . '</div>'
      . '<div class="ck-kpi-v">' . pg_h($val) . ($d !== '' ? '<span class="ck-delta ' . $dir . '">' . pg_h($d) . '</span>' : '') . '</div>'
      . '<div class="ck-kpi-s">' . pg_h($sub) . '</div>' . pg_spark_svg($series, $col) . '</a>';
 }
 echo '</div></div>';
+
+/* ── Neue Nachrichten (prominent) + Aufgaben (kompakt, rechts) ── */
+echo '<div class="ck-main">';
+if ($canMail || $canCont) {
+  $prev = pg_inbox_preview_cached();
+  $needRefresh = $canMail && pg_mail_configured_recv() && pg_imap_available() && time() - $prev['time'] > 60;
+  echo '<section class="ck-card ck-inbox"' . ($needRefresh ? ' data-ck-refresh' : '') . '><div class="ck-card-h"><span class="ck-card-t">' . pg_icon('inbox') . 'Neue Nachrichten</span>'
+     . '<span class="ck-count' . ($nNew ? '' : ' zero') . '" data-ck-unread>' . $nNew . '</span>'
+     . '<span class="ck-sync" data-ck-sync' . ($needRefresh ? '' : ' hidden') . '>' . pg_icon('refresh') . 'wird aktualisiert …</span>'
+     . '<span class="ck-links">' . ($canMail ? '<a class="ck-more" href="mail.php">Postfach' . ($mailUnread ? ' <b>' . $mailUnread . '</b>' : '') . pg_icon('chev') . '</a>' : '')
+     . ($canCont ? '<a class="ck-more" href="index.php?view=contacts">Anfragen' . ($contUnread ? ' <b>' . $contUnread . '</b>' : '') . pg_icon('chev') . '</a>' : '') . '</span></div>'
+     . '<div data-ck-msgs>' . pg_ck_messages($prev['items']) . '</div>'
+     . ($canMail && !pg_mail_configured_recv() ? '<p class="ck-hint">' . pg_icon('mail') . 'Postfach noch nicht verbunden – ' . (pg_is_owner() ? '<a href="mail.php?tab=settings">jetzt einrichten</a>' : 'der Owner kann es unter „Postfach → Einstellungen“ verbinden') . '.</p>' : '')
+     . '</section>';
+}
+echo '<section class="ck-card ck-tasks"><div class="ck-card-h"><span class="ck-card-t">' . pg_icon('zap') . 'Zu erledigen</span>'
+   . ($nTodo ? '<span class="ck-count sm">' . $nTodo . '</span>' : '') . '</div>';
+if ($todo) {
+  echo '<ul class="ck-todo">';
+  foreach ($todo as $ti => [$ic, $tone, $t, $m, $href, $cta]) {
+    $inner = '<span class="ck-todo-ic" style="color:' . $toneVar[$tone] . ';background:' . $toneSoft[$tone] . '">' . pg_icon($ic) . '</span>'
+       . '<span class="ck-todo-tx"><span class="ck-todo-t">' . pg_h($t) . '</span>' . ($m !== '' ? '<span class="ck-todo-m">' . pg_h($m) . '</span>' : '') . '</span>';
+    echo '<li class="' . ($tone === 'danger' ? 'is-danger' : '') . ($ti >= 6 ? ' ck-more-item' : '') . '"' . ($ti >= 6 ? ' hidden' : '') . '>' . ($href !== ''
+      ? '<a class="ck-todo-row" href="' . pg_h($href) . '" title="' . pg_h($cta) . '">' . $inner . pg_icon('chev', 'ck-todo-go') . '</a>'
+      : '<div class="ck-todo-row">' . $inner . '</div>') . '</li>';
+  }
+  echo '</ul>';
+  if ($nTodo > 6) echo '<button type="button" class="ck-showmore" data-ck-showmore>+' . ($nTodo - 6) . ' weitere anzeigen</button>';
+} else {
+  echo '<div class="ck-empty sm">' . pg_icon('check') . '<b>Alles erledigt.</b><span>Fällige Karten, Freigaben & Hinweise erscheinen hier.</span></div>';
+}
+echo '</section>';
+echo '</div>';
 
 /* ── Spiele ── */
 if (pg_can('games') && $gamesData) {
   $stLbl = ['development' => ['In Entwicklung', 'st-dev'], 'announced' => ['Angekündigt', 'st-ann'], 'demo' => ['Demo verfügbar', 'st-demo'],
             'early' => ['Early Access', 'st-early'], 'released' => ['Veröffentlicht', 'st-rel']];
   echo '<div class="ck-sec"><h2>Deine Spiele</h2><a class="ck-more" href="index.php?collection=games">Alle verwalten' . pg_icon('chev') . '</a></div>';
-  echo '<div class="ck-games">';
+  echo '<div class="ck-games-wrap"><div class="ck-games" data-n="' . min(5, count($gamesData)) . '">';
   foreach ($gamesData as $g) {
     $slug = (string) ($g['slug'] ?? ''); $lslug = strtolower($slug);
     $cover = (string) ($g['cover'] ?? '');
@@ -2359,7 +2390,7 @@ if (pg_can('games') && $gamesData) {
        . '<div class="ck-game-acts"><a class="btn btn-sm" href="index.php?collection=games&amp;game=' . rawurlencode($slug) . '">' . pg_icon('edit') . 'Bearbeiten</a>'
        . '<a class="btn btn-sm btn-ghost" href="../game.php?slug=' . rawurlencode($slug) . '" target="_blank" rel="noopener">' . pg_icon('ext') . 'Ansehen</a></div></article>';
   }
-  echo '</div>';
+  echo '</div></div>';
 }
 
 /* ── Aktivität + System & Übersetzungen ── */
@@ -2375,7 +2406,7 @@ if ($isOwner) {
     if (!is_array($a)) continue;
     $k = strtolower((string) ($a['user'] ?? '')) . '|' . ($a['action'] ?? '') . '|' . (($a['action'] ?? '') === 'login' ? '' : ($a['detail'] ?? ''));
     if ($k === $grpKey) { $log[count($log) - 1]['n']++; continue; }
-    if (count($log) >= 7) break;
+    if (count($log) >= 5) break;
     $a['n'] = 1; $log[] = $a; $grpKey = $k;
   }
   $icMap = ['login' => 'user', 'Gespeichert' => 'edit', 'E-Mail gesendet' => 'send', 'Newsletter verschickt' => 'mega', 'Abgemeldet' => 'logout',
