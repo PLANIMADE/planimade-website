@@ -36,7 +36,7 @@ IMG = {
   '/media/20260525180256-1.jpg': ('ww-2.webp', 1000, 78),
   '/media/20260525182444-1.jpg': ('ww-3.webp', 1000, 78),
   '/media/20260525174744-1.jpg': ('ww-4.webp', 1000, 78),
-  '/media/maskottchen.png': ('maskottchen.webp', 520, 88),
+  '/media/first-test-02-53-24-free-3840x2160.png': ('hero-bg.webp', 1920, 78),
 }
 s = open(SRC, encoding='utf-8').read()
 used = set(re.findall(r'/media/[A-Za-z0-9._\-]+', s))

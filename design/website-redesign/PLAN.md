@@ -1,11 +1,11 @@
 # Website-Refresh — Befund & Probedesign
 
-Stand: 27.11.2026 · Prototyp: `prototype.html` (v3, echte Inhalte, Bilder kommen von planigames.com,
+Stand: 27.11.2026 · Prototyp: `prototype.html` (v4 „Aufgefrischt“, echte Inhalte, Bilder kommen von planigames.com,
 nichts wird gespeichert). Dieser Ordner liegt bewusst außerhalb von `planigames/` und wird nie hochgeladen.
 Ansehen: `prototype.html` im Browser öffnen (braucht Internet für Bilder & Schrift) – unten rechts
-(am Handy oben) öffnet „Probedesign v3“ alle Ansichten.
+(am Handy oben) öffnet „Probedesign v4“ alle Ansichten.
 Interaktive Vorschau: als private Seite in Claude veröffentlicht (Bilder verkleinert, Clash Display eingebettet);
-neu bauen mit `build-vorschau.py` (Aufruf steht oben im Skript). Der erste Entwurf liegt als `prototype-v1.html` daneben.
+neu bauen mit `build-vorschau.py` (Aufruf steht oben im Skript). Frühere Entwürfe: `prototype-v1.html` und Git-Verlauf.
 
 ## Befund (aktuelle Website, v54)
 
@@ -16,14 +16,13 @@ neu bauen mit `build-vorschau.py` (Aufruf steht oben im Skript). Der erste Entwu
 
 | Bereich | Befund |
 |---|---|
-| Spiele | Startseite zeigt nur kleine Karten mit Titel-Text – die Spiele-Logos kommen nicht vor. FRONTLINERS erscheint doppelt („Aktuelles Projekt“ + Raster), das Raster endet mit einem verwaisten „Browser-Demos“-Kärtchen. |
-| Rhythmus | Viel leerer Schwarzraum, jeder Abschnitt gleich aufgebaut; unterschiedliche Containerbreiten (Devlog-Liste schmaler als der Rest). |
-| Studio-Werte | Emoji-Icons wirken uneinheitlich. |
-| Spielseiten | Zwei identische Trailer-Platzhalter hintereinander, Warteliste/Vorschläge/Roadmap ohne „Bühne“, kein Steckbrief (Genre, Spieler, Plattform). |
-| Devlog | Beiträge ohne Bild zeigen leere Raster-Platzhalter; auf der Startseite nur eine Textliste. |
-| Anmeldungen | Newsletter im Footer **und** als eigener Block, Community-Block separat. |
-| Schwebendes | „Unterstützen“-Button, Abzeichen und Cursor-Ring liegen über Inhalten. |
-| Technik | Tailwind wird live im Browser erzeugt (Play-CDN – laut Hersteller nicht für Produktion, langsamer Erstaufbau). Schriften von zwei Anbietern. Sehr große Bilder (Wobbly-Wizards-Cover 6,9 MB PNG, Logo 1,1 MB PNG). |
+| Spiele | FRONTLINERS erscheint doppelt („Aktuelles Projekt“ + Raster), das Raster endet mit einem verwaisten „Browser-Demos“-Kärtchen ohne Bild. |
+| Rhythmus | Viel leerer Schwarzraum zwischen den Abschnitten; unterschiedliche Containerbreiten (Devlog-Liste schmaler als der Rest). |
+| Spielseiten | Zwei riesige Trailer-Blöcke untereinander, Roadmap als lange Liste, viel Leerraum. |
+| Devlog | Beiträge ohne Bild zeigen leere Raster-Platzhalter. |
+| Anmeldungen | Newsletter-Block, Community-Block **und** Newsletter-Feld im Footer – dreimal fast dasselbe. |
+| Schwebendes | „Unterstützen“-Button, Abzeichen, Cookie-Hinweis und Cursor-Ring liegen über Inhalten. |
+| Technik | Tailwind wird live im Browser erzeugt (Play-CDN – laut Hersteller nicht für Produktion, langsamer Erstaufbau). Sehr große Bilder (Wobbly-Wizards-Cover 6,9 MB PNG, Logo 1,1 MB PNG). |
 
 **Inhalte, die du direkt im Admin anpassen solltest:**
 - Devlog-Beitrag „Wobbly Test Log“ (Text: „TEST“) ist öffentlich sichtbar.
@@ -32,59 +31,58 @@ neu bauen mit `build-vorschau.py` (Aufruf steht oben im Skript). Der erste Entwu
 - Der Button „Discord beitreten“ führt auf planigames.com statt zum Discord-Server.
 - FRONTLINERS hat noch keinen Wishlist-/Steam-Link.
 
-## Konzept v3 „Ruhe, Wucht & Charme“
+## Verlauf der Entwürfe
 
-Rückmeldungen: v1 „wirkt etwas viel und unüberlegt“ → v2 „Ruhe & Wucht“ (klar und cool, aber zu glatt) →
-„Es muss aber bitte den Charm des Game Studios behalten“ → **v3: die ruhige Struktur aus v2 plus eine
-bewusst gesetzte Charme-Schicht.** v1 und v2 liegen im Git-Verlauf bzw. als `prototype-v1.html`.
+v1 „Cinematic Studio“ → „wirkt etwas viel und unüberlegt“ · v2 „Ruhe & Wucht“ → zu glatt, Charme fehlt ·
+v3 „Charme“ (Maskottchen raus auf Wunsch) → „Ich mag das Design nicht“. Abstimmung danach:
+**Richtung „Live-Seite auffrischen“** – gestört hat an v1–v3 „fühlt sich fremd an“ und „riesige Schrift & Leere“;
+unbedingt bleiben sollen **Farben & Schrift**.
 
-**Struktur (aus v2):**
-1. **Ein Raster.** 12 Spalten; Beschriftungen stehen links, Inhalte beginnen immer in Spalte 4. Feine Linien statt Kästen.
-2. **Bild – Ruhe – Bild.** Große Bildflächen wechseln sich mit ruhigen Textabschnitten ab.
-3. **Orange für die wichtigste Aktion** (Playtest, Eintragen).
-4. **Weniger Abschnitte:** Startseite 5 statt 11 (Spiele-Index · Studio & Team · FRONTLINERS im Fokus · Devlog ·
-   „Bleib dran“); Spielseite: Kopfbild mit Steckbrief · Über das Spiel · Einblicke · Was dich erwartet · Roadmap
-   (Erledigt / In Arbeit / Als Nächstes) bzw. „pausiert“-Hinweis · Mitmachen · FAQ · Devlog · Nächstes Spiel.
+## Konzept v4 „Aufgefrischt“
 
-**Charme (v3) – jeweils an einer bestimmten Stelle statt überall:**
-- **Eure Schrift:** Clash Display für Überschriften (wie auf der Live-Seite), Archivo für Text und Beschriftungen.
-- **Freundliche Formen:** runde Ecken, Pillen-Buttons, abgerundete Bild-Bühnen.
-- **Eure Gesichter:** Team in Farbe mit Sprüchen und Orten.
-- **Eure Stimme:** Laufband „Original Worlds ✦ Handcrafted ✦ Indie & Proud ✦ Unreal Engine <3“, Werte mit
-  Augenzwinkern, ein Spruch im Steckbrief jedes Spiels („Wege zu scheitern: ∞“, „Untote: Jap, auch die“),
-  „Sag Hallo!“, „Mit 🧡 und zu viel Koffein gemacht“.
-- **Zwei Sticker:** „Indie & Proud“ und „Playtest offen!“.
-- **Spielereien wie in einem Spiel:** Glut im Startbild (in der Farbe des aktiven Spiels), „Wobbly Wizards“ wackelt
-  beim Drüberfahren, Erfolge 🏆 mit Konfetti.
+Die Live-Seite ist die Basis – gleicher Aufbau, gleiche Reihenfolge, gleiche Bausteine, eure Texte 1:1.
 
-Erfolge, Glut-Partikel und Laufband gibt es auf der Live-Seite schon – v3 setzt sie gezielt ein, statt sie über
-den Inhalt schweben zu lassen. Maskottchen und Zauberer-Funktionen sind auf Wunsch komplett raus (werden nicht genutzt).
+**Bleibt wie live:** dunkler Look mit Studio-Orange/Gold-Verlauf, Clash Display + Archivo + JetBrains Mono,
+Kopfbereich „Unsere Ideen. Eure Abenteuer.“ mit Abzeichen und Startbild, Laufband, Spielkarten mit Status-Abzeichen,
+„Klein. Unabhängig. Besessen von guten Ideen.“ mit den 6 Werte-Kacheln (Emoji), „Die Köpfe dahinter“,
+Devlog-Liste, Footer. Spielseiten: alle Blöcke aus dem Admin (Text, Videos, Warteliste, Roadmap, Vorschläge,
+Download, Kennzahlen, Galerie, Features, Lore, FAQ, Aufruf, Patch Notes) in der gewohnten Reihenfolge.
 
-**Stand:** v3 gefällt nicht („Ich mag das Design nicht“) – die Richtung für den nächsten Entwurf wird gerade abgestimmt.
+**Aufgefrischt:**
+1. Etwas kleinere Überschriften und weniger Leerraum → mehr Inhalt pro Bildschirm (Startseite ~30 % kürzer,
+   Spielseiten 30–35 % kürzer).
+2. Eine Inhaltsbreite für alle Abschnitte.
+3. „Aktuelles Projekt“ + „Unsere Spiele“ zusammengelegt: FRONTLINERS groß oben, darunter Fall of Kings,
+   Wobbly Wizards und Browser-Demos in einer Reihe (Demos mit eigenem Bild statt leerem Kärtchen).
+4. Kopfzeile mit Logo **und** Schriftzug PLANI**GAMES**; „☕ Unterstützen“ steht dort statt schwebend.
+5. Newsletter + Community in einem Block, kein zweites Newsletter-Feld im Footer.
+6. Devlog-Liste mit Vorschaubildern; Beiträge ohne Bild bekommen das Spiel-Cover mit Logo.
+7. Spielseite: Buttons direkt im Kopfbereich (Playtest/Wishlist + Trailer), Videos nebeneinander statt zweimal
+   riesig, Roadmap als kompakte Kacheln, Beta-Anmeldung + Wishlist-Aufruf in einem Block.
+8. Emoji-Zeilen in Devlog-Beiträgen werden zu Zwischenüberschriften (besser lesbar).
+9. Partikel nur im Kopfbereich, kein eigener Mauszeiger; nichts schwebt mehr über dem Inhalt.
+
+Funktionen wie Cookie-Hinweis, Erfolge, Kommentare und Reaktionen bleiben unverändert – sie sind im
+Probedesign nur weggelassen, damit man das Aussehen beurteilen kann.
 
 ## Was im Admin dazukäme (bestehende Daten bleiben gültig)
 
-- Status „Pausiert“ mit kurzem Hinweistext.
-- Spiel-Steckbrief (optional): Spieler, Plattform, Genre – ohne Angaben wird die Leiste ausgeblendet.
-- „Im Fokus“ auf der Startseite: Spiel + Bild wählbar.
-- Kopfzeilen-Link „Playtest“: Text + Ziel wählbar.
-- Steckbrief-Felder frei benennbar (für den Spruch je Spiel) · Sticker-Texte.
-- Studio-Kennzahlen optional (sonst automatisch aus Gründungsjahr, Spielen und Team).
-- Video-Block: mehrere Videos mit Vorschaubild und Titel.
+- Spiel-Steckbrief (optional, z. B. Genre · Spieler · Plattform) – ohne Angaben keine Leiste.
+- Kopfbereich der Spielseite: zweiter Button „Trailer ansehen“ (nutzt den vorhandenen Trailer-Link).
 
-Roadmap, Warteliste, Vorschläge, FAQ und Devlog nutzen die vorhandenen Daten.
+Alles andere nutzt die vorhandenen Felder und Blöcke.
 
 ## Phasen (jede einzeln hochladbar, Admin funktioniert durchgehend)
 
-1. **Fundament:** Design-Tokens, eigene CSS-Datei statt Tailwind-Laufzeit (schnellerer Seitenaufbau),
-   eine Schrift, Kopfzeile, Footer, Buttons; Bilder beim Upload zusätzlich als WebP.
-2. **Startseite:** Spiele-Index, Studio & Team, Fokus, Devlog, „Bleib dran“.
-3. **Spielseite:** Kopfbereich + Steckbrief, alle Blöcke im neuen Stil, „Nächstes Spiel“.
+1. **Fundament:** eigene CSS-Datei statt Tailwind-Laufzeit (schnellerer Seitenaufbau), Abstände & Breiten
+   vereinheitlichen, Kopfzeile + Footer; Bilder beim Upload zusätzlich als WebP.
+2. **Startseite:** Spiele zusammenlegen, Werte/Team/Devlog auffrischen, Mitmach-Block.
+3. **Spielseite:** Kopfbereich mit Buttons, Blöcke kompakter (Videos, Roadmap, Beta + Aufruf).
 4. **Unterseiten:** Spiele-Übersicht, Devlog (Liste + Beitrag), Presse-Kit, Kontakt, Lore, Rechtliches, 404.
-5. **Feinschliff:** Animationen, Barrierefreiheit, Ladezeit, englische Texte, Gesamttest.
+5. **Feinschliff:** Handy-Ansichten, Ladezeit, englische Texte, Gesamttest.
 
 ## Offene Fragen
 
-- Passt die Mischung aus Ruhe und Charme – lieber mehr oder weniger Spielerei?
-- Kopfzeile: „● Playtest“-Link fest oder im Admin wählbar?
-- Gibt es einen Discord-Link?
+- Passt die Auffrischung so – oder an einzelnen Stellen noch näher an die Live-Seite?
+- „☕ Unterstützen“ oben in der Kopfzeile okay?
+- Gibt es einen Discord-Link (sonst bleiben YouTube & TikTok im Community-Block)?

@@ -7,545 +7,456 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
-<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&display=swap" rel="stylesheet">
 <style>
 /* =====================================================================
-   PLANIGAMES – Probedesign v3 „Ruhe, Wucht & Charme“
-   Struktur (aus v2): 1 Raster (12 Spalten, Inhalt ab Spalte 4) · Linien statt Kästen · Bild – Ruhe – Bild
-   Schrift: Clash Display (Studio-Schrift) für Überschriften, Archivo für Text & Beschriftungen
-   Charme an ausgewählten Stellen: Sprüche, Gesichter, Sticker, Glut, Erfolge
+   PLANIGAMES – Probedesign v4 „Aufgefrischt“
+   Basis ist die Live-Seite: gleicher Aufbau, gleiche Farben (Schwarz + Studio-Orange/Gold),
+   gleiche Schriften (Clash Display, Archivo, JetBrains Mono), gleiche Bausteine und Texte.
+   Aufgefrischt: etwas kleinere Titel, weniger Leerraum, eine Inhaltsbreite, keine Doppelungen,
+   nichts schwebt mehr über dem Inhalt.
    ===================================================================== */
 :root{
   color-scheme:dark;
-  --bg:#0a0a0b; --bg2:#131315; --line:rgba(242,239,233,.12); --line2:rgba(242,239,233,.24);
-  --ink:#f2efe9; --ink2:#aca79f; --ink3:#8a857e;
-  --acc:#ff7d1a; --acc2:#ffb648; --acc-ink:#160b02;
-  --g:32px; --max:1320px; --col:24px; --r:20px; --r2:28px;
-  --sec:clamp(96px,11vw,160px);
+  --bg:#050505; --card:rgba(255,255,255,.025); --card2:rgba(255,255,255,.045);
+  --line:rgba(255,255,255,.1); --line2:rgba(255,255,255,.18);
+  --ink:#f4f4f5; --ink2:#d4d4d8; --ink3:#a1a1aa; --ink4:#71717a;
+  --acc:#ff7d1a; --acc2:#e6a015; --acc3:#ffa53d; --on-acc:#fff;
+  --g:24px; --max:1152px; --sec:clamp(64px,7.4vw,104px); --r:16px; --r2:24px;
   --f:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
   --fd:"Clash Display","Archivo",system-ui,sans-serif;
-  --ease:cubic-bezier(.2,.7,.1,1);
+  --fm:"JetBrains Mono",ui-monospace,monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
 }
-@media (max-width:900px){:root{--g:24px}}
-@media (max-width:560px){:root{--g:16px;--col:16px;--r:14px;--r2:20px}}
-
+@media (max-width:560px){:root{--g:16px;--r2:20px}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:17px;line-height:1.6;font-weight:400;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
+body{margin:0;color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  background-color:var(--bg);background-image:radial-gradient(120% 70% at 50% -10%,rgba(255,125,26,.08),transparent 55%),radial-gradient(100% 60% at 50% 115%,rgba(230,160,21,.05),transparent 60%);background-attachment:fixed}
 body.lock{overflow:hidden}
-body::after{content:"";position:fixed;inset:0;z-index:300;pointer-events:none;opacity:.05;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 img{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
 button,input,textarea{font:inherit;color:inherit}
 h1,h2,h3,p,ol,ul,dl,dd,figure{margin:0}
 ol,ul{list-style:none;padding:0}
 [hidden]{display:none !important}
-::selection{background:var(--acc);color:var(--acc-ink)}
-:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+::selection{background:var(--acc);color:#fff}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:6px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
-.skip{position:fixed;left:16px;top:-60px;z-index:100;background:var(--ink);color:var(--bg);padding:10px 14px;font-weight:600;border-radius:999px}
-.skip:focus{top:16px}
-.ic{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-
-/* ---------- Raster ---------- */
+.ic{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .wrap{width:100%;max-width:calc(var(--max) + 2 * var(--g));margin:0 auto;padding-left:max(var(--g),env(safe-area-inset-left,0px));padding-right:max(var(--g),env(safe-area-inset-right,0px))}
-.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--col)}
-.c-lab{grid-column:1/4}
-.c-main{grid-column:4/13;min-width:0}
-.c-prose{grid-column:4/11;min-width:0}
 .sec{padding-top:var(--sec);padding-bottom:var(--sec)}
 .sec + .sec{padding-top:0}
-.sec .c-lab,.sec .c-main,.sec .c-prose{border-top:1px solid var(--line);padding-top:22px}
 
-/* ---------- Schrift ---------- */
-.lab{font-size:11.5px;line-height:1.35;font-weight:600;font-stretch:125%;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
-.lab b{color:var(--ink);font-weight:600}
-.d1{font-family:var(--fd);font-weight:600;font-size:clamp(52px,7.6vw,124px);line-height:.96;letter-spacing:-.026em;word-spacing:.08em}
-.d2{font-family:var(--fd);font-weight:600;font-size:clamp(40px,5.2vw,84px);line-height:1;letter-spacing:-.024em;word-spacing:.08em}
-.st{font-family:var(--fd);font-weight:500;font-size:clamp(30px,3.7vw,56px);line-height:1.08;letter-spacing:-.024em;color:var(--ink);text-wrap:balance}
-.st.xl{font-size:clamp(42px,5.8vw,94px);line-height:1;letter-spacing:-.028em;word-spacing:.06em}
-.st .dim{color:var(--ink3)}
-.h3{font-family:var(--fd);font-weight:600;font-size:clamp(19px,1.45vw,22px);line-height:1.2;letter-spacing:-.008em;color:var(--ink)}
-.lead{font-size:clamp(17px,1.3vw,20px);line-height:1.55;color:var(--ink2);text-wrap:pretty}
-p{color:var(--ink2)}
+/* ---------- Schrift (wie live) ---------- */
+.h1{font-family:var(--fd);font-weight:700;font-size:clamp(46px,6.8vw,88px);line-height:.95;letter-spacing:-.025em;color:#fff}
+.h1.sm{font-size:clamp(40px,5.4vw,72px)}
+.h2{font-family:var(--fd);font-weight:700;font-size:clamp(30px,3.6vw,44px);line-height:1.05;letter-spacing:-.015em;color:#fff}
+.h2.lg{font-size:clamp(34px,4.2vw,52px)}
+.h3{font-family:var(--fd);font-weight:700;font-size:21px;line-height:1.2;letter-spacing:-.005em;color:#fff}
+.h1,.h2,.h3{overflow-wrap:break-word;hyphens:auto}
+.grad{background:linear-gradient(110deg,var(--acc2),var(--acc) 75%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.kicker,.badge,.more,.lang{font-family:var(--fm);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase}
+.kicker{color:var(--acc);margin-bottom:14px}
+.lead{font-size:clamp(17px,1.5vw,20px);line-height:1.6;color:var(--ink2)}
+p{color:var(--ink3)}
 .txt p + p{margin-top:1em}
-.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:10px;vertical-align:1px;background:var(--ink3)}
-.dot.st-announced{background:var(--acc)}
-.dot.st-development{background:var(--ink)}
-.dot.st-paused{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink3)}
+.txt b{color:var(--ink);font-weight:600}
+.c{text-align:center}
 
-/* ---------- Bedienelemente ---------- */
-.row{display:flex;flex-wrap:wrap;gap:12px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;height:56px;padding:0 28px;border:0;border-radius:999px;cursor:pointer;font-size:12.5px;font-weight:700;font-stretch:112%;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;transition:background .25s,color .25s,box-shadow .25s,transform .25s var(--ease)}
-.btn .ic{width:18px;height:18px;transition:transform .4s var(--ease)}
-.btn:hover .ic{transform:translateX(4px)}
-.btn:active{transform:scale(.97)}
-.btn-p{background:var(--acc);color:var(--acc-ink);box-shadow:0 10px 30px -10px rgba(255,125,26,.7)}
-.btn-p:hover{background:#ff9442}
-.btn-g{background:rgba(10,10,11,.2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-.btn-g:hover{box-shadow:inset 0 0 0 1px var(--ink)}
+/* ---------- Bedienelemente (wie live) ---------- */
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.c .row,.row.c{justify-content:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 26px;border:0;border-radius:999px;cursor:pointer;font-weight:600;font-size:16px;line-height:1.25;white-space:nowrap;transition:transform .3s var(--ease),box-shadow .3s,background .3s,border-color .3s}
+.btn .ic{width:17px;height:17px;transition:transform .35s var(--ease)}
+.btn:hover .ic{transform:translateX(3px)}
+.btn-p{background:linear-gradient(110deg,var(--acc),var(--acc2));color:var(--on-acc);box-shadow:0 10px 40px -10px color-mix(in srgb,var(--acc) 70%,transparent)}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 14px 44px -10px color-mix(in srgb,var(--acc) 85%,transparent)}
+.btn-g{box-shadow:inset 0 0 0 1px var(--line2);background:transparent;color:var(--ink)}
+.btn-g:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.5);background:rgba(255,255,255,.04)}
 .btn-g:hover .ic{transform:none}
-.btn.sm{height:44px;padding:0 20px}
-.lnk{display:inline-flex;align-items:center;gap:10px;padding:6px 0;font-size:12px;font-weight:650;font-stretch:125%;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .45s var(--ease)}
-.lnk:hover{background-size:100% 1px}
-.lnk .ic{width:16px;height:16px}
-button.lnk{border:0;cursor:pointer}
-.c-lab .lnk{margin-top:14px}
-/* Sticker – bewusst nur zwei auf der ganzen Seite */
-.stk{display:inline-flex;align-items:center;gap:8px;padding:9px 16px 8px;border-radius:999px;font-family:var(--f);font-size:12px;line-height:1;font-weight:700;font-stretch:112%;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;vertical-align:middle;box-shadow:0 14px 30px -8px rgba(0,0,0,.5);transform:rotate(var(--rot,-7deg))}
-.stk-w{background:var(--ink);color:var(--bg)}
-.stk-o{background:var(--acc);color:var(--acc-ink)}
+.btn-s{padding:10px 20px;font-size:14px}
+.more{display:inline-flex;align-items:center;gap:8px;color:var(--acc);transition:gap .3s var(--ease)}
+.more:hover{gap:12px}
+.more.dim{color:var(--ink4)} .more.dim:hover{color:#fff}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);background:rgba(5,5,5,.55);color:var(--ink2);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.badge i{width:6px;height:6px;border-radius:50%;background:var(--dot,var(--acc))}
+.badge.plain{box-shadow:none;background:none;padding:5px 0;color:var(--ink4)}
+.pulse{animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.card{border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card)}
+.sec-h{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 20px;margin-bottom:32px}
+.sec-h .more{white-space:nowrap}
 
 /* ---------- Kopfzeile ---------- */
-.hd{position:fixed;top:0;left:0;right:0;z-index:60;padding-top:env(safe-area-inset-top,0px);border-bottom:1px solid transparent;transition:background .4s,border-color .4s}
-.hd.solid{background:rgba(10,10,11,.8);-webkit-backdrop-filter:blur(16px) saturate(1.2);backdrop-filter:blur(16px) saturate(1.2);border-bottom-color:var(--line)}
-.hd-in{display:flex;align-items:center;gap:36px;height:84px}
-.brand{display:flex;align-items:center;gap:12px;margin-right:auto}
-.brand .mark{transition:transform .9s var(--ease)}
-.brand:hover .mark{transform:rotate(360deg)}
-.wm{font-weight:700;font-stretch:125%;font-size:15px;letter-spacing:.05em}
-.nav{display:flex;gap:32px}
-.nav a,.live,.lang{font-size:12px;font-weight:600;font-stretch:125%;letter-spacing:.08em;text-transform:uppercase}
-.nav a{position:relative;padding:8px 0;color:var(--ink2);transition:color .2s}
-.nav a:hover,.nav a.on{color:var(--ink)}
-.nav a.on::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:1px;background:currentColor}
-.live{display:inline-flex;align-items:center;gap:10px;color:var(--ink)}
-.live i{width:7px;height:7px;border-radius:50%;background:var(--acc);animation:pulse 2.6s ease-out infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,125,26,.55)}70%,100%{box-shadow:0 0 0 9px rgba(255,125,26,0)}}
-.lang{color:var(--ink3)} .lang b{color:var(--ink);font-weight:600} .lang a:hover{color:var(--ink)}
-.burger{display:none;position:relative;width:44px;height:44px;margin-right:-10px;border:0;background:none;cursor:pointer}
-.burger i{position:absolute;left:11px;right:11px;height:1.5px;background:var(--ink);transition:transform .4s var(--ease),top .4s var(--ease)}
-.burger i:first-child{top:18px} .burger i:last-child{top:25px}
-.burger[aria-expanded="true"] i:first-child{top:21.5px;transform:rotate(45deg)}
-.burger[aria-expanded="true"] i:last-child{top:21.5px;transform:rotate(-45deg)}
-.mark{flex:none}
+.hd{position:fixed;top:0;left:0;right:0;z-index:60;padding-top:env(safe-area-inset-top,0px);transition:background .35s,box-shadow .35s}
+.hd.solid{background:rgba(5,5,5,.78);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 1px 0 var(--line)}
+.hd-in{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:76px}
+.brand{display:flex;align-items:center;gap:10px;justify-self:start}
+.wm{font-family:var(--fd);font-weight:700;font-size:18px;letter-spacing:-.01em;color:#fff}
+.wm span{background:linear-gradient(110deg,var(--acc2),var(--acc) 75%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.nav{display:flex;gap:30px}
+.nav a{font-size:14px;font-weight:500;color:var(--ink3);transition:color .2s}
+.nav a:hover,.nav a.on{color:#fff}
+.hd-r{display:flex;align-items:center;gap:12px;justify-self:end}
+.tip{font-size:14px;font-weight:500;color:var(--ink3);padding:8px 4px;transition:color .2s}
+.tip:hover{color:#fff}
+.lang{padding:7px 12px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink4)}
+.lang b{color:var(--ink);font-weight:500}
+.burger{display:none;position:relative;width:42px;height:42px;border:0;background:none;cursor:pointer}
+.burger i{position:absolute;left:10px;right:10px;height:2px;border-radius:2px;background:#fff;transition:transform .35s var(--ease),top .35s var(--ease),opacity .2s}
+.burger i:nth-child(1){top:14px} .burger i:nth-child(2){top:20px} .burger i:nth-child(3){top:26px}
+.burger[aria-expanded="true"] i:nth-child(1){top:20px;transform:rotate(45deg)}
+.burger[aria-expanded="true"] i:nth-child(2){opacity:0}
+.burger[aria-expanded="true"] i:nth-child(3){top:20px;transform:rotate(-45deg)}
+.mn{position:fixed;inset:0;z-index:55;display:flex;flex-direction:column;gap:28px;padding:104px var(--g) calc(28px + env(safe-area-inset-bottom,0px));background:rgba(5,5,5,.97);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;visibility:hidden;transition:opacity .3s,visibility 0s .3s}
+.mn.open{opacity:1;visibility:visible;transition:opacity .3s}
+.mn nav{display:grid}
+.mn nav a{padding:14px 0;border-bottom:1px solid var(--line);font-family:var(--fd);font-weight:700;font-size:30px;letter-spacing:-.01em}
+.mn .row{margin-top:auto}
 
-/* Handy-Menü */
-.mn{position:fixed;inset:0;z-index:55;display:flex;flex-direction:column;justify-content:flex-end;gap:40px;background:var(--bg);
-  padding:110px max(var(--g),env(safe-area-inset-left,0px)) calc(32px + env(safe-area-inset-bottom,0px));
-  transform:translateY(-100%);visibility:hidden;transition:transform .6s var(--ease),visibility 0s .6s}
-.mn.open{transform:none;visibility:visible;transition:transform .6s var(--ease)}
-.mn nav{border-top:1px solid var(--line)}
-.mn nav a{display:flex;align-items:center;justify-content:space-between;padding:16px 0 14px;border-bottom:1px solid var(--line);font-family:var(--fd);font-weight:600;font-size:clamp(40px,12vw,64px);line-height:1;letter-spacing:-.03em}
-.mn nav a .ic{width:28px;height:28px;color:var(--ink3)}
-.mn-f{display:flex;justify-content:space-between;align-items:center}
+/* ---------- Startseite: Kopfbereich (wie live) ---------- */
+.hero{position:relative;min-height:max(620px,88vh);display:flex;align-items:center;padding:120px 0 72px;overflow:hidden;isolation:isolate}
+.hero-bg{position:absolute;inset:0;z-index:-3}
+.hero-bg img{width:100%;height:100%;object-fit:cover;object-position:62% 50%}
+.hero::before{content:"";position:absolute;inset:0;z-index:-2;background:
+  linear-gradient(90deg,rgba(5,5,5,.94) 0%,rgba(5,5,5,.78) 38%,rgba(5,5,5,.35) 70%,rgba(5,5,5,.2) 100%),
+  linear-gradient(0deg,var(--bg) 0%,rgba(5,5,5,0) 30%),linear-gradient(180deg,rgba(5,5,5,.6),rgba(5,5,5,0) 22%)}
+.grid-lines{position:absolute;inset:0;z-index:-1;opacity:.5;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:linear-gradient(90deg,#000,transparent 70%);mask-image:linear-gradient(90deg,#000,transparent 70%)}
+.fx{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.fx i{position:absolute;bottom:-24px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;opacity:0;background:radial-gradient(circle,#ffd1a6 0%,rgba(255,125,26,.45) 45%,transparent 70%);animation:rise var(--t) linear var(--d) infinite}
+@keyframes rise{0%{transform:translate3d(0,0,0);opacity:0}15%{opacity:.9}80%{opacity:.5}100%{transform:translate3d(var(--dx),-92vh,0);opacity:0}}
+.hero-in{position:relative}
+.hero .badge{margin-bottom:28px}
+.hero .lead{max-width:640px;margin-top:26px}
+.hero .row{margin-top:34px}
 
-/* ---------- Startseite: Spiele-Index ---------- */
-.hx{position:relative;min-height:max(660px,100vh);min-height:max(660px,100svh);display:flex;align-items:flex-end;overflow:hidden;isolation:isolate}
-.hx-bg{position:absolute;inset:0;z-index:-1;background:var(--bg2)}
-.hx-bg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.07);transition:opacity 1.3s var(--ease),transform 9s cubic-bezier(.15,.6,.25,1)}
-.hx-bg img.on{opacity:1;transform:scale(1)}
-.hx-bg::after{content:"";position:absolute;inset:0;background:
-  linear-gradient(90deg,rgba(10,10,11,.82) 0%,rgba(10,10,11,.42) 46%,rgba(10,10,11,.08) 100%),
-  linear-gradient(0deg,var(--bg) 0%,rgba(10,10,11,.55) 34%,rgba(10,10,11,0) 64%),
-  linear-gradient(180deg,rgba(10,10,11,.6) 0%,rgba(10,10,11,0) 20%)}
-/* Glut – wie die Partikel der Live-Seite, aber nur hier und in der Farbe des aktiven Spiels */
-.embers{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-.embers i{position:absolute;bottom:-12px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:var(--ember,#ff7d1a);box-shadow:0 0 10px 2px var(--ember,#ff7d1a);opacity:0;animation:ember var(--t) linear var(--d) infinite;transition:background 1.2s,box-shadow 1.2s}
-@keyframes ember{0%{transform:translate3d(0,0,0);opacity:0}12%{opacity:.85}70%{opacity:.45}100%{transform:translate3d(var(--dx),-84vh,0);opacity:0}}
-.hx-in{position:relative;z-index:1;padding-top:150px;padding-bottom:clamp(36px,6vh,72px)}
-.hx-top{align-items:end;margin-bottom:22px}
-.ix{border-top:1px solid var(--line2)}
-.ix a{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--col);align-items:center;padding:14px 0 12px;border-bottom:1px solid var(--line2)}
-.ix-m{grid-column:1/4;display:flex;flex-direction:column;gap:10px;align-self:center}
-.ix-s{color:var(--ink3);transition:color .35s}
-.ix-t{grid-column:4/13;font-family:var(--fd);font-weight:600;font-size:clamp(40px,6.9vw,112px);line-height:1;letter-spacing:-.022em;word-spacing:.1em;
-  color:transparent;-webkit-text-stroke:1px rgba(242,239,233,.55);transition:color .5s var(--ease),-webkit-text-stroke-color .5s}
-.ix-t span{display:inline-block}
-.ix li[data-wobble] a:hover .ix-t span{animation:wob .9s var(--ease) calc(var(--i) * 35ms) both}
-@keyframes wob{0%,100%{transform:none}25%{transform:translateY(-.07em) rotate(-6deg)}50%{transform:translateY(.03em) rotate(5deg)}75%{transform:rotate(-2deg)}}
-.ix li.on .ix-t{color:var(--ink);-webkit-text-stroke-color:transparent}
-.ix li.on .ix-s{color:var(--ink)}
-.ix-go{position:absolute;right:0;top:50%;display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:var(--ink);color:var(--bg);transform:translate(-8px,-50%) scale(.7);opacity:0;transition:opacity .35s,transform .5s var(--ease)}
-.ix-go .ic{width:22px;height:22px}
-.ix li.on .ix-go{opacity:1;transform:translate(0,-50%)}
-.ix-bar{position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--ga,var(--ink));transform:scaleX(0);transform-origin:left}
-.ix li.run .ix-bar{animation:bar var(--hxd,6.5s) linear forwards}
-@keyframes bar{to{transform:scaleX(1)}}
-
-/* Laufband – die Studio-Stimme, einmal */
-.tick{overflow:hidden;border-bottom:1px solid var(--line);padding:24px 0;white-space:nowrap}
-.tick-in{display:inline-flex;align-items:center;gap:30px;padding-left:30px;animation:tick 52s linear infinite;font-family:var(--fd);font-weight:600;font-size:clamp(28px,3.2vw,46px);line-height:1;letter-spacing:-.015em;word-spacing:.08em}
-.tick-in .o{color:transparent;-webkit-text-stroke:1px rgba(242,239,233,.55)}
-.tick-in i{font-style:normal;font-size:.55em;color:var(--acc)}
-.tick:hover .tick-in{animation-play-state:paused}
+/* Laufband (wie live) */
+.tick{overflow:hidden;white-space:nowrap;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.tick-in{display:inline-flex;align-items:center;gap:28px;padding-left:28px;animation:tick 45s linear infinite;font-family:var(--fd);font-weight:700;font-size:22px;letter-spacing:-.01em}
+.tick-in span:nth-child(4n+3){color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.35)}
+.tick-in span{color:rgba(255,255,255,.55)}
+.tick-in i{font-style:normal;color:var(--acc);font-size:15px}
 @keyframes tick{to{transform:translateX(-50%)}}
 
-/* ---------- Studio ---------- */
-.st .stk{margin-left:.55em;font-size:12px;transform:rotate(var(--rot)) translateY(-.35em)}
-.split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,4fr);column-gap:clamp(32px,6vw,112px);margin-top:clamp(40px,5vw,72px)}
-.facts-line{margin-top:28px;color:var(--ink2)}
-.facts-line span{white-space:nowrap}
-.vals li{display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:12px;padding:16px 0;border-top:1px solid var(--line)}
-.vals li:last-child{border-bottom:1px solid var(--line)}
-.vals .lab{padding-top:5px}
-.vals .h3{margin-bottom:4px}
-.vals p{font-size:15.5px;line-height:1.5}
-.team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px var(--col)}
-.team-sec{margin-top:clamp(72px,8vw,120px)}
-.tm figure{position:relative;aspect-ratio:4/5;overflow:hidden;background:var(--bg2);border-radius:var(--r);margin-bottom:18px;transition:transform .6s var(--ease),box-shadow .6s}
-.tm:nth-child(odd):hover figure{transform:rotate(-2.2deg) translateY(-6px);box-shadow:0 24px 50px -20px rgba(0,0,0,.8)}
-.tm:nth-child(even):hover figure{transform:rotate(2.2deg) translateY(-6px);box-shadow:0 24px 50px -20px rgba(0,0,0,.8)}
-.tm figure > img{width:100%;height:100%;object-fit:cover}
-.tm .lab{margin-top:6px}
-.tm .q{margin-top:12px;font-size:15px;line-height:1.45;color:var(--ink)}
-.tm .loc{margin-top:6px;font-size:13px;color:var(--ink3)}
-
-/* ---------- Bild-Bühnen ---------- */
-.band-w{position:relative}
-.band{position:relative;display:flex;align-items:flex-end;min-height:min(88vh,820px);overflow:hidden;isolation:isolate;border-radius:var(--r2)}
-.band-bg,.gh-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
-.band::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(10,10,11,.95) 0%,rgba(10,10,11,.55) 42%,rgba(10,10,11,.12) 74%),linear-gradient(90deg,rgba(10,10,11,.6),rgba(10,10,11,0) 62%),rgba(10,10,11,.22)}
-.band-in{width:100%;min-width:0;padding:clamp(28px,5vw,64px)}
-.band-stk{position:absolute;top:clamp(20px,3vw,36px);right:clamp(20px,3vw,36px);animation:bob 3.2s ease-in-out infinite}
-@keyframes bob{50%{transform:rotate(var(--rot)) translateY(-6px)}}
+/* ---------- Spiele ---------- */
+.feat{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:clamp(20px,3.5vw,48px);align-items:center;padding:14px;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card);transition:box-shadow .3s}
+.feat:hover{box-shadow:inset 0 0 0 1px var(--line2)}
+.feat figure,.gcard figure{position:relative;overflow:hidden;border-radius:var(--r);background:#111}
+.feat figure{aspect-ratio:16/10}
+.feat img,.gcard img{width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.feat:hover img,.gcard:hover figure > img{transform:scale(1.05)}
+.feat-b{padding:10px clamp(4px,1.5vw,20px) 10px 0}
+.feat-b .row{margin:0 0 22px}
+.feat-b .lg{margin-bottom:18px}
+.feat-b p{font-size:18px;color:var(--ink2);margin-bottom:26px}
+.cards3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:20px}
+.gcard{display:flex;flex-direction:column;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card);overflow:hidden;transition:box-shadow .3s,transform .4s var(--ease)}
+.gcard:hover{box-shadow:inset 0 0 0 1px var(--line2);transform:translateY(-3px)}
+.gcard figure{aspect-ratio:16/10;border-radius:0}
+.gcard figure .badge{position:absolute;left:14px;top:14px}
+.gcard-b{display:flex;flex-direction:column;gap:8px;padding:20px 22px 22px;flex:1}
+.gcard-b p{font-size:14.5px;line-height:1.5}
+.gcard-b .more{margin-top:auto;padding-top:10px}
+.demo-art{display:grid;place-items:center;height:100%;background:radial-gradient(70% 90% at 50% 100%,rgba(255,125,26,.28),transparent 70%),linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px) 0 0/32px 32px,linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px) 0 0/32px 32px,#0b0b0d}
+.demo-art span{font-size:44px;filter:drop-shadow(0 6px 18px rgba(255,125,26,.45))}
 .lg{display:block;position:relative;overflow:hidden;width:calc(var(--w) * var(--k,1));max-width:100%}
 .lg img{position:absolute;max-width:none;height:auto}
-.band .lg{margin:26px 0 28px}
-.band-t{max-width:520px;margin-bottom:36px;font-size:clamp(17px,1.35vw,20px);color:var(--ink2)}
-.hx .lab,.band .lab,.gh .lab,.gp .lab{text-shadow:0 1px 14px rgba(0,0,0,.6)}
 
-/* ---------- Karten (Devlog) ---------- */
-.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px var(--col)}
-.card figure,.prow figure{position:relative;aspect-ratio:3/2;overflow:hidden;background:var(--bg2);border-radius:var(--r)}
-.card figure{margin-bottom:18px}
-.card img,.prow img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
-.card:hover img,.prow:hover figure > img{transform:scale(1.045)}
-.card .lab{margin-bottom:10px}
-.card .h3{transition:color .2s}
-.ph-img{filter:brightness(.42) saturate(.7)}
-.card-logo{position:absolute !important;left:50%;top:50%;transform:translate(-50%,-50%)}
+/* ---------- Studio (wie live) ---------- */
+.about{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,5vw,72px);align-items:start;margin-bottom:44px}
+.about .txt{padding-top:30px;font-size:17px}
+.vals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.val{padding:24px;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card);transition:box-shadow .3s,background .3s}
+.val:hover{box-shadow:inset 0 0 0 1px var(--line2);background:var(--card2)}
+.val .emo{display:block;font-size:26px;line-height:1;margin-bottom:16px}
+.val .h3{font-size:18px;margin-bottom:6px}
+.val p{font-size:14.5px;line-height:1.55}
 
-/* ---------- Footer ---------- */
-.ft{position:relative;border-top:1px solid var(--line);background:radial-gradient(60% 120% at 85% 0%,rgba(255,125,26,.09),rgba(255,125,26,0) 70%)}
-.ft-cta{padding-top:calc(var(--sec) * .8);padding-bottom:calc(var(--sec) * .8);align-items:end}
-.ft-cta .d2{grid-column:1/7}
-.ft-cta .c-cta{grid-column:7/13}
-.nl{display:flex;align-items:center;gap:8px;margin-top:26px;padding:6px 6px 6px 22px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line2);background:rgba(242,239,233,.03);transition:box-shadow .3s}
-.nl:focus-within{box-shadow:inset 0 0 0 1px var(--ink)}
-.nl input{flex:1;min-width:0;height:50px;background:none;border:0;outline:0;font-size:17px}
-.nl input::placeholder{color:var(--ink3)}
-.nl button{display:inline-flex;align-items:center;gap:10px;height:50px;padding:0 22px;border:0;border-radius:999px;background:var(--acc);color:var(--acc-ink);cursor:pointer;font-size:12px;font-weight:700;font-stretch:112%;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;transition:background .25s,transform .25s var(--ease)}
-.nl button:hover{background:#ff9442}
-.nl button:active{transform:scale(.96)}
-.nl button .ic{width:17px;height:17px;transition:transform .4s var(--ease)}
-.nl button:hover .ic{transform:translateX(4px)}
+/* Team („Die Köpfe dahinter“) */
+.team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;max-width:960px;margin:40px auto 0}
+.tm{text-align:center}
+.tm figure{width:min(100%,210px);aspect-ratio:1;margin:0 auto 18px;border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--line);background:#111}
+.tm img{width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.tm:hover img{transform:scale(1.05)}
+.tm .badge{padding:0;box-shadow:none;background:none;color:var(--acc);margin:6px 0 10px}
+.tm .q{font-size:15px;color:var(--ink2)}
+.tm .loc{margin-top:6px;font-size:13px;color:var(--ink4)}
+
+/* Devlog-Liste (wie live, mit Vorschaubild) */
+.plist{border-top:1px solid var(--line)}
+.prow{display:grid;grid-template-columns:96px 130px minmax(0,1fr) auto;gap:22px;align-items:center;padding:16px 4px;border-bottom:1px solid var(--line);transition:background .25s}
+.prow:hover{background:rgba(255,255,255,.025)}
+.prow figure{position:relative;aspect-ratio:16/10;border-radius:10px;overflow:hidden;background:#111}
+.prow figure img{width:100%;height:100%;object-fit:cover}
+.prow .ph-img{filter:brightness(.55) saturate(.85)}
+.prow-d{font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--ink4);line-height:1.5}
+.prow-t .badge{padding:0;box-shadow:none;background:none;color:var(--ink4);margin-bottom:4px}
+.prow-h{display:block;font-weight:600;font-size:17px;color:#fff;transition:color .2s}
+.prow:hover .prow-h{color:var(--acc3)}
+.prow-e{display:block;font-size:14px;color:var(--ink3);margin-top:2px}
+.prow .ic{width:18px;height:18px;color:var(--ink4);transition:transform .3s var(--ease),color .2s}
+.prow:hover .ic{transform:translateX(3px);color:#fff}
+
+/* Mitmachen: Newsletter + Community in einem Block */
+.join{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);overflow:hidden;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);
+  background:radial-gradient(80% 120% at 0% 0%,rgba(255,125,26,.18),transparent 60%),radial-gradient(60% 100% at 100% 100%,rgba(230,160,21,.1),transparent 60%),var(--card)}
+.join > div{padding:clamp(28px,4.5vw,56px)}
+.join-co{box-shadow:inset 1px 0 0 var(--line)}
+.join .h2{margin-bottom:14px}
+.join-co .emo{font-size:30px;display:block;margin-bottom:14px}
+.join-co .h3{font-size:24px;margin-bottom:10px}
+.join-co .row{margin-top:22px}
+.nl{display:flex;gap:10px;margin-top:26px;max-width:520px}
+.c .nl{margin-left:auto;margin-right:auto}
+.nl input,.idea input{flex:1;min-width:0;height:52px;padding:0 20px;border:0;border-radius:999px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px var(--line2);outline:0;font-size:16px;transition:box-shadow .2s}
+.nl input:focus,.idea input:focus{box-shadow:inset 0 0 0 1px var(--acc)}
+.nl input::placeholder,.idea input::placeholder{color:var(--ink4)}
+.nl .btn,.idea .btn{padding:0 24px;height:52px}
 .ok{margin-top:14px;color:var(--ink);font-weight:500}
-.ft-mid{border-top:1px solid var(--line)}
-.ft-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--col);row-gap:40px;padding-top:56px;padding-bottom:48px}
-.ft-brand{grid-column:1/5}
-.ft-brand p{max-width:330px;margin-top:20px;font-size:15px}
-.ft-brand .lnk{margin-top:16px}
-.ft-col:nth-child(2){grid-column:7/9} .ft-col:nth-child(3){grid-column:9/11} .ft-col:nth-child(4){grid-column:11/13}
-.ft-col ul{display:grid;gap:9px;margin-top:18px}
-.ft-col a{display:inline-flex;align-items:center;gap:7px;font-size:15px;color:var(--ink2);transition:color .2s}
-.ft-col a:hover{color:var(--ink)}
-.ft-col a .ic{width:13px;height:13px;color:var(--ink3)}
-.ft-word{display:block;width:100%;height:auto;margin-bottom:-2px}
-.ft-word text{font-family:var(--fd);font-weight:600;font-size:150px;letter-spacing:-4px;fill:#19191b}
-.ft-bot-w{border-top:1px solid var(--line)}
-.ft-bot{display:flex;justify-content:space-between;gap:16px;padding-top:22px;padding-bottom:calc(26px + env(safe-area-inset-bottom,0px));font-size:13px;color:var(--ink3)}
-.ft-bot span:last-child{display:flex;gap:24px}
-.ft-bot a:hover{color:var(--ink)}
+
+/* ---------- Footer (wie live) ---------- */
+.ft{border-top:1px solid var(--line);padding-top:56px}
+.ft-top{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:40px;padding-bottom:44px}
+.ft-brand p{max-width:330px;margin-top:16px;font-size:15px}
+.ft-col .badge{padding:0;box-shadow:none;background:none;color:var(--ink4);margin-bottom:16px}
+.ft-col ul{display:grid;gap:10px}
+.ft-col a{font-size:15px;color:var(--ink2);transition:color .2s}
+.ft-col a:hover{color:#fff}
+.ft-bot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 24px;padding:22px 0 calc(28px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);font-size:13px;color:var(--ink4)}
+.ft-bot span{display:flex;flex-wrap:wrap;gap:8px 22px}
+.ft-bot a:hover{color:#fff}
+.ft-bot .badge{padding:0;box-shadow:none;background:none;color:var(--ink4)}
 
 /* ---------- Seitenköpfe ---------- */
-.ph{padding-top:clamp(140px,19vh,210px);padding-bottom:clamp(56px,7vw,104px)}
-.ph > .lab{margin-bottom:24px}
-.ph .lead{max-width:600px;margin-top:32px}
+.ph{padding-top:clamp(124px,15vh,168px);padding-bottom:clamp(36px,4vw,56px)}
+.ph .lead{max-width:620px;margin-top:20px}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px}
+.filters button{padding:7px 14px;border:0;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line2);background:none;cursor:pointer;font-family:var(--fm);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);transition:color .2s,background .2s,box-shadow .2s}
+.filters button:hover{color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
+.filters button.on{background:#fff;color:#050505;box-shadow:none}
+.demo-list{margin-top:20px;padding:clamp(22px,3vw,32px)}
+.demo-list .sec-h{margin-bottom:18px}
+.build{display:flex;align-items:center;gap:16px;padding:14px 16px;border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);background:rgba(255,255,255,.02);transition:box-shadow .2s,background .2s}
+.build + .build{margin-top:10px}
+.build:hover{box-shadow:inset 0 0 0 1px var(--line2);background:rgba(255,255,255,.04)}
+.build .emo{font-size:22px}
+.build b{display:block;font-weight:600;color:#fff}
+.build small{display:block;font-family:var(--fm);font-size:11px;letter-spacing:.06em;color:var(--ink4)}
+.build button{margin-left:auto;display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line2);background:none;cursor:pointer;color:var(--ink2)}
+.build button:hover{background:var(--acc);color:#fff;box-shadow:none}
+.build button .ic{width:17px;height:17px}
 
-/* ---------- Spiele-Übersicht ---------- */
-.gpl{display:grid;gap:16px}
-.gp{position:relative;display:flex;align-items:flex-end;min-height:min(78vh,760px);overflow:hidden;isolation:isolate;border-radius:var(--r2)}
-.gp > img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;transition:transform 1.8s var(--ease)}
-.gp::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(10,10,11,.93) 0%,rgba(10,10,11,.3) 46%,rgba(10,10,11,.04) 78%)}
-.gp:hover > img{transform:scale(1.035)}
-.gp-in{display:flex;justify-content:space-between;align-items:flex-end;gap:32px;width:100%;padding:clamp(28px,4.5vw,56px)}
-.gp-in .lab{margin-bottom:24px}
-.gp-in > div:first-child{flex:1 1 auto;min-width:0}
-.gp-r{display:grid;justify-items:end;gap:12px;text-align:right}
-.gp-r .lab{margin:0;color:var(--ink)}
-.demos-lead{max-width:560px;margin-bottom:28px}
-.demos li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:32px;align-items:center;padding:18px 0;border-bottom:1px solid var(--line)}
-.demos li:first-child{border-top:1px solid var(--line)}
+/* ---------- Spielseite (Blöcke wie live) ---------- */
+.gh{position:relative;min-height:max(600px,80vh);display:flex;align-items:flex-end;padding:120px 0 56px;overflow:hidden;isolation:isolate}
+.gh-media{position:absolute;inset:0;z-index:-2}
+.gh-media img{width:100%;height:100%;object-fit:cover}
+.gh::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,var(--bg) 0%,rgba(5,5,5,.72) 32%,rgba(5,5,5,.15) 70%,rgba(5,5,5,.5) 100%),linear-gradient(90deg,rgba(5,5,5,.6),rgba(5,5,5,0) 65%)}
+.gh .lg{margin:22px 0 18px}
+.gh-tag{font-size:clamp(18px,1.7vw,22px);color:var(--ink2);max-width:640px}
+.gh .row{margin-top:28px}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.rt{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(28px,5vw,72px)}
+.rt .txt{font-size:17px}
+.vids{display:grid;gap:20px}
+.vids.two{grid-template-columns:1fr 1fr}
+.vid{position:relative;display:block;aspect-ratio:16/9;border-radius:var(--r2);overflow:hidden;background:#111;box-shadow:0 30px 80px -30px color-mix(in srgb,var(--acc) 45%,transparent)}
+.vid img{width:100%;height:100%;object-fit:cover;filter:brightness(.7);transition:transform .8s var(--ease),filter .4s}
+.vid:hover img{transform:scale(1.04);filter:brightness(.85)}
+.vid-c{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:14px;padding:20px;text-align:center}
+.vid-c .btn{pointer-events:none}
+.vid-c small{font-size:12.5px;color:var(--ink2);text-shadow:0 1px 10px rgba(0,0,0,.7)}
+.vid-t{position:absolute;left:18px;bottom:16px}
+.wl{padding:clamp(32px,5vw,60px) clamp(22px,4vw,48px);text-align:center;background:radial-gradient(70% 130% at 50% 0%,color-mix(in srgb,var(--acc) 16%,transparent),transparent 65%),var(--card)}
+.wl p{max-width:560px;margin:12px auto 0}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.stat{padding:22px 16px;text-align:center;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card)}
+.stat b{display:block;font-family:var(--fd);font-weight:700;font-size:clamp(34px,4vw,48px);line-height:1}
+.stat .badge{padding:0;box-shadow:none;background:none;color:var(--ink4);margin-top:10px}
+.gal{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:16px}
+.gal figure{border-radius:var(--r);overflow:hidden;background:#111}
+.gal figure:first-child{grid-row:1/3}
+.gal img{width:100%;height:100%;object-fit:cover;aspect-ratio:16/10;transition:transform .8s var(--ease)}
+.gal figure:hover img{transform:scale(1.04)}
+.gal.n3{grid-template-columns:repeat(3,1fr);grid-template-rows:auto}
+.gal.n3 figure:first-child{grid-row:auto}
+.feats{display:grid;grid-template-columns:repeat(var(--fc,4),minmax(0,1fr));gap:16px}
+.rm-h{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end;margin-bottom:28px}
+.prog .badge{padding:0;box-shadow:none;background:none;color:var(--ink4)}
+.prog-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.prog-top b{font-family:var(--fd);font-weight:700;font-size:26px}
+.bar{height:6px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.rm{display:grid;grid-template-columns:repeat(var(--rc,3),minmax(0,1fr));gap:16px}
+.rm li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;padding:18px;border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);background:var(--card)}
+.rm li.active{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 55%,transparent);background:color-mix(in srgb,var(--acc) 6%,transparent)}
+.rm .dotc{width:16px;height:16px;margin-top:2px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.22)}
+.rm .done .dotc{background:var(--acc);box-shadow:none}
+.rm .active .dotc{box-shadow:inset 0 0 0 2px var(--acc)}
+.rm .badge{padding:0;box-shadow:none;background:none;color:var(--ink4)}
+.rm .active .badge{color:var(--acc)}
+.rm b{display:block;font-weight:600;color:#fff;line-height:1.35;margin-top:2px}
+.rm p{font-size:14px;margin-top:4px}
+.idea{max-width:640px;margin:0 auto}
+.idea form{display:flex;gap:10px;margin-top:24px}
+.votes{display:grid;gap:10px;margin-top:16px;text-align:left}
+.votes li{display:flex;align-items:center;gap:14px;padding:12px 16px 12px 12px;border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line2);background:rgba(255,255,255,.02)}
+.vote{display:grid;justify-items:center;gap:0;min-width:46px;padding:6px 0;border:0;border-radius:12px;box-shadow:inset 0 0 0 1px var(--line2);background:none;cursor:pointer;font-weight:700;font-size:14px;color:#fff;transition:box-shadow .2s,color .2s,background .2s}
+.vote .ic{width:14px;height:14px}
+.vote:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.45)}
+.vote.on{background:color-mix(in srgb,var(--acc) 16%,transparent);box-shadow:inset 0 0 0 1px var(--acc);color:var(--acc3)}
+.lore{display:flex;align-items:flex-end;min-height:280px;padding:clamp(24px,4vw,44px);border-radius:var(--r2);overflow:hidden;position:relative;isolation:isolate}
+.lore img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+.lore::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(5,5,5,.88),rgba(5,5,5,.25))}
+.lore p{color:var(--ink2);margin:8px 0 20px}
+.faq{max-width:820px}
+.faq details{border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);background:var(--card)}
+.faq details + details{margin-top:10px}
+.faq summary{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 20px;cursor:pointer;list-style:none;font-weight:600;color:#fff}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .ic{width:18px;height:18px;color:var(--ink3);transition:transform .3s var(--ease)}
+.faq details[open] summary .ic{transform:rotate(45deg)}
+.faq .a{padding:0 20px 18px}
+.cta2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0;overflow:hidden}
+.cta2 > div{padding:clamp(28px,4vw,48px)}
+.cta2 > div + div{box-shadow:inset 1px 0 0 var(--line)}
+.cta2 .nl{margin-top:20px}
 
-/* ---------- Spielseite ---------- */
-.gh{position:relative;min-height:max(700px,100vh);min-height:max(700px,100svh);display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;isolation:isolate}
-.gh-media{position:absolute;inset:0;z-index:-2;overflow:hidden}
-.gh-media .gh-bg{z-index:auto;animation:kb 10s var(--ease) both}
-@keyframes kb{from{transform:scale(1.08)}to{transform:none}}
-[data-par]{will-change:transform}
-.gh::before{content:"";position:absolute;inset:0;z-index:-1;background:
-  linear-gradient(90deg,rgba(10,10,11,.75) 0%,rgba(10,10,11,.3) 50%,rgba(10,10,11,0) 100%),
-  linear-gradient(0deg,var(--bg) 0%,rgba(10,10,11,.6) 30%,rgba(10,10,11,0) 62%),
-  linear-gradient(180deg,rgba(10,10,11,.55),rgba(10,10,11,0) 20%)}
-.gh-in{padding-top:150px;padding-bottom:44px}
-.gh .lg{margin:26px 0 24px}
-.gh-lab{color:var(--ink2)}
-.gh-tag{max-width:620px;margin-bottom:36px;font-family:var(--fd);font-size:clamp(21px,1.9vw,29px);line-height:1.25;font-weight:500;letter-spacing:-.015em;color:var(--ink);text-wrap:balance}
-.gh-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:var(--col);border-top:1px solid var(--line2)}
-.gh-facts div{padding:20px 0 30px}
-.gh-facts dt{margin-bottom:8px}
-.gh-facts dd{font-weight:600;color:var(--ink)}
-.gi .txt{max-width:640px;margin-top:clamp(36px,4vw,56px)}
-.media{display:grid;gap:var(--col)}
-.media.two{grid-template-columns:1fr 1fr}
-.vid{position:relative;display:block;aspect-ratio:16/9;overflow:hidden;background:var(--bg2);border-radius:var(--r)}
-.vid img{width:100%;height:100%;object-fit:cover;transition:transform 1.3s var(--ease)}
-.vid::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(10,10,11,.72),rgba(10,10,11,0) 48%)}
-.vid:hover img{transform:scale(1.035)}
-.play{position:absolute;z-index:1;left:50%;top:50%;display:grid;place-items:center;width:76px;height:76px;border-radius:50%;transform:translate(-50%,-50%);background:rgba(242,239,233,.14);box-shadow:inset 0 0 0 1px rgba(242,239,233,.42);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:background .3s,color .3s,transform .5s var(--ease)}
-.play .ic{width:22px;height:22px;fill:currentColor;stroke:none;margin-left:3px}
-.vid:hover .play{background:var(--acc);color:var(--acc-ink);transform:translate(-50%,-50%) scale(1.08)}
-.cap{position:absolute;z-index:1;left:20px;right:20px;bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:12px}
-.cap .lab{color:var(--ink)} .cap .lab + .lab{display:inline-flex;align-items:center;gap:6px;color:var(--ink2)}
-.cap .ic{width:12px;height:12px}
-.gal{display:grid;grid-template-columns:repeat(var(--gn,4),minmax(0,1fr));gap:var(--col);margin-top:var(--col)}
-.gal figure{aspect-ratio:16/10;overflow:hidden;background:var(--bg2);border-radius:var(--r)}
-.gal img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
-.gal figure:hover img{transform:scale(1.05)}
-.feats li{display:grid;grid-template-columns:56px minmax(0,1fr) minmax(0,1.35fr);column-gap:var(--col);align-items:baseline;padding:24px 0 26px;border-bottom:1px solid var(--line)}
-.feats li:first-child{padding-top:4px}
-.rm{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));column-gap:var(--col);margin-top:-23px}
-.rm-col > .lab{display:flex;justify-content:space-between;padding:20px 0 14px;border-top:1px solid transparent}
-.rm-col.now > .lab{color:var(--ink);border-top:2px solid var(--gacc,var(--acc));padding-top:19px}
-.rm-col li{display:flex;gap:10px;align-items:baseline;padding:12px 0;border-top:1px solid var(--line);color:var(--ink2)}
-.rm-col.done li{color:var(--ink3)}
-.rm-col li .ic{width:13px;height:13px;transform:translateY(2px)}
-.paused .st{max-width:22ch;margin-bottom:28px}
-.join{padding-top:var(--sec);padding-bottom:var(--sec);background:var(--bg2);background:color-mix(in oklab,var(--gacc,#131315) 8%,#131315)}
-.join-h{grid-column:1/7}
-.join-r{grid-column:8/13}
-.join .nl{margin-top:22px}
-.acc{border-bottom:1px solid var(--line)}
-.acc summary{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 0;cursor:pointer;list-style:none;font-family:var(--fd);font-size:19px;font-weight:600;line-height:1.3;color:var(--ink)}
-.acc summary::-webkit-details-marker{display:none}
-.c-main > .acc:first-child summary{padding-top:0}
-.pm{position:relative;flex:none;width:14px;height:14px;color:var(--ink2)}
-.pm::before,.pm::after{content:"";position:absolute;left:0;right:0;top:50%;height:1.5px;margin-top:-.75px;background:currentColor;transition:transform .4s var(--ease)}
-.pm::after{transform:rotate(90deg)}
-.acc[open] .pm::after{transform:rotate(0)}
-.acc-b{padding:0 0 26px}
-.idea{margin-top:44px;border-top:1px solid var(--line)}
-.idea summary{font-family:var(--f);font-size:15px;font-weight:500;color:var(--ink2)} .idea summary b{color:var(--ink);font-weight:600}
-textarea{display:block;width:100%;min-height:116px;padding:14px 16px;background:rgba(242,239,233,.03);border:1px solid var(--line2);border-radius:16px;outline:0;font-size:16px;line-height:1.5;resize:vertical;transition:border-color .3s}
-textarea:focus{border-color:var(--ink)}
-textarea::placeholder{color:var(--ink3)}
-.idea form .btn{margin-top:12px}
-.votes-lab{margin-top:30px}
-.votes li{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid var(--line);color:var(--ink2);font-size:15px}
-.votes li:first-child{margin-top:10px;border-top:1px solid var(--line)}
-.vote{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border:0;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line2);background:none;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;transition:box-shadow .2s,color .2s,transform .2s var(--ease)}
-.vote .ic{width:13px;height:13px}
-.vote:hover{box-shadow:inset 0 0 0 1px var(--ink)}
-.vote:active{transform:scale(.94)}
-.vote.on{box-shadow:inset 0 0 0 1px var(--acc);color:var(--acc)}
-.nx{display:block;padding-top:clamp(72px,9vw,128px);padding-bottom:clamp(72px,9vw,128px);border-top:1px solid var(--line);overflow:hidden}
-.nx-row{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-top:22px}
-.nx-t{display:block;min-width:0;padding-bottom:.06em;font-family:var(--fd);font-weight:600;font-size:clamp(52px,10vw,168px);line-height:.95;letter-spacing:-.028em;word-spacing:.08em;color:var(--ink);background-size:cover;transition:background-position 2s var(--ease)}
-@supports ((-webkit-background-clip:text) or (background-clip:text)){.nx-t{color:transparent;-webkit-background-clip:text;background-clip:text}}
-.nx-go{flex:none;display:grid;place-items:center;width:clamp(52px,6vw,88px);height:clamp(52px,6vw,88px);border-radius:50%;box-shadow:inset 0 0 0 1px var(--line2);transition:background .35s,color .35s,box-shadow .35s}
-.nx-go .ic{width:38%;height:38%;transition:transform .45s var(--ease)}
-.nx:hover .nx-go{background:var(--ink);color:var(--bg);box-shadow:none}
-.nx:hover .nx-go .ic{transform:translateX(3px)}
-
-/* ---------- Devlog ---------- */
-.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:48px}
-.tabs button{height:40px;padding:0 18px;border:0;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line2);background:none;cursor:pointer;font-size:12px;font-weight:600;font-stretch:125%;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);transition:color .2s,background .2s,box-shadow .2s}
-.tabs button:hover{color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
-.tabs button.on{color:var(--bg);background:var(--ink);box-shadow:none}
-.plist-w{padding-bottom:var(--sec)}
-.plist{border-top:1px solid var(--line)}
-.prow{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--col);align-items:center;padding:30px 0;border-bottom:1px solid var(--line)}
-.prow-d{grid-column:1/4;align-self:start;padding-top:4px}
-.prow-t{grid-column:4/9;display:grid;gap:10px}
-.prow-h{font-family:var(--fd);font-size:clamp(22px,2.1vw,32px);font-weight:600;line-height:1.12;letter-spacing:-.022em;color:var(--ink);transition:color .2s}
-.prow-e{color:var(--ink2)}
-.prow figure{grid-column:10/13}
-.prow:hover .prow-h,.card:hover .h3{color:var(--acc2)}
-.empty{padding:40px 0;color:var(--ink3)}
-
-/* ---------- Beitrag ---------- */
-.post-h{padding-bottom:clamp(44px,6vw,80px)}
-.post-h .back{margin-bottom:44px}
-.post-h .d2{max-width:17ch}
-.post-h .lead{max-width:620px;margin-top:28px}
-.post-img img{width:100%;aspect-ratio:21/9;object-fit:cover;border-radius:var(--r2)}
-.post-meta dl{position:sticky;top:112px;display:grid;gap:18px}
-.post-meta dd{margin-top:4px;font-weight:500;color:var(--ink)}
-.post-meta dd a{box-shadow:inset 0 -1px 0 var(--line2)}
-.prose{font-size:18px;line-height:1.75}
-.prose p{margin:0 0 1.15em;color:var(--ink2)}
-.prose > p:first-child{font-size:clamp(20px,1.6vw,23px);line-height:1.55;color:var(--ink)}
-.prose h2{margin:2.1em 0 .65em;font-family:var(--fd);font-size:clamp(24px,2.1vw,32px);font-weight:600;line-height:1.15;letter-spacing:-.022em;color:var(--ink)}
-.prose ul{display:grid;gap:10px;margin:0 0 1.4em}
-.prose li{position:relative;padding-left:24px;color:var(--ink2)}
-.prose li::before{content:"–";position:absolute;left:0;top:0;color:var(--acc);font-weight:600}
-.prose hr{margin:3em 0;border:0;border-top:1px solid var(--line)}
-.prose b{font-weight:600;color:var(--ink)}
-.post-next{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-top:30px;padding-bottom:30px}
-.post-next-w{border-top:1px solid var(--line)}
-.post-next .h3{flex:1}
-.post-next .ic{width:24px;height:24px;transition:transform .4s var(--ease)}
-.post-next:hover .ic{transform:translateX(4px)}
-
-/* ---------- Erfolge (wie im Spiel) ---------- */
-.ach{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:240;display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px);padding:10px 26px 10px 10px;border-radius:999px;background:rgba(22,22,24,.96);box-shadow:inset 0 0 0 1px var(--line2),0 24px 60px rgba(0,0,0,.55);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transform:translate(-50%,160%);transition:transform .6s var(--ease)}
-.ach.show{transform:translate(-50%,0)}
-.ach-i{flex:none;display:grid;place-items:center;width:50px;height:50px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--acc2),var(--acc) 60%,#a84300);font-size:24px;box-shadow:0 0 0 4px rgba(255,125,26,.2)}
-.ach .lab{display:block;color:var(--acc2)}
-.ach b{display:block;font-family:var(--fd);font-weight:600;font-size:18px;line-height:1.2;color:var(--ink)}
-.ach-d{display:block;font-size:13px;color:var(--ink2)}
-.tro{position:fixed;z-index:90;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px))}
-.tro summary,.pv summary{display:flex;align-items:center;gap:10px;height:40px;padding:0 16px;list-style:none;cursor:pointer;border-radius:999px;background:rgba(22,22,24,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:inset 0 0 0 1px var(--line2);font-size:11.5px;font-weight:600;font-stretch:125%;letter-spacing:.08em;text-transform:uppercase}
-.tro summary::-webkit-details-marker,.pv summary::-webkit-details-marker{display:none}
-.tro-list,.pv-list{position:absolute;bottom:50px;display:grid;min-width:250px;padding:10px;border-radius:16px;background:rgba(22,22,24,.97);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:inset 0 0 0 1px var(--line2),0 20px 60px rgba(0,0,0,.5)}
-.tro-list{left:0;gap:2px}
-.tro-list .lab{padding:6px 10px 8px}
-.tro-list div{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:10px;opacity:.45}
-.tro-list div.got{opacity:1}
-.tro-list div > span:first-child{font-size:20px;width:26px;text-align:center}
-.tro-list b{display:block;font-size:14px;font-weight:600;color:var(--ink)}
-.tro-list small{display:block;font-size:12px;color:var(--ink3)}
-.tro-list button{margin-top:6px;justify-self:start;padding:6px 10px;border:0;background:none;color:var(--ink3);font-size:12px;cursor:pointer;text-decoration:underline}
-.cf{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:250}
+/* ---------- Devlog & Beitrag (wie live) ---------- */
+.posts{display:grid;gap:14px;padding-bottom:var(--sec)}
+.pcard{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:24px;align-items:center;padding:12px;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card);transition:box-shadow .3s}
+.pcard:hover{box-shadow:inset 0 0 0 1px var(--line2)}
+.pcard figure{position:relative;aspect-ratio:16/10;border-radius:var(--r);overflow:hidden;background:#111}
+.pcard img{width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.pcard:hover img{transform:scale(1.04)}
+.pcard .ph-img{filter:brightness(.5) saturate(.85)}
+.card-logo{position:absolute !important;left:50%;top:50%;transform:translate(-50%,-50%)}
+.pcard-b{padding:6px 12px 6px 0}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--ink4)}
+.meta .badge{padding:3px 10px}
+.pcard .h3{font-size:24px;margin:10px 0 6px;transition:color .2s}
+.pcard:hover .h3{color:var(--acc3)}
+.pcard p{font-size:15px;margin-bottom:12px}
+.empty{padding:28px;text-align:center;color:var(--ink4)}
+.post{max-width:780px;margin:0 auto}
+.post .more.dim{margin-bottom:26px}
+.post .h1{font-size:clamp(28px,4.6vw,56px);margin:18px 0 26px}
+.post-img{border-radius:var(--r2);overflow:hidden;margin-bottom:36px}
+.post-img img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.prose{color:#c7c7d1;font-size:17px;line-height:1.78;overflow-wrap:break-word;hyphens:auto}
+.prose p{color:#c7c7d1;margin:0 0 1.1em}
+.prose h2{font-family:var(--fd);font-weight:700;font-size:26px;line-height:1.2;color:#fff;margin:1.8em 0 .55em}
+.prose h2 .emo{margin-right:10px}
+.prose ul{margin:0 0 1.2em;padding-left:1.25em;list-style:disc}
+.prose li{margin:.35em 0}
+.prose li::marker{color:var(--acc)}
+.prose b{color:#fff;font-weight:600}
+.prose hr{border:0;border-top:1px solid var(--line);margin:2.4em 0}
+.post-next{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:48px;padding:20px 22px;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card);transition:box-shadow .2s}
+.post-next:hover{box-shadow:inset 0 0 0 1px var(--line2)}
+.post-next b{display:block;font-family:var(--fd);font-weight:700;font-size:20px;color:#fff}
+.post-next .ic{width:22px;height:22px}
 
 /* ---------- Probedesign-Menü ---------- */
 .pv{position:fixed;z-index:90;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px))}
-.pv summary i{width:7px;height:7px;border-radius:50%;background:var(--acc)}
-.pv-list{right:0}
-.pv-list .lab{padding:6px 10px 8px}
-.pv-list a{padding:9px 10px;border-radius:8px;font-size:15px;color:var(--ink2)}
-.pv-list a:hover{color:var(--ink)}
-.pv-list a.on{color:var(--ink);background:rgba(242,239,233,.07)}
+.pv summary{display:flex;align-items:center;gap:8px;height:38px;padding:0 14px;list-style:none;cursor:pointer;border-radius:999px;background:rgba(20,20,22,.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px var(--line2);font-family:var(--fm);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2)}
+.pv summary::-webkit-details-marker{display:none}
+.pv summary i{width:6px;height:6px;border-radius:50%;background:var(--acc)}
+.pv-list{position:absolute;right:0;bottom:46px;display:grid;min-width:220px;padding:8px;border-radius:16px;background:rgba(20,20,22,.97);box-shadow:inset 0 0 0 1px var(--line2),0 20px 60px rgba(0,0,0,.5)}
+.pv-list a{padding:9px 10px;border-radius:9px;font-size:14px;color:var(--ink3)}
+.pv-list a:hover,.pv-list a.on{color:#fff;background:rgba(255,255,255,.06)}
 
-/* ---------- Einblenden (nur Bewegung, Inhalte sind immer sichtbar) ---------- */
-#app.enter{animation:enter .8s var(--ease)}
-@keyframes enter{from{transform:translateY(16px)}}
-.rv{transform:translateY(28px);transition:transform 1.1s var(--ease)}
+/* Einblenden: nur Bewegung, Inhalte sind immer sichtbar */
+.rv{transform:translateY(22px);transition:transform .9s var(--ease)}
 .rv.in{transform:none}
-@media (prefers-reduced-motion:reduce){
-  .rv{transform:none;transition:none}
-  .hx-bg img{transform:none;transition:opacity .2s}
-  .gh-media .gh-bg,.live i,.band-stk{animation:none}
-  .ix li.run .ix-bar,#app.enter,.tick-in{animation:none}
-  .embers{display:none}
-  .ix li[data-wobble] a:hover .ix-t span{animation:none}
-}
+@media (prefers-reduced-motion:reduce){.rv{transform:none;transition:none}.fx,.pulse{display:none}.tick-in{animation:none}}
 
 /* ---------- Tablet ---------- */
-@media (max-width:1080px){
-  .nav{gap:24px} .hd-in{gap:28px}
-  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .cards > :nth-child(3){display:none}
+@media (max-width:1024px){
+  .tip{display:none}
+  .feats{--fc:2}
+  .rm{--rc:2}
 }
 @media (max-width:900px){
-  .nav,.live,.hd .lang{display:none}
+  .nav,.lang,.hd-r > .btn{display:none}
   .burger{display:block}
-  .hd-in{height:68px}
-  .grid,.ix a{display:block}
-  .sec .c-main,.sec .c-prose{border-top:0;padding-top:0}
-  .c-lab{margin-bottom:28px}
-  .hx-top .lab + .lab{display:none}
-  .ix a{padding:14px 0 12px}
-  .ix-m{flex-direction:row;gap:14px;margin-bottom:10px}
-  .ix-go{display:none}
-  .split{grid-template-columns:1fr;row-gap:44px}
-  .ft-cta .c-cta{margin-top:32px}
-  .ft-grid{grid-template-columns:1fr 1fr}
+  .hd-in{grid-template-columns:1fr auto;height:64px}
+  .feat{grid-template-columns:minmax(0,1fr)}
+  .feat-b{padding:6px 8px 10px}
+  .cards3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .about,.rt,.rm-h{grid-template-columns:minmax(0,1fr)}
+  .about .txt{padding-top:0}
+  .vals{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .join,.cta2{grid-template-columns:minmax(0,1fr)}
+  .join-co,.cta2 > div + div{box-shadow:inset 0 1px 0 var(--line)}
+  .ft-top{grid-template-columns:repeat(2,minmax(0,1fr))}
   .ft-brand{grid-column:1/-1}
-  .ft-col:nth-child(n){grid-column:auto}
-  .gh-facts{grid-template-columns:1fr 1fr}
-  .gh-facts div{padding:16px 0 18px}
-  .gh-facts div:nth-child(n+3){border-top:1px solid var(--line)}
-  .join-r{margin-top:32px}
-  .rm{margin-top:0}
-  .prow{display:grid;grid-template-columns:minmax(0,1fr) 34%;column-gap:20px;row-gap:12px}
-  .prow-d{grid-column:1/-1;padding:0}
-  .prow-t{grid-column:1}
-  .prow figure{grid-column:2;grid-row:2}
-  .post-meta dl{position:static;display:flex;flex-wrap:wrap;gap:16px 36px}
-  .gp-in{flex-direction:column;align-items:flex-start}
-  .gp-in > div:first-child{width:100%}
-  .gp-r{justify-items:start;text-align:left}
+  .prow{grid-template-columns:84px minmax(0,1fr) auto}
+  .prow-d{display:none}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .vids.two{grid-template-columns:minmax(0,1fr)}
 }
 /* ---------- Handy ---------- */
 @media (max-width:640px){
-  body{font-size:16px}
-  .gh .lg,.band .lg,.gp .lg{--k:.68}
-  .band::before{background:linear-gradient(0deg,var(--bg2) 0%,rgba(10,10,11,.9) 46%,rgba(10,10,11,.35) 74%,rgba(10,10,11,.12) 100%)}
-  .band{min-height:620px}
-  .gh::before{background:linear-gradient(0deg,var(--bg) 0%,rgba(10,10,11,.8) 46%,rgba(10,10,11,.25) 76%,rgba(10,10,11,.45) 100%)}
-  .ix-t{font-size:min(11.4vw,60px)}
-  .tick{padding:18px 0}
-  .st .stk{display:table;margin:14px 0 0;transform:rotate(var(--rot))}
-  .cards{grid-template-columns:1fr;gap:36px}
-  .cards > :nth-child(3){display:block}
-  .team{grid-template-columns:1fr;gap:22px}
-  .tm{display:grid;grid-template-columns:104px minmax(0,1fr);column-gap:16px;align-content:start}
-  .tm figure{grid-row:1/6;margin:0}
-  .tm .q{font-size:14px}
-  .feats li{grid-template-columns:40px minmax(0,1fr);row-gap:6px}
-  .feats p{grid-column:2}
-  .rm{grid-template-columns:1fr;row-gap:12px}
-  .media.two{grid-template-columns:1fr}
-  .gal{gap:8px;margin-top:8px}
-  .play{width:58px;height:58px}
-  .demos li{grid-template-columns:minmax(0,1fr) auto;row-gap:4px;gap:4px 16px}
-  .demos li .lab{grid-row:2}
-  .demos li .lnk{grid-row:1/3;grid-column:2}
-  .gp{min-height:66svh}
-  .btn{height:auto;min-height:52px;padding:13px 22px;white-space:normal;line-height:1.25;text-align:center}
-  .band-in{padding:24px 20px}
+  .hero{min-height:auto;padding:112px 0 56px}
+  .hero::before{background:linear-gradient(0deg,var(--bg) 0%,rgba(5,5,5,.72) 40%,rgba(5,5,5,.45) 100%)}
+  .gh .lg,.feat .lg{--k:.7}
+  .btn{padding:13px 22px;font-size:15px;white-space:normal;text-align:center}
   .row .btn{flex:1 1 auto}
-  .nl{padding-left:18px}
-  .nl button{padding:0 16px}
-  .prow{grid-template-columns:1fr}
-  .prow figure{grid-column:1;grid-row:2}
-  .prow-t{grid-row:3}
+  .cards3,.vals,.team,.feats,.rm{grid-template-columns:minmax(0,1fr)}
+  .team{gap:32px}
+  .nl,.idea form{flex-direction:column}
+  .nl input,.idea input{flex:none;height:50px}
+  .nl .btn,.idea .btn{height:50px}
+  .gal{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}
+  .gal figure:first-child{grid-column:1/-1;grid-row:auto}
+  .pcard{grid-template-columns:minmax(0,1fr);gap:12px}
+  .pcard-b{padding:4px 8px 8px}
+  .ft-top{grid-template-columns:minmax(0,1fr)}
   .ft-bot{flex-direction:column}
-  .pv{top:calc(env(safe-area-inset-top,0px) + 14px);bottom:auto;right:60px}
-  .pv summary{padding:0 13px}
+  .tick-in{font-size:18px}
+  .prose h2{font-size:21px}
+  .pv{top:calc(env(safe-area-inset-top,0px) + 13px);bottom:auto;right:62px}
   .pv-t{display:none}
-  .pv-list{top:50px;bottom:auto}
-  .ach{padding-right:18px}
+  .pv-list{top:46px;bottom:auto}
 }
 </style>
 </head>
 <body>
-<a class="skip" href="#app">Zum Inhalt springen</a>
-
 <header class="hd" id="hd">
   <div class="wrap hd-in">
-    <a class="brand" href="#start" aria-label="PLANIGAMES – Startseite"><span data-mark="28"></span><span class="wm">PLANIGAMES</span></a>
+    <a class="brand" href="#start" aria-label="PLANIGAMES – Startseite"><span data-mark="26"></span><span class="wm">PLANI<span>GAMES</span></span></a>
     <nav class="nav" aria-label="Hauptmenü">
-      <a href="#spiele" data-nav="games">Spiele</a>
       <a href="#start" data-sec="studio" data-nav="studio">Studio</a>
+      <a href="#spiele" data-nav="games">Games</a>
       <a href="#devlog" data-nav="devlog">Devlog</a>
+      <a href="#start" data-sec="kontakt">Kontakt</a>
     </nav>
-    <a class="live" href="#frontliners" data-sec="mitmachen"><i></i>Playtest</a>
-    <span class="lang"><b>DE</b> / <a href="#" onclick="return false">EN</a></span>
-    <button class="burger" type="button" aria-label="Menü" aria-expanded="false" aria-controls="mn" data-burger><i></i><i></i></button>
+    <div class="hd-r">
+      <a class="tip" href="https://ko-fi.com/planigames" target="_blank" rel="noopener">☕ Unterstützen</a>
+      <span class="lang"><b>DE</b> / <a href="#" onclick="return false">EN</a></span>
+      <a class="btn btn-p btn-s" href="#spiele">Spiele entdecken</a>
+      <button class="burger" type="button" aria-label="Menü" aria-expanded="false" aria-controls="mn" data-burger><i></i><i></i><i></i></button>
+    </div>
   </div>
 </header>
 
 <div class="mn" id="mn" aria-hidden="true">
   <nav aria-label="Menü">
-    <a href="#spiele">Spiele<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-    <a href="#start" data-sec="studio">Studio<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-    <a href="#devlog">Devlog<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-    <a href="#frontliners" data-sec="mitmachen">Playtest<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    <a href="#start" data-sec="studio">Studio</a>
+    <a href="#spiele">Games</a>
+    <a href="#devlog">Devlog</a>
+    <a href="#start" data-sec="kontakt">Kontakt</a>
   </nav>
-  <div class="mn-f"><span class="lang"><b>DE</b> / <a href="#" onclick="return false">EN</a></span><span class="lab">hello@planigames.com</span></div>
+  <div class="row"><a class="btn btn-p" href="#spiele">Spiele entdecken</a><a class="btn btn-g" href="https://ko-fi.com/planigames" target="_blank" rel="noopener">☕ Unterstützen</a></div>
 </div>
 
 <main id="app"></main>
 
 <details class="pv" id="pv">
-  <summary><i></i><span class="pv-t">Probedesign </span>v3</summary>
+  <summary><i></i><span class="pv-t">Probedesign </span>v4</summary>
   <div class="pv-list">
-    <p class="lab">Ansichten</p>
     <a href="#start" data-pv="home">Startseite</a>
     <a href="#spiele" data-pv="games">Spiele</a>
     <a href="#frontliners" data-pv="frontliners">FRONTLINERS</a>
@@ -565,16 +476,16 @@ const M = (p) => { if (!p) return ""; const k = p.split("#")[0]; if (MEDIA_MAP) 
 const focus = (p) => { const m = String(p || "").match(/#focus=(\d+),(\d+)/); return m ? m[1] + "% " + m[2] + "%" : "50% 50%"; };
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const inl = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+const paras = (s) => String(s).split(/\n\s*\n/).map((p) => `<p>${inl(p.trim())}</p>`).join("");
 const yt = (id) => "https://www.youtube.com/watch?v=" + id;
 
-/* Sichtbarer Teil der Logo-Dateien (x0,y0,x1,y1, Seitenverhältnis der Datei) – Logos sitzen ohne Rand bündig */
+/* Sichtbarer Teil der Logo-Dateien (wie im Admin gemessen) – Logos sitzen ohne Rand bündig */
 const BOX = {
   "/media/frontliners-logo-weiss.svg": [0.0688, 0.3596, 0.9587, 0.6367, 3.0],
   "/media/fok-logo-tempv01.png": [0.044, 0.1009, 0.9535, 0.8991, 1.5175],
   "/media/wobblywizards-logo.png": [0.0807, 0.1759, 0.9245, 0.8417, 1.7778],
   "/media/logo-6.png": [0.1583, 0.1583, 0.8417, 0.8417, 1],
 };
-/* Logos bekommen gleiche Fläche statt gleicher Höhe – so wirken breite und hohe Logos gleich groß */
 function logo(src, alt, area, cls = "", maxH = 1e9) {
   const [x0, y0, x1, y1, ar] = BOX[src] || [0, 0, 1, 1, 1];
   const fw = x1 - x0, fh = y1 - y0, va = ar * fw / fh;
@@ -582,98 +493,100 @@ function logo(src, alt, area, cls = "", maxH = 1e9) {
   return `<span class="lg ${cls}" ${alt ? `role="img" aria-label="${esc(alt)}"` : 'aria-hidden="true"'} style="--w:${w.toFixed(1)}px;aspect-ratio:${va.toFixed(4)}">`
     + `<img src="${M(src)}" alt="" style="width:${(100 / fw).toFixed(3)}%;left:${(-100 * x0 / fw).toFixed(3)}%;top:${(-100 * y0 / fh).toFixed(3)}%"></span>`;
 }
-
-/* ---------- Icons ---------- */
-const I = {
-  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>', back: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
-  ext: '<path d="M8 16 16 8M9.5 8H16v6.5"/>', play: '<path d="M7 4.5v15l13-7.5z"/>',
-  check: '<path d="M5 12.5 10 17l9-10"/>', up: '<path d="M6 15l6-6 6 6"/>', dl: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
-};
+const I = { arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>', ext: '<path d="M8 16 16 8M9.5 8H16v6.5"/>', up: '<path d="M6 15l6-6 6 6"/>', dl: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>', plus: '<path d="M12 5v14M5 12h14"/>', back: '<path d="M19 12H5M11 6l-6 6 6 6"/>', play: '<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>' };
 const ic = (n) => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${I[n] || ""}</svg>`;
 
-/* ---------- Inhalte (echte Texte der Website, nur öffentliche Inhalte) ---------- */
+/* ---------- Inhalte: echte Texte der Live-Seite ---------- */
 const STUDIO = {
   founded: 2025, h1a: "Unsere Ideen.", h1b: "Eure Abenteuer.",
-  about: ["Wir sind ein junges Indie-Studio mit einer simplen Mission: Spiele machen, die wir selbst spielen wollen würden. Keine Komitees, keine Trends von der Stange – nur eigensinnige Welten mit Charakter, handgemachter Liebe zum Detail und einem Humor, der hängen bleibt.",
-          "Von der ersten Skizze bis zum letzten Partikeleffekt entsteht alles in-house. Das hält uns ehrlich – und unsere Spiele eigen."],
-  factsLine: "Gegründet 2025 · 3 Gründer · 3 Spiele · Unreal Engine <3",
-  values: [["Spielgefühl zuerst", "Bevor eine Idee ins Spiel kommt, muss sie sich gut anfühlen. Punkt."],
-           ["Handgemachte Magie", "Keine Asset-Flips, keine Abkürzungen – jeder Pixel ist bewusst gesetzt."],
-           ["Community an Bord", "Devlogs, Demos und euer Feedback formen das Spiel mit."]],
-  ticker: ["Original Worlds", "Handcrafted", "Indie & Proud", "Unreal Engine <3", "FRONTLINERS", "Fall of Kings", "Wobbly Wizards"],
+  intro: "Von modernen Schlachtfeldern in FRONTLINERS über mittelalterliche Kämpfe in Fall of Kings bis zum magischen Chaos von Wobbly Wizards.",
+  hero: "/media/first-test-02-53-24-free-3840x2160.png",
+  marquee: ["Original Worlds", "Handcrafted", "Indie & Proud", "Wobbly Wizards", "Unreal Engine <3", "FRONTLINERS", "FALL OF KINGS"],
+  aboutTitle: "Klein. Unabhängig. Besessen von guten Ideen.",
+  about: "Wir sind ein junges Indie-Studio mit einer simplen Mission: Spiele machen, die wir selbst spielen wollen würden. Keine Komitees, keine Trends von der Stange — nur eigensinnige Welten mit Charakter, handgemachter Liebe zum Detail und einem Humor, der hängen bleibt.\n\nVon der ersten Skizze bis zum letzten Partikeleffekt entsteht alles in-house. Das hält uns ehrlich — und unsere Spiele eigen.",
+  pillars: [["🪄", "Handgemachte Magie", "Jede Mechanik, jeder Sound, jeder Pixel ist bewusst gesetzt. Keine Asset-Flips, keine Abkürzungen."],
+            ["🌀", "Spielgefühl zuerst", "Bevor eine Idee ins Spiel kommt, muss sie sich gut anfühlen. Punkt. Wir prototypen, bis es klickt."],
+            ["🤝", "Community an Bord", "Wir entwickeln offen. Devlogs, Demos und euer Feedback formen das Spiel mit."],
+            ["🎨", "Eigener Look", "Jedes Spiel bekommt seine eigene visuelle Welt — wiedererkennbar und mit Haltung."],
+            ["⚡", "Klein & schnell", "Als kleines Team treffen wir Entscheidungen heute und sehen sie morgen im Spiel."],
+            ["💜", "Für die Ewigkeit gebaut", "Wir machen Spiele, an die man sich erinnert — nicht solche, die man wegklickt."]],
+  newsletter: { h: "Sei dabei, bevor die Magie startet.", t: "Trag dich ein und erfahre als Erste*r von Release-Terminen, Demos und großen Updates.", b: "Auf die Warteliste", ok: "Danke! Du bist dabei. 🧡" },
+  community: { h: "Komm in unsere Community", t: "Sei beim Chaos dabei: Devlogs aus erster Hand, Playtests, Abstimmungen und ein Haufen wackeliger Magier warten auf dich." },
   note: "Ein unabhängiges Indie-Spielestudio. Wir bauen Welten, die wackeln, zaubern und im Kopf bleiben.",
   email: "hello@planigames.com",
-  socials: [["YouTube", "https://www.youtube.com/@WobblyWizardsGame"], ["TikTok", "https://www.tiktok.com/@wobblywizardsgame"], ["Unterstützen", "https://ko-fi.com/planigames"]],
+  socials: [["YouTube", "https://www.youtube.com/@WobblyWizardsGame"], ["TikTok", "https://www.tiktok.com/@wobblywizardsgame"]],
+  tip: "https://ko-fi.com/planigames",
 };
 const TEAM = [
-  { n: "Dominic Majewski", r: "Gründer · Design & Marketing", p: "/media/1000000825.jpg", q: "Ich liebe es, Welten zu bauen!", l: "Wuppertal" },
-  { n: "Niklas Kalde", r: "Gründer · Code & Sales", p: "/media/img-8077.jpeg", q: "Koffein reicht nicht mehr aus.", l: "Wesseling" },
-  { n: "Vincent Nowak", r: "Gründer · Code & Design", p: "/media/vincent.png#focus=42,51", q: "Ich liebe Formel Eins … Brumm Brumm.", l: "" },
+  { n: "Dominic Majewski", r: "Founder · Design & Marketing", p: "/media/1000000825.jpg", q: "Ich liebe es, Welten zu bauen!", l: "Wuppertal" },
+  { n: "Niklas Kalde", r: "Founder · Code & Sales", p: "/media/img-8077.jpeg", q: "Koffein reicht nicht mehr aus.", l: "Wesseling" },
+  { n: "Vincent Nowak", r: "Founder · Code & Design", p: "/media/vincent.png#focus=42,51", q: "Ich liebe Formel Eins … Brumm Brumm.", l: "" },
 ];
-const ST = { announced: "Angekündigt", development: "In Entwicklung", paused: "Pausiert" };
+const ST = { announced: "Angekündigt", development: "In Entwicklung", demo: "Demo verfügbar" };
+const DEMOS = [["WARCATS – Browser Prototyp", "v1.4 · 37 MB · Windows"], ["Schwarzes Wasser – Horror Browser Game", "v 0.1.0 · 11 MB · Windows"], ["Project Sunset – Browser Game (GTA ähnlich)", "v 0.1.0 · 179 MB · Windows"]];
 const GAMES = [
-  { slug: "frontliners", title: "FRONTLINERS", status: "announced", acc: "#ff9d1a", genre: "Multiplayer-Shooter",
-    cover: "/media/first-test-00-19-00-free-3840x2160-3.png#focus=64,45", logo: "/media/frontliners-logo-weiss.svg",
-    band: "/media/triumph-im-wuestenaussenposten.png#focus=50,42",
-    tagline: "Dein Schlachtfeld. Deine Regeln.",
-    pitch: "Bis zu 60 Spieler, drei Teams und eine Welt, die in Trümmer geht. Der erste Playtest kommt – sei von Anfang an dabei.",
-    facts: [["Spieler", "bis zu 60 · 3 Teams"], ["Plattform", "PC"], ["Genre", "First-Person-Shooter"], ["Zerstörbar", "Fast alles"]],
-    stmt: "Große Schlachten. Maximale Zerstörung. Pures Chaos.",
-    about: ["FRONTLINERS ist ein actiongeladener Multiplayer-First-Person-Shooter mit bis zu 60 Spielern in drei Teams, einer nahezu vollständig zerstörbaren Spielwelt und intensiven Fahrzeugkämpfen.",
-            "Dynamisches Wetter, zahlreiche Spielmodi und taktische Gefechte sorgen dafür, dass keine Schlacht der anderen gleicht. Stelle individuelle Loadouts zusammen, schalte Tarnungen und Ausrüstung frei und kämpfe dich durch ein umfangreiches Fortschrittssystem."],
-    feats: [["60 Spieler, 3 Teams", "Große Gefechte, in denen jede Truppe zählt."], ["Zerstörbare Welt", "Fast alles lässt sich in Schutt verwandeln – auch deine Deckung."], ["Fahrzeugkämpfe", "Panzer, Transporter und mehr mischen jede Runde auf."]],
-    media: { videos: [["h_UT2tzJ-3c", "Trailer", "/media/triumph-im-wuestenaussenposten.png#focus=50,40"], ["zLGANdNcEbE", "Gameplay", "/media/chatgpt-bild-4-okt-2026-04-38-41.png"]], gallery: [] },
-    roadmap: { done: ["Das Grundgerüst steht"], now: ["Spielmechaniken ausbauen & optimieren", "FRONTLINERS auf Steam (Wishlists)"], next: ["Closed Playtests", "Open Playtests", "Early-Access-Release"] },
-    join: { h: "Sei beim ersten Playtest dabei.", t: "Trag dich ein – wir melden uns, sobald die erste Testrunde startet.", b: "Eintragen", cta: "Für den Playtest eintragen" },
-    ideas: { h: "Was soll in FRONTLINERS rein?", items: [["Ranked-Modus mit Saisons", 36], ["Mehr Karten im Wüsten-Setting", 30]] } },
-  { slug: "fall-of-kings", title: "Fall of Kings", status: "development", acc: "#ff4a36", genre: "Medieval-Shooter",
+  { slug: "frontliners", title: "FRONTLINERS", status: "announced", acc: "#ffbb00", acc2: "#ff7b00", onAcc: "#1a1000",
+    cover: "/media/first-test-00-19-00-free-3840x2160-3.png", logo: "/media/frontliners-logo-weiss.svg",
+    tagline: "Dein Schlachtfeld. Deine Regeln.", cardText: "Dein Schlachtfeld. Deine Regeln.",
+    facts: ["Multiplayer-Shooter", "bis zu 60 Spieler", "PC"],
+    cta: ["Für den Playtest eintragen", "#wl"], trailer: "h_UT2tzJ-3c",
+    blocks: [
+      { t: "richtext", kicker: "Dein Schlachtfeld. Deine Regeln.", h: "Was ist FRONTLINERS?", body: "FRONTLINERS ist ein actiongeladener Multiplayer-First-Person-Shooter mit bis zu 60 Spielern in drei Teams, einer nahezu vollständig zerstörbaren Spielwelt und intensiven Fahrzeugkämpfen.\n\nDynamisches Wetter, zahlreiche Spielmodi und taktische Gefechte sorgen dafür, dass keine Schlacht der anderen gleicht.\n\nStelle individuelle Loadouts zusammen, schalte Tarnungen und Ausrüstung frei und kämpfe dich durch ein umfangreiches Fortschrittssystem.\n\n**Große Schlachten. Maximale Zerstörung. Pures Chaos.**" },
+      { t: "videos", h: "Trailer & Gameplay", items: [["h_UT2tzJ-3c", "Trailer", "/media/triumph-im-wuestenaussenposten.png"], ["zLGANdNcEbE", "Gameplay", "/media/chatgpt-bild-4-okt-2026-04-38-41.png"]] },
+      { t: "waitlist", h: "Sei beim ersten Playtest dabei", intro: "Trag dich ein – wir melden uns, sobald die ersten Playtests starten.", ok: "Du bist dabei! 🎉 Teile deinen Link, um aufzusteigen." },
+      { t: "roadmap", h: "FRONTLINERS Roadmap", items: [["done", "", "Das Grundgerüst steht", ""], ["active", "", "Ausbau und Optimierung einiger Spielmechaniken & Features", ""], ["active", "", "FRONTLINERS auf Steam bringen (Wishlists)", ""], ["planned", "", "Closed Playtests", ""], ["planned", "", "Open Playtests", ""], ["planned", "", "Early Access Release", ""]] },
+      { t: "suggestions", h: "Was soll in dem Game rein?", intro: "Du hast die Demo angespielt und hast Feedback oder Vorschläge? Nice, schreib sie uns gerne auf :)", items: [["Ranked-Modus mit Saisons", 36], ["Mehr Karten im Wüsten-Setting", 30]] },
+      { t: "download", h: "Jetzt selber spielen!", text: "Du hast Lust FRONTLINERS selber auszuprobieren? Dann downloade dir exklusiv die Demo des Prototyps und teste, was im Browser möglich ist.", builds: [["Browser-Demo", "Version 1.4 · 38 MB · Windows"]] },
+      { t: "posts" },
+    ] },
+  { slug: "fall-of-kings", title: "Fall of Kings", status: "development", acc: "#ff3b2f", acc2: "#e01010", onAcc: "#fff",
     cover: "/media/3e1f59ea-b160-46fb-b3eb-6531a9654e26.jpg", logo: "/media/fok-logo-tempv01.png",
-    tagline: "Arcade Shooter meets Medieval Battlefields.",
-    facts: [["Spieler", "6 gegen 6"], ["Plattform", "PC"], ["Genre", "Arcade-Medieval-Shooter"], ["Untote", "Jap, auch die"]],
-    stmt: "Perfekte Paraden, schwere Treffer, Guard Breaks – jeder Kampf ist unberechenbar.",
-    about: ["Fall of Kings ist ein schnelles 6-gegen-6-Multiplayer-Spiel, das moderne Shooter-Action mit brutalem mittelalterlichem Nahkampf verbindet.",
-            "Kämpfe mit Schwertern, Äxten, Schilden und Bögen auf Burgen, in zerstörten Dörfern und auf blutigen Schlachtfeldern. Wähle deine Klasse, meistere dein Kampfsystem und entscheide mit deinem Team über Sieg oder Niederlage."],
-    feats: [["6 gegen 6", "Schnelle Team-Matches."], ["1 gegen 1", "Beweise dein Können mit dem Schwert."], ["Zombie-Modus", "Jap, die Untoten warten auch hier."], ["Burgbelagerung", "Erobere oder verteidige eine Burg."]],
-    media: null, roadmap: null,
-    join: { h: "Sei beim Playtest dabei.", t: "Trag dich ein – wir sagen dir Bescheid, sobald du Fall of Kings selbst spielen kannst.", b: "Eintragen", cta: "Für den Playtest eintragen" },
-    ideas: { h: "Was sollen wir als Nächstes bauen?", items: [["Belagerungswaffen steuerbar", 31], ["Fotomodus", 22]] } },
-  { slug: "wobbly-wizards", title: "Wobbly Wizards", status: "paused", acc: "#ffa31a", genre: "Koop-Physik-Abenteuer",
+    tagline: "Arcade Shooter meets Medieval Battlefields", cardText: "Fast Paced Arcade Medieval Shooter",
+    facts: ["Arcade-Medieval-Shooter", "6 gegen 6", "PC"],
+    cta: ["Auf Steam wishlisten", "#"], trailer: "",
+    blocks: [
+      { t: "richtext", kicker: "", h: "Was ist Fall of Kings?", body: "Fall of Kings ist ein schnelles 6-gegen-6-Multiplayer-Spiel, das moderne Shooter-Action mit brutalem mittelalterlichem Nahkampf verbindet.\n\nKämpfe mit Schwertern, Äxten, Schilden und Bögen auf Burgen, in zerstörten Dörfern und auf blutigen Schlachtfeldern. Wähle deine Klasse, meistere dein Kampfsystem und entscheide mit deinem Team über Sieg oder Niederlage.\n\nPerfekte Paraden, schwere Treffer, Guard Breaks und gut getimte Ausweichmanöver machen jeden Kampf unberechenbar." },
+      { t: "features", h: "Modis", items: [["🛡️", "6 vs 6 (TDM)", "Spiele schnelle 6-gegen-6-Multiplayer Matches"], ["⚔️", "1 vs 1", "Kämpfe gegen deinen Freund oder einen Fremden und beweise dein Können mit dem Schwert!"], ["🧟", "Zombie-Modus", "Jap, die Untoten warten auch hier auf dich."], ["🏰", "Burgbelagerung", "Erobere oder verteidige rundenbasiert eine Burg."]] },
+      { t: "waitlist", h: "Sei beim Playtest dabei!", intro: "", ok: "Du bist dabei! 🎉 Teile deinen Link, um aufzusteigen." },
+      { t: "suggestions", h: "Was sollen wir als Nächstes bauen?", intro: "Sei ein Teil der Entwicklung von Fall of Kings und teile uns deine Gedanken mit.", items: [["Belagerungswaffen steuerbar", 31], ["Fotomodus", 22]] },
+    ] },
+  { slug: "wobbly-wizards", title: "Wobbly Wizards", status: "development", acc: "#ff8800", acc2: "#ffae00", onAcc: "#1a0d00",
     cover: "/media/website-3.png#focus=31,48", logo: "/media/wobblywizards-logo.png",
-    tagline: "Ein chaotisch-magisches Physik-Abenteuer für 1–6 Zauberer!",
-    facts: [["Spieler", "1–6 · Online-Koop"], ["Plattform", "PC"], ["Genre", "Physik-Abenteuer"], ["Wege zu scheitern", "∞"]],
-    stmt: "Ein Feuerball verfehlt das Monster und trifft den besten Freund. Genau das ist der Plan.",
-    about: ["**Wobbly Wizards** ist ein Online-Koop-Abenteuer, in dem ihr als tollpatschige Zauberer durch physikbasierte Dungeons stolpert. Jeder Kristall hat Wucht – und Konsequenzen.",
-            "Wir verbinden **magische Kristalle** mit einer Welt, die auf jede Aktion reagiert. Kein Run gleicht dem anderen, kein Chaos dem vorherigen."],
-    feats: [["Wackelige Physik", "Jeder Zauber, jeder Sturz ist simuliert."], ["1–6 Spieler Koop", "Allein meisterbar, zu sechst herrliches Chaos."], ["10+ Kristalle", "Jeder mit eigener Kraft – und instabil."], ["Verwinkelte Dungeons", "Geheimnisse, Fallen, absurde Bosse."]],
-    media: { videos: [["ch_LsJLu-EQ", "Erster Blick", "/media/20260525175316-1.jpg"]], gallery: ["/media/20260525180256-1.jpg", "/media/20260525182444-1.jpg", "/media/20260525174744-1.jpg"] },
-    paused: { t: "Wobbly Wizards ruht gerade – unser Team steckt in anderen Projekten. Vergessen ist es nicht.", post: "wobbly-wizards-ist-erstmal-pausiert" },
-    join: { h: "Erfahre zuerst, wenn es weitergeht.", t: "Trag dich ein – wir schreiben dir, sobald Wobbly Wizards wieder Fahrt aufnimmt.", b: "Benachrichtigen", cta: "Benachrichtigt werden" },
-    ideas: { h: "Was sollen wir ins Spiel bringen?", items: [["Koop-Modus für 2 Spieler", 8], ["Ein Zauber, der Schwerkraft umdreht", 7]] },
-    faq: [["Wird das Spiel zuerst im Early Access erscheinen?", "Ja. Wir wollen eure Ideen mit ins Spiel bringen und laufend daran weiterarbeiten, um euch das bestmögliche Erlebnis zu bieten."]] },
+    tagline: "Ein chaotisch-magisches Physik-Abenteuer für 1–6 Zauberer!", cardText: "Ein chaotisch-magisches Physik-Abenteuer für 1–6 Zauberer. Sammelt Kristalle, stolpert durch wackelige Dungeons und zaubert, was das Zeug hält.",
+    facts: ["Koop-Physik-Abenteuer", "1–6 Spieler", "PC"],
+    cta: ["Auf Steam wishlisten", "#"], trailer: "ch_LsJLu-EQ",
+    blocks: [
+      { t: "richtext", kicker: "Die Idee", h: "Magie, die wackelt.", body: "**Wobbly Wizards** ist ein Online-Koop-Abenteuer, in dem ihr als tollpatschige Zauberer durch physikbasierte Dungeons stolpert. Jeder Kristall hat Wucht — und Konsequenzen. Ein Feuerball verfehlt das Monster und trifft den besten Freund. Ein Teleport landet mitten im Lavabecken. Genau das ist der Plan.\n\nWir verbinden **magische Kristalle** mit einer Welt, die auf jede Aktion reagiert. Kein Run gleicht dem anderen, kein Chaos dem vorherigen." },
+      { t: "videos", h: "Erster Blick", items: [["ch_LsJLu-EQ", "Erster Blick", "/media/20260525175316-1.jpg"]] },
+      { t: "stats", items: [["1–6", "Spieler Koop"], ["10+", "Kristalle"], ["∞", "Wege zu scheitern"], ["2027", "Geplanter Release"]] },
+      { t: "gallery", h: "Eindrücke", items: ["/media/20260525182444-1.jpg", "/media/20260525180256-1.jpg", "/media/20260525174744-1.jpg"] },
+      { t: "features", h: "Was euch erwartet", items: [["🤹", "Wackelige Physik", "Jeder Zauber, jeder Schritt, jeder Sturz ist physiksimuliert. Komik garantiert."], ["🧙‍♂️", "1–6 Spieler Koop", "Allein meisterbar, zu sechst ein herrliches Durcheinander!"], ["💎", "Mehr als 10+ Kristalle", "Jeder Kristall hat seine eigene Kraft, aber seid vorsichtig – sie sind instabil!"], ["🏰", "Verwinkelte Dungeons", "Handgebaute Level mit Geheimnissen, Fallen und absurden Bosskämpfen."]] },
+      { t: "suggestions", h: "Was sollen wir ins Spiel bringen?", intro: "Ihr entscheidet mit! Unser Spiel lebt von euch, also bringt gerne eure Ideen ein.", items: [["Koop-Modus für 2 Spieler", 8], ["Ein Zauber, der Schwerkraft umdreht", 7]] },
+      { t: "lore", h: "Die Welt von Wobbly Wizards", text: "Erfahre mehr über die Welt von Wobbly Wizards.", label: "Welt erkunden", img: "/media/website-3.png#focus=31,48" },
+      { t: "roadmap", h: "Roadmap", items: [["done", "2025 Q1", "Prototyp & Core-Loop", "Das Grundgerüst steht. Kristalle funktionieren, Multiplayer läuft und die Wobbly Physics wobbeln!"], ["done", "2025 Q2", "Erstes Dungeon", "Erster polierter Dungeon mit Boss und allen Kern-Features."], ["planned", "2025 Q3", "Closed Playtest", "Ausgewählte Wizards testen den Koop auf Herz und Nieren."], ["planned", "2026 Q1", "Steam Demo", "Eine spielbare Demo für alle — Next Fest, wir kommen."], ["planned", "TBA", "Early Access", "Release in den Early Access mit der Community an Bord."]] },
+      { t: "faq", h: "FAQ", items: [["Wird das Spiel zuerst im Early-Access erscheinen?", "**Ja.** Weil wir natürlich eure Ideen mit ins Spiel bringen und laufend an dem Spiel weiterarbeiten wollen, um euch das bestmögliche Erlebnis zu bieten!"]] },
+      { t: "join", wl: { h: "Sei bei der Beta dabei", intro: "Sei einer der ersten Spieler:innen und verbesser mit uns zusammen das Spiel!", ok: "Du bist dabei! 🎉 Teile deinen Link, um aufzusteigen." }, cta: { h: "Werde Teil der Magie.", text: "Setz Wobbly Wizards auf deine Wishlist und sei beim Start des Chaos dabei.", label: "Jetzt wishlisten" } },
+      { t: "posts" },
+    ] },
 ];
-const DEMOS = [["WARCATS", "Browser-Prototyp · v1.4 · 37 MB"], ["Schwarzes Wasser", "Horror · v0.1.0 · 11 MB"], ["Project Sunset", "Open World · v0.1.0 · 179 MB"]];
 const BODIES = {"willkommen-im-devlog": "Hallo und herzlich willkommen! 👋\r\n\r\nAb heute gibt es bei **PLANIGAMES** ein offenes Entwicklungstagebuch. Hier erfährst du als Erste*r, woran wir gerade basteln — vom kleinsten Bugfix bis zum großen Feature.\r\n\r\n## Was dich erwartet\r\n\r\n- Regelmäßige **Devlog-Einträge** zu Wobbly Wizards\r\n- Detaillierte **Patch Notes** zu jedem Build\r\n- Blicke hinter die Kulissen: Konzepte, Prototypen, Fehlschläge\r\n\r\nBleib dran — die Magie fängt gerade erst an. 🪄", "wobbly-wizards-ist-erstmal-pausiert": "Aufgrund der Entwicklung an Fall of Kings und WARCATS haben wir unsere Ressourcen und unser Team fürs erste von Wobbly Wizards abgezogen. Aber Wobbly Wizards wird nicht komplett vergessen, freut euch auf zukünftige Updates zum Game!", "frontliners-devlog-1": "Zerstörbare Gebäude, dynamisches Wetter, neue Fahrzeuge und vieles mehr!\r\n\r\nIn den vergangenen Wochen hat sich bei FRONTLINERS einiges getan! Wir haben zahlreiche neue Features integriert, bestehende Systeme überarbeitet und intensiv an der Performance sowie am Gameplay gearbeitet.\r\n\r\nVon einer weitgehend zerstörbaren Spielwelt über neun unterschiedliche Fahrzeuge bis hin zu neuen Spielmodi und umfangreichen Anpassungsmöglichkeiten – hier erfahrt ihr, was sich verändert hat!\r\n\r\n💥 Zerstörbare Spielwelt\r\n\r\nEines unserer bisher größten Features ist die Zerstörung kompletter Gebäude!\r\n\r\nGroße Teile der Spielwelt sind mittlerweile zerstörbar. Dadurch kann sich das Schlachtfeld während einer laufenden Runde erheblich verändern. Gebäude, die zunächst als Deckung dienen, können vollständig zerstört werden und neue taktische Möglichkeiten eröffnen.\r\n\r\n🌪️ Dynamisches Wetter\r\n\r\nMit unserem neuen Wettersystem kann sich das Wetter jetzt auch während eines Matches verändern.\r\n\r\nSo können beispielsweise plötzlich Sandstürme aufziehen, die die Sichtverhältnisse beeinflussen und für völlig neue Kampfsituationen sorgen.\r\n\r\n🚁 Neun Fahrzeuge und Fahrzeug-Customizing\r\n\r\nMittlerweile haben wir neun unterschiedliche Fahrzeuge integriert, die jeweils eigene Stärken und Einsatzmöglichkeiten besitzen.\r\n\r\nZusätzlich verfügen Fahrzeuge jetzt über passende Sounds und freischaltbare Tarnungen.\r\n\r\nFür zukünftige Updates planen wir außerdem ein umfangreicheres Fahrzeug-Customizing, mit dem sich beispielsweise auch unterschiedliche Bordwaffen ausrüsten lassen.\r\n\r\n🎮 Zahlreiche neue Spielmodi\r\n\r\nAuch bei den Spielmodi haben wir ordentlich nachgelegt. Aktuell sind folgende Modi integriert:\r\n\r\n- Hot Zone\r\n- Eroberung\r\n- Team Deathmatch (TDM)\r\n- Deathmatch (FFA)\r\n- 1v1, 2v2, 3v3 und 4v4\r\n- Waffenspiel\r\n- Search and Destroy\r\n\r\nWeitere Spielmodi sind bereits geplant!\r\n\r\n🔫 Loadouts, Inventar und Customizing\r\n\r\nUnser Loadout-Editor wurde vollständig überarbeitet und optisch an das restliche Spiel angepasst.\r\n\r\nAußerdem haben wir ein funktionierendes Inventarsystem integriert und zahlreiche neue Anpassungsmöglichkeiten hinzugefügt.\r\n\r\nDazu gehören unter anderem Waffen-, Soldaten- und Fahrzeugtarnungen, die freigeschaltet und ausgerüstet werden können.\r\n\r\n🏆 Karriere, Challenges und Ingame-Shop\r\n\r\nMit dem neuen Karrieresystem und zahlreichen Challenges gibt es jetzt zusätzliche Fortschrittsmöglichkeiten.\r\n\r\nVerdientes Ingame-Geld lässt sich außerdem im neuen Shop ausgeben, um kosmetische Inhalte und Loot-Kisten freizuschalten.\r\n\r\nDie Kisten können verschiedene Belohnungen enthalten, darunter XP, Ingame-Geld, Tarnungen, Calling Cards und Spielertitel.\r\n\r\n🤖 Verbesserte Bots und Gameplay-Balancing\r\n\r\nWir haben intensiv an unserer Bot-KI gearbeitet, damit sich computergesteuerte Soldaten intelligenter verhalten.\r\n\r\nZusätzlich wurden zahlreiche Balancing-Anpassungen vorgenommen, um Waffen, Fahrzeuge und das allgemeine Gameplay besser aufeinander abzustimmen.\r\n\r\n⚡ Performance, DLSS und FSR\r\n\r\nAuch technisch hat sich einiges getan!\r\n\r\nMit der Integration von NVIDIA DLSS und AMD FSR stehen neue Möglichkeiten zur Performance-Optimierung zur Verfügung.\r\n\r\nDarüber hinaus haben wir zahlreiche weitere Optimierungen vorgenommen. Unser Ziel bleibt, FRONTLINERS auch auf weniger leistungsstarken PCs möglichst flüssig spielbar zu machen.\r\n\r\n🖥️ Neues HUD, Deploy-Karte und Audio\r\n\r\nZum Abschluss haben wir auch die Benutzeroberfläche umfangreich überarbeitet.\r\n\r\nDas HUD wurde modernisiert und eine interaktive Deploy-Karte integriert, die eine bessere Übersicht über das Schlachtfeld bietet.\r\n\r\nAußerdem haben wir große Teile des Spiels mit passenden Sounds ausgestattet, darunter die unterschiedlichen Fahrzeuge.\r\n\r\n---\r\n\r\n🚀 Wie geht es weiter?\r\n\r\nFRONTLINERS hat in den vergangenen Wochen einen großen Entwicklungsschritt gemacht. Doch wir sind noch lange nicht fertig!\r\n\r\nIn den kommenden Updates wollen wir unter anderem das Fahrzeug-Customizing erweitern, zusätzliche Spielmodi integrieren und weiter an Performance, Balancing und der Zerstörung der Spielwelt arbeiten.\r\n\r\nUnser Ziel bleibt ein dynamischer Multiplayer-Shooter, bei dem sich jedes Match anders anfühlt.\r\n\r\nWir freuen uns darauf, euch schon bald weitere Einblicke in die Entwicklung von FRONTLINERS zu geben!", "frontliners-devlog-2": "Die Entwicklung von FRONTLINERS geht weiter! In den vergangenen Tagen haben wir uns besonders intensiv mit der technischen Grundlage unseres Shooters beschäftigt.\r\n\r\nVor allem unser Zerstörungssystem hat uns vor einige Herausforderungen gestellt. Gleichzeitig wurde an neuen Maps, der Fahrzeugsteuerung und zahlreichen Gameplay-Verbesserungen gearbeitet.\r\n\r\nHier gibt es einen Einblick in unseren aktuellen Entwicklungsstand!\r\n\r\n💥 Zerstörung 2.0 – Mehr als nur explodierende Gebäude\r\n\r\nUnser bisher größter Schwerpunkt ist weiterhin die Zerstörung der Spielwelt.\r\n\r\nDabei orientieren wir uns an Spielen wie THE FINALS, in denen Gebäude nicht einfach nur auseinanderfliegen, sondern physikalisch nachvollziehbar auf Beschädigungen reagieren.\r\n\r\nIn unseren bisherigen Tests konnten wir bereits deutliche Performance-Verbesserungen erzielen. Gleichzeitig haben wir festgestellt, dass unser bisheriger technischer Ansatz langfristig nicht unseren Qualitätsansprüchen entspricht.\r\n\r\nDeshalb haben wir uns entschieden, das System grundlegend neu aufzubauen.\r\n\r\nUnser Ziel für das neue Zerstörungssystem:\r\n\r\n- Präzise Beschädigungen, beispielsweise einzelne Löcher durch Raketeneinschläge\r\n- Gebäude, deren tragende Strukturen tatsächlich eine Rolle spielen\r\n- Realistisch einstürzende Gebäudeteile statt zufälliger Explosionen\r\n- Trümmer, die als Deckung dienen und das Schlachtfeld verändern\r\n- Deutlich bessere Performance auch bei umfangreicher Zerstörung\r\n- Einheitliche, synchronisierte Zerstörung im Multiplayer\r\n\r\nDabei arbeiten wir an einer Kombination aus eigener Gebäudestatik, vorbereiteten Bruchstrukturen und optimierter Physiksimulation.\r\n\r\nDas Ganze ist technisch anspruchsvoll, aber für uns eines der wichtigsten Systeme von FRONTLINERS.\r\n\r\n🗺️ Neue Maps und verbessertes Leveldesign\r\n\r\nAuch bei unseren Schlachtfeldern geht es voran!\r\n\r\nMit einer weiteren Map, die intern unter anderem als Apocalypse geführt wird, testen wir neue Umgebungen und unterschiedliche Geländeaufbauten.\r\n\r\nDabei beschäftigen wir uns besonders mit der Spielbarkeit der Karten: Laufwege, Deckungsmöglichkeiten, Fahrzeugbewegungen und die Verteilung wichtiger Kampfbereiche.\r\n\r\nZusätzlich arbeiten wir an Verbesserungen der Geländekollisionen und der Performance größerer Umgebungen.\r\n\r\nLangfristig möchten wir unterschiedliche Schauplätze bieten, damit sich FRONTLINERS nicht ausschließlich auf Wüstenlandschaften beschränkt.\r\n\r\n🚁 Helikopter und Bewegungsmechaniken\r\n\r\nAuch die Fahrzeugsteuerung bekommt weitere Aufmerksamkeit.\r\n\r\nInsbesondere unsere Helikopter sollen sich deutlich natürlicher steuern lassen. Statt einer stark automatisierten Flugbewegung möchten wir ein Fluggefühl erreichen, bei dem Neigung, Geschwindigkeit und Steuerbewegungen besser zusammenspielen.\r\n\r\nParallel dazu überarbeiten wir verschiedene Bewegungsmechaniken unserer Soldaten.\r\n\r\nDazu gehört unter anderem das Vaulting-System, mit dem Hindernisse zuverlässig überwunden werden sollen, ohne dass normale Treppen oder kleinere Höhenunterschiede zu ungewollten Animationen führen.\r\n\r\n🌐 Multiplayer und Server-Performance\r\n\r\nEin weiteres großes Thema ist die Multiplayer-Architektur.\r\n\r\nGerade bei großflächiger Zerstörung, zahlreichen Bots und Fahrzeugen muss sichergestellt werden, dass alle Spieler einen konsistenten Spielzustand erleben.\r\n\r\nDafür arbeiten wir an einer effizienteren Aufteilung zwischen Server und Clients.\r\n\r\nUnser Ziel ist es, dass der Server wichtige Gameplay-Ereignisse und physikalisch relevante Zustände kontrolliert, während die Clients weniger wichtige Effekte lokal darstellen können.\r\n\r\nDadurch möchten wir sowohl die Netzwerkbelastung als auch die benötigte Rechenleistung reduzieren.\r\n\r\n🔧 Bugfixes, Tests und Optimierungen\r\n\r\nNeben den großen Systemen beschäftigen uns natürlich auch zahlreiche kleinere Baustellen.\r\n\r\nDazu zählen unter anderem Fahrzeugkollisionen, Sitzpositionen, Schatten, die Darstellung der Deploy-Karte und verschiedene Probleme bei der Navigation durch unsere Spielwelt.\r\n\r\nBesonders intensiv testen wir aktuell, wie sich Zerstörung, Bots und Fahrzeuge gegenseitig beeinflussen.\r\n\r\nDabei geht es uns nicht einfach darum, möglichst viele Features einzubauen, sondern die vorhandenen Systeme zuverlässig und performant miteinander funktionieren zu lassen.\r\n\r\n---\r\n\r\n🚀 Wie geht es weiter?\r\n\r\nUnser größtes Ziel für die nächsten Entwicklungsschritte ist ein stabiles, überzeugendes und multiplayerfähiges Zerstörungssystem.\r\n\r\nGleichzeitig werden wir weiter an unseren Maps, der Fahrzeugsteuerung, den Bewegungsmechaniken und der allgemeinen Performance arbeiten.\r\n\r\nFRONTLINERS befindet sich weiterhin mitten in der Entwicklung. Nicht jeder Ansatz funktioniert direkt beim ersten Versuch – und manchmal bedeutet Fortschritt auch, ein bestehendes System noch einmal grundlegend zu überdenken.\r\n\r\nGenau das gehört für uns zur Spieleentwicklung dazu.\r\n\r\nWir freuen uns darauf, euch schon bald weitere Ergebnisse zeigen zu können!\r\n\r\n– Das PLANIGAMES Entwicklerteam"};
 const POSTS = [
-  { slug: "frontliners-devlog-2", d: "2026-10-26", g: "frontliners", t: "FRONTLINERS – Devlog #2", e: "Neue Zerstörungsphysik, Map-Entwicklung und große technische Fortschritte.", i: "/media/triumph-im-wuestenaussenposten.png#focus=32,20" },
-  { slug: "frontliners-devlog-1", d: "2026-10-19", g: "frontliners", t: "FRONTLINERS – Devlog #1", e: "Zerstörbare Gebäude, dynamisches Wetter, neue Fahrzeuge und vieles mehr.", i: "/media/chatgpt-bild-4-okt-2026-04-38-41.png" },
-  { slug: "wobbly-wizards-ist-erstmal-pausiert", d: "2026-10-15", g: "wobbly-wizards", t: "Wobbly Wizards ist erstmal pausiert", e: "Wie es mit Wobbly Wizards weitergeht.", i: "" },
-  { slug: "willkommen-im-devlog", d: "2026-06-01", g: "wobbly-wizards", t: "Willkommen im Devlog!", e: "Wir öffnen die Türen zur Werkstatt: ab jetzt teilen wir hier Fortschritt, Patch Notes und Blicke hinter die Kulissen.", i: "" },
+  { slug: "frontliners-devlog-2", d: "2026-10-26", g: "frontliners", t: "FRONTLINERS – DEVLOG #2", e: "Neue Zerstörungsphysik, Map-Entwicklung und große technische Fortschritte!", i: "/media/triumph-im-wuestenaussenposten.png#focus=32,20", tags: ["#frontliners", "#devlog"] },
+  { slug: "frontliners-devlog-1", d: "2026-10-19", g: "frontliners", t: "FRONTLINERS – DEVLOG #1", e: "Große Updates!", i: "/media/chatgpt-bild-4-okt-2026-04-38-41.png", tags: ["#frontliners", "#devlog"] },
+  { slug: "wobbly-wizards-ist-erstmal-pausiert", d: "2026-10-15", g: "wobbly-wizards", t: "Wobbly Wizards ist erstmal pausiert", e: "Wie es mit Wobbly Wizards weitergeht...", i: "", tags: [] },
+  { slug: "willkommen-im-devlog", d: "2026-06-01", g: "wobbly-wizards", t: "Willkommen im Devlog!", e: "Wir öffnen die Türen zur Werkstatt: ab jetzt teilen wir hier regelmäßig Fortschritt, Patchnotes und Blicke hinter die Kulissen.", i: "", tags: [] },
 ];
-const BADGES = [["explorer", "🧭", "Entdecker*in", "5 Ansichten erkundet"], ["subscriber", "📬", "Eingeweiht", "Für Updates eingetragen"], ["ideator", "💡", "Ideengeber*in", "Eine Idee eingereicht"],
-  ["voter", "🗳️", "Wählerisch", "Für eine Idee abgestimmt"]];
 const G = (s) => GAMES.find((g) => g.slug === s);
 const P = (s) => POSTS.find((p) => p.slug === s);
-const gv = (g) => `--gacc:${g.acc}`;
 const MON = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 const dLong = (d) => { const [y, m, t] = d.split("-").map(Number); return `${t}. ${MON[m - 1]} ${y}`; };
-const dShort = (d) => { const [y, m, t] = d.split("-"); return `${t}.${m}.${y}`; };
-const dot = (s) => `<i class="dot st-${s}"></i>`;
-const wob = (t) => [...t].map((ch, k) => ch === " " ? " " : `<span style="--i:${k}">${esc(ch)}</span>`).join("");
-/* feste „Zufalls“-Werte, damit die Glut bei jedem Aufruf gleich aussieht */
+const dShort = (d) => { const [y, m, t] = d.split("-").map(Number); return `${t}. ${MON[m - 1].slice(0, 3)}. ${y}`; };
+const badge = (g) => `<span class="badge" style="--dot:${g.acc}"><i></i>${ST[g.status]}</span>`;
+const accStyle = (g) => `--acc:${g.acc};--acc2:${g.acc2};--acc3:${g.acc};--on-acc:${g.onAcc}`;
 const rnd = (i, n) => { const v = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453; return v - Math.floor(v); };
-const EMBERS = Array.from({ length: 18 }, (_, i) => `<i style="--x:${(rnd(i, 1) * 100).toFixed(1)}%;--s:${(2 + rnd(i, 2) * 3).toFixed(1)}px;--t:${(8 + rnd(i, 3) * 8).toFixed(1)}s;--d:${(-rnd(i, 4) * 16).toFixed(1)}s;--dx:${((rnd(i, 5) - .5) * 180).toFixed(0)}px"></i>`).join("");
+const FX = Array.from({ length: 16 }, (_, i) => `<i style="--x:${(rnd(i, 1) * 100).toFixed(1)}%;--s:${(5 + rnd(i, 2) * 10).toFixed(1)}px;--t:${(12 + rnd(i, 3) * 10).toFixed(1)}s;--d:${(-rnd(i, 4) * 22).toFixed(1)}s;--dx:${((rnd(i, 5) - .5) * 140).toFixed(0)}px"></i>`).join("");
 
-/* Devlog-Text (Markdown light): Absätze, Listen, **fett**, ## und Emoji-Zeilen als Zwischenüberschrift */
+/* Devlog-Text: Absätze, Listen, **fett**, Emoji-Zeilen werden zu Zwischenüberschriften */
 function prose(src) {
   let out = "", para = [], list = [];
   const fp = () => { if (para.length) { out += `<p>${inl(para.join(" "))}</p>`; para = []; } };
@@ -683,7 +596,8 @@ function prose(src) {
     if (!l) { fp(); fl(); continue; }
     if (/^-{3,}$/.test(l)) { fp(); fl(); out += "<hr>"; continue; }
     if (/^#{1,3}\s/.test(l)) { fp(); fl(); out += `<h2>${inl(l.replace(/^#+\s*/, ""))}</h2>`; continue; }
-    if (/^\p{Extended_Pictographic}/u.test(l) && l.length < 90 && !/[.!:]$/.test(l)) { fp(); fl(); out += `<h2>${inl(l.replace(/^[\p{Extended_Pictographic}️‍\s]+/u, ""))}</h2>`; continue; }
+    const em = l.match(/^((?:\p{Extended_Pictographic}|️|‍)+)\s*(.+)$/u);
+    if (em && l.length < 90 && !/[.!:]$/.test(l)) { fp(); fl(); out += `<h2><span class="emo">${em[1]}</span>${inl(em[2])}</h2>`; continue; }
     if (/^[-*]\s+/.test(l)) { fp(); list.push(l.replace(/^[-*]\s+/, "")); continue; }
     fl(); para.push(l);
   }
@@ -692,82 +606,88 @@ function prose(src) {
 }
 
 /* =================== Bausteine =================== */
-function card(p) {
+function gcard(g) {
+  return `<a class="gcard rv" href="#${g.slug}"><figure><img src="${M(g.cover)}" alt="" loading="lazy" style="object-position:${focus(g.cover)}">${badge(g)}</figure>
+    <div class="gcard-b"><h3 class="h3">${esc(g.title)}</h3><p>${esc(g.cardText)}</p><span class="more">Mehr erfahren ${ic("arrow")}</span></div></a>`;
+}
+function demoCard() {
+  return `<a class="gcard rv" href="#spiele" data-sec="demos"><figure><div class="demo-art"><span>🕹️</span></div><span class="badge" style="--dot:#e6a015"><i></i>Demo verfügbar</span></figure>
+    <div class="gcard-b"><h3 class="h3">Browser-Demos</h3><p>Hier findest du alle Browser-Demos zum Download!</p><span class="more">Mehr erfahren ${ic("arrow")}</span></div></a>`;
+}
+function prow(p) {
   const g = G(p.g);
-  const fig = p.i ? `<img src="${M(p.i)}" alt="" loading="lazy" style="object-position:${focus(p.i)}">`
-    : `<img class="ph-img" src="${M(g.cover)}" alt="" loading="lazy" style="object-position:${focus(g.cover)}">${logo(g.logo, "", 9000, "card-logo")}`;
-  return `<a class="card rv" href="#${p.slug}"><figure>${fig}</figure><p class="lab">${dShort(p.d)} · ${esc(g.title)}</p><h3 class="h3">${esc(p.t)}</h3></a>`;
+  const fig = p.i ? `<img src="${M(p.i)}" alt="" loading="lazy" style="object-position:${focus(p.i)}">` : `<img class="ph-img" src="${M(g.cover)}" alt="" loading="lazy" style="object-position:${focus(g.cover)}">`;
+  return `<a class="prow" href="#${p.slug}" data-g="${p.g}"><figure>${fig}</figure><span class="prow-d">${dShort(p.d)}</span><span class="prow-t"><span class="badge">${esc(g.title)}</span><span class="prow-h">${esc(p.t)}</span></span>${ic("arrow")}</a>`;
+}
+function nlForm(id, label, ok) {
+  return `<form class="nl" data-fake><label class="sr" for="${id}">E-Mail-Adresse</label><input id="${id}" type="email" placeholder="${esc(STUDIO.email)}" autocomplete="email" required><button class="btn btn-p" type="submit">${esc(label)}</button></form><p class="ok" hidden>${esc(ok)}</p>`;
 }
 function footer() {
-  return `<footer class="ft">
-  <div class="wrap grid ft-cta">
-    <h2 class="d2">Bleib dran.</h2>
-    <div class="c-cta">
-      <p class="lead">Release-Termine, Playtests und neue Devlogs direkt in dein Postfach. Kein Spam, versprochen.</p>
-      <form class="nl" data-fake data-badge="subscriber"><label class="sr" for="nl-mail">E-Mail-Adresse</label><input id="nl-mail" type="email" placeholder="deine@email.de" autocomplete="email" required><button type="submit">Eintragen${ic("arrow")}</button></form>
-      <p class="ok" hidden>Fast geschafft – bitte bestätige die Mail in deinem Postfach. 🧡</p>
-    </div>
+  return `<footer class="ft" id="s-kontakt"><div class="wrap">
+  <div class="ft-top">
+    <div class="ft-brand"><span data-mark="34"></span><p>${esc(STUDIO.note)}</p></div>
+    <div class="ft-col"><p class="badge">Entdecken</p><ul><li><a href="#spiele">Alle Spiele</a></li><li><a href="#devlog">Devlog &amp; Patch Notes</a></li><li><a href="#start" data-sec="studio">Über das Studio</a></li><li><a href="#" onclick="return false">Press Kit</a></li></ul></div>
+    <div class="ft-col"><p class="badge">Kontakt &amp; Presse</p><ul><li><a href="mailto:${STUDIO.email}">${STUDIO.email}</a></li>${STUDIO.socials.map(([n, u]) => `<li><a href="${u}" target="_blank" rel="noopener">${n}</a></li>`).join("")}<li><a href="${STUDIO.tip}" target="_blank" rel="noopener">☕ Unterstützen</a></li></ul></div>
   </div>
-  <div class="ft-mid"><div class="wrap ft-grid">
-    <div class="ft-brand"><span data-mark="40"></span><p>${esc(STUDIO.note)}</p><a class="lnk" href="mailto:${STUDIO.email}">Sag Hallo!${ic("arrow")}</a></div>
-    <div class="ft-col"><p class="lab">Spiele</p><ul>${GAMES.map((g) => `<li><a href="#${g.slug}">${esc(g.title)}</a></li>`).join("")}</ul></div>
-    <div class="ft-col"><p class="lab">Studio</p><ul><li><a href="#start" data-sec="studio">Team</a></li><li><a href="#devlog">Devlog</a></li><li><a href="mailto:${STUDIO.email}">Kontakt</a></li></ul></div>
-    <div class="ft-col"><p class="lab">Folgen</p><ul>${STUDIO.socials.map(([n, u]) => `<li><a href="${u}" target="_blank" rel="noopener">${n}${ic("ext")}</a></li>`).join("")}</ul></div>
-  </div>
-  <div class="wrap"><svg class="ft-word" viewBox="0 0 1000 132" aria-hidden="true"><text x="0" y="122" textLength="1000" lengthAdjust="spacingAndGlyphs">PLANIGAMES</text></svg></div></div>
-  <div class="ft-bot-w"><div class="wrap ft-bot"><span>© 2026 PLANIGAMES · Mit 🧡 und zu viel Koffein gemacht</span><span><a href="#" onclick="return false">Impressum</a><a href="#" onclick="return false">Datenschutz</a></span></div></div>
-</footer>`;
+  <div class="ft-bot"><span>© 2026 PLANIGAMES — Alle Rechte vorbehalten</span><span><a href="#" onclick="return false">Impressum</a><a href="#" onclick="return false">Datenschutz</a><a href="#" onclick="return false">Cookie-Einstellungen</a></span><span class="badge">Made with 🧡 in Germany</span></div>
+</div></footer>`;
 }
 
 /* =================== Ansichten =================== */
 function viewHome() {
-  const fl = G("frontliners"), v = fl.media.videos[0];
+  const fl = GAMES[0];
   return `
-<section class="hx" data-hx aria-label="Unsere Spiele">
-  <div class="hx-bg" data-par>${GAMES.map((g, i) => `<img class="${i ? "" : "on"}" src="${M(g.cover)}" alt="" style="object-position:${focus(g.cover)}">`).join("")}</div>
-  <div class="embers" aria-hidden="true">${EMBERS}</div>
-  <div class="wrap hx-in">
-    <h1 class="sr">PLANIGAMES – Indie-Spielestudio</h1>
-    <div class="grid hx-top"><p class="lab c-lab"><b>Unsere Spiele</b></p><p class="lab c-main">Indie-Spielestudio aus Deutschland · seit ${STUDIO.founded}</p></div>
-    <ol class="ix">${GAMES.map((g, i) => `<li class="${i ? "" : "on"}" style="--ga:${g.acc}"${g.slug === "wobbly-wizards" ? " data-wobble" : ""}><a href="#${g.slug}" aria-label="${esc(g.title)} – ${ST[g.status]}"><span class="ix-m"><span class="lab">0${i + 1}</span><span class="lab ix-s">${dot(g.status)}${ST[g.status]}</span></span><span class="ix-t">${g.slug === "wobbly-wizards" ? wob(g.title) : esc(g.title)}</span><span class="ix-go">${ic("arrow")}</span><span class="ix-bar"></span></a></li>`).join("")}</ol>
+<section class="hero">
+  <div class="hero-bg" data-par><img src="${M(STUDIO.hero)}" alt=""></div>
+  <div class="grid-lines"></div>
+  <div class="fx" aria-hidden="true">${FX}</div>
+  <div class="wrap hero-in">
+    <span class="badge"><i class="pulse"></i>Indie Game Studio · seit ${STUDIO.founded}</span>
+    <h1 class="h1">${STUDIO.h1a}<br><span class="grad">${STUDIO.h1b}</span></h1>
+    <p class="lead">${esc(STUDIO.intro)}</p>
+    <div class="row"><a class="btn btn-p" href="#spiele">Spiele entdecken ${ic("arrow")}</a><a class="btn btn-g" href="#devlog">Devlog lesen</a></div>
   </div>
 </section>
-<div class="tick" aria-hidden="true"><div class="tick-in">${[0, 1].map(() => STUDIO.ticker.map((t, i) => `<span class="${i % 2 ? "o" : ""}">${esc(t)}</span><i>✦</i>`).join("")).join("")}</div></div>
+<div class="tick" aria-hidden="true"><div class="tick-in">${[0, 1].map(() => STUDIO.marquee.map((t) => `<span>${esc(t)}</span><i>✦</i>`).join("")).join("")}</div></div>
+
+<section class="sec" id="s-spiele">
+  <div class="wrap">
+    <div class="sec-h"><h2 class="h2">Unsere Spiele</h2><a class="more dim" href="#spiele">Alle Spiele ${ic("arrow")}</a></div>
+    <a class="feat rv" href="#${fl.slug}" style="${accStyle(fl)}">
+      <figure><img src="${M(fl.cover)}" alt="" style="object-position:${focus(fl.cover)}"></figure>
+      <div class="feat-b"><div class="row">${badge(fl)}<span class="badge plain">Aktuelles Projekt</span></div>${logo(fl.logo, fl.title, 52000)}<p>${esc(fl.tagline)}</p><span class="btn btn-p btn-s">Zum Spiel ${ic("arrow")}</span></div>
+    </a>
+    <div class="cards3">${gcard(GAMES[1])}${gcard(GAMES[2])}${demoCard()}</div>
+  </div>
+</section>
 
 <section class="sec" id="s-studio">
-  <div class="wrap grid rv">
-    <p class="lab c-lab">Das Studio</p>
-    <div class="c-main">
-      <h2 class="st xl">${STUDIO.h1a}<br><span class="dim">${STUDIO.h1b}</span><span class="stk stk-w" style="--rot:-6deg">Indie &amp; Proud 🧡</span></h2>
-      <div class="split">
-        <div class="txt">${STUDIO.about.map((p) => `<p>${inl(p)}</p>`).join("")}<p class="lab facts-line">${STUDIO.factsLine.split(" · ").map((x) => `<span>${esc(x)}</span>`).join(" · ")}</p></div>
-        <ol class="vals">${STUDIO.values.map(([t, d], i) => `<li><span class="lab">0${i + 1}</span><div><h3 class="h3">${esc(t)}</h3><p>${esc(d)}</p></div></li>`).join("")}</ol>
-      </div>
-    </div>
-  </div>
-  <div class="wrap grid team-sec">
-    <div class="c-lab"><p class="lab">Team</p></div>
-    <ul class="c-main team">${TEAM.map((m) => `<li class="tm rv"><figure><img src="${M(m.p)}" alt="${esc(m.n)}" loading="lazy" style="object-position:${focus(m.p)}"></figure><h3 class="h3">${esc(m.n)}</h3><p class="lab">${esc(m.r)}</p><p class="q">„${esc(m.q)}“</p>${m.l ? `<p class="loc">📍 ${esc(m.l)}</p>` : ""}</li>`).join("")}</ul>
-  </div>
-</section>
-
-<section class="wrap band-w">
-  <div class="band" style="${gv(fl)}">
-    <img class="band-bg" src="${M(fl.band)}" alt="" loading="lazy" style="object-position:${focus(fl.band)}">
-    <span class="stk stk-o band-stk" style="--rot:7deg">Playtest offen!</span>
-    <div class="band-in rv">
-      <p class="lab"><b>${dot(fl.status)}Jetzt im Fokus</b></p>
-      ${logo(fl.logo, fl.title, 72000)}
-      <p class="band-t">${esc(fl.pitch)}</p>
-      <div class="row"><a class="btn btn-p" href="#frontliners" data-sec="mitmachen">${esc(fl.join.cta)}${ic("arrow")}</a><a class="btn btn-g" href="${yt(v[0])}" target="_blank" rel="noopener">${esc(v[1])} ansehen${ic("ext")}</a></div>
-    </div>
+  <div class="wrap">
+    <div class="about rv"><div><p class="kicker">Über das Studio</p><h2 class="h2 lg">${esc(STUDIO.aboutTitle)}</h2></div><div class="txt">${paras(STUDIO.about)}</div></div>
+    <div class="vals">${STUDIO.pillars.map(([e, t, d]) => `<div class="val rv"><span class="emo">${e}</span><h3 class="h3">${esc(t)}</h3><p>${esc(d)}</p></div>`).join("")}</div>
   </div>
 </section>
 
 <section class="sec">
-  <div class="wrap grid">
-    <div class="c-lab"><p class="lab">Devlog</p><a class="lnk" href="#devlog">Alle Beiträge${ic("arrow")}</a></div>
-    <div class="c-main cards">${POSTS.slice(0, 3).map(card).join("")}</div>
+  <div class="wrap">
+    <h2 class="h2 c">Die Köpfe dahinter</h2>
+    <div class="team">${TEAM.map((m) => `<div class="tm rv"><figure><img src="${M(m.p)}" alt="${esc(m.n)}" loading="lazy" style="object-position:${focus(m.p)}"></figure><h3 class="h3">${esc(m.n)}</h3><p class="badge">${esc(m.r)}</p><p class="q">„${esc(m.q)}“</p>${m.l ? `<p class="loc">📍 ${esc(m.l)}</p>` : ""}</div>`).join("")}</div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h"><h2 class="h2">Frisch aus dem Devlog</h2><a class="more dim" href="#devlog">Alle Beiträge ${ic("arrow")}</a></div>
+    <div class="plist">${POSTS.slice(0, 3).map(prow).join("")}</div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="join rv">
+      <div class="join-nl"><h2 class="h2">${esc(STUDIO.newsletter.h)}</h2><p class="lead">${esc(STUDIO.newsletter.t)}</p>${nlForm("nl-mail", STUDIO.newsletter.b, STUDIO.newsletter.ok)}</div>
+      <div class="join-co"><span class="emo">💬</span><h3 class="h3">${esc(STUDIO.community.h)}</h3><p>${esc(STUDIO.community.t)}</p><div class="row">${STUDIO.socials.map(([n, u]) => `<a class="btn btn-g btn-s" href="${u}" target="_blank" rel="noopener">${n} ${ic("ext")}</a>`).join("")}</div></div>
+    </div>
   </div>
 </section>
 ${footer()}`;
@@ -775,123 +695,61 @@ ${footer()}`;
 
 function viewGames() {
   return `
-<section class="wrap ph">
-  <p class="lab">Spiele</p>
-  <h1 class="d1">Drei Welten.</h1>
-  <p class="lead">Ein Shooter für 60 Spieler, ein mittelalterliches Schlachtfeld und ein Haufen wackeliger Zauberer – jedes Spiel mit eigenem Look und eigener Haltung.</p>
-</section>
-<div class="wrap gpl">${GAMES.map((g, i) => `
-  <a class="gp" href="#${g.slug}" style="${gv(g)}">
-    <img src="${M(g.cover)}" alt="" loading="${i ? "lazy" : "eager"}" style="object-position:${focus(g.cover)}">
-    <div class="gp-in">
-      <div><p class="lab">0${i + 1} · ${esc(g.genre)}</p>${logo(g.logo, g.title, 56000, "", 170)}</div>
-      <div class="gp-r"><p class="lab">${dot(g.status)}${ST[g.status]}</p><span class="lnk">Zum Spiel${ic("arrow")}</span></div>
-    </div>
-  </a>`).join("")}
-</div>
-<section class="sec">
-  <div class="wrap grid">
-    <p class="lab c-lab">Prototypen &amp; Demos</p>
-    <div class="c-main">
-      <p class="lead demos-lead">Kleine Experimente aus der Werkstatt – unfertig, aber spielbar.</p>
-      <ul class="demos">${DEMOS.map(([n, m]) => `<li><span class="h3">${esc(n)}</span><span class="lab">${esc(m)}</span><button type="button" class="lnk" data-fakedl>Download${ic("dl")}</button></li>`).join("")}</ul>
-    </div>
+<section class="wrap ph"><p class="kicker">Alle Spiele</p><h1 class="h1 sm">Unsere Spiele</h1><p class="lead">Jede Welt mit eigenem Charakter, eigener Farbe, eigener Magie. Klick dich rein.</p></section>
+<section class="wrap">
+  <div class="cards3" style="margin-top:0">${GAMES.map(gcard).join("")}</div>
+  <div class="card demo-list rv" id="s-demos">
+    <div class="sec-h"><div><p class="kicker">Demo verfügbar</p><h2 class="h2">Browser-Demos</h2></div></div>
+    <p style="margin-bottom:18px">Alle unsere Browser-Prototypen aus den Videos von NULLPLAN an einem Ort!</p>
+    ${DEMOS.map(([n, m]) => `<div class="build"><span class="emo">🪟</span><span><b>${esc(n)}</b><small>${esc(m)}</small></span><button type="button" aria-label="${esc(n)} herunterladen" data-fakedl>${ic("dl")}</button></div>`).join("")}
   </div>
 </section>
+<div class="sec" style="padding-bottom:var(--sec)"></div>
 ${footer()}`;
 }
 
+function block(g, b) {
+  const posts = POSTS.filter((p) => p.g === g.slug);
+  switch (b.t) {
+    case "richtext": return `<section class="sec"><div class="wrap rt rv"><div>${b.kicker ? `<p class="kicker">${esc(b.kicker)}</p>` : ""}<h2 class="h2">${esc(b.h)}</h2></div><div class="txt">${paras(b.body)}</div></div></section>`;
+    case "videos": return `<section class="sec" id="s-videos"><div class="wrap"><div class="sec-h"><h2 class="h2">${esc(b.h)}</h2></div><div class="vids${b.items.length > 1 ? " two" : ""}">${b.items.map(([id, t, poster]) => `<a class="vid rv" href="${yt(id)}" target="_blank" rel="noopener" aria-label="${esc(t)} auf YouTube ansehen"><img src="${M(poster)}" alt="" loading="lazy" style="object-position:${focus(poster)}"><span class="vid-c"><span class="btn btn-p btn-s">${ic("play")} ${esc(t)} ansehen</span><small>Öffnet YouTube in einem neuen Tab</small></span></a>`).join("")}</div></div></section>`;
+    case "waitlist": return `<section class="sec" id="s-wl"><div class="wrap"><div class="card wl rv"><h2 class="h2">${esc(b.h)}</h2>${b.intro ? `<p class="lead">${esc(b.intro)}</p>` : ""}${nlForm("wl-" + g.slug, "Eintragen", b.ok)}</div></div></section>`;
+    case "roadmap": {
+      const done = b.items.filter((x) => x[0] === "done").length, act = b.items.filter((x) => x[0] === "active").length;
+      const pct = Math.round((done + act * 0.5) / b.items.length * 100), lab = { done: "Erledigt", active: "In Arbeit", planned: "Geplant" };
+      return `<section class="sec"><div class="wrap"><div class="rm-h"><h2 class="h2">${esc(b.h)}</h2><div class="prog"><div class="prog-top"><span class="badge">Entwicklungs-Fortschritt</span><b class="grad">${pct}%</b></div><div class="bar"><i style="width:${pct}%"></i></div></div></div>
+        <ol class="rm">${b.items.map(([s, d, t, x]) => `<li class="${s} rv"><span class="dotc"></span><span><span class="badge">${d ? esc(d) + " · " : ""}${lab[s]}</span><b>${esc(t)}</b>${x ? `<p>${esc(x)}</p>` : ""}</span></li>`).join("")}</ol></div></section>`;
+    }
+    case "suggestions": return `<section class="sec"><div class="wrap"><div class="idea c rv"><h2 class="h2">${esc(b.h)}</h2>${b.intro ? `<p class="lead" style="margin-top:12px">${esc(b.intro)}</p>` : ""}
+      <form data-fake><label class="sr" for="idee-${g.slug}">Deine Idee</label><input id="idee-${g.slug}" type="text" placeholder="Deine Idee …" required><button class="btn btn-p" type="submit">Einreichen</button></form><p class="ok" hidden>Danke! Deine Idee ist bei uns gelandet.</p>
+      <ul class="votes">${b.items.map(([t, n]) => `<li><button type="button" class="vote" data-vote="${n}" aria-pressed="false" aria-label="${esc(t)} – Stimme geben">${ic("up")}<span>${n}</span></button><span>${esc(t)}</span></li>`).join("")}</ul></div></div></section>`;
+    case "download": return `<section class="sec"><div class="wrap rt rv"><div><h2 class="h2">${esc(b.h)}</h2></div><div><p class="lead">${esc(b.text)}</p><div style="margin-top:22px">${b.builds.map(([n, m]) => `<div class="build"><span class="emo">🪟</span><span><b>${esc(n)}</b><small>${esc(m)}</small></span><button type="button" aria-label="${esc(n)} herunterladen" data-fakedl>${ic("dl")}</button></div>`).join("")}</div></div></div></section>`;
+    case "features": return `<section class="sec"><div class="wrap"><div class="sec-h"><h2 class="h2">${esc(b.h)}</h2></div><div class="feats" style="--fc:${Math.min(4, b.items.length)}">${b.items.map(([e, t, d]) => `<div class="val rv"><span class="emo">${e}</span><h3 class="h3">${esc(t)}</h3><p>${esc(d)}</p></div>`).join("")}</div></div></section>`;
+    case "stats": return `<section class="sec"><div class="wrap"><div class="stats">${b.items.map(([v, l]) => `<div class="stat rv"><b class="grad">${esc(v)}</b><span class="badge">${esc(l)}</span></div>`).join("")}</div></div></section>`;
+    case "gallery": return `<section class="sec"><div class="wrap"><div class="sec-h"><h2 class="h2">${esc(b.h)}</h2></div><div class="gal">${b.items.map((s) => `<figure class="rv"><img src="${M(s)}" alt="" loading="lazy"></figure>`).join("")}</div></div></section>`;
+    case "lore": return `<section class="sec"><div class="wrap"><a class="lore rv" href="#" onclick="return false"><img src="${M(b.img)}" alt="" loading="lazy" style="object-position:${focus(b.img)}"><span><h2 class="h2">${esc(b.h)}</h2><p>${esc(b.text)}</p><span class="btn btn-p btn-s">${esc(b.label)} ${ic("arrow")}</span></span></a></div></section>`;
+    case "faq": return `<section class="sec"><div class="wrap"><div class="sec-h"><h2 class="h2">${esc(b.h)}</h2></div><div class="faq">${b.items.map(([q, a]) => `<details><summary>${esc(q)}${ic("plus")}</summary><div class="a"><p>${inl(a)}</p></div></details>`).join("")}</div></div></section>`;
+    case "join": return `<section class="sec" id="s-wl"><div class="wrap"><div class="card cta2 rv"><div><h2 class="h2">${esc(b.wl.h)}</h2><p class="lead" style="margin-top:10px">${esc(b.wl.intro)}</p>${nlForm("wl-" + g.slug, "Eintragen", b.wl.ok)}</div><div class="wl" style="text-align:left;background:radial-gradient(90% 120% at 100% 0%,color-mix(in srgb,var(--acc) 18%,transparent),transparent 65%)"><h2 class="h2">${esc(b.cta.h)}</h2><p style="margin:12px 0 22px">${esc(b.cta.text)}</p><a class="btn btn-p" href="#" onclick="return false">${esc(b.cta.label)} ${ic("arrow")}</a></div></div></div></section>`;
+    case "posts": return posts.length ? `<section class="sec"><div class="wrap"><div class="sec-h"><h2 class="h2">Patch Notes</h2><a class="more dim" href="#devlog">Alle ${ic("arrow")}</a></div><div class="plist">${posts.map(prow).join("")}</div></div></section>` : "";
+  }
+  return "";
+}
+
 function viewGame(slug) {
-  const g = G(slug), i = GAMES.indexOf(g), nx = GAMES[(i + 1) % GAMES.length];
-  const v = g.media?.videos || [], gal = g.media?.gallery || [], posts = POSTS.filter((p) => p.g === slug);
-  const two = v.length === 2 && !gal.length;
-  const vid = ([id, t, poster]) => `<a class="vid" href="${yt(id)}" target="_blank" rel="noopener" aria-label="${esc(t)} auf YouTube ansehen"><img src="${M(poster)}" alt="" loading="lazy" style="object-position:${focus(poster)}"><span class="play">${ic("play")}</span><span class="cap"><span class="lab">${esc(t)}</span><span class="lab">YouTube${ic("ext")}</span></span></a>`;
-  const rmCols = g.roadmap ? [["done", "Erledigt", g.roadmap.done], ["now", "In Arbeit", g.roadmap.now], ["next", "Als Nächstes", g.roadmap.next]].filter((c) => c[2].length) : [];
-  return `<div style="${gv(g)}">
+  const g = G(slug);
+  const cta = g.cta[1] === "#wl" ? `<a class="btn btn-p" href="#${g.slug}" data-sec="wl">${esc(g.cta[0])} ${ic("arrow")}</a>` : `<a class="btn btn-p" href="#" onclick="return false">${esc(g.cta[0])} ${ic("arrow")}</a>`;
+  return `<div style="${accStyle(g)}">
 <section class="gh">
-  <div class="gh-media" data-par><img class="gh-bg" src="${M(g.cover)}" alt="" style="object-position:${focus(g.cover)}"></div>
-  <div class="wrap gh-in">
-    <p class="lab gh-lab"><b>${dot(g.status)}${ST[g.status]}</b> · ${esc(g.genre)}</p>
-    <h1>${logo(g.logo, g.title, 82000, "", 190)}</h1>
-    <p class="gh-tag">${esc(g.tagline)}</p>
-    <div class="row"><a class="btn btn-p" href="#${g.slug}" data-sec="mitmachen">${esc(g.join.cta)}${ic("arrow")}</a>${v[0] ? `<a class="btn btn-g" href="${yt(v[0][0])}" target="_blank" rel="noopener">${esc(v[0][1])} ansehen${ic("ext")}</a>` : ""}</div>
-  </div>
-  <div class="wrap"><dl class="gh-facts">${g.facts.map(([k, val]) => `<div><dt class="lab">${k}</dt><dd>${esc(val)}</dd></div>`).join("")}</dl></div>
-</section>
-
-<section class="sec gi">
-  <div class="wrap grid rv">
-    <p class="lab c-lab">Über das Spiel</p>
-    <div class="c-main"><h2 class="st">${esc(g.stmt)}</h2><div class="txt">${g.about.map((p) => `<p>${inl(p)}</p>`).join("")}</div></div>
-  </div>
-</section>
-
-${v.length ? `<section class="sec" id="s-videos">
-  <div class="wrap grid rv">
-    <p class="lab c-lab">Einblicke</p>
-    <div class="c-main"><div class="media${two ? " two" : ""}">${v.map(vid).join("")}</div>${gal.length ? `<div class="gal" style="--gn:${gal.length}">${gal.map((s) => `<figure><img src="${M(s)}" alt="" loading="lazy"></figure>`).join("")}</div>` : ""}</div>
-  </div>
-</section>` : ""}
-
-<section class="sec">
-  <div class="wrap grid rv">
-    <p class="lab c-lab">Was dich erwartet</p>
-    <ol class="c-main feats">${g.feats.map(([t, d], k) => `<li><span class="lab">0${k + 1}</span><h3 class="h3">${esc(t)}</h3><p>${esc(d)}</p></li>`).join("")}</ol>
-  </div>
-</section>
-
-${g.paused ? `<section class="sec">
-  <div class="wrap grid rv">
-    <p class="lab c-lab">Stand der Dinge</p>
-    <div class="c-main paused"><p class="st">${esc(g.paused.t)}</p><a class="lnk" href="#${g.paused.post}">Zum Devlog-Beitrag${ic("arrow")}</a></div>
-  </div>
-</section>` : rmCols.length ? `<section class="sec">
-  <div class="wrap grid rv">
-    <p class="lab c-lab">Roadmap</p>
-    <div class="c-main"><div class="rm" style="--n:${rmCols.length}">${rmCols.map(([k, t, items]) => `<div class="rm-col ${k}"><p class="lab">${t}<span>${items.length}</span></p><ul>${items.map((x) => `<li>${k === "done" ? ic("check") : ""}${esc(x)}</li>`).join("")}</ul></div>`).join("")}</div></div>
-  </div>
-</section>` : ""}
-
-<section class="join" id="s-mitmachen">
-  <div class="wrap grid">
-    <h2 class="d2 join-h">${esc(g.join.h)}</h2>
-    <div class="join-r">
-      <p class="lead">${esc(g.join.t)}</p>
-      <form class="nl" data-fake data-badge="subscriber"><label class="sr" for="wl-${g.slug}">E-Mail-Adresse</label><input id="wl-${g.slug}" type="email" placeholder="deine@email.de" autocomplete="email" required><button type="submit">${esc(g.join.b)}${ic("arrow")}</button></form>
-      <p class="ok" hidden>Du stehst auf der Liste. Wir melden uns! 🧡</p>
-      <details class="acc idea">
-        <summary><span>Idee fürs Spiel? <b>Vorschlag einreichen</b></span><i class="pm"></i></summary>
-        <div class="acc-b">
-          <form data-fake data-badge="ideator"><label class="sr" for="idee-${g.slug}">Deine Idee</label><textarea id="idee-${g.slug}" placeholder="${esc(g.ideas.h)}" required></textarea><button class="btn btn-g sm" type="submit">Absenden${ic("arrow")}</button></form>
-          <p class="ok" hidden>Danke! Deine Idee ist bei uns gelandet.</p>
-          <p class="lab votes-lab">Meistgewünscht</p>
-          <ul class="votes">${g.ideas.items.map(([t, n]) => `<li><span>${esc(t)}</span><button type="button" class="vote" data-vote="${n}" aria-pressed="false" aria-label="${esc(t)} – Stimme geben">${ic("up")}<span>${n}</span></button></li>`).join("")}</ul>
-        </div>
-      </details>
-    </div>
-  </div>
-</section>
-
-${g.faq ? `<section class="sec">
-  <div class="wrap grid rv">
-    <p class="lab c-lab">Häufige Fragen</p>
-    <div class="c-main">${g.faq.map(([q, a]) => `<details class="acc"><summary><span>${esc(q)}</span><i class="pm"></i></summary><div class="acc-b"><p>${esc(a)}</p></div></details>`).join("")}</div>
-  </div>
-</section>` : ""}
-
-${posts.length ? `<section class="sec">
-  <div class="wrap grid">
-    <div class="c-lab"><p class="lab">Devlog</p><a class="lnk" href="#devlog">Alle Beiträge${ic("arrow")}</a></div>
-    <div class="c-main cards">${posts.slice(0, 3).map(card).join("")}</div>
-  </div>
-</section>` : ""}
-
-<a class="nx" href="#${nx.slug}">
+  <div class="gh-media" data-par><img src="${M(g.cover)}" alt="" style="object-position:${focus(g.cover)}"></div>
   <div class="wrap">
-    <p class="lab">Nächstes Spiel</p>
-    <div class="nx-row"><span class="nx-t" style="background-image:linear-gradient(rgba(242,239,233,.26),rgba(242,239,233,.26)),url('${M(nx.cover)}');background-position:${focus(nx.cover)}">${esc(nx.title)}</span><span class="nx-go">${ic("arrow")}</span></div>
+    ${badge(g)}
+    <h1>${logo(g.logo, g.title, 76000, "", 180)}</h1>
+    <p class="gh-tag">${esc(g.tagline)}</p>
+    <div class="facts">${g.facts.map((f) => `<span class="badge">${esc(f)}</span>`).join("")}</div>
+    <div class="row">${cta}${g.trailer ? `<a class="btn btn-g" href="${yt(g.trailer)}" target="_blank" rel="noopener">${ic("play")} Trailer ansehen</a>` : ""}</div>
   </div>
-</a>
+</section>
+${g.blocks.map((b) => block(g, b)).join("")}
 </div>
 ${footer()}`;
 }
@@ -899,18 +757,13 @@ ${footer()}`;
 function viewDevlog() {
   const tabs = [["", "Alle"], ...GAMES.map((g) => [g.slug, g.title])];
   return `
-<section class="wrap ph">
-  <p class="lab">Devlog</p>
-  <h1 class="d1">Aus der Werkstatt.</h1>
-  <p class="lead">Fortschritt, Patch Notes und ehrliche Blicke hinter die Kulissen – direkt vom Team, mit allen Umwegen.</p>
-  <div class="tabs" data-filters>${tabs.map(([k, t], i) => `<button type="button" data-f="${k}" class="${i ? "" : "on"}" aria-pressed="${i ? "false" : "true"}">${esc(t)}</button>`).join("")}</div>
-</section>
-<section class="wrap plist-w"><div class="plist" data-posts>${POSTS.map((p) => {
+<section class="wrap ph"><p class="kicker">Entwicklungstagebuch</p><h1 class="h1 sm">Devlog &amp; Patch Notes</h1><p class="lead">Updates, Patchnotes und Blicke hinter die Kulissen. Frisch aus der Werkstatt.</p>
+  <div class="filters" data-filters>${tabs.map(([k, t], i) => `<button type="button" data-f="${k}" class="${i ? "" : "on"}" aria-pressed="${i ? "false" : "true"}">${esc(t)}</button>`).join("")}</div></section>
+<section class="wrap"><div class="posts" data-posts>${POSTS.map((p) => {
     const g = G(p.g);
-    const fig = p.i ? `<img src="${M(p.i)}" alt="" loading="lazy" style="object-position:${focus(p.i)}">`
-      : `<img class="ph-img" src="${M(g.cover)}" alt="" loading="lazy" style="object-position:${focus(g.cover)}">${logo(g.logo, "", 7000, "card-logo")}`;
-    return `<a class="prow" href="#${p.slug}" data-g="${p.g}"><span class="lab prow-d">${dLong(p.d)}</span><span class="prow-t"><span class="lab">${esc(g.title)}</span><span class="prow-h">${esc(p.t)}</span><span class="prow-e">${esc(p.e)}</span></span><figure>${fig}</figure></a>`;
-  }).join("")}<p class="empty" hidden>Hier ist es noch still – zu diesem Spiel gibt es bald die ersten Beiträge.</p></div></section>
+    const fig = p.i ? `<img src="${M(p.i)}" alt="" loading="lazy" style="object-position:${focus(p.i)}">` : `<img class="ph-img" src="${M(g.cover)}" alt="" loading="lazy" style="object-position:${focus(g.cover)}">${logo(g.logo, "", 9000, "card-logo")}`;
+    return `<a class="pcard rv" href="#${p.slug}" data-g="${p.g}"><figure>${fig}</figure><div class="pcard-b"><div class="meta"><span>${dLong(p.d)}</span><span class="badge">${esc(g.title)}</span></div><h3 class="h3">${esc(p.t)}</h3><p>${esc(p.e)}</p><span class="more">Weiterlesen ${ic("arrow")}</span></div></a>`;
+  }).join("")}<p class="empty card" hidden>Zu diesem Spiel gibt es noch keine Beiträge.</p></div></section>
 ${footer()}`;
 }
 
@@ -918,102 +771,26 @@ function viewPost(slug) {
   const p = P(slug), g = G(p.g), i = POSTS.indexOf(p), nx = POSTS[(i + 1) % POSTS.length];
   const body = BODIES[slug] || p.e, min = Math.max(1, Math.round(body.split(/\s+/).length / 200));
   return `
-<article>
-  <header class="wrap ph post-h">
-    <a class="lnk back" href="#devlog">${ic("back")}Devlog</a>
-    <p class="lab"><b>${esc(g.title)}</b> · ${dLong(p.d)}</p>
-    <h1 class="d2">${esc(p.t)}</h1>
-    <p class="lead">${esc(p.e)}</p>
-  </header>
-  ${p.i ? `<figure class="wrap post-img"><img src="${M(p.i)}" alt="" style="object-position:${focus(p.i)}"></figure>` : ""}
-  <div class="sec"><div class="wrap grid">
-    <aside class="c-lab post-meta"><dl><div><dt class="lab">Datum</dt><dd>${dLong(p.d)}</dd></div><div><dt class="lab">Spiel</dt><dd><a href="#${g.slug}">${esc(g.title)}</a></dd></div><div><dt class="lab">Lesezeit</dt><dd>${min} Min.</dd></div></dl></aside>
-    <div class="c-prose prose">${prose(body)}</div>
-  </div></div>
-  <div class="post-next-w"><a class="wrap post-next" href="#${nx.slug}"><span class="lab">Nächster Beitrag</span><span class="h3">${esc(nx.t)}</span>${ic("arrow")}</a></div>
-</article>
+<article class="wrap ph"><div class="post">
+  <a class="more dim" href="#devlog">${ic("back")} Alle Beiträge</a>
+  <div class="meta"><span>${dLong(p.d)} · ${min} Min. Lesezeit</span><span class="badge">${esc(g.title)}</span>${p.tags.map((t) => `<span>${esc(t)}</span>`).join("")}</div>
+  <h1 class="h1">${esc(p.t)}</h1>
+  ${p.i ? `<figure class="post-img"><img src="${M(p.i)}" alt="" style="object-position:${focus(p.i)}"></figure>` : ""}
+  <div class="prose">${prose(body)}</div>
+  <a class="post-next" href="#${nx.slug}"><span><span class="badge plain">Nächster Beitrag</span><b>${esc(nx.t)}</b></span>${ic("arrow")}</a>
+</div></article>
+<div class="sec" style="padding-top:0"></div>
 ${footer()}`;
-}
-
-/* =================== Charme: Konfetti & Erfolge =================== */
-const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-function confetti(x, y, n = 60) {
-  if (reduced) return;
-  const cv = document.createElement("canvas"), dpr = Math.min(2, devicePixelRatio || 1), W = innerWidth, H = innerHeight;
-  cv.className = "cf"; cv.width = W * dpr; cv.height = H * dpr; document.body.appendChild(cv);
-  const ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
-  const cs = getComputedStyle(document.body), cols = [cs.getPropertyValue("--acc").trim() || "#ff7d1a", cs.getPropertyValue("--acc2").trim() || "#ffb648", "#f2efe9", "#ffd21a", "#ff4a36"];
-  const ps = Array.from({ length: n }, () => ({ x, y, vx: (Math.random() - .5) * 10, vy: -Math.random() * 10 - 3, r: Math.random() * 6, vr: (Math.random() - .5) * .35, w: 5 + Math.random() * 6, h: 3 + Math.random() * 4, c: cols[Math.floor(Math.random() * cols.length)] }));
-  const t0 = performance.now();
-  (function f(t) {
-    ctx.clearRect(0, 0, W, H);
-    for (const q of ps) { q.vy += .3; q.vx *= .985; q.x += q.vx; q.y += q.vy; q.r += q.vr; ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(q.r); ctx.fillStyle = q.c; ctx.fillRect(-q.w / 2, -q.h / 2, q.w, q.h); ctx.restore(); }
-    if (t - t0 < 1900) requestAnimationFrame(f); else cv.remove();
-  })(t0);
-}
-const fromEl = (el, n) => { const r = el.getBoundingClientRect(); confetti(r.left + r.width / 2, r.top + r.height / 2, n); };
-
-let earned = {};
-try { earned = JSON.parse(localStorage.getItem("pg_proto_badges") || "{}") || {}; } catch (e) { earned = {}; }
-function saveBadges() { try { localStorage.setItem("pg_proto_badges", JSON.stringify(earned)); } catch (e) { /* Vorschau ohne Speicher: dann nur für diesen Besuch */ } }
-function toast(icon, label, title, desc) {
-  const t = document.createElement("div"); t.className = "ach"; t.setAttribute("role", "status");
-  t.innerHTML = `<span class="ach-i">${icon}</span><span><span class="lab">${esc(label)}</span><b>${esc(title)}</b>${desc ? `<span class="ach-d">${esc(desc)}</span>` : ""}</span>`;
-  document.body.appendChild(t); requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add("show")));
-  setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 600); }, 4200);
-}
-function badge(id) {
-  const b = BADGES.find((x) => x[0] === id); if (!b || earned[id]) return;
-  earned[id] = 1; saveBadges(); trophy();
-  toast(b[1], "Erfolg freigeschaltet", b[2], b[3]);
-}
-function trophy() {
-  const n = Object.keys(earned).length; let el = document.getElementById("tro");
-  if (!n) { if (el) el.remove(); return; }
-  const open = el ? el.open : false;
-  if (!el) { el = document.createElement("details"); el.id = "tro"; el.className = "tro"; document.body.appendChild(el); }
-  el.innerHTML = `<summary>🏆 <b>${n}/${BADGES.length}</b></summary><div class="tro-list"><p class="lab">Deine Erfolge</p>${BADGES.map(([id, e, t, d]) => `<div class="${earned[id] ? "got" : ""}"><span>${earned[id] ? e : "🔒"}</span><span><b>${earned[id] ? esc(t) : "???"}</b><small>${esc(d)}</small></span></div>`).join("")}<button type="button" data-reset>Zurücksetzen</button></div>`;
-  el.open = open;
-  el.querySelector("[data-reset]").addEventListener("click", () => { earned = {}; saveBadges(); trophy(); });
 }
 
 /* =================== Verhalten =================== */
 const app = document.getElementById("app"), hd = document.getElementById("hd"), pv = document.getElementById("pv");
 const mn = document.getElementById("mn"), burger = document.querySelector("[data-burger]");
-let hxTimer = null, io = null, pendingSec = null;
-const seen = new Set();
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let io = null, pendingSec = null, parEl = null;
 
-function setMenu(open) {
-  mn.classList.toggle("open", open); mn.setAttribute("aria-hidden", String(!open));
-  burger.setAttribute("aria-expanded", String(open)); document.body.classList.toggle("lock", open);
-}
-function marks() {
-  document.querySelectorAll("[data-mark]").forEach((el) => { if (!el.firstChild) { const s = +el.dataset.mark; el.innerHTML = logo("/media/logo-6.png", "", s * s, "mark"); } });
-}
-/* Startseite: Spiele-Index – Bild (und Glut-Farbe) wechseln mit dem aktiven Spiel */
-function hx() {
-  const root = document.querySelector("[data-hx]"); if (!root) return;
-  const imgs = [...root.querySelectorAll(".hx-bg img")], rows = [...root.querySelectorAll(".ix li")];
-  let cur = 0, hold = false;
-  const set = (k) => {
-    cur = (k + rows.length) % rows.length;
-    imgs.forEach((im, n) => im.classList.toggle("on", n === cur));
-    rows.forEach((r, n) => { r.classList.toggle("on", n === cur); r.classList.remove("run"); });
-    root.style.setProperty("--ember", GAMES[cur].acc);
-    clearTimeout(hxTimer);
-    if (!hold && !reduced) { void rows[cur].offsetWidth; rows[cur].classList.add("run"); hxTimer = setTimeout(() => set(cur + 1), 6500); }
-  };
-  rows.forEach((r, n) => {
-    r.addEventListener("mouseenter", () => { hold = true; set(n); });
-    r.querySelector("a").addEventListener("focus", () => { hold = true; set(n); });
-  });
-  root.querySelector(".ix").addEventListener("mouseleave", () => { hold = false; set(cur); });
-  set(0);
-}
-/* Kopfbild bewegt sich beim Scrollen langsamer als der Inhalt */
-let parEl = null;
-function par() { parEl = reduced ? null : app.querySelector("[data-par]"); parTick(); }
-function parTick() { if (parEl && scrollY < innerHeight * 1.2) parEl.style.transform = `translate3d(0,${(scrollY * 0.22).toFixed(1)}px,0)`; }
+function setMenu(open) { mn.classList.toggle("open", open); mn.setAttribute("aria-hidden", String(!open)); burger.setAttribute("aria-expanded", String(open)); document.body.classList.toggle("lock", open); }
+function marks() { document.querySelectorAll("[data-mark]").forEach((el) => { if (!el.firstChild) { const s = +el.dataset.mark; el.innerHTML = logo("/media/logo-6.png", "", s * s); } }); }
 function reveals() {
   if (io) io.disconnect();
   const els = document.querySelectorAll(".rv");
@@ -1021,34 +798,24 @@ function reveals() {
   io = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } }), { rootMargin: "0px 0px -6% 0px" });
   els.forEach((e) => io.observe(e));
 }
+function par() { parEl = reduced ? null : app.querySelector("[data-par]"); parTick(); }
+function parTick() { if (parEl && scrollY < innerHeight * 1.2) parEl.style.transform = `translate3d(0,${(scrollY * 0.2).toFixed(1)}px,0)`; }
 function wire() {
-  app.querySelectorAll("form[data-fake]").forEach((f) => f.addEventListener("submit", (e) => {
-    e.preventDefault(); const ok = f.nextElementSibling; if (ok && ok.classList.contains("ok")) ok.hidden = false;
-    const btn = f.querySelector("button"); if (btn) fromEl(btn, 50);
-    if (f.dataset.badge) badge(f.dataset.badge);
-    f.reset();
-  }));
-  app.querySelectorAll("[data-vote]").forEach((b) => b.addEventListener("click", () => {
-    const on = b.classList.toggle("on"); b.setAttribute("aria-pressed", String(on)); b.querySelector("span").textContent = +b.dataset.vote + (on ? 1 : 0);
-    if (on) { fromEl(b, 14); badge("voter"); }
-  }));
+  app.querySelectorAll("form[data-fake]").forEach((f) => f.addEventListener("submit", (e) => { e.preventDefault(); const ok = f.nextElementSibling; if (ok && ok.classList.contains("ok")) ok.hidden = false; f.reset(); }));
+  app.querySelectorAll("[data-vote]").forEach((b) => b.addEventListener("click", () => { const on = b.classList.toggle("on"); b.setAttribute("aria-pressed", String(on)); b.querySelector("span").textContent = +b.dataset.vote + (on ? 1 : 0); }));
   const fl = app.querySelector("[data-filters]");
   if (fl) fl.addEventListener("click", (e) => {
     const b = e.target.closest("[data-f]"); if (!b) return;
     fl.querySelectorAll("button").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b)); });
     let n = 0;
-    app.querySelectorAll("[data-posts] .prow").forEach((r) => { const show = !b.dataset.f || r.dataset.g === b.dataset.f; r.hidden = !show; n += show ? 1 : 0; });
+    app.querySelectorAll("[data-posts] .pcard").forEach((r) => { const show = !b.dataset.f || r.dataset.g === b.dataset.f; r.hidden = !show; n += show ? 1 : 0; });
     app.querySelector("[data-posts] .empty").hidden = n > 0;
   });
-  app.querySelectorAll("[data-fakedl]").forEach((b) => b.addEventListener("click", () => {
-    if (b.disabled) return; const t = b.innerHTML; b.textContent = "Im Probedesign aus"; b.disabled = true;
-    setTimeout(() => { b.innerHTML = t; b.disabled = false; }, 2000);
-  }));
+  app.querySelectorAll("[data-fakedl]").forEach((b) => b.addEventListener("click", () => { b.title = "Im Probedesign ohne Funktion"; b.animate([{ transform: "translateY(0)" }, { transform: "translateY(3px)" }, { transform: "translateY(0)" }], { duration: 300 }); }));
 }
-const scrollToSec = (sec) => { const t = document.getElementById("s-" + sec); if (t) window.scrollTo({ top: t.getBoundingClientRect().top + scrollY - (sec === "mitmachen" ? 0 : 40), behavior: reduced ? "auto" : "smooth" }); };
+const scrollToSec = (sec) => { const t = document.getElementById("s-" + sec); if (t) window.scrollTo({ top: t.getBoundingClientRect().top + scrollY - (sec === "kontakt" ? 0 : 70), behavior: reduced ? "auto" : "smooth" }); };
 
 function route() {
-  clearTimeout(hxTimer);
   const k = (location.hash || "").replace(/^#/, "") || "start";
   let view = "home", html;
   if (k === "spiele") { view = "games"; html = viewGames(); }
@@ -1057,19 +824,15 @@ function route() {
   else if (P(k)) { view = "post"; html = viewPost(k); }
   else html = viewHome();
   app.innerHTML = html;
-  const navKey = view === "games" || G(view) ? "games" : view === "devlog" || view === "post" ? "devlog" : "";
+  const navKey = view === "games" || G(view) ? "games" : view === "devlog" || view === "post" ? "devlog" : view === "home" ? "studio" : "";
   document.querySelectorAll("[data-nav]").forEach((n) => n.classList.toggle("on", n.dataset.nav === navKey));
   document.querySelectorAll("[data-pv]").forEach((n) => n.classList.toggle("on", n.dataset.pv === view));
   pv.open = false; setMenu(false);
-  marks(); wire(); hx(); reveals(); par();
+  marks(); wire(); reveals(); par();
   const sec = pendingSec; pendingSec = null;
-  app.classList.remove("enter");
-  if (!reduced && !sec) { void app.offsetWidth; app.classList.add("enter"); }   // bei Sprüngen zu Abschnitten kein Gleiten (Ziel bleibt exakt)
   if (sec) setTimeout(() => scrollToSec(sec), 60); else window.scrollTo(0, 0);
-  hd.classList.toggle("solid", scrollY > 24);
-  seen.add(view === "post" ? k : view); if (seen.size >= 5) badge("explorer");
+  hd.classList.toggle("solid", scrollY > 20);
 }
-/* Sprünge zu Abschnitten (z. B. „Playtest“): ggf. erst die Seite öffnen, dann hinscrollen */
 document.addEventListener("click", (e) => {
   const a = e.target.closest("a[data-sec]"); if (!a) return;
   e.preventDefault();
@@ -1080,12 +843,10 @@ document.addEventListener("click", (e) => {
 burger.addEventListener("click", () => setMenu(!mn.classList.contains("open")));
 mn.addEventListener("click", (e) => { if (e.target.closest("a")) setMenu(false); });
 pv.addEventListener("click", (e) => { if (e.target.closest("a")) pv.open = false; });
-addEventListener("keydown", (e) => { if (e.key === "Escape") { setMenu(false); pv.open = false; const t = document.getElementById("tro"); if (t) t.open = false; } });
+addEventListener("keydown", (e) => { if (e.key === "Escape") { setMenu(false); pv.open = false; } });
 let rafP = 0;
-addEventListener("scroll", () => { hd.classList.toggle("solid", scrollY > 24); if (!rafP) rafP = requestAnimationFrame(() => { rafP = 0; parTick(); }); }, { passive: true });
-app.addEventListener("animationend", (e) => { if (e.target === app) app.classList.remove("enter"); });
+addEventListener("scroll", () => { hd.classList.toggle("solid", scrollY > 20); if (!rafP) rafP = requestAnimationFrame(() => { rafP = 0; parTick(); }); }, { passive: true });
 addEventListener("hashchange", route);
-trophy();
 route();
 </script>
 </body>
