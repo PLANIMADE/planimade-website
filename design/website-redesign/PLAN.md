@@ -1,9 +1,9 @@
 # Website-Refresh — Befund & Probedesign
 
-Stand: 27.11.2026 · Prototyp: `prototype.html` (v6 „Ruhig & hochwertig“, echte Inhalte, Bilder kommen von planigames.com,
+Stand: 27.11.2026 · Prototyp: `prototype.html` (v7 „Kino trifft Ordnung“, echte Inhalte, Bilder kommen von planigames.com,
 nichts wird gespeichert). Dieser Ordner liegt bewusst außerhalb von `planigames/` und wird nie hochgeladen.
 Ansehen: `prototype.html` im Browser öffnen (braucht Internet für Bilder & Schrift) – unten rechts
-(am Handy oben) öffnet „Probedesign v6“ alle Ansichten.
+(am Handy oben) öffnet „Probedesign v7“ alle Ansichten.
 Interaktive Vorschau: als private Seite in Claude veröffentlicht (gleicher Link wie bisher, Bilder verkleinert);
 neu bauen mit `build-vorschau.py` (Aufruf steht oben im Skript). Frühere Entwürfe: `prototype-v1.html` und Git-Verlauf.
 
@@ -36,58 +36,62 @@ neu bauen mit `build-vorschau.py` (Aufruf steht oben im Skript). Frühere Entwü
 v1 „Cinematic Studio“ → „wirkt etwas viel und unüberlegt“ · v2 „Ruhe & Wucht“ → zu glatt, Charme fehlt ·
 v3 „Charme“ (Maskottchen raus auf Wunsch) → „Ich mag das Design nicht“ · Abstimmung: **Live-Seite auffrischen**,
 gestört hat „fühlt sich fremd an“ und „riesige Schrift & Leere“ · v4 „Aufgefrischt“ → „sie soll halt auch durchdacht sein“ ·
-v5 „Durchdacht“ (Aufbau nach Konzept) → „nicht gerade besser“: zu wenig verändert, **zu große Schrift auf der Startseite**,
-**die neue Schrift gefällt nicht – lieber z. B. Montserrat**, die **Fortschrittsanzeige für FRONTLINERS** überzeugt nicht ·
-**v6 „Ruhig & hochwertig“: wirklich neues Design, eine bekannte Schrift, moderate Größen, keine Spielereien.**
+v5 „Durchdacht“ → zu wenig verändert, zu große Schrift auf der Startseite, neue Schrift gefällt nicht (lieber Montserrat),
+Fortschrittsanzeige überzeugt nicht · v6 „Ruhig & hochwertig“ (Montserrat, moderate Größen) → schön aufgeräumt, aber
+**ohne Charakter**; Bilder im Kopfbereich passen am Handy nicht gut. Wunsch: **v1 und v6 mischen** – der
+**Durchlauf durch die Spiele im Kopfbereich von v1 war cool, aber der Text muss sich passend zum Spiel ändern** ·
+**v7 „Kino trifft Ordnung“.**
 
-## Design v6 „Ruhig & hochwertig“
+## Design v7 „Kino trifft Ordnung“
 
-**Grundsätze:** schön, aufgeräumt, nichts wirkt komisch – lieber klassisch-hochwertig als experimentell.
-Dunkel + Studio-Orange bleiben; neu sind Schrift, Größen, Abstände und alle Bausteine.
+**Idee:** Charakter und Kino-Gefühl aus v1 (große Spielbilder, Spielfarben, Filmkorn, Studio-Details),
+Ordnung und Ruhe aus v6 (eine Schrift, moderate Größen, feste Abläufe, sorgfältige Abstände).
 
 | Thema | Entscheidung |
 |---|---|
-| Schrift | **Montserrat** für alles (Google Fonts, 400–800) – keine zweite Schrift, keine Spezialschrift. |
-| Größen | Startseiten-Überschrift max. 56 px (Handy 30–34 px), Abschnittstitel max. 38 px, Fließtext 16–17 px. Keine Riesentitel. |
-| Farben | Hintergrund #0b0b10, Abschnitte abwechselnd #101017; Orange #ff7d1a (Verlauf #ff8f33 → #ff6a00) nur für Buttons, Links, Kicker. |
-| Abschnittsköpfe | immer gleich: kleiner orangefarbener Kicker · Titel · ein Satz, **linksbündig** an der Rasterkante; Link zur Unterseite rechts daneben. |
-| Rhythmus | Abschnitte wechseln automatisch den Hintergrund (auch wenn ein Spiel Blöcke weglässt), gleiche Breite (1200 px), gleiche Abstände. |
-| Karten | eine Spielkarte (Bild + Spiel-Logo darauf, Status, Genre, Satz, „Zum Spiel“), eine Devlog-Karte, eine Werte-Karte – überall gleich. |
-| Bewegung | nur dezent: sanftes Einblenden, leichter Zoom bei Bildern, langsamer Bild-Zoom im Kopfbereich. Inhalte sind immer sichtbar. |
-| Weggelassen | Maskottchen, Fortschrittsbalken/Prozentwerte, Konzept-Notizen, Partikel, riesige Schrift. |
+| Kopfbereich Startseite | **Spiele-Durchlauf:** alle 7 s das nächste Spiel – Bild, Logo, Status, Genre, Satz, Beschreibung und Buttons wechseln **gemeinsam**; Hauptbutton in der Farbe des Spiels („Zum Spiel“), zweiter Button passend (Trailer, sonst Playtest). Darunter drei Spiel-Kacheln mit Ladebalken, Zähler 01/03 und Pause-Knopf. Hält an bei Maus darüber, Tastatur-Fokus, verdecktem Tab oder wenn man weggescrollt hat; Wischen am Handy, Pfeiltasten am Rechner; bei „weniger Bewegung“ kein automatischer Wechsel. |
+| Bilder am Handy/Tablet | Bild **ganz oben in voller Breite** (nicht mehr hinter dem Text), mit eigenem Bildausschnitt je Spiel; Logos stehen in allen Folien auf derselben Linie an der Bildkante, Text darunter – alle Folien gleich aufgebaut, nichts verrutscht. |
+| Schrift | **Montserrat** für alles (400–800). Größte Überschrift 38 px (Startseite), Unterseiten max. 48 px. |
+| Farben | Schwarz + Studio-Orange; **jede Spielseite und Spielkarte in ihrer eigenen Spielfarbe** (FRONTLINERS Gelb-Orange, Fall of Kings Rot, Wobbly Wizards Orange). |
+| Charakter-Details | Filmkorn auf großen Bildern, farbiges Glühen hinter Karten/Videos, nummerierte Abschnitts-Kicker mit Linie („01 — Unsere Spiele“), große Anführungszeichen beim Team, Laufband mit ✦, gestrichelte Demo-Box. |
+| Spielseite | Kopfbereich mit Steckbrief-Leiste (Genre · Spieler · Plattform · Status); **Abschnitts-Menü** klebt oben und zeigt, wo man ist; Kopfzeile blendet sich beim Runterscrollen aus. |
+| Weggelassen | Maskottchen, Fortschrittsbalken/Prozente, Riesenschrift, Konzept-Notizen. |
 
-**Startseite:** Kopfbereich mit Bild (Claim wie live, zwei Buttons) → dezentes Laufband → „Drei Welten, ein Studio“
-(3 Spielkarten + Browser-Demos) → Über uns (Text, 3 Kennzahlen, Bildcollage) → Was uns antreibt (6 Werte) →
-Team (3 Köpfe) → Devlog (3 Karten) → Newsletter + YouTube/TikTok → Footer.
+**Startseite:** Spiele-Durchlauf → Laufband → 01 Unsere Spiele (3 Karten + Demos) → 02 Über uns
+(„Unsere Ideen. Eure Abenteuer.“, Text, Kennzahlen, Bildcollage, 6 Werte) → 03 Team (Porträts) →
+04 Devlog (großer Beitrag + 3 kleine) → Newsletter + YouTube/TikTok → Footer.
 
-**Spielseite (feste Reihenfolge, fehlende Blöcke entfallen):** Kopfbereich (Status, Logo, Satz, nächster Schritt, Trailer)
-→ Über das Spiel + Steckbrief (+ Demo) → Einblicke (2 Videos nebeneinander oder Video + 3 Bilder als Raster)
-→ Features → Roadmap als Zeitleiste (ohne Prozent; bei „Pausiert“ Hinweis + Link zum Beitrag) → Mitmachen
-(Anmeldung + Ideen/Abstimmung) → FAQ → Devlog zum Spiel (+ Karte „Alle Beiträge“) → Weitere Spiele.
+**Spielseite (feste Reihenfolge, fehlende Blöcke entfallen, Nummern zählen automatisch):** Kopfbereich → Abschnitts-Menü →
+Über das Spiel (+ Demo) → Einblicke (2 Videos oder Video + 3 Bilder) → Features → Roadmap-Zeitleiste (bei „Pausiert“
+Hinweis + Link) → Mitmachen (Anmeldung + Ideen/Abstimmung) → FAQ → Devlog zum Spiel → Weitere Spiele.
 
 **Unterseiten:** Spiele (Karten + Demo-Downloads), Devlog (neuester Beitrag groß, Filter nach Spiel), Beitrag
 (Lesespalte, Zwischenüberschriften, „Mehr zum Spiel“ + „Nächster Beitrag“).
 
-**Handy & Tablet:** Werte und Team als kompakte Listen statt riesiger Kacheln, einzelne letzte Karte am Tablet
-quer über die volle Breite, nichts ragt über den Rand (geprüft auf iPhone SE/13, Pixel 7, iPad Mini, 820 px, Desktop).
+**Geprüft:** 59 Klick-Tests (u. a. Durchlauf, Pause, Wischen, Tastatur, Sprungmarken, Formulare, Filter) und Darstellung
+auf iPhone SE/13, Pixel 7, iPad Mini, 320/820/960/1024/1440 px – nichts ragt über den Rand.
 
 ## Was im Admin dazukäme (bestehende Daten bleiben gültig)
 
 - Status „Pausiert“ (+ kurzer Hinweistext); der nächste Schritt ergibt sich automatisch aus dem Status.
-- Spiel-Steckbrief (frei benennbare Zeilen, z. B. Genre · Spieler · Plattform) – ohne Angaben keine Liste.
-- Kurzbeschreibung + Genre-Zeile für die Spielkarte.
+- Spiel-Steckbrief (frei benennbare Zeilen, z. B. Genre · Spieler · Plattform) – ohne Angaben keine Leiste.
+- Je Spiel: Kurzbeschreibung + Genre-Zeile für Karte und Durchlauf, Bild für den Durchlauf (Standard: Titelbild)
+  mit Bildausschnitt für Desktop und Handy (wie der vorhandene Fokuspunkt).
+- Reihenfolge/Auswahl der Spiele im Durchlauf (Standard: alle sichtbaren Spiele in Listen-Reihenfolge).
 - Spielseite: Blöcke werden in der festen Reihenfolge angezeigt (Reihenfolge im Admin muss niemand mehr pflegen).
 
 ## Phasen (jede einzeln hochladbar, Admin funktioniert durchgehend)
 
-1. **Fundament:** eigene CSS-Datei statt Tailwind-Laufzeit (schnellerer Seitenaufbau), Montserrat, Farben,
+1. **Fundament:** eigene CSS-Datei statt Tailwind-Laufzeit (schnellerer Seitenaufbau), Montserrat, Farben je Spiel,
    Abstände & Breiten vereinheitlichen, Kopfzeile + Footer; Bilder beim Upload zusätzlich als WebP.
-2. **Startseite:** neue Abschnitte und Karten wie im Probedesign, eine Anmeldung statt drei.
-3. **Spielseite:** feste Reihenfolge, Steckbrief, Medien-Raster, Roadmap-Zeitleiste, Mitmachen an einem Ort, „Pausiert“-Logik.
+2. **Startseite:** Spiele-Durchlauf, Abschnitte und Karten wie im Probedesign, eine Anmeldung statt drei.
+3. **Spielseite:** feste Reihenfolge, Steckbrief-Leiste, Abschnitts-Menü, Medien-Raster, Roadmap-Zeitleiste,
+   Mitmachen an einem Ort, „Pausiert“-Logik.
 4. **Unterseiten:** Spiele-Übersicht, Devlog (Liste + Beitrag), Presse-Kit, Kontakt, Lore, Rechtliches, 404.
 5. **Feinschliff:** Handy-Ansichten, Ladezeit, englische Texte, Gesamttest.
 
 ## Offene Fragen
 
-- Passt die Richtung von v6 (Montserrat, ruhig, moderate Größen) – oder soll an einzelnen Stellen mehr Wucht rein?
+- Passt die Mischung (Kino-Look + Ordnung) – oder an einzelnen Stellen mehr/weniger davon?
+- Soll der Durchlauf immer mit FRONTLINERS starten (aktuelles Projekt) oder in Listen-Reihenfolge?
 - Gibt es einen Discord-Link (sonst bleiben YouTube & TikTok im Newsletter-Block)?
