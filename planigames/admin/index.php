@@ -2083,231 +2083,261 @@ if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
   exit;
 }
 
-/* ---- Dashboard ---- */
-pg_view_head('Dashboard');
+/* ---- Cockpit (Startseite) ---- */
+pg_view_head('Cockpit');
 pg_view_topbar($SCHEMA, null);
-echo '<div class="dash">';
-$me = pg_current_user();
-$firstName = trim((string) ($me['name'] ?? ''));
-if ($firstName !== '') $firstName = ', ' . explode(' ', $firstName)[0];
-echo '<h1>' . pg_h(pg_greeting()) . $firstName . ' 👋</h1>';
+$me = pg_current_user() ?: [];
+$firstName = trim(explode(' ', trim((string) ($me['name'] ?? '')))[0] ?? '');
+$isOwner = pg_is_owner();
+$canSubs = pg_can('subscribers'); $canCont = pg_can('contacts'); $canMail = pg_can('mail');
+$gamesData = array_values(array_filter((array) (pg_load_json(PG_DATA_DIR . '/games.json')['games'] ?? []), 'is_array'));
+$gameTitle = [];
+foreach ($gamesData as $g) if (!empty($g['slug'])) $gameTitle[strtolower((string) $g['slug'])] = (string) ($g['title'] ?? $g['slug']);
+$sugg = pg_load_json(PG_DATA_DIR . '/suggestions.json'); if (!is_array($sugg)) $sugg = [];
+$sugg = array_values(array_filter($sugg, 'is_array'));
+$wl = pg_load_json(PG_DATA_DIR . '/waitlist.json'); if (!is_array($wl)) $wl = [];
+$wl = array_values(array_filter($wl, fn($e) => is_array($e) && !empty($e['email'])));
+$subs = pg_load_json(PG_DATA_DIR . '/subscribers.json'); if (!is_array($subs)) $subs = [];
+$subs = array_values(array_filter($subs, 'is_array'));
+$st = pg_load_json(PG_DATA_DIR . '/stats.json');
+$statDays = (array) ($st['days'] ?? []);
+$statPages = (array) ($st['pages'] ?? []);
+$cutWeek = date('Y-m-d', strtotime('-6 day'));
+$sinceWeek = fn($list) => count(array_filter($list, fn($r) => substr((string) ($r['date'] ?? ''), 0, 10) >= $cutWeek));
+$scopeName = fn($sc) => $sc === '' ? 'Startseite' : ($gameTitle[strtolower((string) $sc)] ?? $sc);
 
-// Zuletzt bearbeitet (nach Datei-Änderungszeit)
-$recent = [];
-foreach ($SCHEMA as $rk => $rc) {
-  if (!pg_can($rk) || empty($rc['file']) || !is_file($rc['file'])) continue;
-  $recent[] = ['key' => $rk, 'icon' => $rc['icon'], 'label' => $rc['label'], 'mt' => filemtime($rc['file'])];
+/* ── „Heute wichtig": priorisierte Aufgaben aus allen Bereichen ── */
+$todo = [];   // [icon, ton, titel, info, link, button]
+$sec = pg_selfcheck_data();
+if (($sec['exposed'] ?? null) === true) {
+  $todo[] = ['alert', 'danger', 'Interne Daten sind öffentlich erreichbar', 'Die neuen .htaccess-Dateien (Root + data/) per FTP hochladen – dann verschwindet dieser Hinweis.', '', ''];
 }
-usort($recent, fn($a, $b) => $b['mt'] - $a['mt']);
-$recent = array_slice($recent, 0, 4);
-if ($recent) {
-  echo '<div class="dash-recent"><span class="dr-lbl">Zuletzt bearbeitet:</span>';
-  foreach ($recent as $r) {
-    echo '<a class="dr-chip" href="index.php?collection=' . pg_h($r['key']) . '">' . $r['icon'] . ' ' . pg_h($r['label'])
-       . '<span class="dr-ago">' . pg_h(pg_time_ago($r['mt'])) . '</span></a>';
+if ($canMail && ($n = pg_mail_unread_cached())) $todo[] = ['mail', 'accent', $n . ' ungelesene E-Mail' . ($n === 1 ? '' : 's'), 'im Postfach', 'mail.php', 'Öffnen'];
+if ($canCont && ($n = pg_contacts_unread())) {
+  $last = '';
+  foreach (array_reverse((array) pg_load_json(PG_DATA_DIR . '/contacts.json')) as $r) if (is_array($r) && empty($r['read'])) { $last = (string) ($r['subject'] ?? $r['name'] ?? ''); break; }
+  $todo[] = ['inbox', 'violet', $n . ' neue Kontaktanfrage' . ($n === 1 ? '' : 'n'), $last !== '' ? 'Betreff: „' . mb_strimwidth($last, 0, 60, '…') . '“' : 'über das Kontaktformular', 'index.php?view=contacts', 'Antworten'];
+}
+if ($canCont && ($n = pg_suggestions_pending())) {
+  $by = [];
+  foreach ($sugg as $s) if (empty($s['approved'])) { $k = $scopeName((string) ($s['scope'] ?? '')); $by[$k] = ($by[$k] ?? 0) + 1; }
+  arsort($by);
+  $todo[] = ['bulb', 'warn', $n . ' Vorschl' . ($n === 1 ? 'ag wartet' : 'äge warten') . ' auf Freigabe', implode(' · ', array_map(fn($k, $v) => $k . ' ' . $v, array_keys($by), $by)), 'index.php?view=suggestions', 'Prüfen'];
+}
+if ($canCont && ($n = pg_comments_pending())) $todo[] = ['chat', 'info', $n . ' Kommentar' . ($n === 1 ? '' : 'e') . ' zur Moderation', 'Devlog-Kommentare warten auf Freigabe', 'index.php?view=comments', 'Prüfen'];
+// Board: überfällige & bald fällige Karten
+$due = [];
+$tomorrow = date('Y-m-d', strtotime('+1 day'));
+foreach ((array) (pg_board_load()['boards'] ?? []) as $bd) foreach ((array) ($bd['columns'] ?? []) as $col) foreach ((array) ($col['cards'] ?? []) as $card) {
+  if (!is_array($card) || !empty($card['archived']) || empty($card['due'])) continue;
+  if ($card['due'] <= $tomorrow) $due[] = ['t' => (string) ($card['title'] ?? ''), 'd' => (string) $card['due'], 'g' => (string) ($card['game'] ?? ''), 'b' => (string) ($bd['id'] ?? '')];
+}
+usort($due, fn($a, $b) => strcmp($a['d'], $b['d']));
+if ($due) {
+  $first = $due[0];
+  $over = $first['d'] < date('Y-m-d');
+  $when = $over ? 'überfällig seit ' . date('d.m.', strtotime($first['d'])) : ($first['d'] === date('Y-m-d') ? 'heute fällig' : 'morgen fällig');
+  $todo[] = ['kanban', $over ? 'danger' : 'ok', 'Board: „' . mb_strimwidth($first['t'], 0, 48, '…') . '“ ist ' . $when,
+    (count($due) > 1 ? '+' . (count($due) - 1) . ' weitere Karte' . (count($due) > 2 ? 'n' : '') . ' bald fällig' : ($first['g'] !== '' ? $scopeName($first['g']) : 'Planungs-Board')),
+    'index.php?view=board' . ($first['b'] !== '' ? '&board=' . rawurlencode($first['b']) : ''), 'Ansehen'];
+}
+$i18n = pg_i18n_report($SCHEMA);
+$gaps = array_filter($i18n, fn($r) => $r['missing'] > 0);
+uasort($gaps, fn($a, $b) => $b['missing'] <=> $a['missing']);
+foreach (array_slice($gaps, 0, 2, true) as $k => $r) {
+  $todo[] = ['globe', 'info', $r['label'] . ': Englisch unvollständig', $r['missing'] . ' Text' . ($r['missing'] === 1 ? '' : 'e') . ' noch nicht übersetzt', 'index.php?collection=' . rawurlencode($k) . '&lang=en', 'Übersetzen'];
+}
+if ($me && !pg_user_has_2fa($me)) $todo[] = ['shield', 'warn', 'Zwei-Faktor-Anmeldung aktivieren', 'schützt dein Konto zusätzlich zum Passwort', 'index.php?view=account', 'Einrichten'];
+$backups = $isOwner ? pg_backup_list() : [];
+$lastBackup = $backups ? (int) $backups[0]['time'] : 0;
+if ($isOwner && (!$lastBackup || $lastBackup < time() - 3 * 86400)) $todo[] = ['archive', 'warn', $lastBackup ? 'Letztes Backup ist älter als 3 Tage' : 'Noch kein Backup vorhanden', 'Ein Klick sichert alle Inhalte', 'index.php?view=backup', 'Sichern'];
+
+$toneVar = ['accent' => 'var(--accent)', 'violet' => 'var(--violet)', 'warn' => 'var(--warn)', 'info' => 'var(--info)', 'ok' => 'var(--ok)', 'danger' => 'var(--danger)'];
+$toneSoft = ['accent' => 'var(--accent-soft)', 'violet' => 'var(--violet-soft)', 'warn' => 'var(--warn-soft)', 'info' => 'var(--info-soft)', 'ok' => 'var(--ok-soft)', 'danger' => 'var(--danger-soft)'];
+$nTodo = count($todo);
+
+/* ── Kopf ── */
+$fmtDate = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'][(int) date('w')] . ', ' . (int) date('j') . '. '
+  . ['', 'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'][(int) date('n')];
+echo '<div class="ck">';
+echo '<div class="ck-hello"><div><div class="ck-eyebrow">' . pg_h($fmtDate) . '</div>'
+   . '<h1 class="ck-title">' . pg_h(pg_greeting()) . ($firstName !== '' ? ', ' . pg_h($firstName) : '') . ' 👋</h1>'
+   . '<p class="ck-lead">' . ($nTodo ? '<b>' . $nTodo . ' ' . ($nTodo === 1 ? 'Ding braucht' : 'Dinge brauchen') . '</b> heute deine Aufmerksamkeit — alles andere läuft.' : 'Alles erledigt — nichts wartet auf dich. Zeit fürs Spiel! 🎮') . '</p></div>';
+echo '<div class="ck-quick">';
+if ($canMail) echo '<a class="btn" href="mail.php?tab=compose">' . pg_icon('mail') . 'Mail schreiben</a>';
+if (pg_can('patchnotes')) echo '<a class="btn" href="index.php?collection=patchnotes">' . pg_icon('devlog') . 'Devlog-Beitrag</a>';
+if (pg_can('games')) echo '<a class="btn btn-primary" href="index.php?collection=games">' . pg_icon('game') . 'Spiele bearbeiten</a>';
+echo '</div></div>';
+
+/* ── Aufgaben + Kennzahlen ── */
+echo '<div class="ck-grid">';
+echo '<section class="ck-card ck-focus"><div class="ck-card-h"><span class="ck-card-t">' . pg_icon('zap') . 'Heute wichtig</span>'
+   . ($nTodo ? '<span class="ck-count">' . $nTodo . '</span><span class="ck-sort">nach Dringlichkeit sortiert</span>' : '') . '</div>';
+if ($todo) {
+  echo '<ul class="ck-todo">';
+  foreach ($todo as [$ic, $tone, $t, $m, $href, $cta]) {
+    $inner = '<span class="ck-todo-ic" style="color:' . $toneVar[$tone] . ';background:' . $toneSoft[$tone] . '">' . pg_icon($ic) . '</span>'
+       . '<span class="ck-todo-tx"><span class="ck-todo-t">' . pg_h($t) . '</span><span class="ck-todo-m">' . pg_h($m) . '</span></span>';
+    echo '<li' . ($tone === 'danger' ? ' class="is-danger"' : '') . '>' . ($href !== ''
+      ? '<a class="ck-todo-row" href="' . pg_h($href) . '">' . $inner . '<span class="btn btn-sm">' . pg_h($cta) . '</span>' . pg_icon('chev', 'ck-todo-go') . '</a>'
+      : '<div class="ck-todo-row">' . $inner . '</div>') . '</li>';
+  }
+  echo '</ul>';
+} else {
+  echo '<div class="ck-empty">' . pg_icon('check') . '<b>Alles erledigt.</b><span>Neue Mails, Anfragen, Vorschläge und fällige Karten erscheinen hier automatisch.</span></div>';
+}
+echo '</section>';
+
+// Kennzahlen mit Verlauf
+$kpis = [];
+$vis14 = pg_stats_series($statDays, 14);
+$last7 = array_sum(array_slice($vis14, -7)); $prev7 = array_sum(array_slice($vis14, 0, 7));
+$delta = $prev7 > 0 ? (int) round(($last7 - $prev7) / $prev7 * 100) : null;
+$kpis[] = ['eye', 'Besuche · 7 Tage', number_format($last7, 0, ',', '.'), $delta === null ? '' : ($delta >= 0 ? '+' : '') . $delta . ' %', $delta === null || $delta >= 0 ? 'up' : 'down',
+  'gesamt ' . number_format((int) ($st['total'] ?? 0), 0, ',', '.') . ' · heute ' . (int) end($vis14), array_values($vis14), '#ff9a3d', 'index.php?view=stats'];
+if ($canSubs) {
+  $kpis[] = ['list', 'Beta-Warteliste', number_format(count($wl), 0, ',', '.'), '+' . $sinceWeek($wl), 'up', 'neue Anmeldungen diese Woche', array_values(pg_daily_counts($wl, 14)), '#3ddc97', 'index.php?view=waitlist'];
+  $conf = count(array_filter($subs, fn($r) => ($r['confirmed'] ?? true) !== false));
+  $kpis[] = ['mega', 'Newsletter', number_format(count($subs), 0, ',', '.'), '+' . $sinceWeek($subs), 'up', $conf . ' bestätigt', array_values(pg_daily_counts($subs, 14)), '#6ea8ff', 'index.php?view=subscribers'];
+}
+if ($canCont) {
+  $kpis[] = ['bulb', 'Vorschläge', number_format(count($sugg), 0, ',', '.'), '+' . $sinceWeek($sugg), 'up', 'davon ' . pg_suggestions_pending() . ' offen', array_values(pg_daily_counts($sugg, 14)), '#ffc53d', 'index.php?view=suggestions'];
+}
+echo '<div class="ck-kpis">';
+foreach ($kpis as [$ic, $label, $val, $d, $dir, $sub, $series, $col, $href]) {
+  echo '<a class="ck-card ck-kpi" href="' . pg_h($href) . '"><div class="ck-kpi-l">' . pg_icon($ic) . pg_h($label) . '</div>'
+     . '<div class="ck-kpi-v">' . pg_h($val) . ($d !== '' ? '<span class="ck-delta ' . $dir . '">' . pg_h($d) . '</span>' : '') . '</div>'
+     . '<div class="ck-kpi-s">' . pg_h($sub) . '</div>' . pg_spark_svg($series, $col) . '</a>';
+}
+echo '</div></div>';
+
+/* ── Spiele ── */
+if (pg_can('games') && $gamesData) {
+  $stLbl = ['development' => ['In Entwicklung', 'st-dev'], 'announced' => ['Angekündigt', 'st-ann'], 'demo' => ['Demo verfügbar', 'st-demo'],
+            'early' => ['Early Access', 'st-early'], 'released' => ['Veröffentlicht', 'st-rel']];
+  echo '<div class="ck-sec"><h2>Deine Spiele</h2><a class="ck-more" href="index.php?collection=games">Alle verwalten' . pg_icon('chev') . '</a></div>';
+  echo '<div class="ck-games">';
+  foreach ($gamesData as $g) {
+    $slug = (string) ($g['slug'] ?? ''); $lslug = strtolower($slug);
+    $cover = (string) ($g['cover'] ?? '');
+    [$cpath] = explode('#', $cover . '#');
+    $fp = preg_match('/#focus=(\d+),(\d+)/', $cover, $m) ? $m[1] . '% ' . $m[2] . '%' : '50% 50%';
+    $stt = $stLbl[$g['status'] ?? 'development'] ?? $stLbl['development'];
+    $nW = count(array_filter($wl, fn($e) => strtolower((string) ($e['scope'] ?? '')) === $lslug));
+    $nS = count(array_filter($sugg, fn($s) => strtolower((string) ($s['scope'] ?? '')) === $lslug));
+    $nV = (int) ($statPages['game:' . $slug] ?? 0);
+    $acc = preg_match('/^#[0-9a-f]{6}$/i', (string) ($g['accent'] ?? '')) ? $g['accent'] : '#ff7d1a';
+    echo '<article class="ck-game" style="--acc:' . pg_h($acc) . '"><a class="ck-game-media" href="index.php?collection=games&amp;game=' . rawurlencode($slug) . '">'
+       . ($cpath !== '' ? '<img class="cv" src="' . pg_h($cpath) . '" alt="" loading="lazy" style="object-position:' . $fp . '">' : '')
+       . '<span class="chip ' . $stt[1] . '"><i></i>' . pg_h($stt[0]) . '</span>'
+       . (!empty($g['featured']) ? '<span class="ck-star">★ Startseite</span>' : '')
+       . (!empty($g['logo']) ? '<img class="lg" src="' . pg_h(explode('#', (string) $g['logo'])[0]) . '" alt="' . pg_h($g['title'] ?? '') . '">' : '<span class="ttl">' . pg_h($g['title'] ?? $slug) . '</span>')
+       . '</a><div class="ck-game-stats">'
+       . '<div><b>' . number_format($nW, 0, ',', '.') . '</b><span>Warteliste</span></div>'
+       . '<div><b>' . $nS . '</b><span>Vorschläge</span></div>'
+       . '<div><b>' . number_format($nV, 0, ',', '.') . '</b><span>Aufrufe</span></div></div>'
+       . '<div class="ck-game-acts"><a class="btn btn-sm" href="index.php?collection=games&amp;game=' . rawurlencode($slug) . '">' . pg_icon('edit') . 'Bearbeiten</a>'
+       . '<a class="btn btn-sm btn-ghost" href="../game.php?slug=' . rawurlencode($slug) . '" target="_blank" rel="noopener">' . pg_icon('ext') . 'Ansehen</a></div></article>';
   }
   echo '</div>';
 }
 
-// Globale Suche
-echo '<form method="get" class="searchbar dash-search"><input type="hidden" name="view" value="search">'
-   . '<span class="sb-ico">🔎</span>'
-   . '<input type="search" name="q" placeholder="Alle Inhalte durchsuchen … (Spiele, Devlog, Anfragen, Medien)">'
-   . '<button class="btn-primary" type="submit">Suchen</button></form>';
-
-/* ── Überblick: Postfach-Vorschau + Statistik ── */
-$ov = '';
-// Postfach-Vorschau (letzte Kontakt-Anfragen)
-if (pg_can('contacts')) {
-  $clist = pg_load_json(PG_DATA_DIR . '/contacts.json');
-  $latest = array_slice(array_reverse($clist), 0, 4);
-  $cUnread = pg_contacts_unread();
-  $mUnread = pg_can('mail') ? pg_mail_unread_cached() : 0;
-  $head = '<div class="dp-head"><span class="dp-title">📮 Postfach</span>'
-        . ($cUnread ? '<span class="nbadge">' . $cUnread . '</span>' : '')
-        . '<a class="dp-more" href="index.php?view=contacts">Alle Anfragen →</a></div>';
-  $body = '';
-  if (!$latest) {
-    $body = '<div class="dp-empty">Noch keine Nachrichten. Anfragen über das Kontaktformular erscheinen hier.</div>';
-  } else {
-    foreach ($latest as $r) {
-      $unread = empty($r['read']);
-      $snip = trim(preg_replace('/\s+/', ' ', (string) ($r['message'] ?? '')));
-      if (mb_strlen($snip) > 90) $snip = mb_substr($snip, 0, 90) . '…';
-      $body .= '<a class="dp-item' . ($unread ? ' unread' : '') . '" href="index.php?view=contacts">'
-             . '<span class="dp-row"><span class="dp-name">' . ($unread ? '<span class="dp-dot"></span>' : '') . pg_h($r['name'] ?? 'Unbekannt') . '</span>'
-             . '<span class="dp-date">' . pg_h(substr($r['date'] ?? '', 0, 10)) . '</span></span>'
-             . '<span class="dp-snip">' . pg_h($snip) . '</span></a>';
-    }
+/* ── Aktivität + System & Übersetzungen ── */
+echo '<div class="ck-two">';
+echo '<section class="ck-card"><div class="ck-card-h"><span class="ck-card-t">' . pg_icon('clock') . ($isOwner ? 'Letzte Aktivität' : 'Zuletzt bearbeitet') . '</span>'
+   . ($isOwner ? '<a class="ck-more" href="index.php?view=activity">Protokoll' . pg_icon('chev') . '</a>' : '') . '</div><ul class="ck-feed">';
+if ($isOwner) {
+  $names = [];
+  foreach (pg_users_load() as $u) if (!empty($u['email'])) $names[strtolower($u['email'])] = trim(explode(' ', trim((string) ($u['name'] ?? '')))[0] ?? '');
+  // gleiche Aktionen derselben Person direkt hintereinander zusammenfassen („3× angemeldet“)
+  $log = []; $grpKey = null;
+  foreach (array_reverse((array) pg_load_json(PG_ACTIVITY_FILE)) as $a) {
+    if (!is_array($a)) continue;
+    $k = strtolower((string) ($a['user'] ?? '')) . '|' . ($a['action'] ?? '') . '|' . (($a['action'] ?? '') === 'login' ? '' : ($a['detail'] ?? ''));
+    if ($k === $grpKey) { $log[count($log) - 1]['n']++; continue; }
+    if (count($log) >= 7) break;
+    $a['n'] = 1; $log[] = $a; $grpKey = $k;
   }
-  if (pg_can('mail')) {
-    $body .= '<a class="dp-foot" href="mail.php">📬 E-Mail-Postfach öffnen'
-           . ($mUnread ? ' <span class="nbadge">' . $mUnread . '</span>' : '') . '</a>';
+  $icMap = ['login' => 'user', 'Gespeichert' => 'edit', 'E-Mail gesendet' => 'send', 'Newsletter verschickt' => 'mega', 'Abgemeldet' => 'logout',
+            'Wiederhergestellt' => 'undo', 'Backup eingespielt' => 'archive', 'Backup wiederhergestellt' => 'archive', 'Keys hinzugefügt' => 'key',
+            'Einladung erstellt' => 'user', 'Zugang geändert' => 'shield', 'Zugang entfernt' => 'shield'];
+  foreach ($log as $a) {
+    if (!is_array($a)) continue;
+    $who = (string) ($a['user'] ?? '');
+    $nm = $names[strtolower($who)] ?? '';
+    $nm = $nm !== '' ? $nm : (strpos($who, '@') !== false ? strstr($who, '@', true) : $who);
+    $act = (string) ($a['action'] ?? ''); $det = trim((string) ($a['detail'] ?? ''));
+    $verbs = ['login' => 'hat sich angemeldet', 'Abgemeldet' => 'hat sich abgemeldet', 'Gespeichert' => 'hat gespeichert',
+              'E-Mail gesendet' => 'hat eine E-Mail gesendet', 'Newsletter verschickt' => 'hat den Newsletter verschickt',
+              'Wiederhergestellt' => 'hat wiederhergestellt', 'Backup eingespielt' => 'hat ein Backup eingespielt',
+              'Backup wiederhergestellt' => 'hat ein Backup wiederhergestellt', 'Keys hinzugefügt' => 'hat Keys hinzugefügt',
+              'Einladung erstellt' => 'hat eine Einladung erstellt', 'Zugang geändert' => 'hat einen Zugang geändert',
+              'Zugang entfernt' => 'hat einen Zugang entfernt', '2FA deaktiviert' => 'hat 2FA deaktiviert',
+              '2FA Backup-Codes erneuert' => 'hat die 2FA-Backup-Codes erneuert'];
+    $label = $verbs[$act] ?? (strncmp($act, '2FA aktiviert', 13) === 0 ? 'hat ' . $act : '· ' . $act);
+    if ($a['n'] > 1) $label .= ' (' . $a['n'] . '×)';
+    if ($act === 'login') $det = preg_match('/·\s*(.+)$/u', $det, $mm) ? $mm[1] : '';
+    $t = strtotime((string) ($a['time'] ?? '')) ?: 0;
+    echo '<li><span class="ck-fi">' . pg_icon($icMap[$act] ?? 'clock') . '</span><div><div class="ck-ft"><b>' . pg_h($nm ?: '—') . '</b> ' . pg_h($label)
+       . ($det !== '' && $act !== 'login' ? ' · <span class="muted">' . pg_h(mb_strimwidth($det, 0, 70, '…')) . '</span>' : '') . '</div>'
+       . '<div class="ck-fm">' . ($t ? pg_h(pg_time_ago($t)) : '') . ($act === 'login' && $det !== '' ? ' · ' . pg_h($det) : '') . '</div></div></li>';
   }
-  $ov .= '<section class="dash-panel">' . $head . $body . '</section>';
-}
-// Statistik-Vorschau
-$st = pg_load_json(PG_DATA_DIR . '/stats.json');
-$days = $st['days'] ?? [];
-ksort($days);
-$today = $days[date('Y-m-d')] ?? 0;
-$last7 = array_sum(array_slice($days, -7, null, true));
-$spark = array_slice($days, -14, null, true);
-$sparkMax = $spark ? max($spark) : 1;
-$sh = '<div class="dp-head"><span class="dp-title">📊 Statistik</span>'
-    . '<a class="dp-more" href="index.php?view=stats">Details →</a></div>';
-$sb = '<div class="dp-stats">'
-    . '<div class="dp-stat"><span class="dp-num">' . (int) $today . '</span><span class="dp-lbl">Heute</span></div>'
-    . '<div class="dp-stat"><span class="dp-num">' . (int) $last7 . '</span><span class="dp-lbl">7 Tage</span></div>'
-    . '<div class="dp-stat"><span class="dp-num">' . (int) ($st['total'] ?? 0) . '</span><span class="dp-lbl">Gesamt</span></div>'
-    . '</div>';
-if ($spark) {
-  $sb .= '<div class="dp-spark" title="Aufrufe der letzten 14 Tage">';
-  foreach ($spark as $d => $n) {
-    $hgt = max(6, round($n / $sparkMax * 100));
-    $sb .= '<span class="dp-bar" title="' . pg_h($d) . ': ' . (int) $n . '" style="height:' . $hgt . '%"></span>';
-  }
-  $sb .= '</div>';
+  if (!$log) echo '<li class="muted">Noch keine Aktivität protokolliert.</li>';
 } else {
-  $sb .= '<div class="dp-empty">Noch keine Aufrufe erfasst.</div>';
-}
-$ov .= '<section class="dash-panel">' . $sh . $sb . '</section>';
-
-// Newsletter-Wachstum (Sparkline der letzten 14 Tage)
-if (pg_can('subscribers')) {
-  $subs = pg_load_json(PG_DATA_DIR . '/subscribers.json');
-  $subTotal = is_array($subs) ? count($subs) : 0;
-  $subDays = [];
-  for ($i = 13; $i >= 0; $i--) $subDays[date('Y-m-d', strtotime("-$i day"))] = 0;
-  $sub7 = 0;
-  foreach ((array) $subs as $r) {
-    $d = substr((string) ($r['date'] ?? ''), 0, 10);
-    if ($d !== '' && isset($subDays[$d])) $subDays[$d]++;
-    if ($d !== '' && $d >= date('Y-m-d', strtotime('-6 day'))) $sub7++;
+  $recent = [];
+  foreach ($SCHEMA as $rk => $rc) {
+    if (!pg_can($rk) || empty($rc['file']) || !is_file($rc['file'])) continue;
+    $recent[] = [$rk, $rc['label'], filemtime($rc['file'])];
   }
-  $subMax = $subDays ? max(max($subDays), 1) : 1;
-  $nh = '<div class="dp-head"><span class="dp-title">📬 Newsletter</span>'
-      . '<a class="dp-more" href="index.php?view=subscribers">Abos →</a></div>';
-  $nb = '<div class="dp-stats">'
-      . '<div class="dp-stat"><span class="dp-num">' . $subTotal . '</span><span class="dp-lbl">Gesamt</span></div>'
-      . '<div class="dp-stat"><span class="dp-num">+' . $sub7 . '</span><span class="dp-lbl">7 Tage</span></div></div>';
-  if (array_sum($subDays) > 0) {
-    $nb .= '<div class="dp-spark" title="Neue Abos der letzten 14 Tage">';
-    foreach ($subDays as $d => $n) $nb .= '<span class="dp-bar" title="' . pg_h($d) . ': ' . (int) $n . '" style="height:' . max(6, round($n / $subMax * 100)) . '%"></span>';
-    $nb .= '</div>';
-  } else {
-    $nb .= '<div class="dp-empty">Noch keine Anmeldungen in den letzten 14 Tagen.</div>';
+  usort($recent, fn($a, $b) => $b[2] - $a[2]);
+  foreach (array_slice($recent, 0, 6) as [$rk, $lbl, $mt]) {
+    echo '<li><span class="ck-fi">' . pg_icon('edit') . '</span><div><div class="ck-ft"><a href="index.php?collection=' . pg_h($rk) . '"><b>' . pg_h($lbl) . '</b></a></div><div class="ck-fm">' . pg_h(pg_time_ago($mt)) . '</div></div></li>';
   }
-  $ov .= '<section class="dash-panel">' . $nh . $nb . '</section>';
 }
+echo '</ul></section>';
 
-// Übersetzungs-Status (DE → EN): welche Inhalte haben noch keine englische Fassung?
-$i18n = pg_i18n_report($SCHEMA);
+echo '<div class="ck-col">';
+// System & Sicherheit
+$sys = [];
+$exp = $sec['exposed'] ?? null;
+$sys[] = ['lock', $exp === true ? 'danger' : ($exp === false ? 'ok' : 'muted'), 'Schutz interner Daten', $exp === true ? 'AUS – .htaccess hochladen!' : ($exp === false ? 'aktiv' : 'nicht prüfbar')];
+if ($isOwner) {
+  $us = pg_users_load(); $with = count(array_filter($us, 'pg_user_has_2fa'));
+  $sys[] = ['shield', $with === count($us) ? 'ok' : 'warn', 'Zwei-Faktor-Anmeldung', $with . ' von ' . count($us) . ' Admins'];
+  $sys[] = ['archive', $lastBackup && $lastBackup > time() - 3 * 86400 ? 'ok' : 'warn', 'Letztes Backup', $lastBackup ? pg_time_ago($lastBackup) : 'noch keins'];
+} else {
+  $sys[] = ['shield', $me && pg_user_has_2fa($me) ? 'ok' : 'warn', 'Zwei-Faktor-Anmeldung', $me && pg_user_has_2fa($me) ? 'aktiv' : 'aus'];
+}
+if ($canMail) {
+  $ms = pg_mail_configured_send(); $mr = pg_mail_configured_recv();
+  $sys[] = ['server', $ms && $mr ? 'ok' : 'warn', 'Mail (Senden / Empfangen)', ($ms ? 'Senden ✓' : 'Senden fehlt') . ' · ' . ($mr ? 'Empfang ✓' : 'Empfang fehlt')];
+}
+$big = pg_media_large();
+$sys[] = ['image', $big ? 'warn' : 'ok', 'Bildgrößen auf der Website', $big ? count($big) . ' Bild' . (count($big) === 1 ? '' : 'er') . ' über 3 MB' : 'alles im grünen Bereich'];
+$allOk = !array_filter($sys, fn($r) => in_array($r[1], ['warn', 'danger'], true));
+echo '<section class="ck-card"><div class="ck-card-h"><span class="ck-card-t">' . pg_icon('shield') . 'System &amp; Sicherheit</span>'
+   . '<span class="chip ' . ($allOk ? 'st-rel' : 'st-dev') . '" style="margin-left:auto"><i></i>' . ($allOk ? 'Alles im grünen Bereich' : 'Bitte prüfen') . '</span></div><ul class="ck-health">';
+$tc = ['ok' => 'var(--ok)', 'warn' => 'var(--warn)', 'danger' => 'var(--danger)', 'muted' => 'var(--muted)'];
+foreach ($sys as [$ic, $tone, $label, $val]) {
+  $link = $label === 'Bildgrößen auf der Website' && $big ? 'index.php?view=media' : ($label === 'Letztes Backup' ? 'index.php?view=backup' : ($label === 'Zwei-Faktor-Anmeldung' && !$isOwner ? 'index.php?view=account' : ''));
+  echo '<li><span style="color:' . $tc[$tone] . '">' . pg_icon($ic) . '</span>' . pg_h($label)
+     . ($link !== '' ? '<a class="ck-hv" href="' . pg_h($link) . '">' . pg_h($val) . '</a>' : '<span class="ck-hv">' . pg_h($val) . '</span>') . '</li>';
+}
+echo '</ul></section>';
+// Übersetzungen
 if ($i18n) {
-  $totAll = array_sum(array_column($i18n, 'total'));
-  $missAll = array_sum(array_column($i18n, 'missing'));
-  $doneAll = $totAll - $missAll;
-  $pctAll = $totAll > 0 ? round($doneAll / $totAll * 100) : 100;
-  $th = '<div class="dp-head"><span class="dp-title">🌐 Übersetzungen</span>'
-      . '<span class="dp-more" style="cursor:default">' . $pctAll . '% EN</span></div>';
-  $tb = '<div class="i18n-list">';
-  // Lückenhafte zuerst, dann nach Anzahl fehlender sortieren
   uasort($i18n, fn($a, $b) => ($b['missing'] <=> $a['missing']) ?: strcmp($a['label'], $b['label']));
+  echo '<section class="ck-card"><div class="ck-card-h"><span class="ck-card-t">' . pg_icon('globe') . 'Übersetzungen (Englisch)</span></div><div class="ck-i18n">';
   foreach ($i18n as $k => $r) {
-    $done = $r['total'] - $r['missing'];
-    $pct = $r['total'] > 0 ? round($done / $r['total'] * 100) : 100;
-    $cls = $r['missing'] === 0 ? 'full' : ($pct < 50 ? 'low' : 'mid');
-    $note = $r['missing'] === 0
-      ? '<span class="i18n-ok">✓ vollständig</span>'
-      : '<span class="i18n-gap">' . $r['missing'] . ' offen</span>';
-    $tb .= '<a class="i18n-row" href="index.php?collection=' . pg_h($k) . '&lang=en" title="' . pg_h($r['label']) . '">'
-         . '<span class="i18n-top"><span class="i18n-name"><span class="i18n-lbl">' . $r['icon'] . ' ' . pg_h($r['label']) . '</span>'
-         . (!$r['enExists'] ? '<span class="i18n-new">neu</span>' : '') . '</span>' . $note . '</span>'
-         . '<span class="i18n-bar"><span class="i18n-fill ' . $cls . '" style="width:' . $pct . '%"></span></span></a>';
+    $pct = $r['total'] > 0 ? (int) round(($r['total'] - $r['missing']) / $r['total'] * 100) : 100;
+    echo '<a class="ck-i18n-row" href="index.php?collection=' . pg_h($k) . '&amp;lang=en"><span>' . pg_h($r['label']) . '</span>'
+       . '<span class="ck-bar' . ($pct === 100 ? ' full' : '') . '"><i style="width:' . $pct . '%"></i></span>'
+       . '<span class="ck-pct' . ($pct === 100 ? ' full' : '') . '">' . $pct . '%</span></a>';
   }
-  $tb .= '</div>';
-  $tb .= $missAll === 0
-    ? '<div class="dp-foot" style="color:#9ff0b5">Alles übersetzt – super! 🎉</div>'
-    : '<div class="i18n-hint">Leere EN-Felder fallen auf der Website automatisch auf Deutsch zurück.</div>';
-  $ov .= '<section class="dash-panel dash-i18n">' . $th . $tb . '</section>';
+  echo '</div></section>';
 }
-
-echo '<div class="dash-grid">' . $ov . '</div>';
-
-// kleine Helfer-Funktion: eine Karte ausgeben
-$card = function ($href, $ico, $title, $desc, $badge = 0) {
-  return '<a class="card" href="' . pg_h($href) . '">'
-       . '<span class="card-ico">' . $ico . '</span>'
-       . '<span class="card-title">' . $title . ($badge ? '<span class="nbadge">' . $badge . '</span>' : '') . '</span>'
-       . '<span class="card-desc">' . $desc . '</span></a>';
-};
-
-/* ── Abschnitt 1: Inhalte ── */
-$inhalte = '';
-foreach ($SCHEMA as $key => $coll) {
-  if (!pg_can($key)) continue;
-  $desc = [
-    'studio' => 'Startseite, Über-uns, Kontakt &amp; Footer.',
-    'team' => 'Teammitglieder mit Foto, Name &amp; Rolle.',
-    'games' => 'Spiele anlegen und ihre Seiten mit Blöcken bauen.',
-    'patchnotes' => 'Devlog-Einträge, Ankündigungen &amp; Patch Notes.',
-    'legal' => 'Impressum &amp; Datenschutzerklärung bearbeiten.',
-  ][$key] ?? '';
-  $inhalte .= $card('index.php?collection=' . $key, pg_h($coll['icon']), pg_h($coll['label']), $desc);
-}
-$inhalte .= $card('index.php?view=media', '🖼️', 'Medien-Bibliothek', 'Bilder &amp; Videos hochladen, Pfade kopieren, aufräumen.');
-if ($inhalte !== '') {
-  echo '<h2 class="dash-section">📝 Inhalte</h2><div class="cards">' . $inhalte . '</div>';
-}
-
-/* ── Abschnitt 2: Community & Kontakt ── */
-$community = '';
-if (pg_can('subscribers')) {
-  $subCount = count(pg_load_json(PG_DATA_DIR . '/subscribers.json'));
-  $community .= $card('index.php?view=subscribers', '📬', 'Newsletter-Abos',
-    $subCount . ' Anmeldung' . ($subCount === 1 ? '' : 'en') . ' · ansehen &amp; exportieren.');
-  $wl = pg_load_json(PG_DATA_DIR . '/waitlist.json'); if (!is_array($wl)) $wl = [];
-  $wlCount = count(array_filter($wl, fn($e) => is_array($e) && !empty($e['email'])));
-  $community .= $card('index.php?view=waitlist', '📋', 'Beta-Warteliste',
-    $wlCount . ' Anmeldung' . ($wlCount === 1 ? '' : 'en') . ' mit Empfehlungs-Ranking.');
-}
-if (pg_can('contacts')) {
-  $cCount = count(pg_load_json(PG_DATA_DIR . '/contacts.json'));
-  $community .= $card('index.php?view=contacts', '✉️', 'Kontakt-Anfragen',
-    $cCount . ' Nachricht' . ($cCount === 1 ? '' : 'en') . ' über das Kontaktformular.', pg_contacts_unread());
-}
-if (pg_can('mail')) {
-  $community .= $card('mail.php', '📮', 'E-Mail-Postfach',
-    'Mails im PLANIGAMES-Design senden &amp; empfangen.', pg_mail_unread_cached());
-}
-if (pg_can('mail') || pg_can('contacts')) {
-  $tplCount = count(pg_templates_load());
-  $community .= $card('index.php?view=templates', '⚡', 'Schnellantworten',
-    $tplCount . ' Vorlage' . ($tplCount === 1 ? '' : 'n') . ' für wiederkehrende Antworten.');
-}
-if ($community !== '') {
-  echo '<h2 class="dash-section">📣 Community &amp; Kontakt</h2><div class="cards">' . $community . '</div>';
-}
-
-/* ── Abschnitt 3: System & Verwaltung ── */
-$system = '';
-$system .= $card('index.php?view=board', '🗂️', 'Planungs-Board', 'Ideen &amp; Aufgaben planen (Kanban).');
-$system .= $card('index.php?view=stats', '📊', 'Statistik', 'Datenschutzfreundliche Seitenaufrufe ansehen.');
-$system .= $card('index.php?view=trash', '🗑️', 'Papierkorb',
-  'Gelöschte Spiele &amp; Beiträge wiederherstellen.', count(pg_trash_load()));
-if (pg_is_owner()) {
-  $system .= $card('index.php?view=users', '🔑', 'Zugänge &amp; Rollen',
-    'Login-Zugänge per E-Mail einladen &amp; Rechte vergeben.');
-  $system .= $card('index.php?view=backup', '💾', 'Backup &amp; Wiederherstellung',
-    'Alle Inhalte als Datei sichern &amp; wieder einspielen.');
-  $system .= $card('index.php?view=activity', '📋', 'Aktivitätsprotokoll',
-    'Wer hat wann was im Dashboard gemacht?');
-}
-echo '<h2 class="dash-section">⚙️ System &amp; Verwaltung</h2><div class="cards">' . $system . '</div>';
-
-echo '<div class="dash-links"><a href="../index.html" target="_blank">↗ Website ansehen</a> '
-   . '<a href="index.php?action=logout">Abmelden</a></div>';
-echo '</div>';
+echo '</div></div>';   // .ck-col, .ck-two
+echo '</div>';          // .ck
 pg_view_foot();
 
 

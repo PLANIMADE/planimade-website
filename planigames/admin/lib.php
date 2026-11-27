@@ -9,7 +9,7 @@ const PG_MEDIA_DIR   = __DIR__ . '/../media';
 const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
 const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
 const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip'];
-const PG_ADMIN_V     = '60';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
+const PG_ADMIN_V     = '61';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -1824,4 +1824,77 @@ function pg_normalize_field($f, $val, $siblingRaw = []){
       }
       return $s;
   }
+}
+
+/* =====================================================================
+   Cockpit-Helfer
+   ===================================================================== */
+// Mini-Verlaufskurve (SVG) für Kennzahlen
+function pg_spark_svg(array $vals, $color){
+  $vals = array_values(array_map('floatval', $vals));
+  if (count($vals) < 2) $vals = array_pad($vals, 2, 0.0);
+  $w = 160; $h = 38; $max = max($vals); $min = min($vals); $rng = ($max - $min) ?: 1;
+  $pts = [];
+  foreach ($vals as $i => $v) $pts[] = sprintf('%.1f %.1f', $i * ($w / (count($vals) - 1)), $h - 3 - (($v - $min) / $rng) * ($h - 8));
+  $d = 'M' . implode(' L', $pts);
+  $id = 'sp' . substr(md5($color . implode(',', $vals)), 0, 8);
+  return '<svg class="ck-spark" viewBox="0 0 ' . $w . ' ' . $h . '" preserveAspectRatio="none" aria-hidden="true">'
+       . '<defs><linearGradient id="' . $id . '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' . $color . '" stop-opacity=".32"/>'
+       . '<stop offset="1" stop-color="' . $color . '" stop-opacity="0"/></linearGradient></defs>'
+       . '<path d="' . $d . ' L ' . $w . ' ' . $h . ' L 0 ' . $h . ' Z" fill="url(#' . $id . ')"/>'
+       . '<path d="' . $d . '" fill="none" stroke="' . $color . '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
+}
+// Einträge pro Tag (lückenlos, letzte $days Tage) – für Verlaufskurven
+function pg_daily_counts($items, $days, $field = 'date'){
+  $out = [];
+  for ($i = $days - 1; $i >= 0; $i--) $out[date('Y-m-d', strtotime("-$i day"))] = 0;
+  foreach ((array) $items as $r) {
+    if (!is_array($r)) continue;
+    $d = substr((string) ($r[$field] ?? ''), 0, 10);
+    if (isset($out[$d])) $out[$d]++;
+  }
+  return $out;
+}
+// Lückenlose Tageswerte aus stats.json (fehlende Tage = 0)
+function pg_stats_series($daysMap, $days){
+  $out = [];
+  for ($i = $days - 1; $i >= 0; $i--) { $k = date('Y-m-d', strtotime("-$i day")); $out[$k] = (int) ($daysMap[$k] ?? 0); }
+  return $out;
+}
+/* Selbsttest „Interne Daten geschützt?": legt eine harmlose Kanarien-Datei in data/ an
+   und ruft sie von außen ab. Erreichbar (200) = Schutz fehlt. Ergebnis 6 h gecacht.
+   Rückgabe: ['time'=>…, 'exposed'=>true|false|null]  (null = nicht prüfbar) */
+function pg_selfcheck_data($force = false){
+  $f = PG_DATA_DIR . '/selfcheck.json';
+  $c = pg_load_json($f);
+  // Ergebnis zwischenspeichern: „geschützt“ 6 h, „nicht prüfbar“ 1 h, „offen“ nur 5 min –
+  // so verschwindet die Warnung kurz nach dem Hochladen der .htaccess von selbst.
+  $ttl = ($c['exposed'] ?? null) === true ? 300 : ((($c['exposed'] ?? null) === false) ? 6 * 3600 : 3600);
+  if (!$force && is_array($c) && isset($c['time'], $c['checked']) && time() - (int) $c['time'] < $ttl) return $c;
+  $res = ['time' => time(), 'checked' => true, 'exposed' => null, 'canary' => 'Diese Datei darf per HTTP NICHT erreichbar sein.'];
+  pg_save_json($f, $res);
+  if (function_exists('curl_init')) {
+    $ch = curl_init(pg_site_url() . '/data/selfcheck.json?' . time());
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 4, CURLOPT_CONNECTTIMEOUT => 3,
+      CURLOPT_FOLLOWLOCATION => false, CURLOPT_USERAGENT => 'PLANIGAMES-Selfcheck']);
+    $body = curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    curl_close($ch);
+    if ($code === 200 && is_string($body) && strpos($body, 'NICHT erreichbar') !== false) $res['exposed'] = true;
+    elseif (in_array($code, [401, 403, 404], true)) $res['exposed'] = false;
+  }
+  pg_save_json($f, $res);
+  return $res;
+}
+// Medien-Dateien über einer Größe (für „Bilder optimieren"-Hinweis)
+function pg_media_large($bytes = 3145728){
+  $out = [];
+  if (!is_dir(PG_MEDIA_DIR)) return $out;
+  foreach (scandir(PG_MEDIA_DIR) as $f) {
+    if ($f[0] === '.' || !preg_match('/\.(jpe?g|png|webp|gif)$/i', $f)) continue;
+    $s = (int) @filesize(PG_MEDIA_DIR . '/' . $f);
+    if ($s > $bytes) $out[$f] = $s;
+  }
+  arsort($out);
+  return $out;
 }

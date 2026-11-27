@@ -18,6 +18,8 @@ data/comments.json
 data/suggestions.json
 data/keys.json
 data/waitlist.json
+data/selfcheck.json
+data/redirects.json
 data/blueprint_vault.php
 data/blueprint_vault.backup.php
 data/vault_config.php
