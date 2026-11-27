@@ -1001,31 +1001,56 @@
     try { if (localStorage.getItem("pg_split") === "1" && innerWidth > 900) openSplit(); } catch {}
   })();
 
-  // ---- Mobiles Admin: untere Tab-Leiste ----
-  (function mobileNav() {
-    if (document.getElementById("pg-mobnav")) return;
-    if (!document.querySelector(".topbar")) return;   // nur im eingeloggten Bereich
-    const items = [
-      ["index.php", "🏠", "Start"],
-      ["index.php?collection=studio", "★", "Studio"],
-      ["index.php?view=board", "🗂️", "Board"],
-      ["mail.php", "📮", "Postfach"],
-      ["index.php?view=search", "🔎", "Suche"],
-    ];
-    const path = location.pathname.split("/").pop() || "index.php";
-    const here = location.search;
-    const nav = document.createElement("nav");
-    nav.id = "pg-mobnav";
-    nav.innerHTML = items.map(([href, ico, lbl]) => {
-      const hp = href.split("?")[0], hq = href.split("?")[1] || "";
-      let on = false;
-      if (hp === "mail.php") on = path === "mail.php";
-      else if (path === "index.php") on = hq === "" ? here === "" : here.includes(hq);
-      return `<a href="${href}" class="${on ? "on" : ""}"><span>${ico}</span>${lbl}</a>`;
-    }).join("");
-    document.body.appendChild(nav);
-    document.body.classList.add("has-mobnav");
-  })();
+  // ---- App-Shell: Seitenmenü auf dem Handy ----
+  const side = document.getElementById("side"), scrim = document.getElementById("scrim");
+  function openDrawer() { if (!side) return; side.classList.add("open"); if (scrim) scrim.classList.add("show"); }
+  function closeDrawer() { if (!side) return; side.classList.remove("open"); if (scrim) scrim.classList.remove("show"); }
+  [document.getElementById("menuBtn"), document.getElementById("tabMore")].forEach((b) => { if (b) b.addEventListener("click", openDrawer); });
+  if (scrim) scrim.addEventListener("click", closeDrawer);
+
+  // ---- Befehlspalette: Strg/⌘ + K — Seiten, Spiele, Aktionen + Volltextsuche ----
+  const pal = document.getElementById("pal");
+  if (pal && Array.isArray(window.PG_PAL)) {
+    const palIn = document.getElementById("palInput"), palList = document.getElementById("palList");
+    const escH = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const norm = (v) => String(v || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    let palSel = 0, palShown = [];
+    const renderPal = () => {
+      const raw = palIn.value.trim(), q = norm(raw);
+      palShown = window.PG_PAL.filter((it) => !q || norm(it.l + " " + (it.k || "")).includes(q));
+      if (raw) palShown.push({ s: "Volltext", i: "search", l: "In allen Inhalten suchen: „" + raw + "“", h: "index.php?view=search&q=" + encodeURIComponent(raw), k: "" });
+      palSel = Math.max(0, Math.min(palSel, palShown.length - 1));
+      let sec = "", h = "";
+      palShown.forEach((it, i) => {
+        if (it.s !== sec) { sec = it.s; h += `<li class="pal-sec">${escH(sec)}</li>`; }
+        h += `<li class="pal-item${i === palSel ? " on" : ""}" data-pi="${i}"><svg class="ic" aria-hidden="true"><use href="#i-${escH(it.i)}"/></svg>${escH(it.l)}${it.s === "Spiele" && it.k ? `<small>${escH(it.k)}</small>` : ""}</li>`;
+      });
+      palList.innerHTML = h || '<li class="pal-sec">Nichts gefunden</li>';
+      const on = palList.querySelector(".pal-item.on"); if (on) on.scrollIntoView({ block: "nearest" });
+    };
+    const palGo = (it) => { if (!it) return; if (it.h === "../index.html") { window.open(it.h, "_blank"); closePal(); } else location.href = it.h; };
+    const openPal = (q) => { closeDrawer(); pal.hidden = false; palIn.value = q || ""; palSel = 0; renderPal(); palIn.focus(); requestAnimationFrame(() => palIn.focus()); };
+    const closePal = () => { pal.hidden = true; };
+    window.pgOpenPalette = openPal;
+    document.addEventListener("click", (e) => {
+      if (e.target.closest("[data-open-palette]")) { e.preventDefault(); openPal(); return; }
+      if (e.target === pal) { closePal(); return; }
+      const li = e.target.closest(".pal-item"); if (li && pal.contains(li)) palGo(palShown[+li.dataset.pi]);
+    });
+    // Suchfeld in der Kopfzeile öffnet die Palette (ohne JS bleibt es eine normale Volltextsuche)
+    const topIn = document.querySelector("[data-open-palette-input]");
+    if (topIn) topIn.addEventListener("focus", () => { const v = topIn.value; topIn.blur(); openPal(v); });
+    palIn.addEventListener("input", () => { palSel = 0; renderPal(); });
+    palIn.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown") { palSel = Math.min(palSel + 1, palShown.length - 1); renderPal(); e.preventDefault(); }
+      else if (e.key === "ArrowUp") { palSel = Math.max(palSel - 1, 0); renderPal(); e.preventDefault(); }
+      else if (e.key === "Enter") { e.preventDefault(); palGo(palShown[palSel]); }
+      else if (e.key === "Escape") { e.stopPropagation(); closePal(); }
+    });
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) { e.preventDefault(); pal.hidden ? openPal() : closePal(); }
+    });
+  }
 
   // ---- Tastatur-Shortcuts ----
   function primarySaveButton() {
@@ -1046,8 +1071,7 @@
       if (help) { help.remove(); return; }
       const grp = document.querySelector("[data-tb-group].open");
       if (grp) { grp.classList.remove("open"); return; }
-      const tb = document.querySelector(".topbar.nav-open");
-      if (tb) tb.classList.remove("nav-open");
+      if (side && side.classList.contains("open")) closeDrawer();
     }
   });
   function toggleShortcutHelp() {
@@ -1058,6 +1082,7 @@
     d.innerHTML = `<div class="kbd-box">
       <h3>Tastatur-Shortcuts</h3>
       <div class="kbd-row"><span><kbd>Strg</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd></span><span>Speichern</span></div>
+      <div class="kbd-row"><span><kbd>Strg</kbd>/<kbd>⌘</kbd> + <kbd>K</kbd></span><span>Suchen &amp; springen</span></div>
       <div class="kbd-row"><span><kbd>?</kbd></span><span>Diese Hilfe</span></div>
       <div class="kbd-row"><span><kbd>Esc</kbd></span><span>Schließen / Menü zu</span></div>
       <button class="btn-add" data-kbd-close>Schließen</button>

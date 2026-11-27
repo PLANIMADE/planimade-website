@@ -9,6 +9,7 @@ const PG_MEDIA_DIR   = __DIR__ . '/../media';
 const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
 const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
 const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip'];
+const PG_ADMIN_V     = '60';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -204,13 +205,13 @@ function pg_notif_bell(){
   $n = pg_notifications();
   $note = pg_notif_notes($n);
   $h = '<div class="tb-notif" data-tb-group>';
-  $h .= '<button type="button" class="tb-group-btn tb-notif-btn" data-notif-bell aria-label="Benachrichtigungen" aria-expanded="false">🔔'
+  $h .= '<button type="button" class="tb-group-btn tb-notif-btn" data-notif-bell aria-label="Benachrichtigungen" aria-expanded="false">' . pg_icon('bell')
       . '<span class="nbadge" data-notif-total' . ($n['total'] ? '' : ' hidden') . '>' . ($n['total'] ?: '') . '</span></button>';
   $h .= '<div class="tb-notif-panel"><div class="tn-head">Benachrichtigungen</div>';
-  if (pg_can('mail'))     $h .= pg_notif_row('mail.php', '✉️', 'E-Mail-Postfach', $n['mail'], $note['mail'], 'mail');
-  if (pg_can('contacts')) $h .= pg_notif_row('index.php?view=contacts', '📨', 'Kontakt-Anfragen', $n['contacts'], $note['contacts'], 'contacts');
-  if (pg_can('subscribers')) $h .= pg_notif_row('index.php?view=subscribers', '📬', 'Newsletter', 0, $note['subs'], 'subs');
-  $h .= pg_notif_row('index.php?view=comments', '💬', 'Kommentare', $n['comments'], $note['comments'], 'comments');
+  if (pg_can('mail'))     $h .= pg_notif_row('mail.php', pg_icon('mail'), 'E-Mail-Postfach', $n['mail'], $note['mail'], 'mail');
+  if (pg_can('contacts')) $h .= pg_notif_row('index.php?view=contacts', pg_icon('inbox'), 'Kontakt-Anfragen', $n['contacts'], $note['contacts'], 'contacts');
+  if (pg_can('subscribers')) $h .= pg_notif_row('index.php?view=subscribers', pg_icon('mega'), 'Newsletter', 0, $note['subs'], 'subs');
+  $h .= pg_notif_row('index.php?view=comments', pg_icon('chat'), 'Kommentare', $n['comments'], $note['comments'], 'comments');
   $h .= '</div></div>';
   return $h;
 }
@@ -1033,7 +1034,144 @@ function pg_imap_part($mbox, $uid, $structure, $want, $prefix = ''){
 }
 
 /* =================== VIEW-HELFER (von index.php & mail.php genutzt) =================== */
+/* =====================================================================
+   App-Shell: Seitenleiste · Kopfzeile · Tab-Leiste (mobil) · Befehlspalette
+   Alle Admin-Seiten bekommen sie automatisch über pg_view_topbar().
+   ===================================================================== */
+function pg_icon($id, $cls = ''){
+  return '<svg class="ic' . ($cls !== '' ? ' ' . $cls : '') . '" aria-hidden="true"><use href="#i-' . $id . '"/></svg>';
+}
+// Linien-Icons (einmal pro Seite, referenziert per <use>)
+function pg_icon_sprite(){
+  $p = [
+    'cockpit' => '<rect x="3" y="3" width="7.5" height="9" rx="2"/><rect x="13.5" y="3" width="7.5" height="5.5" rx="2"/><rect x="13.5" y="11.5" width="7.5" height="9.5" rx="2"/><rect x="3" y="15" width="7.5" height="6" rx="2"/>',
+    'game' => '<path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.3 5H6.7a4 4 0 0 0-4 3.6l-.9 7.1A3 3 0 0 0 4.8 19c1 0 1.8-.6 2.2-1.5L8 15h8l1 2.5c.4.9 1.2 1.5 2.2 1.5a3 3 0 0 0 3-3.3l-.9-7.1A4 4 0 0 0 17.3 5z"/>',
+    'studio' => '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5M10 20v-6h4v6"/>',
+    'devlog' => '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+    'team' => '<circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14c2 .7 3 2.6 3 6"/>',
+    'legal' => '<path d="M12 3v18M7 21h10M5 7h14"/><path d="m5 7-3 7a3.5 3.5 0 0 0 6 0zM19 7l-3 7a3.5 3.5 0 0 0 6 0z"/>',
+    'mail' => '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>',
+    'inbox' => '<path d="M3 13h5l1.5 3h5L16 13h5"/><path d="M5.5 5h13L21 13v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5z"/>',
+    'bulb' => '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+    'list' => '<path d="M10 6h10M10 12h10M10 18h10"/><path d="m3.5 6 1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17"/>',
+    'mega' => '<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6l-5 4H4a1 1 0 0 0-1 1z"/><path d="M15 9a3 3 0 0 1 0 6M18 6a7 7 0 0 1 0 12"/>',
+    'chat' => '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/>',
+    'zap' => '<path d="M13 2 3 14h8l-1 8 10-12h-8z"/>',
+    'key' => '<circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3M17 6l3 3M15 8l2 2"/>',
+    'kanban' => '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 7v7M12 7v4M16 7v10"/>',
+    'cal' => '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    'vault' => '<rect x="3" y="4" width="8" height="6.5" rx="1.6"/><rect x="13" y="13.5" width="8" height="6.5" rx="1.6"/><path d="M11 7.2h2.5a2 2 0 0 1 2 2v4.3"/>',
+    'image' => '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
+    'chart' => '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/>',
+    'globe' => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+    'search' => '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+    'lock' => '<rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    'shield' => '<path d="M12 3 4.5 6v6c0 4.5 3.2 7.8 7.5 9 4.3-1.2 7.5-4.5 7.5-9V6z"/><path d="m9 12 2 2 4-4"/>',
+    'clock' => '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    'archive' => '<rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4"/>',
+    'trash' => '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13M9 7V4h6v3"/>',
+    'settings' => '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+    'bell' => '<path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+    'plus' => '<path d="M12 5v14M5 12h14"/>',
+    'ext' => '<path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>',
+    'chev' => '<path d="m9 6 6 6-6 6"/>',
+    'back' => '<path d="m15 6-6 6 6 6"/>',
+    'down' => '<path d="m6 9 6 6 6-6"/>',
+    'menu' => '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    'x' => '<path d="M18 6 6 18M6 6l12 12"/>',
+    'check' => '<path d="m5 12 5 5 9-10"/>',
+    'alert' => '<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
+    'logout' => '<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H3"/>',
+    'eye' => '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    'spark' => '<path d="m12 3 1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+    'link' => '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+    'download' => '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',
+    'upload' => '<path d="M12 21V9M7 14l5-5 5 5M5 3h14"/>',
+    'send' => '<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>',
+    'clip' => '<path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/>',
+    'bold' => '<path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/>',
+    'italic' => '<path d="M19 4h-9M14 20H5M15 4 9 20"/>',
+    'underline' => '<path d="M7 4v7a5 5 0 0 0 10 0V4M5 21h14"/>',
+    'heading' => '<path d="M6 4v16M18 4v16M6 12h12"/>',
+    'ul' => '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" class="ic-fill"/><circle cx="4.5" cy="12" r="1" class="ic-fill"/><circle cx="4.5" cy="18" r="1" class="ic-fill"/>',
+    'ol' => '<path d="M10 6h10M10 12h10M10 18h10M4 4.5h1.5V9M4 9h3M4 14.5c.5-.6 1-.9 1.7-.9.8 0 1.3.5 1.3 1.2 0 1.2-3 2.2-3 3.7h3"/>',
+    'quote' => '<path d="M6 17h3l2-4V7H5v6h3zM14 17h3l2-4V7h-6v6h3z"/>',
+    'move' => '<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>',
+    'undo' => '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+    'grip' => '<circle cx="9" cy="6" r="1.3" class="ic-fill"/><circle cx="15" cy="6" r="1.3" class="ic-fill"/><circle cx="9" cy="12" r="1.3" class="ic-fill"/><circle cx="15" cy="12" r="1.3" class="ic-fill"/><circle cx="9" cy="18" r="1.3" class="ic-fill"/><circle cx="15" cy="18" r="1.3" class="ic-fill"/>',
+    'play' => '<path d="M7 4.5v15l12-7.5z"/>',
+    'book' => '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h13"/>',
+    'route' => '<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H16"/>',
+    'help' => '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 .5c0 1.5-2.5 2-2.5 3.5M12 17h.01"/>',
+    'server' => '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/>',
+    'palette' => '<path d="M12 3a9 9 0 1 0 0 18c1 0 1.7-.8 1.7-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H16a5 5 0 0 0 5-5c0-4-4-7.2-9-7.2z"/><circle cx="7.5" cy="11" r="1" class="ic-fill"/><circle cx="10.5" cy="7" r="1" class="ic-fill"/><circle cx="15" cy="7.5" r="1" class="ic-fill"/>',
+    'user' => '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>',
+    'edit' => '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+    'copy' => '<rect x="8" y="8" width="13" height="13" rx="2.5"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
+    'star' => '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+    'refresh' => '<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"/>',
+    'filter' => '<path d="M3 5h18l-7 8v6l-4 2v-8z"/>',
+    'radio' => '<circle cx="12" cy="12" r="2"/><path d="M8.5 15.5a5 5 0 0 1 0-7M15.5 8.5a5 5 0 0 1 0 7M5.6 18.4a9 9 0 0 1 0-12.8M18.4 5.6a9 9 0 0 1 0 12.8"/>',
+  ];
+  $h = '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>';
+  foreach ($p as $id => $d) $h .= '<symbol id="i-' . $id . '" viewBox="0 0 24 24">' . $d . '</symbol>';
+  return $h . '</defs></svg>';
+}
+
+// Aktuelle Route aus der URL ableiten (kein Parameter an den 20 Aufrufstellen nötig)
+function pg_route(){
+  $script = basename((string) ($_SERVER['SCRIPT_NAME'] ?? 'index.php'));
+  if ($script === 'mail.php')  return 'mail';
+  if ($script === 'vault.php') return 'vault';
+  if (!empty($_GET['collection'])) return 'c:' . preg_replace('/[^a-z0-9_\-]/i', '', (string) $_GET['collection']);
+  if (!empty($_GET['view']))       return 'v:' . preg_replace('/[^a-z0-9_\-]/i', '', (string) $_GET['view']);
+  return 'cockpit';
+}
+
+// Navigation: [ [Gruppenname, [ [route, href, icon, label, zahl, hervorheben], … ] ], … ]
+function pg_nav_model($SCHEMA){
+  $collIcons = ['studio' => 'studio', 'games' => 'game', 'patchnotes' => 'devlog', 'team' => 'team', 'legal' => 'legal'];
+  $order = array_values(array_unique(array_merge(['studio', 'games', 'patchnotes', 'team', 'legal'], array_keys($SCHEMA))));
+  $inhalte = [];
+  foreach ($order as $key) {
+    if (!isset($SCHEMA[$key]) || !pg_can($key)) continue;
+    $n = 0;
+    if ($key === 'games') $n = count((array) (pg_load_json(PG_DATA_DIR . '/games.json')['games'] ?? []));
+    $inhalte[] = ['c:' . $key, 'index.php?collection=' . rawurlencode($key), $collIcons[$key] ?? 'devlog', $SCHEMA[$key]['label'], $n, false];
+  }
+  $com = [];
+  if (pg_can('mail'))        $com[] = ['mail', 'mail.php', 'mail', 'Postfach', pg_mail_unread_cached(), true];
+  if (pg_can('contacts'))    $com[] = ['v:contacts', 'index.php?view=contacts', 'inbox', 'Kontakt-Anfragen', pg_contacts_unread(), true];
+  if (pg_can('contacts'))    $com[] = ['v:suggestions', 'index.php?view=suggestions', 'bulb', 'Vorschläge', pg_suggestions_pending(), true];
+  if (pg_can('subscribers')) $com[] = ['v:waitlist', 'index.php?view=waitlist', 'list', 'Beta-Warteliste', 0, false];
+  if (pg_can('subscribers')) $com[] = ['v:subscribers', 'index.php?view=subscribers', 'mega', 'Newsletter', 0, false];
+  if (pg_can('contacts'))    $com[] = ['v:comments', 'index.php?view=comments', 'chat', 'Kommentare', pg_comments_pending(), true];
+  if (pg_can('mail') || pg_can('contacts')) $com[] = ['v:templates', 'index.php?view=templates', 'zap', 'Schnellantworten', 0, false];
+  $ops = [];
+  if (pg_is_owner()) $ops[] = ['v:keys', 'index.php?view=keys', 'key', 'Keys & Presse', 0, false];
+  $tools = [
+    ['v:board', 'index.php?view=board', 'kanban', 'Planungs-Board', 0, false],
+    ['vault', 'vault.php', 'vault', 'Blueprint Vault', 0, false],
+    ['v:media', 'index.php?view=media', 'image', 'Medien', 0, false],
+    ['v:stats', 'index.php?view=stats', 'chart', 'Statistik', 0, false],
+    ['v:seo', 'index.php?view=seo', 'globe', 'SEO-Assistent', 0, false],
+  ];
+  $sys = [['v:account', 'index.php?view=account', 'lock', 'Konto & 2FA', 0, false]];
+  if (pg_is_owner()) {
+    $sys[] = ['v:users', 'index.php?view=users', 'shield', 'Zugänge & Rollen', 0, false];
+    $sys[] = ['v:activity', 'index.php?view=activity', 'clock', 'Protokoll', 0, false];
+    $sys[] = ['v:backup', 'index.php?view=backup', 'archive', 'Backups', 0, false];
+  }
+  $sys[] = ['v:trash', 'index.php?view=trash', 'trash', 'Papierkorb', count(pg_trash_load()), false];
+  return array_values(array_filter([
+    ['', [['cockpit', 'index.php', 'cockpit', 'Cockpit', 0, false]]],
+    ['Inhalte', $inhalte], ['Community', $com], ['Spielbetrieb', $ops],
+    ['Planung & Werkzeuge', $tools], ['System', $sys],
+  ], fn($g) => !empty($g[1])));
+}
+
 function pg_view_head($title){
+  $GLOBALS['pg_page_title'] = (string) $title;
   // Admin als installierbare App (nur Backend): Manifest + Apple-Tags + App-Icon
   $s = pg_load_json(PG_DATA_DIR . '/studio.json');
   $appIcon = trim((string) ($s['pwa']['appIcon'] ?? '')) ?: '../assets/icon-180.png';
@@ -1041,98 +1179,106 @@ function pg_view_head($title){
   echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
      . '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
      . '<meta name="robots" content="noindex"><title>' . pg_h($title) . ' · PLANIGAMES Admin</title>'
-     . '<meta name="theme-color" content="#0a0a0b">'
+     . '<meta name="theme-color" content="#08080a">'
      . '<link rel="manifest" href="manifest.php">'
      . '<link rel="apple-touch-icon" href="' . pg_h($appIcon) . '">'
      . '<meta name="apple-mobile-web-app-capable" content="yes">'
      . '<meta name="mobile-web-app-capable" content="yes">'
      . '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">'
      . '<meta name="apple-mobile-web-app-title" content="' . pg_h($appName) . '">'
-     . '<link rel="stylesheet" href="assets/admin.css?v=58"></head><body>';
+     . '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+     . '<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">'
+     . '<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet">'
+     . '<link rel="stylesheet" href="assets/admin.css?v=' . PG_ADMIN_V . '"></head><body>'
+     . pg_icon_sprite();
 }
-function pg_view_foot(){
-  echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
-  echo '<script src="assets/admin.js?v=58"></script></body></html>';
-}
+
 function pg_view_topbar($SCHEMA, $active){
+  $GLOBALS['pg_shell_open'] = true;
+  $route = pg_route();
+  $nav = pg_nav_model($SCHEMA);
+  // aktiven Eintrag + Gruppe für die Brotkrumen finden
+  $crumbGroup = 'Übersicht';
+  foreach ($nav as [$gl, $items]) foreach ($items as $it) if ($it[0] === $route) $crumbGroup = $gl !== '' ? $gl : 'Übersicht';
+  $title = $GLOBALS['pg_page_title'] ?? 'Admin';
   $studio = pg_load_json(PG_DATA_DIR . '/studio.json');
-  $logo = trim((string) ($studio['logo'] ?? ''));
-  $brand = $logo !== ''
-    ? '<img src="' . pg_h($logo) . '" alt="PLANIGAMES" class="tb-logo">'
-    : '<span class="diamond"></span> PLANI<span class="grad">GAMES</span>';
-  echo '<header class="topbar">';
-  echo '<a class="tb-brand" href="index.php">' . $brand . '</a>';
-  // Direkter Planungsboard-Knopf (immer sichtbar)
-  echo '<a class="tb-iconbtn' . ($active === 'board' ? ' on' : '') . '" href="index.php?view=board" '
-     . 'title="Planungs-Board" aria-label="Planungs-Board">🗂️</a>';
-  // Benachrichtigungs-Center (ersetzt das frühere Mail-Icon)
+  $u = pg_current_user() ?: [];
+  $uname = trim((string) ($u['name'] ?? '')) ?: strtok(pg_current_email(), '@');
+  $ini = strtoupper(implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(preg_split('/\s+/', trim($uname)) ?: [], 0, 2)))) ?: 'PG';
+  $role = (($u['role'] ?? '') === 'owner') ? 'Owner' : 'Editor';
+  $twofa = $u && pg_user_has_2fa($u);
+
+  echo '<div class="pg-app">';
+  // ---- Seitenleiste ----
+  echo '<aside class="side" id="side" aria-label="Hauptnavigation">';
+  echo '<a class="brand" href="index.php"><span class="brand-mark"><i></i></span><span><span class="brand-name">PLANI<b>GAMES</b></span><span class="brand-sub">Studio-Cockpit</span></span></a>';
+  echo '<button type="button" class="side-search" data-open-palette>' . pg_icon('search') . 'Suchen &amp; springen<kbd>⌘K</kbd></button>';
+  foreach ($nav as [$gl, $items]) {
+    echo '<div class="nav-group">' . ($gl !== '' ? '<div class="nav-label">' . pg_h($gl) . '</div>' : '');
+    foreach ($items as [$r, $href, $ic, $label, $n, $hot]) {
+      $on = $r === $route;
+      echo '<a class="nav-item' . ($on ? ' active' : '') . '" href="' . pg_h($href) . '"' . ($on ? ' aria-current="page"' : '') . '>'
+         . pg_icon($ic) . '<span class="nav-t">' . pg_h($label) . '</span>'
+         . ($n ? '<span class="nav-count' . ($hot ? ' hot' : '') . '">' . (int) $n . '</span>' : '') . '</a>';
+    }
+    echo '</div>';
+  }
+  echo '<div class="side-foot">';
+  echo '<a class="side-link" href="../index.html" target="_blank" rel="noopener">' . pg_icon('ext') . 'Website ansehen</a>';
+  echo '<div class="me"><span class="avatar">' . pg_h($ini) . '</span><span class="me-txt"><span class="me-name">' . pg_h($uname) . '</span>'
+     . '<span class="me-role">' . ($twofa ? '<span class="dot-ok"></span>' : '<span class="dot-warn"></span>') . pg_h($role) . ' · ' . ($twofa ? '2FA aktiv' : '2FA aus') . '</span></span>'
+     . '<a class="icon-btn sm" href="index.php?action=logout" title="Abmelden" aria-label="Abmelden">' . pg_icon('logout') . '</a></div>';
+  echo '</div></aside><div class="scrim" id="scrim"></div>';
+  // ---- Hauptbereich mit Kopfzeile ----
+  echo '<div class="main"><header class="topbar">';
+  echo '<button type="button" class="icon-btn only-m" id="menuBtn" aria-label="Menü öffnen">' . pg_icon('menu') . '</button>';
+  echo '<div class="crumbs"><span class="hide-m">' . pg_h($crumbGroup) . '</span>' . pg_icon('chev', 'hide-m') . '<b>' . pg_h($title) . '</b></div>';
+  echo '<div class="top-actions">';
+  echo '<form class="top-search" action="index.php" method="get" role="search"><input type="hidden" name="view" value="search">'
+     . pg_icon('search') . '<input name="q" placeholder="Suchen, springen, erledigen …" autocomplete="off" aria-label="Suchen" data-open-palette-input><kbd>⌘K</kbd></form>';
+  echo '<button type="button" class="icon-btn only-m" data-open-palette aria-label="Suchen">' . pg_icon('search') . '</button>';
+  echo '<a class="btn btn-ghost btn-sm hide-m" href="../index.html" target="_blank" rel="noopener">' . pg_icon('ext') . 'Website</a>';
   echo pg_notif_bell();
-  echo '<button type="button" class="tb-burger" id="tb-burger" aria-label="Menü" aria-expanded="false"><span></span><span></span><span></span></button>';
-  echo '<nav class="tb-nav" id="tb-nav">';
-
-  // Inhalte (Content-Sammlungen) – direkte Links
-  foreach ($SCHEMA as $key => $coll) {
-    if (!pg_can($key)) continue;
-    $cls = $key === $active ? ' class="on"' : '';
-    echo '<a' . $cls . ' href="index.php?collection=' . pg_h($key) . '">' . pg_h($coll['label']) . '</a>';
-  }
-
-  // Gruppe „Community" – Abos & Kontakt (Mails haben eigenes Icon oben)
-  $community = [];
-  if (pg_can('subscribers')) $community[] = ['index.php?view=subscribers', '📬 Newsletter-Abos', 0];
-  if (pg_can('subscribers')) $community[] = ['index.php?view=waitlist', '📋 Beta-Warteliste', 0];
-  if (pg_can('contacts'))    $community[] = ['index.php?view=contacts', '✉️ Kontakt-Anfragen', pg_contacts_unread()];
-  pg_nav_group('Community', $community, false);
-
-  // Gruppe „System" – Medien, Statistik, Papierkorb + Owner-Werkzeuge
-  $system = [];
-  $system[] = ['index.php?view=board', '🗂️ Planungs-Board', 0];
-  $system[] = ['vault.php', '🧩 Blueprint Vault', 0];
-  $system[] = ['index.php?view=search', '🔎 Suche', 0];
-  $system[] = ['index.php?view=media', '🖼️ Medien-Bibliothek', 0];
-  $system[] = ['index.php?view=stats', '📊 Statistik', 0];
-  $system[] = ['index.php?view=seo', '🔍 SEO-Assistent', 0];
-  if (pg_can('mail') || pg_can('contacts')) $system[] = ['index.php?view=templates', '⚡ Schnellantworten', 0];
-  if (pg_can('contacts')) $system[] = ['index.php?view=comments', '💬 Kommentare', pg_comments_pending()];
-  if (pg_can('contacts')) $system[] = ['index.php?view=suggestions', '💡 Vorschläge', pg_suggestions_pending()];
-  $system[] = ['index.php?view=trash', '🗑️ Papierkorb', count(pg_trash_load())];
-  $system[] = ['index.php?view=account', '🔒 Konto & 2FA', 0];
-  if (pg_is_owner()) {
-    $system[] = ['index.php?view=keys', '🔑 Key-Verteilung', 0];
-    $system[] = ['index.php?view=users', '🔑 Zugänge & Rollen', 0];
-    $system[] = ['index.php?view=activity', '📋 Protokoll', 0];
-    $system[] = ['index.php?view=backup', '💾 Backup', 0];
-  }
-  pg_nav_group('System', $system, $active === 'media');
-
-  echo '<span class="tb-mobile-extra">';
-  if (pg_logged_in()) echo '<span class="tb-user">' . pg_h(pg_current_email()) . '</span>';
-  echo '<a href="../index.html" target="_blank">↗ Seite ansehen</a><a href="index.php?action=logout">Abmelden</a></span>';
-  echo '</nav>';
-  echo '<span class="tb-right">';
-  if (pg_logged_in()) echo '<span class="tb-user" title="' . pg_h(pg_current_email()) . '">' . pg_h(pg_current_email()) . '</span>';
-  echo '<a href="../index.html" target="_blank">↗ Seite</a><a href="index.php?action=logout">Abmelden</a></span>';
-  echo '</header>';
+  echo '</div></header><main class="page" id="page">';
 }
 
-/* Aufklappbare Navi-Gruppe (Desktop: Dropdown, Mobil: aufgeklappte Liste im Burger-Menü).
-   $items = [ [href, 'Emoji Beschriftung', ungelesen-Anzahl], … ] */
-function pg_nav_group($label, $items, $active = false){
-  if (!$items) return;
-  $sum = 0;
-  foreach ($items as $it) $sum += (int) ($it[2] ?? 0);
-  echo '<div class="tb-group' . ($active ? ' on' : '') . '" data-tb-group>';
-  echo '<button type="button" class="tb-group-btn" aria-expanded="false">'
-     . pg_h($label)
-     . ($sum ? '<span class="nbadge">' . $sum . '</span>' : '')
-     . '<span class="tb-caret" aria-hidden="true">▾</span></button>';
-  echo '<div class="tb-menu">';
-  foreach ($items as $it) {
-    $href = $it[0]; $text = $it[1]; $badge = (int) ($it[2] ?? 0);
-    echo '<a href="' . pg_h($href) . '">' . $text
-       . ($badge ? '<span class="nbadge">' . $badge . '</span>' : '') . '</a>';
+function pg_view_foot(){
+  if (!empty($GLOBALS['pg_shell_open'])) {
+    $GLOBALS['pg_shell_open'] = false;
+    echo '</main></div>';
+    // ---- mobile Tab-Leiste ----
+    $route = pg_route();
+    $tabs = [['cockpit', 'index.php', 'cockpit', 'Cockpit', 0]];
+    if (pg_can('games')) $tabs[] = ['c:games', 'index.php?collection=games', 'game', 'Spiele', 0];
+    if (pg_can('mail'))  $tabs[] = ['mail', 'mail.php', 'mail', 'Postfach', pg_mail_unread_cached()];
+    $tabs[] = ['v:board', 'index.php?view=board', 'kanban', 'Board', 0];
+    echo '<nav class="tabbar" aria-label="Schnellnavigation">';
+    foreach ($tabs as [$r, $href, $ic, $label, $n]) {
+      echo '<a class="tab-item' . ($r === $route ? ' active' : '') . '" href="' . pg_h($href) . '">' . pg_icon($ic) . '<span>' . pg_h($label) . '</span>'
+         . ($n ? '<span class="tdot">' . (int) $n . '</span>' : '') . '</a>';
+    }
+    echo '<button type="button" class="tab-item" id="tabMore">' . pg_icon('menu') . '<span>Mehr</span></button></nav>';
+    // ---- Befehlspalette (Strg/⌘ + K) ----
+    $items = [];
+    foreach (pg_nav_model($GLOBALS['SCHEMA'] ?? []) as [$gl, $its]) foreach ($its as $it) $items[] = ['s' => 'Seiten', 'i' => $it[2], 'l' => $it[3], 'h' => $it[1], 'k' => $gl];
+    if (pg_can('games')) foreach ((array) (pg_load_json(PG_DATA_DIR . '/games.json')['games'] ?? []) as $gi => $g) {
+      if (!is_array($g) || trim((string) ($g['title'] ?? '')) === '') continue;
+      $items[] = ['s' => 'Spiele', 'i' => 'game', 'l' => (string) $g['title'], 'h' => 'index.php?collection=games&game=' . rawurlencode((string) ($g['slug'] ?? $gi)), 'k' => '/' . ($g['slug'] ?? '')];
+    }
+    if (pg_can('mail')) $items[] = ['s' => 'Aktionen', 'i' => 'mail', 'l' => 'Neue E-Mail schreiben', 'h' => 'mail.php?tab=compose', 'k' => ''];
+    if (pg_can('patchnotes')) $items[] = ['s' => 'Aktionen', 'i' => 'devlog', 'l' => 'Devlog-Beitrag schreiben', 'h' => 'index.php?collection=patchnotes', 'k' => ''];
+    if (pg_is_owner()) $items[] = ['s' => 'Aktionen', 'i' => 'archive', 'l' => 'Backup erstellen', 'h' => 'index.php?view=backup', 'k' => ''];
+    $items[] = ['s' => 'Aktionen', 'i' => 'ext', 'l' => 'Website ansehen', 'h' => '../index.html', 'k' => ''];
+    $items[] = ['s' => 'Aktionen', 'i' => 'logout', 'l' => 'Abmelden', 'h' => 'index.php?action=logout', 'k' => ''];
+    echo '<div class="pal-back" id="pal" hidden><div class="pal" role="dialog" aria-modal="true" aria-label="Suchen und springen">'
+       . '<div class="pal-in">' . pg_icon('search') . '<input id="palInput" placeholder="Seite, Spiel oder Aktion … – oder Suchbegriff" autocomplete="off"><kbd>Esc</kbd></div>'
+       . '<ul class="pal-list" id="palList"></ul>'
+       . '<div class="pal-foot"><span>↑↓ auswählen</span><span>↵ öffnen</span><span>Esc schließen</span></div></div></div>';
+    echo '<script>window.PG_PAL=' . json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
+    echo '</div>';
   }
-  echo '</div></div>';
+  echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
+  echo '<script src="assets/admin.js?v=' . PG_ADMIN_V . '"></script></body></html>';
 }
 
 /* ---------------- Mehrsprachigkeit ---------------- */
