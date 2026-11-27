@@ -83,6 +83,20 @@ Dashboard frei hinzufügst, sortierst und füllst:
 Jedes Spiel hat eine eigene **Akzentfarbe** — so bekommt jede Game-Welt
 ihren eigenen Look, während der Studio-Rahmen edel schwarz bleibt.
 
+**Spiele-Verwaltung im Dashboard:** links die Spieleliste (Suche, Filter,
+Reihenfolge per Ziehen), rechts genau ein Spiel mit den Reitern *Übersicht ·
+Seiten-Aufbau · Darstellung · Community · Einstellungen*. Gespeichert wird immer
+nur das geöffnete Spiel. Blöcke lassen sich **ausblenden statt löschen**.
+
+- **Web-Adresse (Slug) ändern** nur über *Einstellungen → Ändern…*: Warteliste,
+  Vorschläge, Board, Devlog-Zuordnung, Statistik und die englische Fassung ziehen
+  automatisch mit um; vorher entsteht eine Sicherheitskopie (Backups → „Vor
+  Adress-Umzug“), und die alte Adresse leitet dauerhaft weiter (`data/redirects.json`).
+- **Logo platzieren** (*Darstellung*): zeigt die echte Spielseite in Laptop-,
+  Full-HD-, 1440p- und Handy-Größe; eine Ampel meldet, ob das Logo Badge, Text,
+  Buttons oder das Menü überdeckt. Transparenter Rand wird beim Hochladen
+  automatisch entfernt (bzw. per „Rand entfernen“ bei bestehenden Logos).
+
 ---
 
 ## Mehrsprachigkeit (Deutsch / Englisch)
@@ -97,8 +111,14 @@ du Englisch:
    *MyMemory*, **kein API-Key nötig**).
 3. Englisch **gegenlesen/anpassen** und **Speichern**.
 
+Bei **Spielen** zeigt der englische Modus nur die übersetzbaren Texte – jeweils
+mit dem deutschen Original darunter. *„Fehlende automatisch übersetzen“* füllt
+nur leere Felder und überschreibt keine vorhandenen Übersetzungen.
+
 Gut zu wissen:
 - Englische Übersetzungen liegen in `data/*.en.json` (getrennt vom Deutschen).
+- Zuordnung: Spiele & Beiträge über die Web-Adresse, Seiten-Blöcke über Typ und
+  Reihenfolge – Umsortieren auf Deutsch bringt das Englische nicht mehr durcheinander.
 - **Leere** englische Felder fallen auf der Website automatisch auf Deutsch
   zurück — die Seite ist also nie „halb leer".
 - **Nicht-Textfelder** (Bilder, Farben, Slugs, Links) gelten für beide
@@ -129,6 +149,14 @@ Gut zu wissen:
   Titel & Social-Vorschaubilder. Standard-Vorschaubild: `media/og.jpg`.
 - **Backups:** Deine Inhalte stecken komplett in `data/*.json` — einfach
   per FTP herunterladen = fertiges Backup.
+- **Postfach:** Verfassen mit Formatierung (fett, kursiv, Listen, Zitat, Link),
+  Anhänge senden (zusammen bis 10 MB) und empfangen/herunterladen, Weiterleiten
+  inkl. Anhängen, mehrere Signaturen (Studio + pro Person, Standard je Admin).
+  Jede Mail geht mit Text- und HTML-Fassung raus (besser für Spamfilter).
+- **Datenschutz der Daten:** In `data/` sind per Web nur `studio`, `team`,
+  `games`, `patchnotes`, `legal` (+ `.en`) und `redirects.json` abrufbar – alles
+  andere sperrt die Root-`.htaccess` (zweite Sperre: `data/.htaccess`). Das
+  Cockpit prüft das regelmäßig selbst und warnt, falls etwas offen liegt.
 
 ## Lokal testen (optional)
 

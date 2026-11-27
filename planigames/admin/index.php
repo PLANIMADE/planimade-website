@@ -1431,9 +1431,17 @@ if (($_GET['view'] ?? '') === 'search') {
     foreach ($SCHEMA as $key => $coll) {
       if (!pg_can($key)) continue;
       $matches = [];
-      pg_search_walk(pg_load_json($coll['file']), $q, [], $matches);
+      $collData = pg_load_json($coll['file']);
+      pg_search_walk($collData, $q, [], $matches);
       foreach ($matches as $m) {
-        $groups[$coll['label']][] = ['icon' => $coll['icon'], 'href' => 'index.php?collection=' . pg_h($key),
+        $href = 'index.php?collection=' . pg_h($key);
+        // Spiele: direkt zum betroffenen Spiel + passenden Reiter springen
+        if ($key === 'games' && ($m['path'][0] ?? '') === 'games' && isset($m['path'][1]) && !empty($collData['games'][$m['path'][1]]['slug'])) {
+          $f2 = (string) ($m['path'][2] ?? '');
+          $tab = in_array($f2, ['blocks', 'lore'], true) ? 'page' : (in_array($f2, ['accent', 'accent2', 'particleColor', 'cover', 'coverAlt', 'logo', 'logoScale', 'logoPos'], true) ? 'look' : 'settings');
+          $href = 'index.php?collection=games&game=' . rawurlencode((string) $collData['games'][$m['path'][1]]['slug']) . '&tab=' . $tab;   // wird bei der Ausgabe escaped
+        }
+        $groups[$coll['label']][] = ['icon' => $coll['icon'], 'href' => $href,
           'label' => pg_search_pathlabel($m['path']), 'snip' => $m['snip']];
       }
     }

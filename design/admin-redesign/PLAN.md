@@ -48,6 +48,13 @@ Weitere Notizen: Wobbly-Wizards-Cover ist ein 6,9-MB-PNG; Wobbly-Wizards-Logo ei
 - **Spiel-Inbox (Live-Ops):** später, wenn das externe Tool steht. Das Design im Prototyp hat dem Nutzer gefallen —
   als Vorlage für die Integration behalten (Server-Proxy für den Spiel-API-Schlüssel wie beim Vault, Protokoll).
 
+## Umsetzungsstand (27.11.2026)
+Phasen 1–5 umgesetzt und getestet (Branch `claude/planigames-studio-site-4hngfe`):
+App-Shell + ⌘K, Cockpit, Spiele (Master-Detail, Adress-Umzug, WYSIWYG-Logo, Auto-Zuschnitt),
+Website (EN-Zuordnung per Slug/Typ, 301-Weiterleitungen, 404 statt erstem Spiel, ausgeblendete Blöcke),
+Postfach (Formatierung, Anhänge senden/empfangen, Weiterleiten, Signaturen), Gesamt-Regression.
+Offen: Phase 6 (Spiel-Inbox), sobald das externe Tool/API steht.
+
 ## Phasen (jede einzeln hochladbar, Datenformate bleiben kompatibel)
 1. Fundament: neues Design-System + App-Shell (Seitenleiste, Kopfzeile, ⌘K, mobile Tab-Leiste) für alle bestehenden Seiten.
 2. Cockpit.
