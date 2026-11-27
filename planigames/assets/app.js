@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "51";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "52";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
@@ -804,23 +804,34 @@
         let voted = {};
         try { voted = JSON.parse(localStorage.getItem("pg_sugg_voted") || "{}"); } catch {}
         const stLabel = { planned: en ? "Planned" : "Geplant", done: en ? "Done" : "Umgesetzt" };
+        // Lange Listen: erst 7 Vorschläge, dann per „Mehr anzeigen“ jeweils 7 weitere
+        const STEP = 7;
+        let all = [], shown = STEP;
         const render = (items) => {
-            list.innerHTML = items.length ? items.map(s => `
+            all = items;
+            const vis = items.slice(0, shown), rest = items.length - vis.length;
+            list.innerHTML = (items.length ? vis.map(s => `
                 <div class="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.02] p-3 pl-4">
                     <button type="button" class="sugg-vote ${voted[s.id] ? "voted" : ""}" data-vote="${s.id}" ${voted[s.id] ? "disabled" : ""} aria-label="Upvote">
                         <span class="sv-arrow">▲</span><span class="sv-count">${s.votes}</span>
                     </button>
                     <span class="flex-1 text-zinc-200">${esc(s.text)}</span>
                     ${s.status && s.status !== "open" ? `<span class="badge px-2 py-0.5 rounded-full border ${s.status === "done" ? "border-emerald-400/40 text-emerald-300" : "border-[color:var(--accent)]/40 text-[color:var(--accent)]"}">${stLabel[s.status] || ""}</span>` : ""}
-                </div>`).join("") : `<p class="text-zinc-500 text-sm text-center">${en ? "No suggestions yet — add the first!" : "Noch keine Vorschläge — mach den Anfang!"}</p>`;
+                </div>`).join("") : `<p class="text-zinc-500 text-sm text-center">${en ? "No suggestions yet — add the first!" : "Noch keine Vorschläge — mach den Anfang!"}</p>`)
+                + (rest > 0
+                    ? `<div class="text-center pt-2"><button type="button" data-sugg-more class="btn-ghost px-6 py-2.5 rounded-full text-sm font-semibold">${en ? "Show more" : "Mehr anzeigen"} <span class="text-zinc-500">(${rest} ${en ? "more" : "weitere"})</span></button></div>`
+                    : (items.length > STEP ? `<div class="text-center pt-2"><button type="button" data-sugg-less class="btn-ghost px-6 py-2.5 rounded-full text-sm font-semibold">${en ? "Show less" : "Weniger anzeigen"}</button></div>` : ""));
         };
         async function load() { try { const r = await fetch("suggestions.php" + q); render((await r.json()).suggestions || []); } catch {} }
         await load();
         list.addEventListener("click", async (e) => {
+            if (e.target.closest("[data-sugg-more]")) { shown += STEP; render(all); return; }
+            if (e.target.closest("[data-sugg-less]")) { shown = STEP; render(all); sec.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
             const btn = e.target.closest("[data-vote]"); if (!btn) return;
             const id = btn.dataset.vote; if (voted[id]) return;
             voted[id] = 1; try { localStorage.setItem("pg_sugg_voted", JSON.stringify(voted)); } catch {}
             const cnt = btn.querySelector(".sv-count"); cnt.textContent = (+cnt.textContent || 0) + 1;
+            const it = all.find(x => String(x.id) === String(id)); if (it) it.votes = (+it.votes || 0) + 1;   // bleibt beim Auf-/Zuklappen erhalten
             btn.classList.add("voted"); btn.disabled = true;
             pgBadge("voter");
             const fd = new FormData(); fd.append("upvote", id);
@@ -1192,13 +1203,9 @@
 
     function logoScale(g) { return Math.min(3, Math.max(0.3, (+g.logoScale || 100) / 100)); }
 
-    // Logo-Position im Hero: gültige X/Y in % -> frei platziertes Logo, sonst Standard (im Textfluss).
-    function logoPosOf(g) {
-        const p = g.logoPos || {};
-        const num = (v) => (v === 0 || v === "0" || (v != null && v !== "" && !isNaN(+v))) ? Math.min(100, Math.max(0, +v)) : null;
-        const x = num(p.x), y = num(p.y);
-        return (x != null && y != null) ? { x, y } : null;
-    }
+    // Kopfbereich: Das Logo sitzt IMMER im Textblock (nie frei über dem Bild). Dadurch steht es auf jedem
+    // Bildschirm gleich zum Text und kann nichts überdecken. Anordnung: links (Standard) · mittig · rechts neben dem Text.
+    function heroLayout(g) { return ["left", "center", "split"].includes(g.logoLayout) ? g.logoLayout : "left"; }
     function blockHero(b, g) {
         const bg = b.background || g.cover;
         const bgMobile = b.backgroundMobile || "";
@@ -1217,33 +1224,29 @@
         } else {
             media = `<div class="absolute inset-0 grid-lines"></div>`;
         }
-        const pos = g.logo ? logoPosOf(g) : null;
-        // Logo im Textfluss (Standard bzw. immer auf dem Handy, damit es nicht überlappt).
-        // Auf dem Handy mittig -> bündig mit dem ebenfalls zentrierten Text.
-        const inlineLogo = (cls) => g.logo
-            ? `<img data-hero-logo="inline" src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-6 object-contain object-center md:object-left mx-auto md:mx-0 reveal ${cls}" style="height:${Math.round(150 * ls)}px;width:auto;max-width:100%">`
-            : `<h1 data-hero-logo="title" class="font-display text-6xl md:text-8xl font-extrabold text-white mb-6 reveal-on ${cls}"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`;
-        // Frei platziertes Logo nur auf großen Bildschirmen (absolut, blockiert keine Klicks).
-        const floatLogo = pos
-            ? `<img data-hero-logo="float" src="${esc(g.logo)}" alt="${esc(g.title)}" class="hidden md:block absolute object-contain pointer-events-none reveal z-[2]" style="left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);height:clamp(${Math.round(64 * ls)}px, ${(18 * ls).toFixed(1)}vh, ${Math.round(150 * ls)}px);width:auto;max-width:80vw">`
-            : "";
-        // Bei gesetzter Desktop-Position: Inline-Logo nur auf dem Handy. Sonst immer.
-        const inlineTitle = pos ? inlineLogo("md:hidden") : inlineLogo("");
+        const layout = heroLayout(g) === "split" && !g.logo ? "left" : heroLayout(g);
+        // Logo-Höhe wächst mit der Bildschirmbreite – in festen Grenzen (gleiche Wirkung auf Laptop, Full HD, 4K)
+        const h = layout === "split"
+            ? `clamp(${Math.round(72 * ls)}px, ${(11 * ls).toFixed(2)}vw, ${Math.round(220 * ls)}px)`
+            : `clamp(${Math.round(56 * ls)}px, ${(8.5 * ls).toFixed(2)}vw, ${Math.round(150 * ls)}px)`;
+        const logo = g.logo
+            ? `<img data-hero-logo="inline" src="${esc(g.logo)}" alt="${esc(g.title)}" class="pg-hero-logo reveal" style="height:${h}">`
+            : `<h1 data-hero-logo="title" class="pg-hero-title font-display text-6xl md:text-8xl font-extrabold text-white reveal-on"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`;
+        const badge = `<div data-hero-badge class="pg-hero-badge reveal-on">${statusBadge(g.status)}</div>`;
+        const tag = `<p data-hero-tagline class="pg-hero-tag text-xl md:text-2xl text-zinc-200 reveal">${esc(b.tagline || g.tagline || "")}</p>`;
+        const btns = `<div data-hero-btns class="pg-hero-btns reveal">
+                    ${g.wishlistUrl ? `<a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold">${esc(b.ctaLabel || t("wishlist"))}</a>` : ""}
+                    ${b.trailerUrl ? `<a href="${esc(b.trailerUrl)}" target="_blank" rel="noopener" class="btn-ghost magnetic px-8 py-4 rounded-full font-semibold inline-flex items-center gap-2">▶ ${LANG === "en" ? "Watch trailer" : "Trailer ansehen"}</a>` : ""}
+                </div>`;
+        const inner = layout === "split"
+            ? `<div class="pg-hero-text">${badge}${tag}${btns}</div><div class="pg-hero-side">${logo}</div>`
+            : `${badge}${logo}${tag}${btns}`;
         return `
         <section data-hero class="relative min-h-[88vh] flex items-end overflow-hidden">
             ${media}
             <div class="absolute inset-0" style="background:linear-gradient(to top, var(--bg) 4%, color-mix(in srgb, var(--accent) 18%, transparent) 55%, rgba(0,0,0,.35))"></div>
             <div class="absolute inset-0 bg-black/30"></div>
-            ${floatLogo}
-            <div class="relative max-w-6xl mx-auto w-full px-6 pb-16 md:pb-24 text-center md:text-left">
-                <div data-hero-badge class="mb-6 reveal-on flex justify-center md:justify-start">${statusBadge(g.status)}</div>
-                ${inlineTitle}
-                <p data-hero-tagline class="text-xl md:text-2xl text-zinc-200 max-w-2xl mx-auto md:mx-0 mb-9 reveal">${esc(b.tagline || g.tagline || "")}</p>
-                <div data-hero-btns class="flex flex-wrap justify-center md:justify-start gap-3 reveal">
-                    ${g.wishlistUrl ? `<a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold">${esc(b.ctaLabel || t("wishlist"))}</a>` : ""}
-                    ${b.trailerUrl ? `<a href="${esc(b.trailerUrl)}" target="_blank" rel="noopener" class="btn-ghost magnetic px-8 py-4 rounded-full font-semibold inline-flex items-center gap-2">▶ ${LANG === "en" ? "Watch trailer" : "Trailer ansehen"}</a>` : ""}
-                </div>
-            </div>
+            <div data-hero-inner class="pg-hero-inner pg-hero--${layout} relative max-w-6xl mx-auto w-full px-6 pb-16 md:pb-24">${inner}</div>
         </section>`;
     }
 
@@ -2667,7 +2670,7 @@
     function initPlacerMode() {
         const st = document.createElement("style");
         st.textContent = ".reveal,.reveal-on,.line-inner,[data-hero] *{opacity:1!important;transform:none;transition:none!important;animation:none!important}"
-            + "[data-hero-logo=float]{transform:translate(-50%,-50%)!important}#cookie-banner,.pg-mascot,#fx-layer,#cursor-ring,#cursor-dot,#scroll-progress{display:none!important}"
+            + "#cookie-banner,.pg-mascot,#fx-layer,#cursor-ring,#cursor-dot,#scroll-progress{display:none!important}"
             + "html,body{overflow:hidden!important}*{cursor:default!important}";
         document.head.appendChild(st);
         const games = (DATA.games && DATA.games.games) || [];
@@ -2691,26 +2694,16 @@
                 if (old) old.replaceWith(sec); else document.querySelector("[data-game-root]")?.prepend(sec);
                 return this.measure();
             },
-            move(x, y) {
-                const img = document.querySelector('[data-hero-logo="float"]');
-                if (img) { img.style.left = x + "%"; img.style.top = y + "%"; }
-                return this.measure();
-            },
             measure() {
-                const img = document.querySelector('[data-hero-logo="float"]');
                 const vis = (el) => el && getComputedStyle(el).display !== "none" ? el : null;
-                const hdr = document.getElementById("site-header");
                 return {
                     vw: window.innerWidth, vh: window.innerHeight,
                     section: rect(document.querySelector("[data-hero]")),
-                    float: rect(vis(img)), nat: img ? { w: img.naturalWidth, h: img.naturalHeight, done: img.complete } : null,
-                    inline: rect(vis(document.querySelector('[data-hero-logo="inline"], [data-hero-logo="title"]'))),
-                    hits: {
-                        "Status-Badge": rect(document.querySelector("[data-hero-badge] > *")),
-                        "Tagline": rect(document.querySelector("[data-hero-tagline]")),
-                        "Buttons": rect(document.querySelector("[data-hero-btns]")),
-                        "Kopfzeile (Menü)": rect(hdr),
-                    },
+                    inner: rect(document.querySelector("[data-hero-inner]")),
+                    logo: rect(vis(document.querySelector('[data-hero-logo="inline"], [data-hero-logo="title"]'))),
+                    nat: (() => { const im = document.querySelector('[data-hero-logo="inline"]'); return im ? { w: im.naturalWidth, h: im.naturalHeight, done: im.complete } : null; })(),
+                    header: rect(document.getElementById("site-header")),
+                    tagline: rect(document.querySelector("[data-hero-tagline]")),
                 };
             },
             ready: true,

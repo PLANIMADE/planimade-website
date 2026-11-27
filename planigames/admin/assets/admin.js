@@ -1388,7 +1388,15 @@
     return readJson(r);
   }
 
-  const PL = { vp: "desktop", pos: null, scale: 100, box: [0, 0, 1, 1], ar: 2, warn: {}, m: null, api: null, papi: null, s: 1, drag: null, logo: "" };
+  const PL = { vp: "desktop", layout: "left", scale: 100, box: [0, 0, 1, 1], ar: 2, fit: {}, m: null, api: null, papi: null, s: 1, logo: "" };
+  const LAYOUTS = [
+    ["left", "Links", "Logo über dem Text, linksbündig",
+     '<rect x="6" y="8" width="20" height="6" rx="1.5" class="lg"/><rect x="6" y="17" width="26" height="2.5" rx="1"/><rect x="6" y="22" width="18" height="2.5" rx="1"/><rect x="6" y="28" width="10" height="4" rx="2" class="bt"/>'],
+    ["center", "Mittig", "Alles zentriert",
+     '<rect x="14" y="8" width="20" height="6" rx="1.5" class="lg"/><rect x="11" y="17" width="26" height="2.5" rx="1"/><rect x="15" y="22" width="18" height="2.5" rx="1"/><rect x="19" y="28" width="10" height="4" rx="2" class="bt"/>'],
+    ["split", "Logo rechts", "Text links, Logo groß daneben",
+     '<rect x="27" y="11" width="16" height="12" rx="2" class="lg"/><rect x="5" y="12" width="18" height="2.5" rx="1"/><rect x="5" y="17" width="14" height="2.5" rx="1"/><rect x="5" y="23" width="10" height="4" rx="2" class="bt"/>'],
+  ];
   let plDlg = null;
   function plEl(sel) { return plDlg.querySelector(sel); }
   function buildPlacer() {
@@ -1396,35 +1404,29 @@
     plDlg = document.createElement("div");
     plDlg.className = "pg-modal-back"; plDlg.id = "dlg-placer"; plDlg.hidden = true;
     plDlg.innerHTML = `<div class="pg-modal xl" role="dialog" aria-modal="true" aria-labelledby="pl-t">
-      <div class="pg-modal-h"><div><h3 id="pl-t">Logo platzieren</h3><p>Das ist die echte Spielseite in echter Bildschirmgröße – was du hier siehst, steht genau so auf der Website.</p></div>
+      <div class="pg-modal-h"><div><h3 id="pl-t">Kopfbereich gestalten</h3><p>Das ist die echte Spielseite in echter Bildschirmgröße. Das Logo steht immer im Textblock – auf jedem Bildschirm gleich zum Text, ohne etwas zu überdecken.</p></div>
         <button type="button" class="icon-btn" data-close aria-label="Schließen"><svg class="ic"><use href="#i-x"/></svg></button></div>
       <div class="placer-bar"><div class="g-seg" data-vp-seg></div><div class="placer-warn" data-pl-warn></div></div>
       <div class="placer-tip" data-pl-tip hidden></div>
       <div class="placer-wrap" data-pl-wrap><div class="placer-stage" data-pl-stage>
         <iframe data-pl-frame title="Vorschau der Spielseite" tabindex="-1"></iframe>
-        <div class="placer-ov" data-pl-ov><div class="placer-sel" data-pl-sel hidden></div><div class="placer-guide v" data-pl-gv></div><div class="placer-guide h" data-pl-gh></div></div>
+        <div class="placer-ov" data-pl-ov><div class="placer-sel" data-pl-sel hidden></div></div>
         <div class="placer-load" data-pl-load>Lädt die Spielseite …</div></div></div>
       <div class="placer-foot">
-        <label class="placer-range">Größe <input type="range" min="30" max="300" step="1" data-pl-size><b data-pl-sizeval>100 %</b></label>
-        <span class="placer-coords" data-pl-coords>Standard</span>
-        <span class="placer-note" data-pl-note></span>
+        <div class="pl-layouts" data-pl-layouts role="radiogroup" aria-label="Anordnung">${LAYOUTS.map(([k, l, d, svg]) => `<button type="button" class="pl-lay" data-lay="${k}" role="radio" title="${d}"><svg viewBox="0 0 48 36" aria-hidden="true">${svg}</svg><span><b>${l}</b><small>${d}</small></span></button>`).join("")}</div>
+        <label class="placer-range">Logo-Größe <input type="range" min="30" max="300" step="1" data-pl-size><b data-pl-sizeval>100 %</b></label>
         <span class="sp"></span>
-        <button type="button" class="btn btn-ghost" data-pl-reset><svg class="ic"><use href="#i-undo"/></svg>Standard (über dem Text)</button>
         <button type="button" class="btn btn-primary" data-pl-save><svg class="ic"><use href="#i-check"/></svg>Übernehmen</button>
       </div></div>
       <iframe data-pl-probe title="" aria-hidden="true" tabindex="-1" class="placer-probe"></iframe>`;
     document.body.appendChild(plDlg);
     plEl("[data-vp-seg]").addEventListener("click", (e) => { const b = e.target.closest("[data-vp]"); if (b) { PL.vp = b.dataset.vp; plRender(true); } });
+    plEl("[data-pl-layouts]").addEventListener("click", (e) => { const b = e.target.closest("[data-lay]"); if (!b) return; PL.layout = b.dataset.lay; plApply({ logoLayout: PL.layout }).then(plCheckAll); });
     const size = plEl("[data-pl-size]");
     size.addEventListener("input", () => { PL.scale = +size.value; plApply({ logoScale: PL.scale }); });
     size.addEventListener("change", plCheckAll);
-    plEl("[data-pl-reset]").addEventListener("click", () => { PL.pos = null; plApply({ logoPos: { x: "", y: "" } }); plCheckAll(); toast("Standard: Logo steht über der Tagline", "info", 2000); });
     plEl("[data-pl-save]").addEventListener("click", plSave);
-    const ov = plEl("[data-pl-ov]");
-    ov.addEventListener("pointerdown", plDown); ov.addEventListener("pointermove", plMove);
-    ov.addEventListener("pointerup", plUp); ov.addEventListener("pointercancel", plUp);
     addEventListener("resize", () => { if (plDlg && !plDlg.hidden) plRender(true); });
-    // Schließen → Rahmen leeren (spart Rechenleistung)
     new MutationObserver(() => { if (plDlg.hidden) { plEl("[data-pl-frame]").src = "about:blank"; plEl("[data-pl-probe]").src = "about:blank"; PL.api = PL.papi = null; } })
       .observe(plDlg, { attributes: true, attributeFilter: ["hidden"] });
   }
@@ -1434,7 +1436,7 @@
     Object.keys(p).forEach((k) => p[k] === undefined && delete p[k]);
     const hero = [...gEditor.querySelectorAll('[data-item][data-block-type="hero"]')].find((it) => (it.querySelector(":scope > [data-hidden-input]") || {}).value !== "1");
     if (hero) { const h = {}; ["tagline", "background", "backgroundMobile", "video", "poster", "ctaLabel", "trailerUrl"].forEach((k) => { const el = hero.querySelector(`[name$="[${k}]"]`); if (el) h[k] = el.value; }); p.hero = h; }
-    p.logoScale = PL.scale; p.logoPos = PL.pos ? { ...PL.pos } : { x: "", y: "" };
+    p.logoScale = PL.scale; p.logoLayout = PL.layout;
     return p;
   }
   async function plWaitApi(frame) {
@@ -1445,53 +1447,53 @@
     return null;
   }
   async function plWaitImg(frame) {
-    try { const img = frame.contentDocument.querySelector('[data-hero-logo="float"], [data-hero-logo="inline"]'); if (img && img.decode) await img.decode().catch(() => {}); } catch (e) {}
+    try { const img = frame.contentDocument.querySelector('[data-hero-logo="inline"]'); if (img && img.decode) await img.decode().catch(() => {}); } catch (e) {}
   }
-  function plVis(m) {
-    const f = m && m.float; if (!f) return null;
-    const ar = PL.ar || (f.w / f.h);
-    let iw = f.w, ih = f.h;
-    if (f.w / f.h > ar) iw = f.h * ar; else ih = f.w / ar;
-    const ix = f.x + (f.w - iw) / 2, iy = f.y + (f.h - ih) / 2, b = PL.box;
+  // sichtbare Logo-Pixel innerhalb des Bild-Elements (object-fit: contain + transparenter Rand)
+  function plVis(r) {
+    if (!r) return null;
+    const ar = PL.ar || (r.w / r.h);
+    let iw = r.w, ih = r.h;
+    if (r.w / r.h > ar) iw = r.h * ar; else ih = r.w / ar;
+    const ix = r.x + (r.w - iw) / 2 * (PL.align === "left" ? 0 : (PL.align === "right" ? 2 : 1)), iy = r.y + (r.h - ih) / 2, b = PL.box;
     return { x: ix + b[0] * iw, y: iy + b[1] * ih, w: (b[2] - b[0]) * iw, h: (b[3] - b[1]) * ih };
   }
-  function plHits(m) {
-    const r = plVis(m); if (!r) return [];
-    const out = Object.entries(m.hits || {}).filter(([, b]) => b && r.x < b.x + b.w && r.x + r.w > b.x && r.y < b.y + b.h && r.y + r.h > b.y).map(([k]) => k);
-    const s = m.section;
-    if (r.x < 0 || r.x + r.w > m.vw || (s && (r.y < s.y || r.y + r.h > s.y + s.h))) out.push("Bildrand");
+  // Bewertung je Bildschirmgröße: passt der Kopfbereich auf den ersten Bildschirm? Ist das Logo gut erkennbar?
+  function plJudge(m, mobile) {
+    const out = [];
+    if (!m || !m.section) return out;
+    if (m.section.h > m.vh + 4) out.push("höher als der Bildschirm");
+    const v = plVis(m.logo);
+    if (v && v.h < (mobile ? 26 : 38)) out.push("Logo wirkt sehr klein");
+    if (v && m.inner && v.x + v.w > m.inner.x + m.inner.w + 2) out.push("Logo ragt aus dem Text-Bereich");
     return out;
   }
   function plFit() {
     const vp = VPS[PL.vp], wrap = plEl("[data-pl-wrap]"), frame = plEl("[data-pl-frame]"), stage = plEl("[data-pl-stage]");
-    const availW = Math.max(200, wrap.clientWidth - 32), availH = Math.max(220, Math.min(innerHeight * 0.58, 660));
+    const availW = Math.max(200, wrap.clientWidth - 32), availH = Math.max(220, Math.min(innerHeight * 0.56, 640));
     PL.s = Math.min(availW / vp.w, availH / vp.h);
     frame.style.width = vp.w + "px"; frame.style.height = vp.h + "px"; frame.style.transform = `scale(${PL.s})`;
     stage.style.width = Math.round(vp.w * PL.s) + "px"; stage.style.height = Math.round(vp.h * PL.s) + "px";
   }
   function plDraw() {
-    const m = PL.m, s = PL.s, sel = plEl("[data-pl-sel]"), ov = plEl("[data-pl-ov]");
+    const m = PL.m, s = PL.s, sel = plEl("[data-pl-sel]");
     const mobile = VPS[PL.vp].w < 768;
-    ov.querySelectorAll(".placer-hit").forEach((e) => e.remove());
-    const r = !mobile && PL.pos ? plVis(m) : null;
+    PL.align = mobile || PL.layout === "center" ? "center" : (PL.layout === "split" ? "right" : "left");
+    const r = m && m.logo ? plVis(m.logo) : null;
     sel.hidden = !r;
     if (r) Object.assign(sel.style, { left: r.x * s + "px", top: r.y * s + "px", width: r.w * s + "px", height: r.h * s + "px" });
-    const hits = mobile || !PL.pos ? [] : plHits(m);
-    hits.forEach((k) => { const b = m.hits[k]; if (!b) return; const d = document.createElement("div"); d.className = "placer-hit"; Object.assign(d.style, { left: b.x * s + "px", top: b.y * s + "px", width: b.w * s + "px", height: b.h * s + "px" }); ov.appendChild(d); });
-    ov.classList.toggle("free", !mobile && !PL.pos);
-    ov.classList.toggle("mobile", mobile);
+    const issues = plJudge(m, mobile);
     const w = plEl("[data-pl-warn]");
-    if (mobile) { w.className = "placer-warn ok"; w.innerHTML = '<svg class="ic"><use href="#i-check"/></svg>Handy: Logo steht automatisch über dem Text'; }
-    else if (!PL.pos) { w.className = "placer-warn ok"; w.innerHTML = '<svg class="ic"><use href="#i-check"/></svg>Standard: Logo steht über der Tagline'; }
-    else { w.className = "placer-warn " + (hits.length ? "bad" : "ok"); w.innerHTML = hits.length ? '<svg class="ic"><use href="#i-alert"/></svg>Überdeckt: ' + hits.join(", ") : '<svg class="ic"><use href="#i-check"/></svg>Frei · nichts wird verdeckt'; }
-    plEl("[data-pl-coords]").textContent = PL.pos ? `x ${PL.pos.x} · y ${PL.pos.y}` : "Standard";
+    w.className = "placer-warn " + (issues.length ? "bad" : "ok");
+    w.innerHTML = issues.length ? '<svg class="ic"><use href="#i-alert"/></svg>' + escHtml(issues.join(" · "))
+                                : '<svg class="ic"><use href="#i-check"/></svg>' + (mobile ? "Handy: passt, alles mittig" : "Passt auf den ersten Bildschirm");
     plEl("[data-pl-size]").value = PL.scale; plEl("[data-pl-sizeval]").textContent = PL.scale + " %";
-    plEl("[data-pl-note]").innerHTML = mobile ? "" : (PL.pos ? '<svg class="ic"><use href="#i-move"/></svg>Logo anfassen und ziehen · mittig rastet ein' : '<svg class="ic"><use href="#i-move"/></svg>Zum freien Platzieren ins Bild klicken');
+    plEl("[data-pl-layouts]").querySelectorAll("[data-lay]").forEach((b) => { const on = b.dataset.lay === PL.layout; b.classList.toggle("on", on); b.setAttribute("aria-checked", String(on)); });
   }
   function plSeg() {
     plEl("[data-vp-seg]").innerHTML = Object.entries(VPS).map(([k, v]) => {
-      const w = PL.warn[k];
-      const dot = k === "mobile" ? "" : `<span class="vdot${w && w.length ? " warn" : ""}" title="${w && w.length ? "Überdeckt: " + w.join(", ") : "frei"}"></span>`;
+      const w = PL.fit[k];
+      const dot = `<span class="vdot${w && w.length ? " warn" : ""}" title="${w && w.length ? escHtml(w.join(", ")) : "passt"}"></span>`;
       return `<button type="button" class="${PL.vp === k ? "on" : ""}" data-vp="${k}">${dot}${v.l}<span class="n">${v.w}</span></button>`;
     }).join("");
   }
@@ -1504,8 +1506,9 @@
   }
   async function plApply(patch) {
     if (!PL.api) return;
-    PL.m = PL.api.update(patch);
+    PL.api.update(patch);
     await plWaitImg(plEl("[data-pl-frame]"));
+    await nextFrames(plEl("[data-pl-frame]").contentWindow);
     PL.m = PL.api.measure();
     plDraw();
   }
@@ -1515,62 +1518,21 @@
     const run = ++plChecking, probe = plEl("[data-pl-probe]");
     PL.papi.update(plFormPatch());
     await plWaitImg(probe);
-    for (const k of ["laptop", "desktop", "wide"]) {
+    for (const k of ["laptop", "desktop", "wide", "mobile"]) {
       if (run !== plChecking || !PL.papi) return;
       probe.style.width = VPS[k].w + "px"; probe.style.height = VPS[k].h + "px";
       await nextFrames(probe.contentWindow);
-      PL.warn[k] = PL.pos ? plHits(PL.papi.measure()) : [];
+      const keep = PL.align;
+      PL.align = VPS[k].w < 768 || PL.layout === "center" ? "center" : (PL.layout === "split" ? "right" : "left");
+      PL.fit[k] = plJudge(PL.papi.measure(), VPS[k].w < 768);
+      PL.align = keep;
     }
     plSeg();
   }
-  const plPt = (e) => { const r = plEl("[data-pl-stage]").getBoundingClientRect(); return { x: (e.clientX - r.left) / PL.s, y: (e.clientY - r.top) / PL.s }; };
-  const clampP = (v) => Math.round(Math.min(100, Math.max(0, v)));
-  function plDown(e) {
-    if (!PL.api || !PL.m || VPS[PL.vp].w < 768 || !PL.m.section) return;
-    const p = plPt(e), sec = PL.m.section;
-    if (!PL.pos) {
-      PL.pos = { x: clampP((p.x - sec.x) / sec.w * 100), y: clampP((p.y - sec.y) / sec.h * 100) };
-      plApply({ logoPos: { ...PL.pos } }).then(plCheckAll);
-      return;
-    }
-    const f = PL.m.float; if (!f) return;
-    const pad = 12;
-    if (p.x < f.x - pad || p.x > f.x + f.w + pad || p.y < f.y - pad || p.y > f.y + f.h + pad) return;
-    e.preventDefault();
-    PL.drag = { dx: p.x - (sec.x + PL.pos.x / 100 * sec.w), dy: p.y - (sec.y + PL.pos.y / 100 * sec.h) };
-    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
-    plEl("[data-pl-ov]").classList.add("grabbing");
-  }
-  function plMove(e) {
-    if (!PL.api || !PL.m) return;
-    const ov = plEl("[data-pl-ov]");
-    if (!PL.drag) {   // Mauszeiger: „Greifen“ über dem Logo
-      const p = plPt(e), f = PL.m.float;
-      ov.classList.toggle("can-grab", !!(f && PL.pos && p.x >= f.x && p.x <= f.x + f.w && p.y >= f.y && p.y <= f.y + f.h));
-      return;
-    }
-    const p = plPt(e), sec = PL.m.section;
-    let x = (p.x - PL.drag.dx - sec.x) / sec.w * 100, y = (p.y - PL.drag.dy - sec.y) / sec.h * 100;
-    const sx = Math.abs(x - 50) < 1.5, sy = Math.abs(y - 50) < 1.5;
-    if (sx) x = 50; if (sy) y = 50;
-    const gv = plEl("[data-pl-gv]"), gh = plEl("[data-pl-gh]");
-    gv.classList.toggle("show", sx); gh.classList.toggle("show", sy);
-    gv.style.left = (sec.x + sec.w / 2) * PL.s + "px"; gh.style.top = (sec.y + sec.h / 2) * PL.s + "px";
-    PL.pos = { x: clampP(x), y: clampP(y) };
-    PL.m = PL.api.move(PL.pos.x, PL.pos.y);
-    plDraw();
-  }
-  function plUp() {
-    if (!PL.drag) return;
-    PL.drag = null;
-    plEl("[data-pl-ov]").classList.remove("grabbing");
-    plEl("[data-pl-gv]").classList.remove("show"); plEl("[data-pl-gh]").classList.remove("show");
-    plCheckAll();
-  }
   function plTip() {
     const b = PL.box, pad = Math.round((1 - (b[2] - b[0]) * (b[3] - b[1])) * 100), tip = plEl("[data-pl-tip]");
-    tip.hidden = pad < 35;
-    tip.innerHTML = `<svg class="ic"><use href="#i-spark"/></svg><span>Diese Logo-Datei besteht zu <b>${pad} %</b> aus transparentem Rand. Gemessen wird nur der sichtbare Teil – mit „Rand entfernen“ wird eine zugeschnittene Kopie angelegt (die Größe wird so angepasst, dass das Logo gleich groß bleibt).</span><button type="button" class="btn btn-sm" data-pl-trim>Rand entfernen</button>`;
+    tip.hidden = pad < 20;
+    tip.innerHTML = `<svg class="ic"><use href="#i-spark"/></svg><span>Diese Logo-Datei besteht zu <b>${pad} %</b> aus durchsichtigem Rand – deshalb wirkt das Logo kleiner und steht nicht bündig am Text (gestrichelt = sichtbarer Teil). <b>Empfehlung:</b> Rand entfernen – es wird eine zugeschnittene Kopie angelegt, die Größe bleibt gleich.</span><button type="button" class="btn btn-primary btn-sm" data-pl-trim>Rand entfernen</button>`;
     const btn = tip.querySelector("[data-pl-trim]");
     if (btn) btn.addEventListener("click", plTrim);
   }
@@ -1591,46 +1553,44 @@
       const st = li && li.closest("[data-media]") && li.closest("[data-media]").querySelector(".media-status");
       if (st) st.innerHTML = '<a href="' + j.path + '" target="_blank" class="media-prev">' + j.path + "</a>";
       await plApply({ logo: PL.logo, logoScale: PL.scale });
-      if (PL.papi) PL.papi.update({ logo: PL.logo });
       plTip(); plCheckAll();
       toast("Rand entfernt – neue Datei " + j.path.split("/").pop() + ". Größe auf " + PL.scale + " % angepasst.", "ok", 4500);
     } catch (err) { toast("Zuschneiden fehlgeschlagen: " + err.message, "err"); btn.disabled = false; btn.textContent = "Rand entfernen"; }
   }
   function plSave() {
     const q = (n) => gEditor.querySelector(`[name="g[${n}]"]`);
-    const fx = q("logoPos][x"), fy = q("logoPos][y"), fs = q("logoScale");
-    if (fx) fx.value = PL.pos ? PL.pos.x : ""; if (fy) fy.value = PL.pos ? PL.pos.y : ""; if (fs) fs.value = PL.scale;
-    [fx, fy, fs].forEach((i) => i && i.dispatchEvent(new Event("input", { bubbles: true })));
+    const fl = q("logoLayout"), fs = q("logoScale");
+    if (fl) fl.value = PL.layout; if (fs) fs.value = PL.scale;
+    [fl, fs].forEach((i) => i && i.dispatchEvent(new Event("input", { bubbles: true })));
+    const lbl = { left: "Links über dem Text", center: "Mittig – alles zentriert", split: "Logo rechts neben dem Text" };
     const stTxt = gEditor.querySelector("[data-logo-state]"), scTxt = gEditor.querySelector("[data-logo-scale]");
-    if (stTxt) stTxt.textContent = PL.pos ? `Frei platziert · x ${PL.pos.x} %, y ${PL.pos.y} %` : "Standard · steht über der Tagline";
-    if (scTxt) scTxt.textContent = PL.scale;
-    const bad = Object.entries(PL.warn).filter(([, v]) => v && v.length).map(([k]) => VPS[k].l);
+    if (stTxt) stTxt.textContent = lbl[PL.layout]; if (scTxt) scTxt.textContent = PL.scale;
+    const bad = Object.entries(PL.fit).filter(([, v]) => v && v.length).map(([k, v]) => VPS[k].l + ": " + v.join(", "));
     plDlg.hidden = true;
-    toast(PL.pos && bad.length ? "Übernommen · Hinweis: überdeckt etwas auf " + bad.join(", ") : "Übernommen · passt auf allen Bildschirmgrößen", PL.pos && bad.length ? "info" : "ok", 4200);
+    toast(bad.length ? "Übernommen · Hinweis – " + bad.join(" · ") : "Übernommen · passt auf allen Bildschirmgrößen", bad.length ? "info" : "ok", 5000);
   }
   async function openPlacer() {
     if (!gEditor) return;
     const li = gEditor.querySelector('[name="g[logo]"]');
     PL.logo = li ? li.value.split("#")[0].trim() : "";
-    if (!PL.logo) { toast("Bitte zuerst ein Logo hochladen oder auswählen.", "info"); return; }
     if (window.pgEditor && window.pgEditor.isDirty()) await window.pgEditor.save();   // Vorschau = aktueller Stand
     buildPlacer();
     const v = (n) => (gEditor.querySelector(`[name="g[${n}]"]`) || {}).value;
-    const x = v("logoPos][x"), y = v("logoPos][y");
-    PL.pos = x !== "" && y !== "" && x != null && y != null && !isNaN(+x) && !isNaN(+y) ? { x: clampP(+x), y: clampP(+y) } : null;
+    PL.layout = ["left", "center", "split"].includes(v("logoLayout")) ? v("logoLayout") : "left";
     PL.scale = Math.round(Math.min(300, Math.max(30, +v("logoScale") || 100)));
-    PL.vp = innerWidth < 860 ? "mobile" : "desktop"; PL.warn = {}; PL.api = PL.papi = null; PL.m = null;
+    PL.vp = innerWidth < 860 ? "mobile" : "laptop"; PL.fit = {}; PL.api = PL.papi = null; PL.m = null;
+    PL.box = [0, 0, 1, 1]; PL.ar = 0;
     plDlg.hidden = false;
-    plEl("[data-pl-load]").hidden = false;
+    plEl("[data-pl-load]").hidden = false; plEl("[data-pl-load]").textContent = "Lädt die Spielseite …";
     plFit(); plSeg();
     const slug = (gEditor.querySelector('[name="game_orig"]') || {}).value || "";
     const src = "../game.php?slug=" + encodeURIComponent(slug) + "&_placer=1&_t=" + Date.now();
     const frame = plEl("[data-pl-frame]"), probe = plEl("[data-pl-probe]");
     frame.src = src; probe.src = src;
-    const info = await logoInfo(PL.logo); PL.box = info.box; PL.ar = info.ar;
+    if (PL.logo) { const info = await logoInfo(PL.logo); PL.box = info.box; PL.ar = info.ar; }
     plTip();
     PL.api = await plWaitApi(frame);
-    if (!PL.api) { plEl("[data-pl-load]").textContent = "Die Spielseite konnte nicht geladen werden."; return; }
+    if (!PL.api) { plEl("[data-pl-load]").textContent = "Die Spielseite konnte nicht geladen werden – bitte Seite neu laden."; return; }
     await plApply(plFormPatch());
     plEl("[data-pl-load]").hidden = true;
     await plRender(true);
@@ -1638,6 +1598,24 @@
     plCheckAll();
   }
   document.addEventListener("click", (e) => { if (e.target.closest("[data-open-placer]")) { e.preventDefault(); openPlacer(); } });
+  // Hinweis direkt im Reiter „Darstellung“, wenn die Logo-Datei viel durchsichtigen Rand hat
+  async function logoMarginHint() {
+    if (!gEditor) return;
+    const li = gEditor.querySelector('[name="g[logo]"]'), row = gEditor.querySelector(".g-logo-row");
+    if (!li || !row) return;
+    row.querySelector(".g-logo-warn")?.remove();
+    const src = li.value.split("#")[0].trim();
+    if (!src) return;
+    let info; try { info = await logoInfo(src); } catch (e) { return; }
+    const b = info.box, pad = Math.round((1 - (b[2] - b[0]) * (b[3] - b[1])) * 100);
+    if (pad < 20) return;
+    const w = document.createElement("div");
+    w.className = "g-logo-warn";
+    w.innerHTML = `<svg class="ic"><use href="#i-alert"/></svg><span>Die Logo-Datei besteht zu <b>${pad} %</b> aus durchsichtigem Rand – dadurch steht das Logo nicht bündig am Text. Unter „Kopfbereich gestalten“ mit einem Klick entfernen.</span>`;
+    row.after(w);
+  }
+  logoMarginHint();
+  if (gEditor) { const li0 = gEditor.querySelector('[name="g[logo]"]'); if (li0) li0.addEventListener("input", () => setTimeout(logoMarginHint, 300)); }
 
 
   // =====================================================================

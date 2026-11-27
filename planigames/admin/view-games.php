@@ -265,26 +265,20 @@ function pg_games_view($SCHEMA, $lang){
           . '<p class="hint">Geschützt, damit sie nicht versehentlich geändert wird. Beim Ändern ziehen Warteliste, Vorschläge, Board, Devlog, Statistik & die englische Fassung automatisch mit um – die alte Adresse leitet weiter.</p></div>');
         continue;
       }
-      if ($n === 'logoScale') { $fine .= pg_render_field($f, $val, $nm, 'games.' . $n); continue; }
-      if ($n === 'logoPos') {
-        $fine .= '<div class="field"><label class="flabel">' . pg_h($f['label']) . '</label><div class="g-fine-grid">'
-               . pg_render_fields($f['fields'] ?? [], is_array($val) ? $val : [], $nm, 'games.' . $n) . '</div>'
-               . (!empty($f['hint']) ? '<p class="hint">' . pg_h($f['hint']) . '</p>' : '') . '</div>';
-        continue;
-      }
+      if ($n === 'logoScale' || $n === 'logoLayout') { $fine .= pg_render_field($f, $val, $nm, 'games.' . $n); continue; }
       if ($f['widget'] === 'object' && $n === 'lore') { $cards[$ci]['html'] .= pg_gv_field($n, pg_render_fields($f['fields'] ?? [], is_array($val) ? $val : [], $nm, 'games.' . $n)); continue; }
       $cards[$ci]['html'] .= pg_gv_field($n, pg_render_field($f, $val, $nm, 'games.' . $n));
       if ($n === 'particleColor') {
         $cards[$ci]['html'] .= '<div class="g-btnprev"><span data-btn-prev>Auf Steam wishlisten</span><small>Live-Vorschau des Buttons · die Schriftfarbe passt sich automatisch an</small></div>';
       }
       if ($n === 'logo') {
-        $pos = is_array($g['logoPos'] ?? null) ? $g['logoPos'] : [];
-        $isPos = isset($pos['x'], $pos['y']) && $pos['x'] !== '' && $pos['y'] !== '' && is_numeric($pos['x']) && is_numeric($pos['y']);
+        $lay = in_array($g['logoLayout'] ?? '', ['left', 'center', 'split'], true) ? $g['logoLayout'] : 'left';
+        $layTxt = ['left' => 'Links über dem Text', 'center' => 'Mittig – alles zentriert', 'split' => 'Logo rechts neben dem Text'][$lay];
         $cards[$ci]['html'] .= '<div class="g-logo-row"><div class="g-logo-prev" data-logo-prev>' . (!empty($g['logo']) ? '<img src="' . pg_h(explode('#', (string) $g['logo'])[0]) . '" alt="">' : '<span>kein Logo</span>') . '</div>'
-          . '<div class="g-logo-tx"><b data-logo-state>' . ($isPos ? 'Frei platziert · x ' . (int) $pos['x'] . ' %, y ' . (int) $pos['y'] . ' %' : 'Standard · steht über der Tagline') . '</b>'
-          . '<span>Größe <span data-logo-scale>' . (int) ($g['logoScale'] ?? 100) . '</span> % · auf dem Handy immer über dem Text</span>'
-          . '<button type="button" class="btn btn-primary btn-sm" data-open-placer>' . pg_icon('move') . 'Logo platzieren</button></div></div>'
-          . '<details class="g-fine"><summary>Feinjustierung (Zahlen)</summary>@@FINE@@</details>';
+          . '<div class="g-logo-tx"><b data-logo-state>' . pg_h($layTxt) . '</b>'
+          . '<span>Größe <span data-logo-scale>' . (int) ($g['logoScale'] ?? 100) . '</span> % · steht immer im Textblock, auf dem Handy mittig</span>'
+          . '<button type="button" class="btn btn-primary btn-sm" data-open-placer>' . pg_icon('palette') . 'Kopfbereich gestalten</button></div></div>'
+          . '<details class="g-fine"><summary>Anordnung &amp; Größe direkt einstellen</summary>@@FINE@@</details>';
       }
     }
     foreach ($cards as $k => $c) $cards[$k]['html'] = str_replace('@@FINE@@', $fine, $c['html']);

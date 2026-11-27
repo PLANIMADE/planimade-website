@@ -497,3 +497,24 @@ body.menu-open #cookie-banner { display: none; }
                       linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
     background-size: 64px 64px;
 }
+
+/* ===== Kopfbereich der Spielseite: Logo immer im Textblock (responsiv) ===== */
+.pg-hero-inner{padding-top:7.5rem;text-align:center}
+.pg-hero-badge{display:flex;justify-content:center;margin-bottom:1.5rem}
+.pg-hero-logo{display:block;width:auto;max-width:100%;object-fit:contain;object-position:center;margin:0 auto 1.5rem}
+.pg-hero-title{margin-bottom:1.5rem}
+.pg-hero-tag{max-width:42rem;margin:0 auto 2.25rem}
+.pg-hero-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:.75rem}
+.pg-hero--split{display:flex;flex-direction:column}
+.pg-hero--split .pg-hero-side{order:-1}
+@media (min-width:768px){
+  .pg-hero--left{text-align:left}
+  .pg-hero--left .pg-hero-badge,.pg-hero--left .pg-hero-btns{justify-content:flex-start}
+  .pg-hero--left .pg-hero-logo{margin:0 0 1.5rem;object-position:left center}
+  .pg-hero--left .pg-hero-tag{margin-left:0}
+  .pg-hero--split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3rem;align-items:center;text-align:left}
+  .pg-hero--split .pg-hero-side{order:0;display:flex;justify-content:flex-end}
+  .pg-hero--split .pg-hero-side .pg-hero-logo{margin:0;object-position:right center}
+  .pg-hero--split .pg-hero-badge,.pg-hero--split .pg-hero-btns{justify-content:flex-start}
+  .pg-hero--split .pg-hero-tag{margin-left:0}
+}

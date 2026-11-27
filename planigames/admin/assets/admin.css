@@ -1632,3 +1632,21 @@ a.mx-att:hover{border-color:var(--accent-line)}
 .cmp-sigon{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2);white-space:nowrap;cursor:pointer;flex:none}
 .sig-from{font-size:12px;color:var(--muted);margin:-4px 0 10px}
 .sig-from b{color:var(--ink2);font-weight:600}
+
+/* Kopfbereich gestalten: Anordnungen */
+.placer-ov{pointer-events:none}
+.pl-layouts{display:flex;gap:8px;flex-wrap:wrap}
+.pl-lay{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 8px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);cursor:pointer;color:var(--ink2);font-family:inherit;text-align:left}
+.pl-lay:hover{border-color:var(--line3)}
+.pl-lay.on{border-color:var(--accent-line);background:var(--accent-soft);color:var(--ink)}
+.pl-lay svg{width:48px;height:36px;border-radius:7px;background:#0d0d10;border:1px solid var(--line);flex:none}
+.pl-lay svg rect{fill:rgba(255,255,255,.28)}
+.pl-lay svg rect.lg{fill:var(--accent)}
+.pl-lay svg rect.bt{fill:var(--accent2)}
+.pl-lay span{display:flex;flex-direction:column;line-height:1.2}
+.pl-lay b{font-size:13px}
+.pl-lay small{font-size:11px;color:var(--muted)}
+.placer-tip .btn{flex:none}
+@media (max-width:860px){ .pl-lay small{display:none} .pl-lay{padding:6px 10px 6px 6px} }
+.g-logo-warn{display:flex;gap:10px;align-items:flex-start;margin:-4px 0 14px;padding:10px 12px;border-radius:12px;background:var(--warn-soft);border:1px solid rgba(255,197,61,.3);font-size:12.5px;color:var(--ink2);line-height:1.45}
+.g-logo-warn .ic{width:16px;height:16px;color:var(--warn);flex:none;margin-top:1px}
