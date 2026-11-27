@@ -1,9 +1,10 @@
 # Website-Refresh — Befund & Probedesign
 
-Stand: 27.11.2026 · Prototyp: `prototype.html` (v4 „Aufgefrischt“, echte Inhalte, Bilder kommen von planigames.com,
+Stand: 27.11.2026 · Prototyp: `prototype.html` (v5 „Durchdacht“, echte Inhalte, Bilder kommen von planigames.com,
 nichts wird gespeichert). Dieser Ordner liegt bewusst außerhalb von `planigames/` und wird nie hochgeladen.
 Ansehen: `prototype.html` im Browser öffnen (braucht Internet für Bilder & Schrift) – unten rechts
-(am Handy oben) öffnet „Probedesign v4“ alle Ansichten.
+(am Handy oben) öffnet „Probedesign v5“ alle Ansichten, die Konzept-Übersicht und die
+blauen Konzept-Notizen (an jedem Abschnitt: Besucherfrage + Begründung).
 Interaktive Vorschau: als private Seite in Claude veröffentlicht (Bilder verkleinert, Clash Display eingebettet);
 neu bauen mit `build-vorschau.py` (Aufruf steht oben im Skript). Frühere Entwürfe: `prototype-v1.html` und Git-Verlauf.
 
@@ -34,55 +35,57 @@ neu bauen mit `build-vorschau.py` (Aufruf steht oben im Skript). Frühere Entwü
 ## Verlauf der Entwürfe
 
 v1 „Cinematic Studio“ → „wirkt etwas viel und unüberlegt“ · v2 „Ruhe & Wucht“ → zu glatt, Charme fehlt ·
-v3 „Charme“ (Maskottchen raus auf Wunsch) → „Ich mag das Design nicht“. Abstimmung danach:
-**Richtung „Live-Seite auffrischen“** – gestört hat an v1–v3 „fühlt sich fremd an“ und „riesige Schrift & Leere“;
-unbedingt bleiben sollen **Farben & Schrift**.
+v3 „Charme“ (Maskottchen raus auf Wunsch) → „Ich mag das Design nicht“ · Abstimmung: **Live-Seite auffrischen**,
+gestört hat „fühlt sich fremd an“ und „riesige Schrift & Leere“, bleiben sollen **Farben & Schrift** ·
+v4 „Aufgefrischt“ (Live-Seite, nur aufgeräumt) → „sie soll halt auch durchdacht sein“ ·
+**v5 „Durchdacht“: Optik von v4, Aufbau nach einem Konzept.**
 
-## Konzept v4 „Aufgefrischt“
+## Konzept v5 „Durchdacht“ (ausführlich in der Vorschau unter „Konzept-Übersicht“)
 
-Die Live-Seite ist die Basis – gleicher Aufbau, gleiche Reihenfolge, gleiche Bausteine, eure Texte 1:1.
+**Ziele:** 1. FRONTLINERS-Playtest-Anmeldungen (später Wishlists) · 2. Vertrauen ins Studio (echtes Team,
+sichtbarer Fortschritt) · 3. Community aufbauen (Newsletter, YouTube, TikTok).
+**Für wen:** Spieler:innen (sehen & mitmachen) · Community (kommt für Neuigkeiten wieder) · Presse/Partner (Fakten, Kontakt).
 
-**Bleibt wie live:** dunkler Look mit Studio-Orange/Gold-Verlauf, Clash Display + Archivo + JetBrains Mono,
-Kopfbereich „Unsere Ideen. Eure Abenteuer.“ mit Abzeichen und Startbild, Laufband, Spielkarten mit Status-Abzeichen,
-„Klein. Unabhängig. Besessen von guten Ideen.“ mit den 6 Werte-Kacheln (Emoji), „Die Köpfe dahinter“,
-Devlog-Liste, Footer. Spielseiten: alle Blöcke aus dem Admin (Text, Videos, Warteliste, Roadmap, Vorschläge,
-Download, Kennzahlen, Galerie, Features, Lore, FAQ, Aufruf, Patch Notes) in der gewohnten Reihenfolge.
+**Startseite – 5 Fragen in dieser Reihenfolge:**
+1. *Wer seid ihr – und was kann ich jetzt tun?* Studio-Claim wie live + Karte „Jetzt aktuell“ (FRONTLINERS-Playtest,
+   Fortschritt) – der einzige orangefarbene Button im ersten Bildschirm.
+2. *Was macht ihr?* Drei gleichwertige Spielkarten, jede mit Status und **nächstem Schritt**; Browser-Demos als eigene Zeile.
+3. *Tut sich da was?* Devlog direkt nach den Spielen (Fortschritt schafft Vertrauen), jede Zeile mit Bild.
+4. *Wer steckt dahinter?* Studio-Text, 6 Werte kompakt, Team – eine Geschichte in einem Abschnitt.
+5. *Wie bleibe ich dran?* Eine Anmeldung + Kanäle.
 
-**Aufgefrischt:**
-1. Etwas kleinere Überschriften und weniger Leerraum → mehr Inhalt pro Bildschirm (Startseite ~30 % kürzer,
-   Spielseiten 30–35 % kürzer).
-2. Eine Inhaltsbreite für alle Abschnitte.
-3. „Aktuelles Projekt“ + „Unsere Spiele“ zusammengelegt: FRONTLINERS groß oben, darunter Fall of Kings,
-   Wobbly Wizards und Browser-Demos in einer Reihe (Demos mit eigenem Bild statt leerem Kärtchen).
-4. Kopfzeile mit Logo **und** Schriftzug PLANI**GAMES**; „☕ Unterstützen“ steht dort statt schwebend.
-5. Newsletter + Community in einem Block, kein zweites Newsletter-Feld im Footer.
-6. Devlog-Liste mit Vorschaubildern; Beiträge ohne Bild bekommen das Spiel-Cover mit Logo.
-7. Spielseite: Buttons direkt im Kopfbereich (Playtest/Wishlist + Trailer), Videos nebeneinander statt zweimal
-   riesig, Roadmap als kompakte Kacheln, Beta-Anmeldung + Wishlist-Aufruf in einem Block.
-8. Emoji-Zeilen in Devlog-Beiträgen werden zu Zwischenüberschriften (besser lesbar).
-9. Partikel nur im Kopfbereich, kein eigener Mauszeiger; nichts schwebt mehr über dem Inhalt.
+**Spielseite – immer dieselbe Reihenfolge:** Was ist das? (Logo, Satz, Hauptbutton) → Worum geht's? (Text + Steckbrief)
+→ Wie sieht's aus? (Videos + Bilder) → Was erwartet mich? (Features) → Wie weit seid ihr? (Roadmap + Fortschritt)
+→ Wie kann ich mitmachen? (Anmeldung + Ideen + ggf. Demo) → Noch Fragen? (FAQ) → Was ist neu? (Patch Notes)
+→ Was gibt's noch? (andere Spiele). Blöcke ohne Inhalt entfallen einfach.
 
-Funktionen wie Cookie-Hinweis, Erfolge, Kommentare und Reaktionen bleiben unverändert – sie sind im
-Probedesign nur weggelassen, damit man das Aussehen beurteilen kann.
+**Regeln:** ein Hauptbutton pro Abschnitt mit konkretem Verb · der Status bestimmt den nächsten Schritt
+(Angekündigt → Playtest, In Entwicklung ohne Steam-Seite → Warteliste, Pausiert → „Benachrichtigen“) ·
+keine Sackgassen (Beitrag → Spiel, Spiel → andere Spiele) · Inhalte widersprechen sich nicht ·
+gleiche Dinge sehen gleich aus (eine Spielkarte, Abschnittskopf „Kicker · Titel · ein Satz“, eine Breite).
+
+**Optik (aus v4, wie live):** Schwarz + Studio-Orange/Gold, Clash Display + Archivo + JetBrains Mono, normale
+Schriftgrößen, wenig Leerraum, Kopfzeile mit Schriftzug PLANI**GAMES**, „☕ Unterstützen“ fest statt schwebend.
+Cookie-Hinweis, Erfolge, Kommentare und Reaktionen bleiben unverändert (im Probedesign weggelassen).
 
 ## Was im Admin dazukäme (bestehende Daten bleiben gültig)
 
-- Spiel-Steckbrief (optional, z. B. Genre · Spieler · Plattform) – ohne Angaben keine Leiste.
-- Kopfbereich der Spielseite: zweiter Button „Trailer ansehen“ (nutzt den vorhandenen Trailer-Link).
-
-Alles andere nutzt die vorhandenen Felder und Blöcke.
+- Status „Pausiert“ (+ kurzer Hinweistext); der nächste Schritt ergibt sich automatisch aus dem Status.
+- Spiel-Steckbrief (frei benennbare Zeilen, z. B. Genre · Spieler · Plattform) – ohne Angaben keine Liste.
+- „Jetzt aktuell“ auf der Startseite: Spiel wählbar (Fortschritt kommt aus dessen Roadmap).
+- Spielseite: Blöcke werden in der festen Reihenfolge angezeigt (Reihenfolge im Admin muss niemand mehr pflegen).
 
 ## Phasen (jede einzeln hochladbar, Admin funktioniert durchgehend)
 
 1. **Fundament:** eigene CSS-Datei statt Tailwind-Laufzeit (schnellerer Seitenaufbau), Abstände & Breiten
    vereinheitlichen, Kopfzeile + Footer; Bilder beim Upload zusätzlich als WebP.
-2. **Startseite:** Spiele zusammenlegen, Werte/Team/Devlog auffrischen, Mitmach-Block.
-3. **Spielseite:** Kopfbereich mit Buttons, Blöcke kompakter (Videos, Roadmap, Beta + Aufruf).
+2. **Startseite:** „Jetzt aktuell“, Spielkarten mit nächstem Schritt, Devlog vor Studio, eine Anmeldung.
+3. **Spielseite:** feste Reihenfolge, Steckbrief, Medien zusammen, Mitmachen an einem Ort, „Pausiert“-Logik.
 4. **Unterseiten:** Spiele-Übersicht, Devlog (Liste + Beitrag), Presse-Kit, Kontakt, Lore, Rechtliches, 404.
 5. **Feinschliff:** Handy-Ansichten, Ladezeit, englische Texte, Gesamttest.
 
 ## Offene Fragen
 
-- Passt die Auffrischung so – oder an einzelnen Stellen noch näher an die Live-Seite?
-- „☕ Unterstützen“ oben in der Kopfzeile okay?
+- Passt der Plan (Ziele, Reihenfolge, Regeln) – oder setzt ihr andere Schwerpunkte?
+- Soll „Jetzt aktuell“ immer FRONTLINERS zeigen oder im Admin wählbar sein?
 - Gibt es einen Discord-Link (sonst bleiben YouTube & TikTok im Community-Block)?
