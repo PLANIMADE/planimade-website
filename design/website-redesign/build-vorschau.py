@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """Baut die interaktive Vorschau (eine Seite + media/) aus prototype.html.
 
-  python3 build-vorschau.py --media <Ordner mit den Original-Medien von planigames.com/media> --out <Zielordner>
+  python3 build-vorschau.py --media <Ordner mit den Original-Medien von planigames.com/media>
+                            --fonts <Ordner mit clash-500.woff2 / clash-600.woff2 (Clash Display, fontshare.com)>
+                            --out   <Zielordner>
 
-Ergebnis: <out>/planigames-probedesign.html ohne äußeres HTML-Gerüst (das liefert die Vorschau) und
-die Bilder verkleinert als WebP in <out>/media/. Schrift kommt von Google Fonts. Braucht Pillow.
+Ergebnis: <out>/planigames-probedesign.html ohne äußeres HTML-Gerüst (das liefert die Vorschau),
+Clash Display eingebettet (die Vorschau lädt extern nur Google Fonts), Bilder verkleinert als WebP in
+<out>/media/. Braucht Pillow.
 Der Prototyp selbst bleibt unverändert (lädt Bilder weiter von planigames.com).
 """
-import argparse, json, os, re
+import argparse, base64, json, os, re
 from PIL import Image
 
 ap = argparse.ArgumentParser()
-ap.add_argument('--media', required=True); ap.add_argument('--out', required=True)
+ap.add_argument('--media', required=True); ap.add_argument('--fonts'); ap.add_argument('--out', required=True)
 a = ap.parse_args()
 SRC = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'prototype.html')
 MED, OUT = a.media, a.out
@@ -33,6 +36,7 @@ IMG = {
   '/media/20260525180256-1.jpg': ('ww-2.webp', 1000, 78),
   '/media/20260525182444-1.jpg': ('ww-3.webp', 1000, 78),
   '/media/20260525174744-1.jpg': ('ww-4.webp', 1000, 78),
+  '/media/maskottchen.png': ('maskottchen.webp', 520, 88),
 }
 s = open(SRC, encoding='utf-8').read()
 used = set(re.findall(r'/media/[A-Za-z0-9._\-]+', s))
@@ -64,6 +68,12 @@ for pat in (r'<!doctype[^>]*>\s*', r'<html\b[^>]*>\s*', r'</html>\s*', r'<head>\
     s = re.sub(pat, '', s, flags=re.I)
 bad = re.findall(r'<\s*/?\s*(?:!doctype|html|head|body)(?=[\s>])', s, re.I)
 assert not bad, bad
+# Clash Display (fontshare) einbetten – die Vorschau darf extern nur Google Fonts laden
+fs = re.search(r'<link href="https://api\.fontshare\.com/v2/css\?f\[\]=clash-display@([0-9,]+)[^"]*" rel="stylesheet">\s*', s)
+if fs:
+    assert a.fonts, 'Clash Display wird genutzt: --fonts <Ordner> angeben'
+    faces = ''.join("@font-face{font-family:'Clash Display';font-style:normal;font-weight:%s;font-display:swap;src:url(data:font/woff2;base64,%s) format('woff2')}\n" % (w, base64.b64encode(open(os.path.join(a.fonts, f'clash-{w}.woff2'), 'rb').read()).decode()) for w in fs.group(1).split(','))
+    s = s.replace(fs.group(0), '').replace('<style>\n', '<style>\n' + faces, 1)
 links = re.findall(r'<link[^>]+rel="stylesheet"[^>]*>', s)
 assert all('fonts.googleapis.com' in l for l in links), links
 assert 'const MEDIA_MAP = null;' in s
