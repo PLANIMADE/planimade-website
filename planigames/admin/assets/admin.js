@@ -1844,6 +1844,7 @@
       draw(); sigDlg.hidden = false;
     };
     document.addEventListener("click", (e) => { if (e.target.closest("[data-open-sigs]")) { e.preventDefault(); open(); } });
+    if (new URLSearchParams(location.search).get("sigs") === "1") open();     // aus „Kontaktformular“/„Schnellantworten“ kommend
     listEl.addEventListener("input", (e) => {
       const inp = e.target.closest("[data-k]"); if (!inp) return;
       const card = inp.closest(".sig-card"), i = +card.dataset.i;
@@ -2342,6 +2343,35 @@
     });
     draw();
     let rt = null; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(draw, 120); });
+  });
+
+  /* ---- Schnellantworten: Vorlagen hinzufügen/entfernen ---- */
+  (function templates() {
+    const grid = document.querySelector("[data-tpl-grid]"); if (!grid) return;
+    const tpl = document.querySelector("template[data-tpl-new]"), empty = document.querySelector("[data-tpl-empty]");
+    const refresh = () => { if (empty) empty.hidden = !!grid.querySelector("[data-tpl-card]"); };
+    document.querySelector("[data-tpl-add]").addEventListener("click", () => {
+      grid.insertAdjacentHTML("beforeend", tpl.innerHTML.split("__N__").join("n" + uid++));
+      const c = grid.lastElementChild; c.querySelector("input").focus(); refresh();
+      grid.closest("form").dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    grid.addEventListener("click", (e) => {
+      const d = e.target.closest("[data-tpl-del]"); if (!d) return;
+      const c = d.closest("[data-tpl-card]");
+      const filled = [...c.querySelectorAll("input,textarea")].some((x) => x.value.trim());
+      if (filled && !confirm("Diese Vorlage entfernen? (Wirksam nach „Speichern“)")) return;
+      c.remove(); refresh();
+      grid.closest("form").dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  })();
+
+  /* ---- Tabellen durchsuchen (Warteliste, Abos, …) ---- */
+  document.querySelectorAll("[data-dt-search]").forEach((inp) => {
+    const table = inp.closest("section, .ck-card, body").querySelector("[data-dt]"); if (!table) return;
+    inp.addEventListener("input", () => {
+      const q = inp.value.trim().toLowerCase();
+      table.querySelectorAll("tbody tr").forEach((tr) => { tr.hidden = !!q && !(tr.dataset.q || tr.textContent.toLowerCase()).includes(q); });
+    });
   });
 
   // ---- Tastatur-Shortcuts ----

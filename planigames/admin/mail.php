@@ -243,24 +243,8 @@ $sel = ($tab === 'inbox' && (int) ($_GET['uid'] ?? 0)) || ($tab === 'sent' && pr
 $wide = in_array($tab, ['compose', 'newsletter', 'settings'], true);
 echo '<div class="mx' . ($sel ? ' has-sel' : '') . ($wide ? ' mx-wide' : '') . '" data-mx>';
 
-/* ---- Ordner ---- */
-$unread = pg_mail_unread_cached();
-$sentN = count(pg_mail_sent_load());
-echo '<nav class="ck-card mx-nav" aria-label="Postfach-Ordner">'
-   . '<a class="btn btn-primary mx-new" href="mail.php?tab=compose">' . pg_icon('edit') . 'Verfassen</a>';
-$fl = function ($href, $ic, $label, $on, $n = 0, $hot = false) {
-  return '<a class="mx-folder' . ($on ? ' on' : '') . '" href="' . $href . '">' . pg_icon($ic) . '<span>' . pg_h($label) . '</span>'
-       . ($n ? '<span class="n' . ($hot ? ' hot' : '') . '">' . (int) $n . '</span>' : '') . '</a>';
-};
-echo $fl('mail.php?tab=inbox', 'inbox', 'Posteingang', $tab === 'inbox', $unread, $unread > 0)
-   . $fl('mail.php?tab=sent', 'send', 'Gesendet', $tab === 'sent', $sentN)
-   . (pg_can('subscribers') ? $fl('mail.php?tab=newsletter', 'mega', 'Newsletter', $tab === 'newsletter') : '')
-   . '<div class="mx-nav-sep"></div>'
-   . (pg_can('contacts') ? $fl('index.php?view=contacts', 'chat', 'Kontaktformular', false, pg_contacts_unread(), pg_contacts_unread() > 0) : '')
-   . $fl('index.php?view=templates', 'zap', 'Schnellantworten', false)
-   . '<button type="button" class="mx-folder" data-open-sigs>' . pg_icon('user') . '<span>Signaturen</span></button>'
-   . (pg_is_owner() ? $fl('mail.php?tab=settings', 'settings', 'Einstellungen', $tab === 'settings') : '')
-   . '</nav>';
+/* ---- Ordner (gemeinsame Leiste, auch auf „Kontaktformular“ & „Schnellantworten“) ---- */
+echo pg_mx_nav($tab);
 
 /* ---------------- POSTEINGANG ---------------- */
 if ($tab === 'inbox') {

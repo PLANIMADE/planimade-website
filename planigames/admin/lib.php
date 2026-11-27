@@ -9,7 +9,7 @@ const PG_MEDIA_DIR   = __DIR__ . '/../media';
 const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
 const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
 const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip'];
-const PG_ADMIN_V     = '82';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
+const PG_ADMIN_V     = '85';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -141,6 +141,31 @@ function pg_mail_unread_live($maxAge = 20){
   return $n;
 }
 
+/* ---------------- Postfach-Ordnerleiste (Postfach, Kontaktformular, Schnellantworten teilen sie) ---------------- */
+function pg_mx_nav($active){
+  $onMail = basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')) === 'mail.php';
+  $mail = pg_can('mail');
+  $fl = function ($href, $ic, $label, $on, $n = 0, $hot = false) {
+    return '<a class="mx-folder' . ($on ? ' on' : '') . '" href="' . pg_h($href) . '">' . pg_icon($ic) . '<span>' . pg_h($label) . '</span>'
+         . ($n ? '<span class="n' . ($hot ? ' hot' : '') . '">' . (int) $n . '</span>' : '') . '</a>';
+  };
+  $h = '<nav class="ck-card mx-nav" aria-label="Postfach-Ordner">';
+  if ($mail) {
+    $unread = pg_mail_unread_cached();
+    $h .= '<a class="btn btn-primary mx-new" href="mail.php?tab=compose">' . pg_icon('edit') . 'Verfassen</a>'
+        . $fl('mail.php?tab=inbox', 'inbox', 'Posteingang', $active === 'inbox', $unread, $unread > 0)
+        . $fl('mail.php?tab=sent', 'send', 'Gesendet', $active === 'sent', count(pg_mail_sent_load()))
+        . (pg_can('subscribers') ? $fl('mail.php?tab=newsletter', 'mega', 'Newsletter', $active === 'newsletter') : '')
+        . '<div class="mx-nav-sep"></div>';
+  }
+  if (pg_can('contacts')) { $cu = pg_contacts_unread(); $h .= $fl('index.php?view=contacts', 'chat', 'Kontaktformular', $active === 'contacts', $cu, $cu > 0); }
+  $h .= $fl('index.php?view=templates', 'zap', 'Schnellantworten', $active === 'templates');
+  if ($mail) $h .= $onMail ? '<button type="button" class="mx-folder" data-open-sigs>' . pg_icon('user') . '<span>Signaturen</span></button>'
+                           : $fl('mail.php?tab=inbox&sigs=1', 'user', 'Signaturen', false);
+  if ($mail && pg_is_owner()) $h .= $fl('mail.php?tab=settings', 'settings', 'Einstellungen', $active === 'settings');
+  return $h . '</nav>';
+}
+
 /* ---------------- Neue Nachrichten fürs Cockpit (Postfach + Kontaktformular) ----------------
    Das Cockpit zeigt sofort den zuletzt bekannten Stand (data/mail_preview.json) und holt
    im Hintergrund frisch vom Mailserver (action=ck_inbox) – die Seite wartet nie auf IMAP. */
@@ -178,7 +203,7 @@ function pg_ck_messages($mailItems, $max = 6){
   if (pg_can('contacts')) foreach ((array) pg_load_json(PG_DATA_DIR . '/contacts.json') as $i => $r) {
     if (!is_array($r)) continue;
     $rows[] = ['src' => 'contact', 'name' => (string) ($r['name'] ?? ''), 'email' => (string) ($r['email'] ?? ''), 'subject' => (string) ($r['subject'] ?? 'Kontaktanfrage'),
-               'text' => (string) ($r['message'] ?? ''), 'time' => strtotime((string) ($r['date'] ?? '')) ?: 0, 'unread' => empty($r['read']), 'href' => 'index.php?view=contacts#c' . $i];
+               'text' => (string) ($r['message'] ?? ''), 'time' => strtotime((string) ($r['date'] ?? '')) ?: 0, 'unread' => empty($r['read']), 'href' => 'index.php?view=contacts&sel=' . $i];
   }
   usort($rows, fn($a, $b) => ($b['unread'] <=> $a['unread']) ?: ($b['time'] <=> $a['time']));
   $unread = array_values(array_filter($rows, fn($r) => $r['unread']));

@@ -576,36 +576,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_subscribers']))
 /* ---- Newsletter-Abos: Ansicht ---- */
 if (($_GET['view'] ?? '') === 'subscribers') {
   if (!pg_can('subscribers')) { header('Location: index.php'); exit; }
-  $list = pg_load_json(PG_DATA_DIR . '/subscribers.json');
-  $confirmedN = count(pg_confirmed_emails($list));
-  $pendingN = count($list) - $confirmedN;
-  $list = array_reverse($list);
-  pg_view_head('Newsletter-Abos');
-  pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor wide">';
-  if (isset($_GET['cleared'])) echo '<div class="flash ok">✓ Liste geleert.</div>';
-  echo '<div class="editor-head"><div><h1>📬 Newsletter-Abos</h1>'
-     . '<p class="muted">' . count($list) . ' Anmeldung' . (count($list) === 1 ? '' : 'en') . ' · <b>' . $confirmedN . '</b> bestätigt'
-     . ($pendingN > 0 ? ' · ' . $pendingN . ' ausstehend' : '') . '. Nur Bestätigte erhalten den Newsletter.</p></div>';
-  if ($list) echo '<a class="btn-primary" href="index.php?action=subscribers_csv">CSV exportieren</a>';
-  echo '</div>';
-  if (!$list) {
-    echo '<p class="muted">Noch keine Anmeldungen.</p>';
-  } else {
-    echo '<table class="subs"><thead><tr><th>E-Mail</th><th>Status</th><th>Datum</th><th>Quelle</th></tr></thead><tbody>';
-    foreach ($list as $r) {
-      $isConf = !array_key_exists('confirmed', $r) || !empty($r['confirmed']);
-      $status = $isConf ? '<span style="color:#9ff0b5">✓ bestätigt</span>' : '<span style="color:#ffb37a">⏳ ausstehend</span>';
-      echo '<tr><td>' . pg_h($r['email'] ?? '') . '</td><td>' . $status . '</td><td>'
-         . pg_h(substr($r['date'] ?? '', 0, 10)) . '</td><td>' . pg_h($r['source'] ?? '') . '</td></tr>';
-    }
-    echo '</tbody></table>';
-    echo '<form method="post" class="clear-form" onsubmit="return confirm(\'Wirklich ALLE Abos löschen? (Vorher exportieren!)\')">'
-       . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
-       . '<button class="btn-danger" name="clear_subscribers" value="1">Alle Abos löschen</button></form>';
-  }
-  echo '</div>';
-  pg_view_foot();
+  require_once __DIR__ . '/view-community.php';
+  pg_subscribers_view($SCHEMA);
   exit;
 }
 
@@ -684,49 +656,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_waitlist'])) {
   header('Location: index.php?view=waitlist&cleared=1'); exit;
 }
 
-/* ---- Beta-Warteliste: Ansicht (pro Bereich gruppiert) ---- */
+/* ---- Beta-Warteliste: Ansicht (pro Spiel) ---- */
 if (($_GET['view'] ?? '') === 'waitlist') {
   if (!pg_can('subscribers')) { header('Location: index.php'); exit; }
-  $list = pg_load_json(PG_DATA_DIR . '/waitlist.json'); if (!is_array($list)) $list = [];
-  $groups = pg_adm_wl_groups($list);
-  $total = array_sum(array_map('count', $groups));
-  pg_view_head('Beta-Warteliste');
-  pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor wide">';
-  if (isset($_GET['cleared'])) echo '<div class="flash ok">✓ Warteliste geleert.</div>';
-  echo '<div class="editor-head"><div><h1>📋 Beta-Warteliste</h1>'
-     . '<p class="muted">' . $total . ' Anmeldung' . ($total === 1 ? '' : 'en')
-     . ' · jedes Spiel hat eine eigene Warteliste mit eigenem Ranking (Empfehlungen, dann Anmeldedatum). '
-     . 'Die Warteliste fügst du als Block „Beta-Warteliste" auf der jeweiligen Spielseite ein.'
-     . '</p></div>';
-  if ($total) echo '<a class="btn-primary" href="index.php?action=waitlist_csv">CSV exportieren</a>';
-  echo '</div>';
-  if (!$total) {
-    echo '<p class="muted">Noch keine Anmeldungen.</p>';
-  } else {
-    foreach ($groups as $sc => $ranked) {
-      echo '<h2 class="sub-h">' . pg_h(pg_scope_label($sc)) . ' <span class="muted" style="font-weight:400">· ' . count($ranked) . '</span></h2>';
-      echo '<table class="subs"><thead><tr><th>#</th><th>E-Mail</th><th>Empfehlungen</th><th>Datum</th><th>Geworben von</th></tr></thead><tbody>';
-      $byCode = [];
-      foreach ($ranked as $r) if (!empty($r['code'])) $byCode[$r['code']] = $r['email'] ?? '';
-      $pos = 0;
-      foreach ($ranked as $r) {
-        $pos++;
-        $refs = pg_adm_wl_referrals($ranked, $r['code'] ?? '');
-        $by = ($r['ref'] ?? '') !== '' ? ($byCode[$r['ref']] ?? '—') : '—';
-        $medal = $pos === 1 ? '🥇 ' : ($pos === 2 ? '🥈 ' : ($pos === 3 ? '🥉 ' : ''));
-        echo '<tr><td>' . $medal . $pos . '</td><td>' . pg_h($r['email'] ?? '') . '</td><td><b>'
-           . $refs . '</b></td><td>' . pg_h(substr($r['date'] ?? '', 0, 10)) . '</td><td>'
-           . pg_h($by) . '</td></tr>';
-      }
-      echo '</tbody></table>';
-    }
-    echo '<form method="post" class="clear-form" onsubmit="return confirm(\'Wirklich die GESAMTE Warteliste (alle Bereiche) löschen? (Vorher exportieren!)\')">'
-       . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
-       . '<button class="btn-danger" name="clear_waitlist" value="1">Warteliste löschen</button></form>';
-  }
-  echo '</div>';
-  pg_view_foot();
+  require_once __DIR__ . '/view-community.php';
+  pg_waitlist_view($SCHEMA);
   exit;
 }
 
@@ -757,7 +691,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_contact_status'])
     pg_save_json(PG_DATA_DIR . '/contacts.json', $list);
   }
   $fl = trim((string) ($_POST['filter'] ?? ''));
-  header('Location: index.php?view=contacts' . ($fl !== '' ? '&filter=' . urlencode($fl) : '') . '#c' . $i); exit;
+  header('Location: index.php?view=contacts' . ($fl !== '' ? '&filter=' . urlencode($fl) : '') . '&sel=' . $i . '&status_set=1'); exit;
 }
 
 /* ---- Devlog-Kommentare: Moderation ---- */
@@ -778,40 +712,8 @@ if (($_GET['view'] ?? '') === 'comments' || isset($_POST['approve_comment']) || 
     pg_save_json($cfile, $list);
     header('Location: index.php?view=comments'); exit;
   }
-  $list = pg_load_json($cfile); if (!is_array($list)) $list = [];
-  usort($list, fn($a, $b) => strcmp((string) ($b['date'] ?? ''), (string) ($a['date'] ?? '')));
-  $pending = array_filter($list, fn($c) => empty($c['approved']));
-  $approved = array_filter($list, fn($c) => !empty($c['approved']));
-  pg_view_head('Kommentare');
-  pg_view_topbar($SCHEMA, null);
-  $csrf = pg_h(pg_csrf());
-  $renderC = function ($c, $isPending) use ($csrf) {
-    $h = '<div class="contact-card' . ($isPending ? ' st-offen' : '') . '">';
-    $h .= '<div class="contact-head"><div><span class="contact-name">' . pg_h($c['name'] ?? '') . '</span> '
-        . '<span class="muted" style="font-size:.82rem">zu <code>' . pg_h($c['slug'] ?? '') . '</code></span></div>'
-        . '<span class="contact-date">' . pg_h(substr($c['date'] ?? '', 0, 16)) . '</span></div>';
-    $h .= '<div class="contact-msg">' . nl2br(pg_h($c['body'] ?? '')) . '</div>';
-    $h .= '<div class="contact-actions"><form method="post" style="margin:0"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($c['id'] ?? '') . '">';
-    $h .= $isPending
-      ? '<button class="btn-add" name="approve_comment" value="1">✓ Freigeben</button>'
-      : '<button class="btn-add" name="unapprove_comment" value="1">↩︎ Verbergen</button>';
-    $h .= '</form><form method="post" style="margin:0" onsubmit="return confirm(\'Kommentar löschen?\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($c['id'] ?? '') . '">'
-        . '<button class="btn-danger sm" name="delete_comment" value="1">Löschen</button></form></div></div>';
-    return $h;
-  };
-  echo '<div class="editor wide">';
-  echo '<div class="editor-head"><div><h1>💬 Devlog-Kommentare</h1><p class="muted">'
-     . count($pending) . ' zu prüfen · ' . count($approved) . ' freigegeben.</p></div></div>';
-  echo '<h2 class="sub-h">Zu prüfen</h2>';
-  if (!$pending) echo '<div class="mailnote">Nichts zu moderieren. 🎉</div>';
-  else { echo '<div class="contacts">'; foreach ($pending as $c) echo $renderC($c, true); echo '</div>'; }
-  if ($approved) {
-    echo '<h2 class="sub-h">Freigegeben</h2><div class="contacts">';
-    foreach ($approved as $c) echo $renderC($c, false);
-    echo '</div>';
-  }
-  echo '</div>';
-  pg_view_foot();
+  require_once __DIR__ . '/view-community.php';
+  pg_comments_view($SCHEMA);
   exit;
 }
 
@@ -929,43 +831,11 @@ if (($_GET['view'] ?? '') === 'suggestions' || isset($_POST['approve_sugg']) || 
       if (in_array($st, ['open', 'planned', 'done'], true)) { foreach ($list as &$s) if (($s['id'] ?? '') === $id) $s['status'] = $st; unset($s); }
     }
     pg_save_json($sfile, $list);
-    header('Location: index.php?view=suggestions'); exit;
+    $ret = preg_replace('/[^a-z0-9=&%\-]/i', '', (string) ($_POST['ret'] ?? ''));
+    header('Location: index.php?view=suggestions' . ($ret !== '' ? '&' . $ret : '')); exit;
   }
-  $list = pg_load_json($sfile); if (!is_array($list)) $list = [];
-  $pending = array_filter($list, fn($s) => empty($s['approved']));
-  $approved = array_filter($list, fn($s) => !empty($s['approved']));
-  usort($approved, fn($a, $b) => (int) ($b['votes'] ?? 0) <=> (int) ($a['votes'] ?? 0));
-  $stLabels = ['open' => 'Offen', 'planned' => 'Geplant', 'done' => 'Umgesetzt'];
-  pg_view_head('Vorschläge');
-  pg_view_topbar($SCHEMA, null);
-  $csrf = pg_h(pg_csrf());
-  echo '<div class="editor wide">';
-  echo '<div class="editor-head"><div><h1>💡 Vorschläge</h1><p class="muted">' . count($pending) . ' zu prüfen · ' . count($approved) . ' veröffentlicht. Der „Bereich" zeigt, ob ein Vorschlag von der Startseite oder einer Spiel-Seite kommt.</p></div></div>';
-  echo '<h2 class="sub-h">Zu prüfen</h2>';
-  if (!$pending) echo '<div class="mailnote">Nichts zu prüfen. 🎉</div>';
-  else {
-    echo '<div class="contacts">';
-    foreach ($pending as $s) {
-      echo '<div class="contact-card st-offen"><div class="contact-msg">' . pg_h($s['text'] ?? '')
-         . ' <span class="badge" style="margin-left:.4rem;opacity:.8">' . pg_h(pg_scope_label($s['scope'] ?? '')) . '</span></div>'
-         . '<div class="contact-actions"><form method="post" style="margin:0"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($s['id'] ?? '') . '"><button class="btn-add" name="approve_sugg" value="1">✓ Freigeben</button></form>'
-         . '<form method="post" style="margin:0" onsubmit="return confirm(\'Löschen?\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($s['id'] ?? '') . '"><button class="btn-danger sm" name="del_sugg" value="1">Löschen</button></form></div></div>';
-    }
-    echo '</div>';
-  }
-  if ($approved) {
-    echo '<h2 class="sub-h">Veröffentlicht (nach Stimmen)</h2><table class="subs"><thead><tr><th>Vorschlag</th><th>Bereich</th><th>Stimmen</th><th>Status</th><th></th></tr></thead><tbody>';
-    foreach ($approved as $s) {
-      echo '<tr><td>' . pg_h($s['text'] ?? '') . '</td><td>' . pg_h(pg_scope_label($s['scope'] ?? '')) . '</td><td>' . (int) ($s['votes'] ?? 0) . '</td>'
-         . '<td><form method="post" style="margin:0;display:flex;gap:.3rem"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($s['id'] ?? '') . '"><select name="status" onchange="this.form.querySelector(\'[name=sugg_status]\').click()">';
-      foreach ($stLabels as $k => $lbl) echo '<option value="' . $k . '"' . (($s['status'] ?? 'open') === $k ? ' selected' : '') . '>' . $lbl . '</option>';
-      echo '</select><button type="submit" name="sugg_status" value="1" hidden></button></form></td>'
-         . '<td><form method="post" style="margin:0" onsubmit="return confirm(\'Löschen?\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($s['id'] ?? '') . '"><button class="btn-danger sm" name="del_sugg" value="1">✕</button></form></td></tr>';
-    }
-    echo '</tbody></table>';
-  }
-  echo '</div>';
-  pg_view_foot();
+  require_once __DIR__ . '/view-community.php';
+  pg_suggestions_view($SCHEMA);
   exit;
 }
 
@@ -988,19 +858,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_templates'])) {
 if (($_GET['view'] ?? '') === 'templates') {
   if (!(pg_can('mail') || pg_can('contacts'))) { header('Location: index.php'); exit; }
   $tpls = pg_templates_load();
-  pg_view_head('Schnellantwort-Vorlagen');
+  $GLOBALS['pg_crumb_group'] = 'Community';
+  pg_view_head('Schnellantworten');
   pg_view_topbar($SCHEMA, null);
-  echo '<form method="post" class="editor" id="editor">';
-  echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
   if (isset($_GET['saved'])) echo '<div class="flash ok">✓ Vorlagen gespeichert.</div>';
-  echo '<div class="editor-head"><div><h1>⚡ Schnellantwort-Vorlagen</h1>'
-     . '<p class="muted">Textbausteine für wiederkehrende Antworten – beim Verfassen einer Mail per Klick einfügbar.</p></div>'
-     . '<div class="editor-actions"><button class="btn-primary" name="save_templates" value="1">Speichern</button></div></div>';
-  echo '<div class="fields">';
-  echo pg_render_fields([$pg_tpl_field], ['templates' => $tpls], 'd', 'templates');
-  echo '</div>';
-  echo '<div class="editor-foot"><button class="btn-primary" name="save_templates" value="1">Speichern</button></div>';
-  echo '</form>';
+  $card = function ($i, $t) {
+    return '<div class="tpl-card ck-card" data-tpl-card><div class="tpl-top"><input type="text" name="d[templates][' . $i . '][title]" value="' . pg_h($t['title'] ?? '') . '" placeholder="Titel, z. B. „Danke für dein Feedback“" class="tpl-title" aria-label="Titel">'
+         . '<button type="button" class="icon-btn" data-tpl-del title="Vorlage entfernen" aria-label="Vorlage entfernen">' . pg_icon('trash') . '</button></div>'
+         . '<textarea name="d[templates][' . $i . '][body]" rows="5" placeholder="Text der Antwort …" aria-label="Text">' . pg_h($t['body'] ?? '') . '</textarea></div>';
+  };
+  echo '<div class="mx mx-wide mx-one" data-mx>' . pg_mx_nav('templates');
+  echo '<form method="post" class="ck-card mx-pane tpl-form" id="editor"><input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+     . '<div class="tpl-head"><div><h2>Schnellantworten</h2><p>Textbausteine für wiederkehrende Antworten – beim Verfassen einer Mail mit einem Klick eingefügt.</p></div>'
+     . '<div class="gd-acts"><button type="button" class="btn btn-sm" data-tpl-add>' . pg_icon('plus') . 'Vorlage</button><button class="btn btn-primary btn-sm" name="save_templates" value="1">' . pg_icon('check') . 'Speichern</button></div></div>'
+     . '<div class="tpl-grid" data-tpl-grid>';
+  foreach (array_values($tpls) as $i => $t) echo $card($i, $t);
+  echo '</div><p class="tpl-empty" data-tpl-empty' . ($tpls ? ' hidden' : '') . '>Noch keine Vorlagen – leg mit „Vorlage“ die erste an.</p>'
+     . '<template data-tpl-new>' . $card('__N__', []) . '</template></form></div>';
   pg_view_foot();
   exit;
 }
@@ -1319,86 +1193,82 @@ if (($_GET['view'] ?? '') === 'search') {
 if (($_GET['view'] ?? '') === 'contacts') {
   if (!pg_can('contacts')) { header('Location: index.php'); exit; }
   $list = pg_load_json(PG_DATA_DIR . '/contacts.json');
-  // Beim Ansehen alle als gelesen markieren (für die Ungelesen-Badge)
-  $hadUnread = false;
-  foreach ($list as &$r) { if (empty($r['read'])) { $r['read'] = true; $hadUnread = true; } }
-  unset($r);
-  if ($hadUnread) pg_save_json(PG_DATA_DIR . '/contacts.json', $list);
-  // Status-Filter
+  $sel = isset($_GET['sel']) && ctype_digit((string) $_GET['sel']) && isset($list[(int) $_GET['sel']]) ? (int) $_GET['sel'] : -1;
+  // gelesen = geöffnet (wie im Postfach)
+  if ($sel >= 0 && empty($list[$sel]['read'])) { $list[$sel]['read'] = true; pg_save_json(PG_DATA_DIR . '/contacts.json', $list); }
   $statuses = pg_contact_statuses();
   $filter = (string) ($_GET['filter'] ?? '');
   if (!array_key_exists($filter, $statuses)) $filter = '';
-  // Zählung je Status
   $counts = ['' => count($list)];
   foreach ($statuses as $k => $_) $counts[$k] = 0;
   foreach ($list as $r) $counts[pg_contact_status($r)]++;
-  // Newest first, but keep original index for delete
   $indexed = [];
-  foreach ($list as $i => $r) { if ($filter === '' || pg_contact_status($r) === $filter) $indexed[] = [$i, $r]; }
+  foreach ($list as $i => $r) if ($filter === '' || pg_contact_status($r) === $filter) $indexed[] = [$i, $r];
   $indexed = array_reverse($indexed);
+  $GLOBALS['pg_crumb_group'] = 'Community';
   pg_view_head('Kontakt-Anfragen');
   pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor wide">';
   if (isset($_GET['cleared'])) echo '<div class="flash ok">✓ Alle Anfragen gelöscht.</div>';
   if (isset($_GET['deleted'])) echo '<div class="flash ok">✓ Anfrage gelöscht.</div>';
-  echo '<div class="editor-head"><div><h1>✉️ Kontakt-Anfragen</h1>'
-     . '<p class="muted">' . count($list) . ' Nachricht' . (count($list) === 1 ? '' : 'en') . ' über das Kontaktformular.</p></div></div>';
-  // Filter-Leiste
+  if (isset($_GET['status_set'])) echo '<div class="flash ok">✓ Status geändert.</div>';
+  $q = fn($extra) => 'index.php?view=contacts' . ($filter !== '' ? '&filter=' . urlencode($filter) : '') . $extra;
+  echo '<div class="mx' . ($sel >= 0 ? ' has-sel' : '') . '" data-mx>' . pg_mx_nav('contacts');
+  // ---- Liste ----
+  echo '<section class="ck-card mx-list"><div class="mx-list-h"><label class="g-inp">' . pg_icon('search') . '<input type="search" placeholder="Anfragen durchsuchen…" data-mx-search aria-label="Anfragen durchsuchen"></label></div>';
   if ($list) {
-    echo '<div class="cfilter">';
-    $tabs = ['' => 'Alle'] + $statuses;
-    foreach ($tabs as $k => $lbl) {
-      $on = $k === $filter ? ' on' : '';
-      $href = 'index.php?view=contacts' . ($k !== '' ? '&filter=' . urlencode($k) : '');
-      echo '<a class="cfilter-tab' . $on . ($k !== '' ? ' st-' . $k : '') . '" href="' . pg_h($href) . '">'
-         . pg_h($lbl) . ' <span class="cfilter-n">' . (int) ($counts[$k] ?? 0) . '</span></a>';
-    }
-    echo '</div>';
+    echo '<div class="mx-tabs"><div class="g-seg">';
+    foreach (['' => 'Alle'] + $statuses as $k => $lbl)
+      echo '<a class="' . ($k === $filter ? 'on' : '') . '" href="' . pg_h('index.php?view=contacts' . ($k !== '' ? '&filter=' . urlencode($k) : '')) . '">' . pg_h($lbl) . '<span class="n">' . (int) ($counts[$k] ?? 0) . '</span></a>';
+    echo '</div></div>';
   }
   if (!$indexed) {
-    echo '<div class="mailnote">' . ($list ? 'Keine Anfragen mit diesem Status.' : 'Noch keine Anfragen. Sie erscheinen hier, sobald jemand das Kontaktformular auf <code>kontakt.html</code> nutzt.') . '</div>';
+    echo '<div class="mx-empty">' . pg_icon('chat') . '<b>' . ($list ? 'Keine Anfragen mit diesem Status.' : 'Noch keine Anfragen.') . '</b>'
+       . ($list ? '' : '<span>Sie erscheinen hier, sobald jemand das Kontaktformular auf der Website nutzt.</span>') . '</div>';
   } else {
-    echo '<div class="contacts">';
+    echo '<ul class="mx-rows" data-mx-rows>';
     foreach ($indexed as [$i, $r]) {
-      $subj = trim($r['subject'] ?? '');
+      $t = strtotime((string) ($r['date'] ?? '')) ?: 0;
+      $when = $t ? (date('Y-m-d', $t) === date('Y-m-d') ? date('H:i', $t) : (date('Y', $t) === date('Y') ? date('d.m.', $t) : date('d.m.y', $t))) : '';
       $cst = pg_contact_status($r);
-      echo '<div class="contact-card st-' . $cst . '" id="c' . $i . '">';
-      echo '<div class="contact-head"><div><span class="contact-name">' . pg_h($r['name'] ?? '') . '</span> '
-         . '<a class="contact-mail" href="mailto:' . pg_h($r['email'] ?? '') . '">' . pg_h($r['email'] ?? '') . '</a></div>'
-         . '<div class="contact-headr"><span class="cstatus st-' . $cst . '">' . pg_h($statuses[$cst]) . '</span>'
-         . '<span class="contact-date">' . pg_h(substr($r['date'] ?? '', 0, 16)) . '</span></div></div>';
-      if ($subj !== '') echo '<div class="contact-subj">' . pg_h($subj) . '</div>';
-      echo '<div class="contact-msg">' . nl2br(pg_h($r['message'] ?? '')) . '</div>';
-      $replySubj = rawurlencode('Re: ' . ($subj ?: 'Deine Anfrage'));
-      $quote = "\n\n\n— Deine Nachricht vom " . substr($r['date'] ?? '', 0, 10) . " —\n"
-             . preg_replace('/^/m', '> ', (string) ($r['message'] ?? ''));
-      $replyHref = pg_can('mail')
-        ? 'mail.php?tab=compose&to=' . rawurlencode($r['email'] ?? '') . '&subject=' . $replySubj . '&body=' . rawurlencode($quote)
-        : 'mailto:' . pg_h($r['email'] ?? '') . '?subject=' . $replySubj;
-      echo '<div class="contact-actions">'
-         . '<a class="btn-add" href="' . pg_h($replyHref) . '">↩︎ Antworten</a>';
-      // Status-Umschalter
-      echo '<span class="cstatus-set">';
-      foreach ($statuses as $k => $lbl) {
-        if ($k === $cst) continue;
-        echo '<form method="post" style="margin:0"><input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
-           . '<input type="hidden" name="idx" value="' . $i . '"><input type="hidden" name="status" value="' . pg_h($k) . '">'
-           . '<input type="hidden" name="filter" value="' . pg_h($filter) . '">'
-           . '<button class="btn-status st-' . $k . '" name="set_contact_status" value="1">→ ' . pg_h($lbl) . '</button></form>';
-      }
-      echo '</span>';
-      echo '<form method="post" onsubmit="return confirm(\'Diese Anfrage löschen?\')" style="margin:0">'
-         . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
-         . '<input type="hidden" name="idx" value="' . $i . '">'
-         . '<button class="btn-danger sm" name="delete_contact" value="1">Löschen</button></form>'
-         . '</div></div>';
+      echo '<li><a class="mx-row' . (empty($r['read']) ? ' unread' : '') . ($i === $sel ? ' on' : '') . '" href="' . pg_h($q('&sel=' . $i)) . '" data-q="' . pg_h(mb_strtolower(($r['name'] ?? '') . ' ' . ($r['email'] ?? '') . ' ' . ($r['subject'] ?? '') . ' ' . ($r['message'] ?? ''))) . '">'
+         . '<span class="ud"></span><span class="mf">' . pg_h(($r['name'] ?? '') !== '' ? $r['name'] : ($r['email'] ?? '')) . '</span><span class="mt">' . pg_h($when) . '</span>'
+         . '<span class="ms">' . pg_h(($r['subject'] ?? '') !== '' ? $r['subject'] : 'Kontaktanfrage') . '</span>'
+         . '<span class="mp"><span class="cst st-' . $cst . '">' . pg_h($statuses[$cst]) . '</span>' . pg_h(mb_strimwidth(preg_replace('/\s+/u', ' ', (string) ($r['message'] ?? '')), 0, 90, '…')) . '</span></a></li>';
     }
-    echo '</div>';
-    echo '<form method="post" class="clear-form" onsubmit="return confirm(\'Wirklich ALLE Anfragen löschen?\')">'
-       . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
-       . '<button class="btn-danger" name="clear_contacts" value="1">Alle Anfragen löschen</button></form>';
+    echo '</ul>';
+    echo '<form method="post" class="mx-listfoot" onsubmit="return confirm(\'Wirklich ALLE Anfragen löschen?\')"><input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+       . '<span>' . count($list) . ' Anfrage' . (count($list) === 1 ? '' : 'n') . '</span><button class="btn btn-ghost btn-sm" name="clear_contacts" value="1">' . pg_icon('trash') . 'Alle löschen</button></form>';
   }
-  echo '</div>';
+  echo '</section>';
+  // ---- Lesebereich ----
+  echo '<article class="ck-card mx-read">';
+  if ($sel >= 0) {
+    $r = $list[$sel];
+    $cst = pg_contact_status($r);
+    $subj = trim((string) ($r['subject'] ?? ''));
+    $name = trim((string) ($r['name'] ?? ''));
+    $ini = mb_strtoupper(implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(preg_split('/\s+/', preg_replace('/[^\p{L} ]/u', '', $name)) ?: [], 0, 2)))) ?: '✉';
+    $replySubj = rawurlencode('Re: ' . ($subj ?: 'Deine Anfrage'));
+    $quote = "\n\n\n— Deine Nachricht vom " . substr((string) ($r['date'] ?? ''), 0, 10) . " —\n" . preg_replace('/^/m', '> ', (string) ($r['message'] ?? ''));
+    $replyHref = pg_can('mail') ? 'mail.php?tab=compose&to=' . rawurlencode($r['email'] ?? '') . '&subject=' . $replySubj . '&body=' . rawurlencode($quote)
+                                : 'mailto:' . ($r['email'] ?? '') . '?subject=' . $replySubj;
+    $csrfIn = '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '"><input type="hidden" name="idx" value="' . $sel . '">';
+    echo '<div class="mx-read-h"><a class="btn btn-ghost btn-sm mx-back" href="' . pg_h($q('')) . '">' . pg_icon('back') . 'Zurück</a>'
+       . '<h2>' . pg_h($subj !== '' ? $subj : 'Kontaktanfrage') . '</h2>'
+       . '<div class="mx-from"><span class="avatar">' . pg_h($ini) . '</span><div><b>' . pg_h($name !== '' ? $name : 'Unbekannt') . '</b><span>' . pg_h($r['email'] ?? '') . ' · ' . pg_h($r['date'] ? date('d.m.Y · H:i', strtotime((string) $r['date']) ?: time()) : '') . '</span></div>'
+       . '<div class="mx-acts"><a class="btn btn-primary btn-sm" href="' . pg_h($replyHref) . '">' . pg_icon('undo') . 'Antworten</a>'
+       . '<form method="post" onsubmit="return confirm(\'Diese Anfrage löschen?\')">' . $csrfIn . '<button class="btn btn-sm g-btn-danger" name="delete_contact" value="1" title="Löschen">' . pg_icon('trash') . '</button></form></div></div>'
+       . '<div class="cst-bar"><span>Status</span><div class="g-seg">';
+    foreach ($statuses as $k => $lbl) {
+      echo $k === $cst ? '<span class="on cst-on st-' . $k . '"><i></i>' . pg_h($lbl) . '</span>'
+                       : '<form method="post">' . $csrfIn . '<input type="hidden" name="status" value="' . pg_h($k) . '"><input type="hidden" name="filter" value="' . pg_h($filter) . '"><button name="set_contact_status" value="1">' . pg_h($lbl) . '</button></form>';
+    }
+    echo '</div></div></div>';
+    echo '<div class="mx-body"><div class="mx-text">' . nl2br(pg_h((string) ($r['message'] ?? ''))) . '</div></div>';
+  } else {
+    echo '<div class="mx-empty">' . pg_icon('chat') . '<b>Wähle eine Anfrage aus.</b><span>Antworten geht direkt aus dem Postfach – mit deiner Signatur.</span></div>';
+  }
+  echo '</article></div>';
   pg_view_foot();
   exit;
 }
