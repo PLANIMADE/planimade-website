@@ -2272,6 +2272,78 @@
     if (ed) { card.scrollIntoView({ block: "center" }); card.classList.add("kb-flash"); setTimeout(() => card.classList.remove("kb-flash"), 1800); }
   }
 
+  /* ---- Statistik: Verlauf als Linie + Fläche, Fadenkreuz-Tooltip (Maus & Tastatur) ---- */
+  document.querySelectorAll("[data-st-chart]").forEach((el) => {
+    let data = [];
+    try { data = JSON.parse(el.querySelector("script").textContent || "[]"); } catch (e) { return; }
+    if (!data.length) return;
+    const COLOR = "#f06f15";                          // geprüft: Helligkeit, Sättigung, Kontrast auf dunklem Grund
+    const fmt = (n) => Number(n).toLocaleString("de-DE");
+    const fmtD = (d, long) => { const [y, m, dd] = d.split("-").map(Number); const dt = new Date(y, m - 1, dd);
+      return long ? dt.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "long" }) : dd + "." + m + "."; };
+    const nice = (max) => { if (max <= 4) return 4; const p = Math.pow(10, Math.floor(Math.log10(max))); const n = max / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p; };
+    const tip = document.createElement("div"); tip.className = "st-tip"; tip.hidden = true;
+    let sel = -1, geo = null;
+    function draw() {
+      const W = Math.max(280, el.clientWidth), H = W < 560 ? 210 : 270;
+      const pad = { l: 44, r: 18, t: 14, b: 28 };
+      const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+      const yMax = nice(Math.max(...data.map((x) => x.v)) * 1.08);
+      const X = (i) => pad.l + (data.length === 1 ? pw / 2 : (i / (data.length - 1)) * pw);
+      const Y = (v) => pad.t + ph - (v / yMax) * ph;
+      geo = { X, Y, pad, pw, ph, W, H };
+      let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">`;
+      for (let k = 0; k <= 4; k++) {
+        const v = (yMax / 4) * k, y = Y(v);
+        svg += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y}" y2="${y}" class="st-grid"/><text x="${pad.l - 8}" y="${y + 4}" class="st-ax" text-anchor="end">${fmt(Math.round(v))}</text>`;
+      }
+      const step = Math.max(1, Math.ceil(data.length / (W < 560 ? 4 : 7)));
+      data.forEach((x, i) => { if (i % step === 0 || i === data.length - 1) svg += `<text x="${X(i)}" y="${H - 8}" class="st-ax" text-anchor="${i === 0 ? "start" : i === data.length - 1 ? "end" : "middle"}">${fmtD(x.d)}</text>`; });
+      const pts = data.map((x, i) => `${X(i).toFixed(1)},${Y(x.v).toFixed(1)}`);
+      svg += `<path d="M${pts[0]} L${pts.join(" L")} L${X(data.length - 1)},${Y(0)} L${X(0)},${Y(0)} Z" fill="${COLOR}" fill-opacity=".1"/>`;
+      svg += `<path d="M${pts.join(" L")}" fill="none" stroke="${COLOR}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+      const li = data.length - 1;
+      svg += `<circle cx="${X(li)}" cy="${Y(data[li].v)}" r="4" fill="${COLOR}" stroke="#121216" stroke-width="2"/>`;
+      svg += `<text x="${X(li) - 8}" y="${Y(data[li].v) - 10}" class="st-endlbl" text-anchor="end">${fmt(data[li].v)}</text>`;
+      svg += `<g class="st-cross" style="display:none"><line class="st-crossl" y1="${pad.t}" y2="${pad.t + ph}"/><circle r="5" fill="${COLOR}" stroke="#121216" stroke-width="2"/></g></svg>`;
+      el.innerHTML = svg; el.appendChild(tip);
+      if (sel >= 0) show(sel);
+    }
+    function show(i) {
+      sel = Math.max(0, Math.min(data.length - 1, i));
+      const g = el.querySelector(".st-cross"); if (!g || !geo) return;
+      const x = geo.X(sel), y = geo.Y(data[sel].v);
+      g.style.display = ""; g.querySelector("line").setAttribute("x1", x); g.querySelector("line").setAttribute("x2", x);
+      g.querySelector("circle").setAttribute("cx", x); g.querySelector("circle").setAttribute("cy", y);
+      tip.hidden = false;
+      tip.replaceChildren();
+      const v = document.createElement("b"); v.textContent = fmt(data[sel].v) + (data[sel].v === 1 ? " Aufruf" : " Aufrufe");
+      const d = document.createElement("span"); d.textContent = fmtD(data[sel].d, true);
+      tip.append(v, d);
+      const tw = tip.offsetWidth || 140;
+      tip.style.left = Math.min(Math.max(x - tw / 2, 4), geo.W - tw - 4) + "px";
+      tip.style.top = Math.max(0, y - 58) + "px";
+    }
+    function hide() { sel = -1; tip.hidden = true; const g = el.querySelector(".st-cross"); if (g) g.style.display = "none"; }
+    el.addEventListener("pointermove", (e) => {
+      if (!geo) return;
+      const r = el.getBoundingClientRect(), x = e.clientX - r.left;
+      const i = Math.round(((x - geo.pad.l) / geo.pw) * (data.length - 1));
+      show(i);
+    });
+    el.addEventListener("pointerleave", hide);
+    el.addEventListener("focus", () => show(data.length - 1));
+    el.addEventListener("blur", hide);
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") { e.preventDefault(); show((sel < 0 ? data.length : sel) - 1); }
+      if (e.key === "ArrowRight") { e.preventDefault(); show((sel < 0 ? -1 : sel) + 1); }
+      if (e.key === "Home") { e.preventDefault(); show(0); }
+      if (e.key === "End") { e.preventDefault(); show(data.length - 1); }
+    });
+    draw();
+    let rt = null; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(draw, 120); });
+  });
+
   // ---- Tastatur-Shortcuts ----
   function primarySaveButton() {
     return document.querySelector('[data-tr-savebar] button[type="submit"]')

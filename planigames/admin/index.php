@@ -1751,63 +1751,8 @@ if ($action === 'stats_csv') {
 
 if (($_GET['view'] ?? '') === 'stats') {
   if (!pg_logged_in()) { header('Location: index.php'); exit; }
-  $s = pg_load_json(PG_DATA_DIR . '/stats.json');
-  $days = $s['days'] ?? [];
-  $pages = $s['pages'] ?? [];
-  $refs = $s['refs'] ?? [];
-  $regions = $s['regions'] ?? [];
-  ksort($days);
-  $today = $days[date('Y-m-d')] ?? 0;
-  $last14 = array_slice($days, -14, null, true);
-  $maxDay = $last14 ? max($last14) : 1;
-  arsort($pages); arsort($refs); arsort($regions);
-  $total = (int) ($s['total'] ?? 0);
-  $subCount = pg_can('subscribers') ? count(pg_load_json(PG_DATA_DIR . '/subscribers.json')) : 0;
-  $msgCount = pg_can('contacts') ? count(pg_load_json(PG_DATA_DIR . '/contacts.json')) : 0;
-  $conv = $total > 0 ? round($subCount / $total * 100, 1) : 0;
-  pg_view_head('Statistik');
-  pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor wide">';
-  echo '<div class="editor-head"><div><h1>📊 Statistik</h1>'
-     . '<p class="muted">Aggregierte Aufrufe – ohne Cookies, ohne IP-Speicherung, ohne externe Dienste.</p></div>'
-     . '<a class="btn-add" href="index.php?action=stats_csv">⬇ CSV-Export</a></div>';
-  echo '<div class="stat-cards">';
-  echo '<div class="stat-card"><span class="stat-num">' . $total . '</span><span class="stat-lbl">Aufrufe gesamt</span></div>';
-  echo '<div class="stat-card"><span class="stat-num">' . (int) $today . '</span><span class="stat-lbl">Heute</span></div>';
-  echo '<div class="stat-card"><span class="stat-num">' . array_sum($last14) . '</span><span class="stat-lbl">Letzte 14 Tage</span></div>';
-  echo '</div>';
-  echo '<h2 class="sub-h" style="margin-top:1.6rem">🎯 Ziele</h2><div class="stat-cards">';
-  echo '<div class="stat-card"><span class="stat-num">' . $subCount . '</span><span class="stat-lbl">Newsletter-Anmeldungen</span></div>';
-  echo '<div class="stat-card"><span class="stat-num">' . $conv . '%</span><span class="stat-lbl">Anmeldequote</span></div>';
-  echo '<div class="stat-card"><span class="stat-num">' . $msgCount . '</span><span class="stat-lbl">Kontakt-Nachrichten</span></div>';
-  echo '</div>';
-  if (!$days) {
-    echo '<div class="mailnote" style="margin-top:1.2rem">Noch keine Daten. Sobald die Website besucht wird, erscheinen hier die Aufrufe.</div>';
-  } else {
-    echo '<h2 class="sub-h" style="margin-top:1.6rem">Letzte 14 Tage</h2><div class="stat-bars">';
-    foreach ($last14 as $d => $n) {
-      $h = max(4, round($n / $maxDay * 100));
-      echo '<div class="stat-bar" title="' . pg_h($d) . ': ' . (int) $n . '"><span class="sb-fill" style="height:' . $h . '%"></span>'
-         . '<span class="sb-val">' . (int) $n . '</span><span class="sb-day">' . pg_h(substr($d, 5)) . '</span></div>';
-    }
-    echo '</div>';
-    $tbl = function ($title, $arr, $col, $empty) {
-      $h = '<div class="stat-tbl"><h2 class="sub-h">' . $title . '</h2>';
-      if (!$arr) return $h . '<p class="hint">' . $empty . '</p></div>';
-      $h .= '<table class="subs"><thead><tr><th>' . $col . '</th><th>Aufrufe</th></tr></thead><tbody>';
-      $i = 0; foreach ($arr as $k => $n) { if ($i++ >= 12) break; $h .= '<tr><td>' . pg_h($k) . '</td><td>' . (int) $n . '</td></tr>'; }
-      return $h . '</tbody></table></div>';
-    };
-    echo '<div class="stat-cols">';
-    echo $tbl('Beliebteste Seiten', $pages, 'Seite', 'Keine Daten.');
-    echo $tbl('Verweis-Quellen', $refs, 'Domain', 'Bisher nur Direktaufrufe – externe Verweise erscheinen hier, sobald jemand über einen Link kommt.');
-    echo '</div><div class="stat-cols">';
-    echo $tbl('Region (aus Browsersprache geschätzt)', $regions, 'Region', 'Noch keine Daten.');
-    echo '<div class="stat-tbl"></div>';
-    echo '</div>';
-  }
-  echo '</div>';
-  pg_view_foot();
+  require_once __DIR__ . '/view-stats.php';
+  pg_stats_view($SCHEMA);
   exit;
 }
 
