@@ -1,5 +1,8 @@
 # Website-Refresh — Befund & Probedesign
 
+> **Entschieden am 27.11.2026: v7 „Kino trifft Ordnung“ wird umgesetzt** (inkl. weichem Bildübergang am Handy).
+> Grundlage für alle Phasen unten ist `prototype.html` in diesem Stand.
+
 Stand: 27.11.2026 · Prototyp: `prototype.html` (v7 „Kino trifft Ordnung“, echte Inhalte, Bilder kommen von planigames.com,
 nichts wird gespeichert). Dieser Ordner liegt bewusst außerhalb von `planigames/` und wird nie hochgeladen.
 Ansehen: `prototype.html` im Browser öffnen (braucht Internet für Bilder & Schrift) – unten rechts
@@ -92,6 +95,5 @@ auf iPhone SE/13, Pixel 7, iPad Mini, 320/820/960/1024/1440 px – nichts ragt �
 
 ## Offene Fragen
 
-- Passt die Mischung (Kino-Look + Ordnung) – oder an einzelnen Stellen mehr/weniger davon?
 - Soll der Durchlauf immer mit FRONTLINERS starten (aktuelles Projekt) oder in Listen-Reihenfolge?
 - Gibt es einen Discord-Link (sonst bleiben YouTube & TikTok im Newsletter-Block)?
