@@ -69,6 +69,20 @@ für `data/` und `media/` ggf. **775**.
   setzen.
 - **Speichern** → die Änderung ist **sofort live** auf der Website.
 
+## Update einspielen (bestehende Website)
+
+1. Per FTP **alles aus `planigames/` hochladen und überschreiben – außer den
+   Ordnern `data/` und `media/`**. Dort liegen deine echten Inhalte, Zugänge und
+   Bilder; die bleiben unangetastet.
+2. **Einzige Ausnahme:** die Datei **`data/.htaccess`** einmal mit hochladen (falls
+   noch nicht auf dem Server). Sie sperrt interne Daten wie Passwörter,
+   Postfach-Zugänge und die Warteliste. Fehlt sie, zeigt das Cockpit oben einen
+   roten Hinweis.
+3. Danach einmal **`/admin/`** öffnen. Beim ersten Aufruf prüft das Admin die
+   englischen Texte (vorher automatische Sicherheitskopie unter *Backups*) und zieht
+   veraltete Übersetzungen im Hintergrund nach.
+4. Kurz prüfen: *Postfach → Einstellungen → „Verbindung testen“*.
+
 ---
 
 ## Der „Website-Builder" für Game-Seiten
@@ -130,6 +144,32 @@ Gut zu wissen:
   Adressen, Links, Bilder, Farben, Zahlen/Jahreszahlen und der Seitenaufbau.
 - Ist der Übersetzungsdienst nicht erreichbar (z. B. Tageskontingent), bleibt es
   beim deutschen Text – später geht es automatisch weiter.
+
+---
+
+## Mails, Keys & Warteliste
+
+- **Spiel-Karte in Mails:** Im Mail-Editor (Postfach, Newsletter, Warteliste)
+  fügt der Button **„Spiel“** eine Karte mit Cover, Kurztext und großem
+  Wishlist-Button ein. Der Button führt zum Link aus *Spiele → [Spiel] →
+  Einstellungen → „Wishlist / Store-Link“* (bei Steam-Links heißt er „Jetzt auf
+  Steam wunschlisten“). Ohne Link führt er zur Spielseite („Zum Spiel“).
+- **Keys pro Spiel** (*Spielbetrieb → Keys & Presse*): Keys je Spiel einfügen (einer pro
+  Zeile – doppelte werden übersprungen), an Presse/Streamer vergeben, als
+  eingelöst markieren oder zurücksetzen, als CSV exportieren.
+- **Warteliste anschreiben** (*Community → Beta-Warteliste → „Warteliste
+  anschreiben“*): an alle, nur an noch nicht Angeschriebene oder an die ersten N
+  der Rangliste. Platzhalter `{platz}`, `{spiel}` und – wenn Keys verteilt
+  werden – `{key}`. Optional die Spiel-Karte, ein persönlicher Key pro Empfänger
+  (wird unter *Keys* automatisch als vergeben markiert) und der Button **„Weiter
+  informiert bleiben?“** – wer klickt, landet bestätigt im Newsletter. Jede Mail
+  geht einzeln raus (niemand sieht andere Adressen) und enthält einen
+  Abmelde-Link. Erst „Testmail an mich“, dann senden; ein unterbrochener Versand
+  lässt sich fortsetzen.
+- **Zum Rechtlichen (keine Rechtsberatung):** Wer auf der Beta-Warteliste steht,
+  wartet auf Beta-Infos – Mails zu Beta-Zugang, Keys und Terminen passen dazu.
+  Reine Werbung ohne Einwilligung ist in Deutschland heikel; dafür den
+  Einwilligungs-Button nutzen und Werbung danach über den Newsletter schicken.
 
 ---
 
