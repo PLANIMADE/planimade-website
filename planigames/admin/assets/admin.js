@@ -2244,6 +2244,23 @@
     });
   });
 
+  /* ---- Bereiche mit Reitern (Studio & Startseite, Rechtliches) ---- */
+  (function sections() {
+    const root = document.querySelector("[data-sections]");
+    if (!root) return;
+    const show = (id) => {
+      root.querySelectorAll("[data-sx]").forEach((b) => b.classList.toggle("on", b.dataset.sx === id));
+      root.querySelectorAll("[data-sx-panel]").forEach((p) => p.classList.toggle("on", p.dataset.sxPanel === id));
+      const inp = root.querySelector("[data-sx-input]"); if (inp) inp.value = id;
+      try { const u = new URL(location.href); u.searchParams.set("tab", id); ["saved", "error", "sent"].forEach((k) => u.searchParams.delete(k)); history.replaceState(null, "", u); } catch {}
+      root.querySelectorAll(`[data-sx-panel="${id}"] textarea`).forEach((t) => t.dispatchEvent(new Event("pg:shown")));
+    };
+    root.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-sx]");
+      if (b) { e.preventDefault(); show(b.dataset.sx); if (innerWidth < 860) root.querySelector(".sx-body").scrollIntoView({ behavior: "smooth", block: "start" }); }
+    });
+  })();
+
   // ---- Tastatur-Shortcuts ----
   function primarySaveButton() {
     return document.querySelector('[data-tr-savebar] button[type="submit"]')

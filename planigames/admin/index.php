@@ -464,6 +464,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
     exit;
   }
   $extra = $sentCount > 0 ? '&sent=' . $sentCount : '';
+  $sxTab = preg_replace('/[^a-z0-9\-]/', '', (string) ($_POST['sx_tab'] ?? ''));
+  if ($sxTab !== '') $extra .= '&tab=' . $sxTab;                       // zurück zum geöffneten Abschnitt
   header('Location: index.php?collection=' . urlencode($key) . '&lang=' . $lang . ($ok ? '&saved=1' : '&error=1') . $extra);
   exit;
 }
@@ -2219,6 +2221,8 @@ if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
     pg_view_foot();
     exit;
   }
+  // Studio & Rechtliches: Abschnitte mit Reitern
+  if ($key === 'studio' || $key === 'legal') { require_once __DIR__ . '/view-sections.php'; pg_sections_view($SCHEMA, $key); exit; }
   $data = pg_load_json($coll['file']);
 
   pg_view_head($coll['label']);
