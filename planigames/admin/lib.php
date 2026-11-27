@@ -9,7 +9,7 @@ const PG_MEDIA_DIR   = __DIR__ . '/../media';
 const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
 const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
 const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip'];
-const PG_ADMIN_V     = '63';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
+const PG_ADMIN_V     = '64';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -747,59 +747,221 @@ function pg_mail_config(){
   ];
 }
 
-/* Gebrandete E-Mail-Signatur aus der Mail-Config + Studio-Kontaktdaten.
-   Erscheint unter persönlichen Mails (Verfassen / Antworten), nicht im Newsletter. */
-function pg_mail_signature(){
+/* ---- Signaturen: beliebig viele (Studio + pro Person), Standard pro Admin ----
+   Gespeichert in mail.json unter „signatures“. Ältere Installationen haben genau eine
+   Signatur in sig_* – die erscheint automatisch als „PLANIGAMES“ (ohne etwas umzuschreiben). */
+function pg_mail_signatures(){
   $c = pg_mail_config();
-  if (($c['sig_enabled'] ?? true) === false) return '';
+  if (isset($c['signatures']) && is_array($c['signatures'])) {
+    $out = [];
+    foreach ($c['signatures'] as $x) if (is_array($x) && !empty($x['id'])) $out[] = $x + ['label' => '', 'name' => '', 'role' => '', 'phone' => '', 'email' => '', 'closing' => ''];
+    return $out;
+  }
+  $legacy = ['id' => 'studio', 'label' => 'PLANIGAMES', 'name' => trim((string) ($c['sig_name'] ?? '')), 'role' => trim((string) ($c['sig_role'] ?? '')),
+             'phone' => trim((string) ($c['sig_phone'] ?? '')), 'email' => '', 'closing' => trim((string) ($c['signature'] ?? ''))];
+  return ($legacy['name'] . $legacy['role'] . $legacy['phone'] . $legacy['closing']) !== '' ? [$legacy] : [];
+}
+function pg_mail_signature_find($id){
+  foreach (pg_mail_signatures() as $x) if ((string) $x['id'] === (string) $id) return $x;
+  return null;
+}
+// Standard-Signatur für den angemeldeten Admin ('' = keine)
+function pg_mail_signature_default(){
+  $sigs = pg_mail_signatures();
+  if (!$sigs) return '';
+  $u = pg_current_user();
+  if ($u && array_key_exists('mail_sig', $u)) {
+    if ((string) $u['mail_sig'] === '') return '';
+    if (pg_mail_signature_find($u['mail_sig'])) return (string) $u['mail_sig'];
+  }
+  $c = pg_mail_config();
+  if (($c['sig_enabled'] ?? true) === false && !isset($c['signatures'])) return '';
+  if (!empty($c['sig_default']) && pg_mail_signature_find($c['sig_default'])) return (string) $c['sig_default'];
+  return (string) $sigs[0]['id'];
+}
+// Signaturen speichern (nur dieser Teil von mail.json wird verändert)
+function pg_mail_signatures_save(array $list){
+  $clean = []; $seen = [];
+  foreach ($list as $x) {
+    if (!is_array($x)) continue;
+    $id = preg_replace('/[^a-z0-9_\-]/i', '', (string) ($x['id'] ?? '')) ?: 'sig_' . bin2hex(random_bytes(3));
+    if (isset($seen[$id])) $id .= '_' . bin2hex(random_bytes(2));
+    $seen[$id] = true;
+    $row = ['id' => $id];
+    foreach (['label' => 40, 'name' => 80, 'role' => 120, 'phone' => 40, 'email' => 120, 'closing' => 200] as $k => $max) $row[$k] = mb_substr(trim((string) ($x[$k] ?? '')), 0, $max);
+    if ($row['email'] !== '' && !filter_var($row['email'], FILTER_VALIDATE_EMAIL)) $row['email'] = '';
+    if ($row['label'] === '') $row['label'] = $row['name'] !== '' ? explode(' ', $row['name'])[0] : 'Signatur';
+    if ($row['name'] . $row['role'] . $row['closing'] === '') continue;
+    $clean[] = $row;
+  }
+  $raw = pg_load_json(PG_MAIL_FILE); if (!is_array($raw)) $raw = [];
+  $raw['signatures'] = $clean;
+  return pg_save_json(PG_MAIL_FILE, $raw) ? $clean : false;
+}
+// Standard-Signatur des angemeldeten Admins merken (users.json, Feld „mail_sig“)
+function pg_mail_signature_set_default($id){
+  $me = pg_current_email(); if (!$me) return false;
+  $users = pg_users_load(); $hit = false;
+  foreach ($users as $k => $u) if (strtolower((string) ($u['email'] ?? '')) === strtolower($me)) { $users[$k]['mail_sig'] = (string) $id; $hit = true; }
+  return $hit && pg_users_save($users);
+}
+
+/* Gebrandete Signatur (HTML) – $sig = Signatur-Array, ID oder null (= Standard des Admins). */
+function pg_mail_signature($sig = null){
+  if ($sig === null) $sig = pg_mail_signature_default();
+  if (!is_array($sig)) $sig = $sig === '' ? null : pg_mail_signature_find($sig);
+  if (!$sig) return '';
   $s = pg_load_json(PG_DATA_DIR . '/studio.json');
-  $name    = trim((string)($c['sig_name'] ?? ''));
-  $role    = trim((string)($c['sig_role'] ?? ''));
-  $phone   = trim((string)($c['sig_phone'] ?? ''));
-  $closing = trim((string)($c['signature'] ?? ''));
-  $email   = trim((string)($s['email'] ?? ''));
+  $name    = trim((string) ($sig['name'] ?? ''));
+  $role    = trim((string) ($sig['role'] ?? ''));
+  $phone   = trim((string) ($sig['phone'] ?? ''));
+  $closing = trim((string) ($sig['closing'] ?? ''));
+  $email   = trim((string) ($sig['email'] ?? '')) ?: trim((string) ($s['email'] ?? ''));
   $siteUrl = pg_site_url();
   $siteTxt = preg_replace('#^https?://#', '', $siteUrl);
   $socials = array_filter(is_array($s['socials'] ?? null) ? $s['socials'] : [],
              fn($x) => !empty($x['url']) && $x['url'] !== '#' && !empty($x['label']));
-
-  if ($name === '' && $role === '' && $closing === '' && $email === '') return '';
-
-  // Textspalte der Signatur (Name, Rolle, Kontakt, Socials)
+  if ($name === '' && $role === '' && $closing === '') return '';
   $lines = '';
   if ($name !== '') $lines .= '<div style="color:#ffffff;font-weight:700;font-size:15px">' . pg_h($name) . '</div>';
   if ($role !== '') $lines .= '<div style="color:#9a9aa6;font-size:13px;margin-top:2px">' . pg_h($role) . '</div>';
-
   $contact = [];
   if ($email)   $contact[] = '<a href="mailto:' . pg_h($email) . '" style="color:#ff8a2b;text-decoration:none">' . pg_h($email) . '</a>';
   if ($siteTxt) $contact[] = '<a href="' . pg_h($siteUrl) . '" style="color:#ff8a2b;text-decoration:none">' . pg_h($siteTxt) . '</a>';
   if ($phone)   $contact[] = '<span style="color:#9a9aa6">' . pg_h($phone) . '</span>';
   if ($contact) $lines .= '<div style="font-size:13px;margin-top:11px">' . implode(' &nbsp;·&nbsp; ', $contact) . '</div>';
-
   $soc = [];
   foreach ($socials as $x) $soc[] = '<a href="' . pg_h($x['url']) . '" style="color:#9a9aa6;text-decoration:none">' . pg_h($x['label']) . '</a>';
   if ($soc) $lines .= '<div style="font-size:12px;margin-top:9px;color:#6f6f7a">' . implode(' &nbsp;&nbsp; ', $soc) . '</div>';
-
-  // Kein Logo in der Signatur – das Logo steht bereits im Mail-Kopf (keine Doppelung).
+  // Kein Logo in der Signatur – das Logo steht bereits im Mail-Kopf.
   $out = '<div style="margin-top:28px">';
   if ($closing !== '') $out .= '<div style="color:#c7c7d1;font-size:14px;line-height:1.6;margin-bottom:16px">' . nl2br(pg_h($closing)) . '</div>';
-  $out .= '<div style="width:42px;height:2px;background:linear-gradient(110deg,#e6a015,#ff7d1a);margin:0 0 16px"></div>';
-  $out .= $lines;
-  $out .= '</div>';
+  $out .= '<div style="width:42px;height:2px;background:linear-gradient(110deg,#e6a015,#ff7d1a);margin:0 0 16px"></div>' . $lines . '</div>';
   return $out;
 }
 
-/* Fertiges HTML für eine persönliche Mail (Verfassen/Antworten) inkl. Signatur. */
-function pg_mail_build_personal($message){
-  $body = '<div style="color:#d7d7df;line-height:1.7;font-size:15px;padding:6px 0">' . nl2br(pg_h($message)) . '</div>' . pg_mail_signature();
-  return pg_mail_shell($body, mb_substr($message, 0, 90));
+/* ---- Formatierte Nachrichten: nur erlaubte Auszeichnungen, Stile werden fest gesetzt ---- */
+function pg_mail_sanitize_html($html){
+  $html = (string) $html;
+  if (trim($html) === '') return '';
+  if (!class_exists('DOMDocument')) return nl2br(pg_h(strip_tags($html)));
+  $doc = new DOMDocument();
+  $prev = libxml_use_internal_errors(true);
+  $doc->loadHTML('<?xml encoding="UTF-8"><html><body><div id="pg-mail-root">' . $html . '</div></body></html>', LIBXML_NONET);
+  libxml_clear_errors(); libxml_use_internal_errors($prev);
+  $root = $doc->getElementById('pg-mail-root');
+  if (!$root) return '';
+  // Text ohne Absatz (z. B. erste Zeile im Editor) in Absätze fassen
+  $out = ''; $inline = '';
+  $flush = function () use (&$out, &$inline) {
+    if (trim(strip_tags($inline, '<br>')) !== '' && trim(preg_replace('#<br>#', '', $inline)) !== '') $out .= '<p style="margin:0 0 12px">' . trim($inline) . '</p>';
+    $inline = '';
+  };
+  foreach ($root->childNodes as $ch) {
+    $h = pg_mail_clean_node($ch);
+    if (preg_match('#^<(p|h3|ul|ol|blockquote|hr)[\s>]#', $h)) { $flush(); $out .= $h; } else $inline .= $h;
+  }
+  $flush();
+  // leere Absätze am Ende entfernen
+  return preg_replace('#(<p style="[^"]*"><br></p>\s*)+$#', '', trim($out));
+}
+function pg_mail_clean_children($node){
+  $out = '';
+  foreach ($node->childNodes as $ch) $out .= pg_mail_clean_node($ch);
+  return $out;
+}
+function pg_mail_clean_node($n){
+  if ($n->nodeType === XML_TEXT_NODE || $n->nodeType === XML_CDATA_SECTION_NODE) return htmlspecialchars($n->nodeValue, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+  if ($n->nodeType !== XML_ELEMENT_NODE) return '';
+  $tag = strtolower($n->nodeName);
+  if (in_array($tag, ['script', 'style', 'iframe', 'object', 'embed', 'head', 'title', 'meta', 'link', 'svg', 'math', 'template', 'noscript', 'form', 'input', 'button', 'select', 'textarea', 'img', 'video', 'audio', 'canvas'], true)) return '';
+  $inner = pg_mail_clean_children($n);
+  $st = [
+    'p' => 'margin:0 0 12px', 'h3' => 'margin:18px 0 8px;font-size:18px;line-height:1.35;color:#ffffff',
+    'ul' => 'margin:0 0 12px;padding-left:22px', 'ol' => 'margin:0 0 12px;padding-left:22px', 'li' => 'margin:0 0 4px',
+    'blockquote' => 'margin:0 0 12px;padding:4px 0 4px 14px;border-left:3px solid #ff7d1a;color:#b6b6c0',
+  ];
+  switch ($tag) {
+    case 'b': case 'strong': return $inner === '' ? '' : '<strong>' . $inner . '</strong>';
+    case 'i': case 'em': return $inner === '' ? '' : '<em>' . $inner . '</em>';
+    case 'u': return $inner === '' ? '' : '<u>' . $inner . '</u>';
+    case 's': case 'strike': case 'del': return $inner === '' ? '' : '<s>' . $inner . '</s>';
+    case 'br': return '<br>';
+    case 'hr': return '<hr style="border:0;border-top:1px solid rgba(255,255,255,.14);margin:18px 0">';
+    case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6':
+      return trim(strip_tags($inner)) === '' ? '' : '<h3 style="' . $st['h3'] . '">' . $inner . '</h3>';
+    case 'ul': case 'ol': case 'li': case 'blockquote':
+      return '<' . $tag . ' style="' . $st[$tag] . '">' . $inner . '</' . $tag . '>';
+    case 'a':
+      $href = trim((string) $n->getAttribute('href'));
+      if (!preg_match('#^(https?://|mailto:)#i', $href)) return $inner;
+      return '<a href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '" style="color:#ff8a2b">' . $inner . '</a>';
+    case 'p': case 'div':
+      // Block mit Block-Inhalt nicht verschachteln
+      if (preg_match('#<(p|ul|ol|h3|blockquote|hr)[\s>]#', $inner)) return $inner;
+      return '<p style="' . $st['p'] . '">' . ($inner === '' ? '<br>' : $inner) . '</p>';
+    default:
+      return $inner;   // span, font, … → nur Inhalt behalten
+  }
+}
+// Text-Fassung aus (beliebigem) HTML – für den Text-Teil jeder Mail (besser für Spamfilter)
+function pg_mail_html_to_text($html){
+  $html = (string) $html;
+  if (trim($html) === '') return '';
+  if (!class_exists('DOMDocument')) return trim(html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+  $doc = new DOMDocument();
+  $prev = libxml_use_internal_errors(true);
+  $doc->loadHTML('<?xml encoding="UTF-8">' . (stripos($html, '<body') === false ? '<html><body>' . $html . '</body></html>' : $html), LIBXML_NONET);
+  libxml_clear_errors(); libxml_use_internal_errors($prev);
+  $walk = function ($n) use (&$walk) {
+    if ($n->nodeType === XML_TEXT_NODE) return preg_replace('/\s+/u', ' ', $n->nodeValue);
+    if ($n->nodeType !== XML_ELEMENT_NODE) return '';
+    $tag = strtolower($n->nodeName);
+    if (in_array($tag, ['script', 'style', 'head', 'title'], true)) return '';
+    if (preg_match('/display\s*:\s*none/i', (string) $n->getAttribute('style'))) return '';
+    $in = '';
+    foreach ($n->childNodes as $c) $in .= $walk($c);
+    switch ($tag) {
+      case 'br': return "\n";
+      case 'li': return "\n• " . trim($in);
+      case 'a':
+        $href = trim((string) $n->getAttribute('href')); $t = trim($in);
+        if ($href === '' || stripos($href, 'mailto:') === 0) return $t;
+        return $t === '' || $t === $href ? $href : $t . ' (' . $href . ')';
+      case 'p': case 'div': case 'h1': case 'h2': case 'h3': case 'h4': case 'tr': case 'table': case 'ul': case 'ol': case 'section':
+        return "\n" . trim($in) . "\n";
+      case 'blockquote': return "\n> " . str_replace("\n", "\n> ", trim($in)) . "\n";
+      case 'td': return ' ' . $in . ' ';
+      case 'hr': return "\n----\n";
+      default: return $in;
+    }
+  };
+  $body = $doc->getElementsByTagName('body')->item(0) ?: $doc->documentElement;
+  $t = $walk($body);
+  $t = preg_replace("/[ \t]+/u", ' ', $t);
+  $t = preg_replace("/ *\n */u", "\n", $t);
+  $t = preg_replace("/\n{3,}/u", "\n\n", $t);
+  return trim($t);
+}
+/* Nachrichtenteil als HTML: formatiertes HTML (Editor) oder Klartext (Altbestand/Vorlagen) */
+function pg_mail_message_html($message, $isHtml = false){
+  if ($isHtml) return pg_mail_sanitize_html($message);
+  return nl2br(pg_h($message));
+}
+/* Fertiges HTML für eine persönliche Mail (Verfassen/Antworten) inkl. Signatur.
+   $opts: html (bool, Nachricht ist HTML aus dem Editor), sig (Signatur-ID, '' = keine, null = Standard) */
+function pg_mail_build_personal($message, $opts = []){
+  $msg = pg_mail_message_html($message, !empty($opts['html']));
+  $body = '<div style="color:#d7d7df;line-height:1.7;font-size:15px;padding:6px 0">' . $msg . '</div>' . pg_mail_signature(array_key_exists('sig', $opts) ? $opts['sig'] : null);
+  return pg_mail_shell($body, mb_substr(pg_mail_html_to_text($msg), 0, 90));
 }
 /* Fertiges HTML für eine Newsletter-Mail inkl. Abmeldelink. */
-function pg_mail_build_newsletter($message, $unsubLink){
-  $body = '<div style="color:#d7d7df;line-height:1.7;font-size:15px;padding:6px 0">' . nl2br(pg_h($message)) . '</div>'
+function pg_mail_build_newsletter($message, $unsubLink, $opts = []){
+  $msg = pg_mail_message_html($message, !empty($opts['html']));
+  $body = '<div style="color:#d7d7df;line-height:1.7;font-size:15px;padding:6px 0">' . $msg . '</div>'
     . '<p style="color:#6f6f7a;font-size:12px;margin:22px 0 0">Du erhältst diese Mail, weil du den PLANIGAMES-Newsletter abonniert hast. '
     . '<a href="' . pg_h($unsubLink) . '" style="color:#ff8a2b">Abmelden</a></p>';
-  return pg_mail_shell($body, mb_substr($message, 0, 90));
+  return pg_mail_shell($body, mb_substr(pg_mail_html_to_text($msg), 0, 90));
 }
 
 /* Bestätigte Abonnenten-E-Mails (Legacy ohne Flag gelten als bestätigt). */
@@ -843,7 +1005,9 @@ function pg_mail_config_save(array $c){
   foreach (['smtp_pass','imap_pass'] as $k) {
     if (($c[$k] ?? '') === '') $c[$k] = $old[$k] ?? '';
   }
-  return pg_save_json(PG_MAIL_FILE, $c);
+  // Alles, was das Formular nicht kennt (z. B. Signaturen), unverändert übernehmen
+  $raw = pg_load_json(PG_MAIL_FILE);
+  return pg_save_json(PG_MAIL_FILE, $c + (is_array($raw) ? $raw : []));
 }
 function pg_mail_configured_send(){ $c = pg_mail_config(); return $c['smtp_host'] !== '' && $c['smtp_user'] !== ''; }
 function pg_mail_configured_recv(){ $c = pg_mail_config(); return $c['imap_host'] !== '' && $c['imap_user'] !== ''; }
@@ -866,37 +1030,77 @@ function pg_mail_from(){
 /* ---- Postausgang / Gesendet (lokal protokollieren, was aus dem Dashboard rausging) ---- */
 const PG_MAIL_SENT_FILE = __DIR__ . '/../data/mail_sent.json';
 function pg_mail_sent_load(){ $l = pg_load_json(PG_MAIL_SENT_FILE); return is_array($l) ? $l : []; }
-function pg_mail_sent_log($to, $subject, $html){
+function pg_mail_sent_log($to, $subject, $html, $atts = []){
   $list = pg_mail_sent_load();
-  array_unshift($list, [
-    'id'      => bin2hex(random_bytes(5)),
+  $id = bin2hex(random_bytes(5));
+  $row = [
+    'id'      => $id,
     'to'      => mb_substr((string) $to, 0, 200),
     'subject' => mb_substr((string) $subject, 0, 300),
     'html'    => (string) $html,
     'date'    => date('c'),
-  ]);
+    'by'      => (string) (pg_current_email() ?: ''),
+  ];
+  // Anhänge nur als Liste (Name + Größe) merken – die Dateien selbst liegen nicht im Protokoll
+  if ($atts) $row['atts'] = array_map(fn($a) => ['name' => (string) ($a['name'] ?? ''), 'size' => (int) strlen((string) ($a['data'] ?? ''))], $atts);
+  array_unshift($list, $row);
   if (count($list) > 200) $list = array_slice($list, 0, 200);   // nicht unbegrenzt wachsen lassen
   pg_save_json(PG_MAIL_SENT_FILE, $list);
+  return $id;
+}
+
+/* MIME-Aufbau: Text + HTML (multipart/alternative), mit Anhängen als multipart/mixed.
+   $atts = [['name'=>…, 'mime'=>…, 'data'=>Binärdaten], …] */
+function pg_mail_mime($html, $text, $atts = []){
+  $eol = "\r\n";
+  $b1 = 'pg-alt-' . bin2hex(random_bytes(9));
+  $alt = '--' . $b1 . $eol . 'Content-Type: text/plain; charset=UTF-8' . $eol . 'Content-Transfer-Encoding: base64' . $eol . $eol
+       . chunk_split(base64_encode((string) $text), 76, $eol)
+       . '--' . $b1 . $eol . 'Content-Type: text/html; charset=UTF-8' . $eol . 'Content-Transfer-Encoding: base64' . $eol . $eol
+       . chunk_split(base64_encode((string) $html), 76, $eol)
+       . '--' . $b1 . '--' . $eol;
+  if (!$atts) return ['multipart/alternative; boundary="' . $b1 . '"', $alt];
+  $b2 = 'pg-mix-' . bin2hex(random_bytes(9));
+  $body = '--' . $b2 . $eol . 'Content-Type: multipart/alternative; boundary="' . $b1 . '"' . $eol . $eol . $alt;
+  foreach ($atts as $at) {
+    $name = str_replace(["\r", "\n", '"', '\\'], '', (string) ($at['name'] ?? 'anhang')) ?: 'anhang';
+    $mime = preg_match('#^[a-z0-9.+\-]+/[a-z0-9.+\-]+$#i', (string) ($at['mime'] ?? '')) ? $at['mime'] : 'application/octet-stream';
+    $ascii = preg_match('/^[\x20-\x7e]+$/', $name) ? $name : '=?UTF-8?B?' . base64_encode($name) . '?=';
+    $body .= '--' . $b2 . $eol . 'Content-Type: ' . $mime . '; name="' . $ascii . '"' . $eol
+           . 'Content-Transfer-Encoding: base64' . $eol
+           . 'Content-Disposition: attachment; filename="' . $ascii . '"; filename*=UTF-8\'\'' . rawurlencode($name) . $eol . $eol
+           . chunk_split(base64_encode((string) $at['data']), 76, $eol);
+  }
+  $body .= '--' . $b2 . '--' . $eol;
+  return ['multipart/mixed; boundary="' . $b2 . '"', $body];
 }
 
 /* Zentrale Versandfunktion: nutzt SMTP, wenn konfiguriert, sonst mail().
-   $html = vollständiges HTML (z. B. via pg_mail_shell). Gibt true/false zurück. */
-function pg_send_mail($to, $subject, $html, $replyTo = ''){
+   $html = vollständiges HTML (z. B. via pg_mail_shell). Jede Mail bekommt automatisch einen Text-Teil.
+   $opts: text (eigener Text-Teil), attachments (s. pg_mail_mime), headers (z. B. In-Reply-To). */
+function pg_send_mail($to, $subject, $html, $replyTo = '', $opts = []){
   [$fromName, $fromEmail] = pg_mail_from();
+  $text = isset($opts['text']) ? (string) $opts['text'] : pg_mail_html_to_text($html);
+  [$ctype, $body] = pg_mail_mime($html, $text, $opts['attachments'] ?? []);
+  $extra = '';
+  foreach ((array) ($opts['headers'] ?? []) as $k => $v) {
+    $k = preg_replace('/[^A-Za-z0-9\-]/', '', (string) $k); $v = str_replace(["\r", "\n"], ' ', (string) $v);
+    if ($k !== '' && trim($v) !== '') $extra .= $k . ': ' . $v . "\r\n";
+  }
   if (pg_mail_configured_send()) {
-    return pg_smtp_send($to, $subject, $html, $fromName, $fromEmail, $replyTo);
+    return pg_smtp_send($to, $subject, $ctype, $body, $fromName, $fromEmail, $replyTo, $extra);
   }
   // Fallback: PHP mail()
   $fn = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
   $headers = "From: {$fn} <{$fromEmail}>\r\n"
     . ($replyTo ? "Reply-To: {$replyTo}\r\n" : "Reply-To: {$fromEmail}\r\n")
-    . "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n";
+    . $extra . "MIME-Version: 1.0\r\nContent-Type: {$ctype}";
   $subj = '=?UTF-8?B?' . base64_encode($subject) . '?=';
-  return @mail($to, $subj, $html, $headers);
+  return @mail($to, $subj, $body, $headers);
 }
 
 /* Minimaler SMTP-Client (fsockopen) – ohne Abhängigkeiten, für All-Inkl geeignet. */
-function pg_smtp_send($to, $subject, $html, $fromName, $fromEmail, $replyTo = ''){
+function pg_smtp_send($to, $subject, $ctype, $mimeBody, $fromName, $fromEmail, $replyTo = '', $extraHeaders = ''){
   $c = pg_mail_config();
   $host = $c['smtp_host']; $port = (int)$c['smtp_port'] ?: 587;
   $secure = $c['smtp_secure']; // 'ssl' | 'tls' | ''
@@ -905,7 +1109,7 @@ function pg_smtp_send($to, $subject, $html, $fromName, $fromEmail, $replyTo = ''
   $fp = @stream_socket_client($transport . $host . ':' . $port, $errno, $errstr, 20,
         STREAM_CLIENT_CONNECT, stream_context_create(['ssl'=>['verify_peer'=>false,'verify_peer_name'=>false]]));
   if (!$fp) { error_log("SMTP connect failed: $errstr ($errno)"); return false; }
-  stream_set_timeout($fp, 20);
+  stream_set_timeout($fp, 30);
 
   $read = function() use ($fp){
     $data = '';
@@ -944,11 +1148,10 @@ function pg_smtp_send($to, $subject, $html, $fromName, $fromEmail, $replyTo = ''
   $msgid = '<' . bin2hex(random_bytes(12)) . '@' . $midDomain . '>';
   $head = "Date: $date\r\nFrom: $fn <$fromEmail>\r\n"
     . ($replyTo ? "Reply-To: $replyTo\r\n" : '')
-    . "To: <$to>\r\nSubject: $subj\r\nMessage-ID: $msgid\r\n"
-    . "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-  $body = chunk_split(base64_encode($html));
-  // Punkt-Stuffing nicht nötig bei base64
-  $r = $cmd($head . $body . "\r\n.");
+    . "To: <$to>\r\nSubject: $subj\r\nMessage-ID: $msgid\r\n" . $extraHeaders
+    . "MIME-Version: 1.0\r\nContent-Type: $ctype\r\n\r\n";
+  // MIME-Teile sind base64-kodiert → keine Zeile beginnt mit „.“ (kein Punkt-Stuffing nötig)
+  $r = $cmd($head . $mimeBody . "\r\n.");
   if ($code($r) !== 250) $ok = false;
   $cmd('QUIT');
   fclose($fp);
@@ -964,6 +1167,8 @@ function pg_imap_mailbox($folder = 'INBOX'){
 }
 function pg_imap_connect($folder = 'INBOX'){
   if (!pg_imap_available() || !pg_mail_configured_recv()) return null;
+  static $clean = false;   // IMAP-Hinweise am Ende abholen, sonst landen sie als PHP-Notice im Fehlerlog
+  if (!$clean) { register_shutdown_function(function () { @imap_errors(); @imap_alerts(); }); $clean = true; }
   $c = pg_mail_config();
   $mbox = @imap_open(pg_imap_mailbox($folder), $c['imap_user'], $c['imap_pass'], 0, 1);
   return $mbox ?: null;
@@ -1030,6 +1235,7 @@ function pg_imap_part($mbox, $uid, $structure, $want, $prefix = ''){
   }
   foreach ($structure->parts as $i => $part) {
     $no = $prefix === '' ? (string)($i + 1) : $prefix . '.' . ($i + 1);
+    if (strtolower((string) ($part->disposition ?? '')) === 'attachment' && empty($part->parts)) continue;   // angehängte .txt/.html sind kein Inhalt
     if (!empty($part->parts)) {
       $r = pg_imap_part($mbox, $uid, $part, $want, $no);
       if ($r !== '') return $r;
@@ -2395,4 +2601,98 @@ function pg_i18n_fill_missing($fields, $de, $en, &$count){
     }
   }
   return $en;
+}
+
+/* =====================================================================
+   POSTFACH – Anhänge empfangen, Antworten im Verlauf
+   ===================================================================== */
+// Dateiname eines MIME-Teils (RFC 2047 & RFC 2231, auch mehrteilig „filename*0*“)
+function pg_imap_part_filename($part){
+  $params = [];
+  foreach (['dparameters', 'parameters'] as $k) if (!empty($part->{$k}) && is_array($part->{$k})) foreach ($part->{$k} as $p) $params[] = [strtolower((string) $p->attribute), (string) $p->value];
+  $pick = function ($base) use ($params) {
+    $parts = [];
+    foreach ($params as [$a, $v]) {
+      if ($a === $base) return pg_imap_decode($v);
+      if ($a === $base . '*') { $parts = [0 => $v]; $star = true; break; }
+      if (preg_match('/^' . $base . '\*(\d+)\*?$/', $a, $m)) $parts[(int) $m[1]] = $v;
+    }
+    if (!$parts) return '';
+    ksort($parts);
+    $v = implode('', $parts);
+    if (preg_match("/^([a-z0-9\-_]+)'[^']*'(.*)$/i", $v, $m)) {         // charset'lang'%XX
+      $dec = rawurldecode($m[2]);
+      return strtoupper($m[1]) === 'UTF-8' ? $dec : (string) @mb_convert_encoding($dec, 'UTF-8', $m[1]);
+    }
+    return rawurldecode($v);
+  };
+  $n = $pick('filename');
+  if ($n === '') $n = $pick('name');
+  return trim(str_replace(["\r", "\n", "\0", '/', '\\'], ['', '', '', '_', '_'], $n));
+}
+function pg_imap_part_mime($part){
+  $types = ['text', 'multipart', 'message', 'application', 'audio', 'image', 'video', 'model', 'other'];
+  return ($types[(int) ($part->type ?? 3)] ?? 'application') . '/' . strtolower((string) ($part->subtype ?? 'octet-stream'));
+}
+// Anhänge einer Mail: [['part'=>'2', 'name'=>…, 'mime'=>…, 'size'=>Bytes, 'enc'=>…], …]
+function pg_imap_attachments($mbox, $uid){
+  $st = @imap_fetchstructure($mbox, $uid, FT_UID);
+  $out = [];
+  if ($st) pg_imap_walk_attachments($st, '', $out);
+  return $out;
+}
+function pg_imap_walk_attachments($part, $no, &$out){
+  if (!empty($part->parts)) {
+    foreach ($part->parts as $i => $p) pg_imap_walk_attachments($p, $no === '' ? (string) ($i + 1) : $no . '.' . ($i + 1), $out);
+    return;
+  }
+  $no = $no === '' ? '1' : $no;
+  $name = pg_imap_part_filename($part);
+  $disp = strtolower((string) ($part->disposition ?? ''));
+  if ($name === '' && $disp !== 'attachment') return;                 // normaler Textteil
+  $mime = pg_imap_part_mime($part);
+  if ($name === '') $name = 'anhang-' . str_replace('.', '-', $no) . '.' . preg_replace('/[^a-z0-9]/', '', strtolower((string) ($part->subtype ?? 'bin')));
+  $bytes = (int) ($part->bytes ?? 0);
+  $out[] = ['part' => $no, 'name' => $name, 'mime' => $mime, 'enc' => (int) ($part->encoding ?? 0),
+            'size' => (int) ((int) ($part->encoding ?? 0) === 3 ? round($bytes * 0.74) : $bytes)];
+}
+function pg_imap_decode_part($raw, $enc){
+  if ((int) $enc === 3) return base64_decode(preg_replace('/\s+/', '', (string) $raw));
+  if ((int) $enc === 4) return quoted_printable_decode((string) $raw);
+  return (string) $raw;
+}
+// Inhalt eines Anhangs (ohne die Mail als gelesen zu markieren)
+function pg_imap_attachment_data($mbox, $uid, $partNo){
+  foreach (pg_imap_attachments($mbox, $uid) as $a) {
+    if ($a['part'] !== $partNo) continue;
+    $raw = @imap_fetchbody($mbox, $uid, $partNo, FT_UID | FT_PEEK);
+    if ($raw === false) return null;
+    return $a + ['data' => pg_imap_decode_part($raw, $a['enc'])];
+  }
+  return null;
+}
+// Message-ID + References für Antworten im selben Verlauf
+function pg_imap_thread_headers($mbox, $uid){
+  $no = @imap_msgno($mbox, $uid);
+  if (!$no) return [];
+  $h = @imap_headerinfo($mbox, $no);
+  $mid = trim((string) ($h->message_id ?? ''));
+  if ($mid === '' || !preg_match('/^<[^<>\s]+>$/', $mid)) return [];
+  $refs = trim(preg_replace('/\s+/', ' ', (string) ($h->references ?? '')));
+  return ['In-Reply-To' => $mid, 'References' => trim($refs . ' ' . $mid)];
+}
+// Lesbare Dateigröße
+function pg_fmt_bytes($b){
+  $b = (int) $b;
+  if ($b >= 1048576) return str_replace('.', ',', (string) round($b / 1048576, 1)) . ' MB';
+  return max(1, (int) round($b / 1024)) . ' KB';
+}
+
+// php.ini-Größenangaben („20M“, „1G“) in Bytes
+function pg_ini_bytes($v){
+  $v = trim((string) $v);
+  if ($v === '' || $v === '-1') return 0;
+  $n = (float) $v;
+  switch (strtolower(substr($v, -1))) { case 'g': $n *= 1024; /* weiter */ case 'm': $n *= 1024; /* weiter */ case 'k': $n *= 1024; }
+  return (int) $n;
 }

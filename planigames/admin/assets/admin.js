@@ -710,7 +710,7 @@
   if (compose) {
     const mode = compose.getAttribute("data-mode") || "compose";
     const input = compose.querySelector("[data-mail-input]");
-    const frame = compose.querySelector("[data-mail-frame]");
+    const frame = compose.querySelector("[data-mail-frame]") || document.querySelector("[data-mail-frame]");
     let timer = null, busy = false, pending = false;
     async function render() {
       if (busy) { pending = true; return; }
@@ -719,6 +719,9 @@
       fd.append("csrf", csrf());
       fd.append("mode", mode);
       fd.append("message", input ? input.value : "");
+      if (compose.hasAttribute("data-html")) fd.append("html", "1");
+      const sigSel = compose.querySelector("[data-sig-select]");
+      if (sigSel) fd.append("sig", sigSel.value);
       try {
         const r = await fetch("mail.php?action=preview", { method: "POST", body: fd });
         frame.srcdoc = await r.text();
@@ -727,6 +730,9 @@
       if (pending) { pending = false; render(); }
     }
     if (input) input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(render, 350); });
+    const sigSelP = compose.querySelector("[data-sig-select]");
+    if (sigSelP) sigSelP.addEventListener("change", render);
+    window.pgMailPreview = render;
     render();
 
     // Schnellantwort-Vorlage einfügen
@@ -1618,6 +1624,255 @@
     plCheckAll();
   }
   document.addEventListener("click", (e) => { if (e.target.closest("[data-open-placer]")) { e.preventDefault(); openPlacer(); } });
+
+
+  // =====================================================================
+  //  POSTFACH: Editor mit Formatierung, Anhänge, Entwürfe, Signaturen
+  // =====================================================================
+  const escHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // Eingefügtes HTML (z. B. aus Word/Webseiten) auf einfache Auszeichnungen reduzieren
+  function cleanPasted(html) {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const ok = { B: "b", STRONG: "b", I: "i", EM: "i", U: "u", P: "p", DIV: "p", BR: "br", UL: "ul", OL: "ol", LI: "li", H1: "h3", H2: "h3", H3: "h3", H4: "h3", BLOCKQUOTE: "blockquote", A: "a" };
+    const walk = (n) => {
+      if (n.nodeType === 3) return escHtml(n.nodeValue);
+      if (n.nodeType !== 1 || /^(SCRIPT|STYLE|META|LINK|TITLE|IMG|IFRAME|OBJECT|SVG)$/.test(n.nodeName)) return "";
+      const inner = [...n.childNodes].map(walk).join("");
+      const t = ok[n.nodeName];
+      if (!t) return inner;
+      if (t === "br") return "<br>";
+      if (t === "a") { const h = n.getAttribute("href") || ""; return /^(https?:|mailto:)/i.test(h) ? `<a href="${escHtml(h)}">${inner}</a>` : inner; }
+      return `<${t}>${inner}</${t}>`;
+    };
+    return [...doc.body.childNodes].map(walk).join("");
+  }
+  document.querySelectorAll("[data-rte]").forEach((rte) => {
+    const area = rte.querySelector("[data-rte-area]"), input = rte.querySelector("[data-rte-input]");
+    const sync = () => {
+      const empty = !area.textContent.trim() && !area.querySelector("li, blockquote");
+      area.classList.toggle("is-empty", empty);
+      input.value = empty ? "" : area.innerHTML;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    const blockOf = () => {
+      const sel = getSelection(); if (!sel.rangeCount) return "";
+      let n = sel.anchorNode; while (n && n !== area) { if (n.nodeType === 1 && /^(H3|BLOCKQUOTE|P|LI)$/.test(n.nodeName)) return n.nodeName; n = n.parentNode; }
+      return "";
+    };
+    const exec = (cmd) => {
+      area.focus();
+      try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch (e) {}
+      if (cmd === "h3") document.execCommand("formatBlock", false, blockOf() === "H3" ? "p" : "h3");
+      else if (cmd === "quote") document.execCommand("formatBlock", false, blockOf() === "BLOCKQUOTE" ? "p" : "blockquote");
+      else if (cmd === "link") {
+        const cur = getSelection().toString();
+        let url = prompt("Link-Adresse (https://… oder mailto:…)", /^https?:\/\//.test(cur) ? cur : "https://");
+        if (url === null) return;
+        url = url.trim();
+        if (/^www\./i.test(url)) url = "https://" + url;
+        if (!/^(https?:\/\/|mailto:)/i.test(url) || url === "https://") { toast("Bitte eine vollständige Adresse mit https:// oder mailto: eingeben.", "info"); return; }
+        if (getSelection().isCollapsed) document.execCommand("insertHTML", false, `<a href="${escHtml(url)}">${escHtml(url)}</a>`);
+        else document.execCommand("createLink", false, url);
+      } else if (cmd === "clear") { document.execCommand("removeFormat"); document.execCommand("unlink"); document.execCommand("formatBlock", false, "p"); }
+      else document.execCommand(cmd);
+      sync(); updState();
+    };
+    const updState = () => {
+      rte.querySelectorAll("[data-cmd]").forEach((b) => {
+        const c = b.dataset.cmd; let on = false;
+        try { if (["bold", "italic", "underline", "insertUnorderedList", "insertOrderedList"].includes(c)) on = document.queryCommandState(c); } catch (e) {}
+        if (c === "h3") on = blockOf() === "H3"; if (c === "quote") on = blockOf() === "BLOCKQUOTE";
+        b.classList.toggle("on", !!on);
+      });
+    };
+    rte.querySelector(".rte-bar").addEventListener("mousedown", (e) => { if (e.target.closest("[data-cmd]")) e.preventDefault(); });   // Auswahl im Text behalten
+    rte.addEventListener("click", (e) => { const b = e.target.closest("[data-cmd]"); if (b) exec(b.dataset.cmd); });
+    area.addEventListener("input", sync);
+    area.addEventListener("keyup", updState); area.addEventListener("mouseup", updState);
+    area.addEventListener("focus", () => { try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch (e) {} });
+    area.addEventListener("paste", (e) => {
+      const cd = e.clipboardData; if (!cd) return;
+      const html = cd.getData("text/html"), text = cd.getData("text/plain");
+      e.preventDefault();
+      if (html) document.execCommand("insertHTML", false, cleanPasted(html));
+      else document.execCommand("insertHTML", false, escHtml(text).replace(/\r?\n/g, "<br>"));
+      sync();
+    });
+    // Schnellantwort-Vorlage an der Schreibmarke einfügen
+    const tplSel = rte.querySelector("[data-tpl-select]"), tplData = rte.querySelector("[data-tpl-data]");
+    if (tplSel && tplData) {
+      let bodies = []; try { bodies = JSON.parse(tplData.textContent || "[]"); } catch (e) {}
+      tplSel.addEventListener("change", () => {
+        const t = bodies[tplSel.value]; tplSel.value = "";
+        if (!t) return;
+        area.focus();
+        document.execCommand("insertHTML", false, t.split(/\n{2,}/).map((p) => "<p>" + escHtml(p).replace(/\n/g, "<br>") + "</p>").join(""));
+        sync();
+      });
+    }
+    window.pgRteSet = (html) => { area.innerHTML = html; sync(); };
+    sync();
+  });
+
+  // ---- Anhänge: auswählen/ziehen, Liste, Größe prüfen ----
+  const composer = document.querySelector("[data-composer]");
+  if (composer) {
+    const attBox = composer.querySelector("[data-atts]");
+    const BLOCK = /\.(exe|bat|cmd|com|scr|msi|jse?|vbe?|ps1|jar|lnk|reg|hta|cpl|pif|wsf|php|phtml)$/i;
+    const max = +composer.dataset.max || 10485760;
+    let files = [];
+    const fmt = (b) => (b >= 1048576 ? (b / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(b / 1024)) + " KB");
+    const fwdSize = () => [...composer.querySelectorAll("[data-fwd-size]")].filter((c) => c.checked).reduce((a, c) => a + (+c.dataset.fwdSize || 0), 0);
+    const renderAtts = () => {
+      if (!attBox) return;
+      const list = attBox.querySelector("[data-att-list]");
+      const total = files.reduce((a, f) => a + f.size, 0) + fwdSize();
+      list.innerHTML = files.map((f, i) => `<li><span class="mx-att-ic">${escHtml((f.name.split(".").pop() || "").slice(0, 4).toUpperCase())}</span><span class="cmp-att-n">${escHtml(f.name)}</span><small>${fmt(f.size)}</small><button type="button" class="icon-btn sm" data-att-del="${i}" aria-label="Entfernen"><svg class="ic"><use href="#i-x"/></svg></button></li>`).join("")
+        + (files.length || fwdSize() ? `<li class="cmp-att-sum${total > max ? " over" : ""}">${fmt(total)} von ${fmt(max)}${total > max ? " – zu groß" : ""}</li>` : "");
+      const dt = new DataTransfer(); files.forEach((f) => dt.items.add(f));
+      attBox.querySelector("[data-att-input]").files = dt.files;
+    };
+    const addFiles = (list) => {
+      for (const f of list) {
+        if (BLOCK.test(f.name)) { toast("„" + f.name + "“ – dieser Dateityp wird aus Sicherheitsgründen nicht verschickt.", "err", 4500); continue; }
+        if (files.some((x) => x.name === f.name && x.size === f.size)) continue;
+        if (files.reduce((a, x) => a + x.size, 0) + fwdSize() + f.size > max) { toast("„" + f.name + "“ passt nicht mehr – Anhänge zusammen höchstens " + fmt(max) + ".", "err", 4500); continue; }
+        files.push(f);
+      }
+      renderAtts();
+    };
+    if (attBox) {
+      const inp = attBox.querySelector("[data-att-input]"), drop = attBox.querySelector("[data-drop]");
+      inp.addEventListener("change", () => { const l = [...inp.files]; addFiles(l); });
+      attBox.addEventListener("click", (e) => { const d = e.target.closest("[data-att-del]"); if (d) { e.preventDefault(); files.splice(+d.dataset.attDel, 1); renderAtts(); } });
+      ["dragenter", "dragover"].forEach((t) => composer.addEventListener(t, (e) => { if ([...(e.dataTransfer?.items || [])].some((i) => i.kind === "file")) { e.preventDefault(); drop.classList.add("over"); } }));
+      ["dragleave", "drop"].forEach((t) => composer.addEventListener(t, () => drop.classList.remove("over")));
+      composer.addEventListener("drop", (e) => { if (e.dataTransfer && e.dataTransfer.files.length) { e.preventDefault(); addFiles([...e.dataTransfer.files]); } });
+      composer.querySelectorAll("[data-fwd-size]").forEach((c) => c.addEventListener("change", renderAtts));
+      renderAtts();
+    }
+    // ---- Entwurf automatisch im Browser merken (pro Modus) ----
+    const mode = composer.dataset.mode || "compose";
+    const key = "pg_mail_draft_" + mode;
+    const st = composer.querySelector("[data-draft-status]");
+    const fTo = composer.querySelector('[name="to"]'), fSub = composer.querySelector('[name="subject"]'), fSig = composer.querySelector("[data-sig-select]");
+    const fHtml = composer.querySelector("[data-rte-input]");
+    const hasContent = () => (fTo && fTo.value.trim()) || (fSub && fSub.value.trim()) || (fHtml && fHtml.value.trim());
+    let dt = null;
+    const saveDraft = () => {
+      clearTimeout(dt);
+      dt = setTimeout(() => {
+        try {
+          if (!hasContent()) { localStorage.removeItem(key); if (st) st.textContent = ""; return; }
+          localStorage.setItem(key, JSON.stringify({ to: fTo ? fTo.value : "", subject: fSub ? fSub.value : "", html: fHtml ? fHtml.value : "", sig: fSig ? fSig.value : null, t: Date.now() }));
+          if (st) st.textContent = "Entwurf gemerkt · " + new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+        } catch (e) {}
+      }, 600);
+    };
+    composer.addEventListener("input", saveDraft);
+    composer.addEventListener("change", saveDraft);
+    let saved = null; try { saved = JSON.parse(localStorage.getItem(key) || "null"); } catch (e) {}
+    if (saved && !hasContent() && (saved.html || saved.subject || saved.to)) {
+      const bar = document.createElement("div");
+      bar.className = "cmp-restore";
+      bar.innerHTML = `<svg class="ic"><use href="#i-clock"/></svg><span>Ungesendeter Entwurf vom ${new Date(saved.t).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}${saved.subject ? " – „" + escHtml(saved.subject) + "“" : ""}</span><button type="button" class="btn btn-sm" data-r="1">Wiederherstellen</button><button type="button" class="btn btn-sm btn-ghost" data-r="0">Verwerfen</button>`;
+      composer.querySelector(".cmp-h").after(bar);
+      bar.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-r]"); if (!b) return;
+        if (b.dataset.r === "1") {
+          if (fTo && saved.to) fTo.value = saved.to; if (fSub && saved.subject) fSub.value = saved.subject;
+          if (fSig && saved.sig !== null && [...fSig.options].some((o) => o.value === saved.sig)) fSig.value = saved.sig;
+          if (window.pgRteSet && saved.html) window.pgRteSet(saved.html);
+          if (window.pgMailPreview) window.pgMailPreview();
+        } else { try { localStorage.removeItem(key); } catch (err) {} }
+        bar.remove();
+      });
+    }
+    composer.addEventListener("submit", (e) => {
+      if (fHtml && !fHtml.value.trim()) { e.preventDefault(); toast("Bitte eine Nachricht schreiben.", "info"); composer.querySelector("[data-rte-area]")?.focus(); return; }
+      if (files.reduce((a, f) => a + f.size, 0) + fwdSize() > max) { e.preventDefault(); toast("Anhänge sind zusammen zu groß.", "err"); return; }
+      try { localStorage.removeItem(key); } catch (err) {}
+      const btn = composer.querySelector('button[type="submit"]');
+      if (btn) { setTimeout(() => { btn.disabled = true; btn.textContent = "Wird gesendet …"; }, 0); }
+    });
+    // Vorschau ein-/ausblenden (Einstellung merken)
+    const mx = document.querySelector("[data-mx]");
+    const pv = (on) => { if (mx) mx.classList.toggle("pv-off", !on); try { localStorage.setItem("pg_mail_pv", on ? "1" : "0"); } catch (e) {} };
+    let pvOn = innerWidth >= 1280; try { const v = localStorage.getItem("pg_mail_pv"); if (v !== null) pvOn = v === "1"; } catch (e) {}
+    pv(pvOn);
+    composer.querySelectorAll("[data-preview-toggle]").forEach((b) => b.addEventListener("click", () => pv(mx && mx.classList.contains("pv-off"))));
+  }
+
+  // ---- Liste filtern ----
+  const mxSearch = document.querySelector("[data-mx-search]");
+  if (mxSearch) mxSearch.addEventListener("input", () => {
+    const q = mxSearch.value.trim().toLowerCase();
+    document.querySelectorAll("[data-mx-rows] .mx-row").forEach((r) => { r.parentElement.style.display = !q || (r.dataset.q || "").includes(q) ? "" : "none"; });
+  });
+
+  // ---- Signaturen verwalten ----
+  const sigDlg = document.getElementById("dlg-sigs"), sigData = document.getElementById("pg-sigs-data");
+  if (sigDlg && sigData) {
+    let SD = { sigs: [], mine: "", team: [] }; try { SD = JSON.parse(sigData.textContent); } catch (e) {}
+    const listEl = sigDlg.querySelector("[data-sig-list]");
+    let rows = [], mineIdx = -1;
+    const fields = [["label", "Bezeichnung", "z. B. Dominik"], ["name", "Name", "Dominic Majewski"], ["role", "Rolle / Titel", "Founder · PLANIGAMES"], ["closing", "Grußzeile", "Beste Grüße"], ["email", "Eigene E-Mail (optional)", "Leer = Studio-Adresse"], ["phone", "Telefon (optional)", "+49 …"]];
+    const draw = () => {
+      listEl.innerHTML = rows.length ? rows.map((r, i) => `<div class="sig-card" data-i="${i}">
+          <div class="sig-card-h"><b>${escHtml(r.label || r.name || "Neue Signatur")}</b>
+            <label class="sig-mine"><input type="radio" name="sig-mine" value="${i}" ${mineIdx === i ? "checked" : ""}> Mein Standard</label>
+            <button type="button" class="icon-btn sm" data-sig-del="${i}" title="Löschen" aria-label="Löschen"><svg class="ic"><use href="#i-trash"/></svg></button></div>
+          <div class="sig-grid">${fields.map(([k, l, ph]) => `<label class="field"><span class="flabel">${l}</span><input type="text" data-k="${k}" value="${escHtml(r[k] || "")}" placeholder="${escHtml(ph)}"></label>`).join("")}</div></div>`).join("")
+        + `<label class="sig-none"><input type="radio" name="sig-mine" value="-1" ${mineIdx === -1 ? "checked" : ""}> Standardmäßig ohne Signatur schreiben</label>`
+        : '<p class="hint">Noch keine Signatur – lege eine an oder übernimm sie aus den Team-Profilen.</p>';
+    };
+    const open = () => {
+      rows = SD.sigs.map((x) => ({ ...x }));
+      mineIdx = rows.findIndex((x) => x.id === SD.mine);
+      draw(); sigDlg.hidden = false;
+    };
+    document.addEventListener("click", (e) => { if (e.target.closest("[data-open-sigs]")) { e.preventDefault(); open(); } });
+    listEl.addEventListener("input", (e) => { const inp = e.target.closest("[data-k]"); if (!inp) return; const i = +inp.closest("[data-i]").dataset.i; rows[i][inp.dataset.k] = inp.value; if (inp.dataset.k === "label" || inp.dataset.k === "name") inp.closest(".sig-card").querySelector(".sig-card-h b").textContent = rows[i].label || rows[i].name || "Neue Signatur"; });
+    listEl.addEventListener("change", (e) => { if (e.target.name === "sig-mine") mineIdx = +e.target.value; });
+    listEl.addEventListener("click", (e) => {
+      const d = e.target.closest("[data-sig-del]"); if (!d) return;
+      const i = +d.dataset.sigDel;
+      if (!confirm("Signatur „" + (rows[i].label || rows[i].name || "") + "“ löschen?")) return;
+      rows.splice(i, 1); if (mineIdx === i) mineIdx = -1; else if (mineIdx > i) mineIdx--;
+      draw();
+    });
+    sigDlg.querySelector("[data-sig-add]").addEventListener("click", () => { rows.push({ id: "", label: "", name: "", role: "", closing: "Beste Grüße", email: "", phone: "" }); draw(); listEl.querySelector(".sig-card:last-child input")?.focus(); });
+    const teamBtn = sigDlg.querySelector("[data-sig-team]");
+    if (teamBtn) teamBtn.addEventListener("click", () => {
+      let n = 0;
+      (SD.team || []).forEach((m) => {
+        // persönliche Signatur schon vorhanden? (die Studio-Signatur „PLANIGAMES“ zählt nicht)
+        if (rows.some((r) => r.id !== "studio" && (r.label || "").toLowerCase() !== "planigames" && (r.name || "").trim().toLowerCase() === m.name.trim().toLowerCase())) return;
+        rows.push({ id: "", label: m.name.split(" ")[0], name: m.name, role: m.role ? m.role + " · PLANIGAMES" : "PLANIGAMES", closing: "Beste Grüße", email: "", phone: "" }); n++;
+      });
+      draw();
+      toast(n ? n + " Signatur" + (n === 1 ? "" : "en") + " aus den Team-Profilen übernommen – prüfen und speichern." : "Alle Team-Mitglieder haben schon eine Signatur.", "info");
+    });
+    sigDlg.querySelector("[data-sig-save]").addEventListener("click", async (e) => {
+      const btn = e.currentTarget; btn.disabled = true;
+      const fd = new URLSearchParams(); fd.append("csrf", csrf()); fd.append("sigs", JSON.stringify(rows)); fd.append("mine", String(mineIdx));
+      try {
+        const r = await fetch("mail.php?action=sigs_save", { method: "POST", body: fd });
+        const j = await r.json();
+        if (!j.ok) throw new Error(j.error || "Fehler");
+        SD.sigs = j.sigs; SD.mine = j.default;
+        document.querySelectorAll("[data-sig-select]").forEach((sel) => {
+          const cur = sel.value;
+          sel.innerHTML = '<option value="">Keine Signatur</option>' + j.sigs.map((x) => `<option value="${escHtml(x.id)}">${escHtml(x.label + (x.name && x.name !== x.label ? " · " + x.name : ""))}</option>`).join("");
+          sel.value = j.sigs.some((x) => x.id === cur) ? cur : (j.default || "");
+          sel.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+        sigDlg.hidden = true;
+        toast("Signaturen gespeichert", "ok");
+      } catch (err) { toast("Speichern fehlgeschlagen: " + err.message, "err"); }
+      btn.disabled = false;
+    });
+  }
 
   // ---- Tastatur-Shortcuts ----
   function primarySaveButton() {
