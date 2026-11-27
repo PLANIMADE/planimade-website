@@ -4,6 +4,8 @@ Stand: 27.11.2026 · Prototyp: `prototype.html` (echte Inhalte, Bilder kommen vo
 nichts wird gespeichert). Dieser Ordner liegt bewusst außerhalb von `planigames/` und wird nie hochgeladen.
 Ansehen: `prototype.html` im Browser öffnen (braucht Internet für Bilder & Schriften) – unten wechselt eine
 Leiste zwischen Startseite, Spiele, den drei Spielseiten und dem Devlog.
+Interaktive Vorschau: als private Seite in Claude veröffentlicht (Bilder verkleinert, Schrift eingebettet);
+neu bauen mit `build-vorschau.py` (Aufruf steht oben im Skript).
 
 ## Befund (aktuelle Website, v54)
 
