@@ -2261,6 +2261,17 @@
     });
   })();
 
+  /* ---- Board: Aufklapp-Menüs (Board, Spalte, Neues Board) schließen beim Klick daneben ---- */
+  document.addEventListener("click", (e) => {
+    document.querySelectorAll("details.kb-pop[open]").forEach((d) => { if (!d.contains(e.target)) d.open = false; });
+  });
+  // Karte aus dem Kalender (#card-…) direkt öffnen
+  if (location.hash.startsWith("#card-")) {
+    const card = document.getElementById(location.hash.slice(1));
+    const ed = card && card.querySelector(".kb-cardedit");
+    if (ed) { card.scrollIntoView({ block: "center" }); card.classList.add("kb-flash"); setTimeout(() => card.classList.remove("kb-flash"), 1800); }
+  }
+
   // ---- Tastatur-Shortcuts ----
   function primarySaveButton() {
     return document.querySelector('[data-tr-savebar] button[type="submit"]')
