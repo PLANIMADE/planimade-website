@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "52";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "53";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
@@ -216,17 +216,27 @@
         $$("[data-i18n-ph]", root).forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
     }
     // Tiefen-Merge: englische TEXTE über die deutsche Basis legen.
-    // - Aufbau (Reihenfolge, Blöcke, Ein/Aus, Bilder, Farben, Links, Zahlen) kommt IMMER aus Deutsch.
+    // - Deutsch ist die Vorlage: Aufbau (Reihenfolge, Blöcke, Ein/Aus, Bilder, Farben, Links, Zahlen) kommt IMMER aus Deutsch.
     // - Einträge mit Adresse (Spiele, Beiträge) werden über den Slug zugeordnet, Blöcke über Typ +
     //   Vorkommen – so passt EN auch dann noch, wenn auf Deutsch umsortiert oder ergänzt wurde.
-    // - Leeres Englisch fällt auf Deutsch zurück.
+    // - Jeder englische Text merkt sich in „_src“ einen Fingerabdruck seines deutschen Originals.
+    //   Ist das Deutsche inzwischen anders (veraltet), wird der aktuelle deutsche Text gezeigt.
+    // - Leeres Englisch (oder leeres Deutsch) → Deutsch.
     const SHARED_KEYS = new Set(["type", "slug", "hidden", "status", "align", "platform", "effect", "density", "game",
         "steamAppId", "itchEmbed", "youtube", "version", "publishAt", "draft", "notify", "featured", "enabled",
-        "icon", "emoji", "email", "accent", "accent2", "particleColor", "logoScale"]);
+        "icon", "emoji", "email", "accent", "accent2", "particleColor", "logoScale", "logoLayout", "logoPos"]);
     const looksShared = (v) => /^(\/|https?:\/\/|www\.|#|data:|mailto:|tel:)/i.test(v)
         || /\.(png|jpe?g|webp|gif|svg|avif|mp4|webm|mov|zip|pdf)(\?[^#]*)?(#.*)?$/i.test(v)
         || /^\d{4}-\d{2}-\d{2}/.test(v);
-    function mergeLang(de, en, key) {
+    // Fingerabdruck (FNV-1a, 32 Bit) – identisch zu admin/lib.php pg_tr_hash()
+    const trHash = (s) => {
+        const b = new TextEncoder().encode(String(s).replace(/^[ \t\n\r\0\x0B]+|[ \t\n\r\0\x0B]+$/g, ""));
+        let h = 0x811c9dc5;
+        for (const x of b) { h ^= x; h = Math.imul(h, 0x01000193) >>> 0; }
+        return h.toString(16).padStart(8, "0");
+    };
+    function mergeLang(de, en, key, path = "", src = null) {
+        const sub = (k) => (path === "" ? String(k) : path + "." + k);
         if (en === undefined || en === null || en === "") return de;
         if (Array.isArray(de)) {
             if (!Array.isArray(en)) return de;
@@ -234,34 +244,36 @@
             if (de.some(d => isObj(d) && d.slug)) {                       // Spiele, Beiträge …
                 const deSlugs = new Set(de.filter(isObj).map(d => String(d.slug || "").toLowerCase()));
                 return de.map((d, i) => {
-                    if (!isObj(d) || !d.slug) return mergeLang(d, en[i]);
+                    if (!isObj(d) || !d.slug) return mergeLang(d, en[i], key, sub(i), src);
                     const s = String(d.slug).toLowerCase();
                     let e = en.find(x => isObj(x) && String(x.slug || "").toLowerCase() === s);
                     // Altbestand: gleiche Position, wenn der EN-Eintrag zu keinem deutschen gehört (z. B. alte Adresse)
                     if (!e && isObj(en[i]) && (!en[i].slug || !deSlugs.has(String(en[i].slug).toLowerCase()))) e = en[i];
-                    return mergeLang(d, e);
+                    return mergeLang(d, e, key, sub("@" + d.slug), src);
                 });
             }
             if (de.some(d => isObj(d) && d.type)) {                       // Seiten-Blöcke
                 const byType = {}, seen = {};
                 en.forEach(x => { if (isObj(x) && x.type) (byType[x.type] = byType[x.type] || []).push(x); });
-                return de.map(d => {
+                return de.map((d, i) => {
                     if (!isObj(d) || !d.type) return d;
                     const k = seen[d.type] = (seen[d.type] || 0) + 1;
-                    return mergeLang(d, (byType[d.type] || [])[k - 1]);
+                    return mergeLang(d, (byType[d.type] || [])[k - 1], key, sub(d.type + "#" + k), src);
                 });
             }
-            return de.map((d, i) => mergeLang(d, en[i], key));
+            return de.map((d, i) => mergeLang(d, en[i], key, sub(i), src));
         }
         if (de && typeof de === "object") {
             if (typeof en !== "object" || Array.isArray(en)) return de;
             const out = { ...de };
-            for (const k of Object.keys(de)) out[k] = SHARED_KEYS.has(k) ? de[k] : mergeLang(de[k], en[k], k);
+            for (const k of Object.keys(de)) out[k] = SHARED_KEYS.has(k) ? de[k] : mergeLang(de[k], en[k], k, sub(k), src);
             return out;
         }
         if (typeof de === "number" || typeof de === "boolean") return de;   // Zahlen & Schalter: immer DE
         if (typeof en !== "string") return de;
-        if (looksShared(en) || (typeof de === "string" && de !== "" && looksShared(de))) return de;   // Bilder, Dateien, Links, Farben, Datum
+        if (typeof de === "string" && !/\p{L}/u.test(de)) return de;      // leer oder ohne Buchstaben (z. B. „2025“) → wie Deutsch
+        if (looksShared(en) || (typeof de === "string" && looksShared(de))) return de;   // Bilder, Dateien, Links, Farben, Datum
+        if (src && typeof src[path] === "string" && src[path] !== trHash(de)) return de;   // Übersetzung veraltet → aktuelles Deutsch
         return en;
     }
 
@@ -651,7 +663,8 @@
             const de = await fetchJSON(map[n]);
             if (LANG === "en" && de) {
                 const en = await fetchJSON(map[n].replace(/\.json$/, ".en.json"));
-                DATA[n] = en ? mergeLang(de, en) : de;
+                const src = en && en._src && typeof en._src === "object" && !Array.isArray(en._src) ? en._src : null;
+                DATA[n] = en ? mergeLang(de, en, undefined, "", src) : de;
                 applyShared(n, DATA[n], de);     // Nicht-Text-Einstellungen immer aus DE
             } else {
                 DATA[n] = de;
@@ -665,11 +678,11 @@
     function applyShared(name, merged, de) {
         if (!merged || !de) return;
         if (name === "studio") {
-            ["background", "logo", "favicon", "heroBackground", "heroVideo"].forEach(k => {
+            ["name", "background", "logo", "favicon", "heroBackground", "heroVideo"].forEach(k => {
                 if (de[k] !== undefined) merged[k] = de[k];
             });
         } else if (name === "games" && Array.isArray(merged.games) && Array.isArray(de.games)) {
-            const SHARED_GAME = ["accent", "accent2", "particleColor", "cover", "logo", "logoScale", "logoPos", "wishlistUrl", "status", "featured", "slug"];
+            const SHARED_GAME = ["title", "accent", "accent2", "particleColor", "cover", "logo", "logoScale", "logoPos", "logoLayout", "wishlistUrl", "status", "featured", "slug"];
             merged.games.forEach((g, i) => {
                 const d = de.games[i]; if (!d) return;
                 SHARED_GAME.forEach(k => { if (d[k] !== undefined) g[k] = d[k]; });

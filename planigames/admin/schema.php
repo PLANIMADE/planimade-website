@@ -31,12 +31,12 @@ return [
     'file'  => __DIR__ . '/../data/studio.json',
     'fields' => [
       ['widget'=>'heading','label'=>'Studio-Identität','hint'=>'Name, Logo & Grunddaten.'],
-      ['name'=>'name','label'=>'Studio-Name','widget'=>'string'],
+      ['name'=>'name','label'=>'Studio-Name','widget'=>'string','i18n'=>false],
       ['name'=>'logo','label'=>'Logo (optional)','widget'=>'image','hint'=>'Transparentes PNG/SVG, Höhe ~80 px (z. B. 240×80). Ersetzt den Schriftzug in Kopf-/Fußzeile. Leer = Wortmarke.'],
       ['name'=>'favicon','label'=>'Favicon (Browser-Tab-Icon)','widget'=>'image','hint'=>'Quadratisch, z. B. 64×64 oder 192×192 px (PNG/SVG/ICO). Separat vom Logo.'],
       ['name'=>'pwa','label'=>'Admin-App-Symbol (Homescreen)','widget'=>'object','hint'=>'Nur fürs Admin/Backend: Ihr könnt das Admin am Handy „zum Home-Bildschirm hinzufügen" und es öffnet im Vollbild wie eine App – mit diesem Symbol. Für normale Besucher gibt es das nicht.','fields'=>[
         ['name'=>'appIcon','label'=>'App-Icon','widget'=>'image','hint'=>'Quadratisch, mind. 512×512 px (PNG). Am besten mit etwas Rand (Sicherheitszone), sonst beschneidet Android die Ecken. Leer = Standard-Symbol.'],
-        ['name'=>'appName','label'=>'App-Name (unter dem Icon)','widget'=>'string','default'=>'PLANIGAMES','hint'=>'Im Homescreen erscheint „… Admin".'],
+        ['name'=>'appName','label'=>'App-Name (unter dem Icon)','widget'=>'string','i18n'=>false,'default'=>'PLANIGAMES','hint'=>'Im Homescreen erscheint „… Admin".'],
       ]],
       ['name'=>'tagline','label'=>'Untertitel / Tagline','widget'=>'string'],
       ['name'=>'founded','label'=>'Gegründet (Jahr)','widget'=>'string'],
@@ -171,7 +171,7 @@ return [
     'file'  => __DIR__ . '/../data/team.json',
     'fields' => [
       ['name'=>'members','label'=>'Teammitglieder','widget'=>'list','summary'=>'name','fields'=>[
-        ['name'=>'name','label'=>'Name','widget'=>'string'],
+        ['name'=>'name','label'=>'Name','widget'=>'string','i18n'=>false],
         ['name'=>'role','label'=>'Rolle','widget'=>'string','hint'=>'z. B. Founder · Code & Design'],
         ['name'=>'photo','label'=>'Foto','widget'=>'image','hint'=>'Quadratisch, ca. 400×400 px (JPG/PNG). Ohne Foto wird das Emoji gezeigt.'],
         ['name'=>'photoAlt','label'=>'Foto – Alt-Text','widget'=>'string','hint'=>'Bildbeschreibung für SEO & Screenreader. Leer = Name.'],
@@ -197,7 +197,7 @@ return [
       ['name'=>'games','label'=>'Spiele','widget'=>'list','summary'=>'title','fields'=>[
         // „tab“ ordnet die Abschnitte den Reitern der Spiele-Verwaltung zu (settings · look · page)
         ['widget'=>'heading','label'=>'Grunddaten','tab'=>'settings','hint'=>'Name, Kurzbeschreibung, Status & Store-Link.'],
-        ['name'=>'title','label'=>'Titel','widget'=>'string'],
+        ['name'=>'title','label'=>'Titel','widget'=>'string','i18n'=>false,'hint'=>'Der Spielname ist in allen Sprachen gleich.'],
         ['name'=>'slug','label'=>'Web-Adresse (Slug)','widget'=>'string','slug'=>true,'hint'=>'Kleinbuchstaben & Bindestriche. Wird über „Ändern…“ geändert – dabei ziehen Warteliste, Vorschläge, Board, Devlog & Statistik automatisch mit um.'],
         ['name'=>'tagline','label'=>'Kurzbeschreibung / Tagline','widget'=>'text'],
         ['name'=>'status','label'=>'Status','widget'=>'select','default'=>'development','options'=>[

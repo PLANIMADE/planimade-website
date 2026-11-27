@@ -18,69 +18,6 @@ function pg_gv_card($icon, $title, $body, $extra = '', $hint = ''){
 }
 
 /* Englisch-Modus: nur übersetzbare Texte, jeweils mit deutschem Original darunter */
-function pg_gv_i18n_leaf($label, $name, $enVal, $deVal, $widget, &$stat){
-  $enVal = is_scalar($enVal) ? (string) $enVal : '';
-  $stat['t']++;
-  $miss = trim($enVal) === '';
-  if ($miss) $stat['m']++;
-  $deShow = trim(preg_replace('/\s+/', ' ', (string) $deVal));
-  $input = $widget === 'string'
-    ? '<input type="text" name="' . pg_h($name) . '" value="' . pg_h($enVal) . '" placeholder="' . pg_h(mb_strimwidth($deShow, 0, 90, '…')) . '">'
-    : '<textarea name="' . pg_h($name) . '" rows="' . ($widget === 'markdown' ? 7 : 3) . '"' . ($widget === 'markdown' ? ' class="md"' : '') . '>' . pg_h($enVal) . '</textarea>';
-  return '<div class="field i18n-field' . ($miss ? ' missing' : '') . '"><label class="flabel">' . pg_h($label)
-       . ($miss ? ' <span class="i18n-miss">fehlt</span>' : '') . '</label>' . $input
-       . '<div class="de-ref"><span>DE</span><p>' . pg_h(mb_strimwidth($deShow, 0, 320, '…')) . '</p></div></div>';
-}
-function pg_gv_i18n_fields($fields, $de, $en, $prefix, &$stat){
-  $h = ''; $de = is_array($de) ? $de : []; $en = is_array($en) ? $en : [];
-  foreach ($fields as $f) {
-    if (($f['widget'] ?? '') === 'heading' || empty($f['name'])) continue;
-    $n = $f['name'];
-    if (!array_key_exists($n, $de)) continue;
-    $dv = $de[$n]; $ev = $en[$n] ?? null; $nm = $prefix . '[' . $n . ']';
-    switch ($f['widget']) {
-      case 'object':
-        $inner = pg_gv_i18n_fields($f['fields'] ?? [], $dv, $ev, $nm, $stat);
-        if ($inner !== '') $h .= '<div class="i18n-group"><div class="i18n-gh">' . pg_h($f['label'] ?? $n) . '</div>' . $inner . '</div>';
-        break;
-      case 'list':
-        if (!is_array($dv)) break;
-        $dv = array_values($dv); $ev = is_array($ev) ? array_values($ev) : [];
-        if (isset($f['field'])) {
-          if (!pg_i18n_translatable($f['field'])) break;
-          foreach ($dv as $k => $v) if (trim((string) $v) !== '') $h .= pg_gv_i18n_leaf(($f['field']['label'] ?? $n) . ' ' . ($k + 1), $nm . '[' . $k . ']', $ev[$k] ?? '', $v, $f['field']['widget'] ?? 'string', $stat);
-          break;
-        }
-        foreach ($dv as $k => $it) {
-          $inner = pg_gv_i18n_fields($f['fields'] ?? [], $it, $ev[$k] ?? [], $nm . '[' . $k . ']', $stat);
-          if ($inner === '') continue;
-          $sum = is_array($it) && !empty($f['summary']) ? trim((string) ($it[$f['summary']] ?? '')) : '';
-          $h .= '<div class="i18n-group"><div class="i18n-gh">' . pg_h(($f['label_singular'] ?? $f['label'] ?? $n) . ' ' . ($k + 1))
-              . ($sum !== '' ? ' <span>· ' . pg_h(mb_strimwidth($sum, 0, 60, '…')) . '</span>' : '') . '</div>' . $inner . '</div>';
-        }
-        break;
-      case 'blocks':
-        if (!is_array($dv)) break;
-        $ev = is_array($ev) ? array_values($ev) : []; $ai = 0;
-        foreach (array_values($dv) as $k => $it) {
-          $t = is_array($it) ? (string) ($it['type'] ?? '') : '';
-          if (!isset($f['types'][$t])) continue;
-          $eit = $ev[$ai++] ?? [];
-          $inner = pg_gv_i18n_fields($f['types'][$t]['fields'] ?? [], $it, $eit, $nm . '[' . $k . ']', $stat);
-          if ($inner === '') continue;
-          $meta = pg_block_meta($t, $it);
-          $h .= '<div class="i18n-group i18n-block"><div class="i18n-gh">' . pg_icon(pg_block_icon($t)) . pg_h($f['types'][$t]['label'])
-              . ($meta !== '' ? ' <span>· ' . pg_h($meta) . '</span>' : '') . (!empty($it['hidden']) ? ' <span class="chip">ausgeblendet</span>' : '') . '</div>' . $inner . '</div>';
-        }
-        break;
-      default:
-        if (!pg_i18n_translatable($f) || trim((string) $dv) === '') break;
-        $h .= pg_gv_i18n_leaf($f['label'] ?? $n, $nm, $ev, $dv, $f['widget'], $stat);
-    }
-  }
-  return $h;
-}
-
 function pg_games_view($SCHEMA, $lang){
   $de = pg_games_data('de');
   $games = $de['games'];
@@ -119,12 +56,10 @@ function pg_games_view($SCHEMA, $lang){
   $stLbl = ['development' => ['In Entwicklung', 'st-dev'], 'announced' => ['Angekündigt', 'st-ann'], 'demo' => ['Demo verfügbar', 'st-demo'],
             'early' => ['Early Access', 'st-early'], 'released' => ['Veröffentlicht', 'st-rel']];
 
-  // EN-Stand dieses Spiels
-  $enData = pg_games_data('en');
-  $enGame = $g ? (($ei = pg_game_en_idx($enData['games'], $games, $slug, $i)) >= 0 ? $enData['games'][$ei] : []) : [];
-  $enAligned = $g ? pg_i18n_align($fields, $g, $enGame) : [];
-  [$tT, $tM] = $g ? pg_i18n_count($fields, $g, $enAligned) : [0, 0];
-  $enPct = $tT > 0 ? (int) floor(($tT - $tM) / $tT * 100) : 100;
+  // EN-Stand dieses Spiels (Deutsch ist die Vorlage: „aktuell“ = passt zum deutschen Text)
+  $trc = $g && $slug !== '' ? pg_tr_state($SCHEMA, 'games', 'games.@' . $slug)['count'] : ['total' => 0, 'ok' => 0, 'outdated' => 0, 'missing' => 0, 'unchecked' => 0];
+  $enPct = $trc['total'] > 0 ? (int) floor($trc['ok'] / $trc['total'] * 100) : 100;
+  $enOpen = $trc['outdated'] + $trc['missing'] + $trc['unchecked'];
 
   $GLOBALS['pg_crumb_group'] = 'Spiele';
   pg_view_head($g ? (string) ($g['title'] ?? 'Spiel') : 'Spiele');
@@ -198,16 +133,18 @@ function pg_games_view($SCHEMA, $lang){
   [$cp] = explode('#', (string) ($g['cover'] ?? '') . '#');
   $fp = preg_match('/#focus=(\d+),(\d+)/', (string) ($g['cover'] ?? ''), $m) ? $m[1] . '% ' . $m[2] . '%' : '50% 50%';
   $stt = $stLbl[$g['status'] ?? 'development'] ?? $stLbl['development'];
-  $preview = '../game.php?slug=' . rawurlencode($slug) . ($lang === 'en' ? '&lang=en' : '');
+  $preview = '../game.php?slug=' . rawurlencode($slug) . '&lang=' . $lang;
   $base = 'index.php?collection=games&game=' . rawurlencode($slug);
 
   echo '<a class="btn btn-ghost btn-sm gd-back" href="index.php?collection=games">' . pg_icon('back') . 'Alle Spiele</a>';
-  echo '<form method="post" class="gd-form" id="editor" data-autosave data-preview="' . pg_h($preview) . '" data-game-editor data-lang="' . $lang . '">';
-  echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
-     . '<input type="hidden" name="collection" value="games"><input type="hidden" name="lang" value="' . $lang . '">'
-     . '<input type="hidden" name="game_orig" value="' . pg_h($slug) . '"><input type="hidden" name="game_idx" value="' . (int) $i . '">'
-     . '<input type="hidden" name="game_tab" value="' . pg_h($tab) . '" data-tab-input>';
-  if ($lang === 'en') echo '<input type="hidden" name="game_sig" value="' . pg_h(pg_i18n_signature($fields, $g)) . '">';
+  if ($lang === 'en') echo '<div class="gd-form gd-en">';
+  else {
+    echo '<form method="post" class="gd-form" id="editor" data-autosave data-preview="' . pg_h($preview) . '" data-game-editor data-lang="de">';
+    echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+       . '<input type="hidden" name="collection" value="games"><input type="hidden" name="lang" value="de">'
+       . '<input type="hidden" name="game_orig" value="' . pg_h($slug) . '"><input type="hidden" name="game_idx" value="' . (int) $i . '">'
+       . '<input type="hidden" name="game_tab" value="' . pg_h($tab) . '" data-tab-input>';
+  }
 
   // ---- Kopfbereich ----
   echo '<div class="gd-hero" style="--acc:' . pg_h($acc) . '">'
@@ -219,38 +156,18 @@ function pg_games_view($SCHEMA, $lang){
      . '<span class="chip ' . $stt[1] . '"><i></i>' . pg_h($stt[0]) . '</span>'
      . (!empty($g['featured']) ? '<span class="chip st-feat">★ Startseite</span>' : '') . '</div></div>'
      . '<div class="gd-acts editor-actions"><span class="save-status" data-save-status></span>'
-     . '<div class="g-seg g-lang"><a class="' . ($lang === 'de' ? 'on' : '') . '" href="' . pg_h($base) . '">DE</a>'
-     . '<a class="' . ($lang === 'en' ? 'on' : '') . '" href="' . pg_h($base . '&lang=en') . '">EN <span class="n' . ($enPct < 95 ? ' warn' : '') . '">' . $enPct . '%</span></a></div>'
-     . '<a class="btn btn-sm" href="' . pg_h($preview) . '" target="_blank" rel="noopener">' . pg_icon('ext') . 'Ansehen</a>'
-     . '<button type="button" class="btn btn-sm hide-m" data-split-toggle title="Live-Vorschau neben dem Editor">' . pg_icon('eye') . 'Vorschau</button>'
-     . '<button class="btn btn-primary btn-sm" type="submit" name="save" value="1">' . pg_icon('check') . 'Speichern</button></div>'
+     . pg_lang_switch($base, $base . '&lang=en', $lang, $enPct, $enOpen)
+     . '<a class="btn btn-sm" href="' . pg_h($preview) . '" target="_blank" rel="noopener">' . pg_icon('ext') . 'Ansehen' . ($lang === 'en' ? ' (EN)' : '') . '</a>'
+     . ($lang === 'en' ? '<button class="btn btn-primary btn-sm" type="submit" form="trf">' . pg_icon('check') . 'Englisch speichern</button></div>'
+                       : '<button type="button" class="btn btn-sm hide-m" data-split-toggle title="Live-Vorschau neben dem Editor">' . pg_icon('eye') . 'Vorschau</button>'
+                       . '<button class="btn btn-primary btn-sm" type="submit" name="save" value="1">' . pg_icon('check') . 'Speichern</button></div>')
      . '</div></div>';
 
   if ($lang === 'en') {
-    /* ================= Englisch: nur Texte, mit deutschem Original ================= */
-    $stat = ['t' => 0, 'm' => 0];
-    // nach den Abschnitten des Schemas gruppieren (Grunddaten, Cover, Seiten-Blöcke, Lore …)
-    $sections = []; $cur = ['label' => '', 'fields' => []];
-    foreach ($fields as $f) {
-      if (($f['widget'] ?? '') === 'heading') { if ($cur['fields']) $sections[] = $cur; $cur = ['label' => (string) $f['label'], 'fields' => []]; continue; }
-      $cur['fields'][] = $f;
-    }
-    if ($cur['fields']) $sections[] = $cur;
-    $html = '';
-    foreach ($sections as $sec) {
-      $inner = pg_gv_i18n_fields($sec['fields'], $g, $enAligned, 'g', $stat);
-      if ($inner === '') continue;
-      $kinds = array_map(fn($f) => $f['widget'] ?? '', $sec['fields']);
-      if (in_array('blocks', $kinds, true)) $html .= '<h3 class="i18n-sec">' . pg_h($sec['label']) . '</h3>' . $inner;
-      elseif (array_diff($kinds, ['object']) === []) $html .= $inner;
-      else $html .= '<div class="i18n-group"><div class="i18n-gh">' . pg_h($sec['label'] ?: 'Allgemein') . '</div>' . $inner . '</div>';
-    }
-    echo '<div class="ck-card g-en-head"><div><b>Englische Fassung</b><span>' . ($stat['t'] - $stat['m']) . ' von ' . $stat['t'] . ' Texten übersetzt. '
-       . 'Leere Felder zeigen auf der Website automatisch den deutschen Text. Bilder, Farben, Links & Aufbau gelten für beide Sprachen.</span></div>'
-       . ($stat['m'] > 0 ? '<button class="btn btn-sm" type="submit" form="frm-game-tr">' . pg_icon('globe') . 'Fehlende automatisch übersetzen</button>' : '<span class="chip st-rel"><i></i>vollständig</span>')
-       . '</div>';
-    echo $html !== '' ? '<div class="g-en">' . $html . '</div>' : '<div class="ck-card gd-empty"><p>Für dieses Spiel gibt es noch keine Texte zum Übersetzen.</p></div>';
-    echo '</form>';
+    /* ================= Englisch: einheitliche Übersetzungs-Ansicht (Deutsch = Vorlage) ================= */
+    require_once __DIR__ . '/view-translate.php';
+    echo pg_tr_view($SCHEMA, 'games', 'games.@' . $slug, ['back' => $base . '&lang=en', 'form_id' => 'trf']);
+    echo '</div>';
   } else {
     /* ================= Deutsch: Reiter ================= */
     $cards = []; $ci = -1; $fine = '';
@@ -305,7 +222,7 @@ function pg_games_view($SCHEMA, $lang){
       [$hasTrailer, 'Trailer', 'Erhöht die Verweildauer deutlich', 'page', 'blocks'],
       [in_array('waitlist', $types, true) || in_array('suggestions', $types, true), 'Warteliste oder Vorschlagsbox', 'Sammelt Interessenten & Ideen', 'page', 'blocks'],
       [trim((string) ($g['coverAlt'] ?? '')) !== '', 'Alt-Text fürs Cover', 'Barrierefreiheit & Google-Bildersuche', 'look', 'coverAlt'],
-      [$enPct >= 95, 'Englische Fassung', $enPct >= 95 ? 'vollständig' : (100 - $enPct) . ' % der Texte fehlen noch', 'en', ''],
+      [$enOpen === 0, 'Englische Fassung', $enOpen === 0 ? 'passt zum deutschen Text' : $enOpen . ' Text' . ($enOpen === 1 ? '' : 'e') . ' veraltet oder fehlen noch', 'en', ''],
     ];
     $chk = '<ul class="g-check">';
     foreach ($checks as [$ok, $t, $m, $tb, $fld]) {
@@ -386,7 +303,6 @@ function pg_games_view($SCHEMA, $lang){
   $hidden = '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '"><input type="hidden" name="idx" value="' . (int) $i . '"><input type="hidden" name="orig" value="' . pg_h($slug) . '">';
   echo '<form id="frm-game-dup" method="post" action="index.php?action=game_duplicate" hidden>' . $hidden . '</form>';
   echo '<form id="frm-game-del" method="post" action="index.php?action=game_delete" hidden data-confirm="„' . pg_h($g['title'] ?? $slug) . '“ in den Papierkorb legen? Die Spielseite ist dann nicht mehr erreichbar. Warteliste & Vorschläge bleiben gespeichert.">' . $hidden . '</form>';
-  echo '<form id="frm-game-tr" method="post" action="index.php?action=game_translate" hidden data-confirm="Fehlende englische Texte automatisch übersetzen? Vorhandene Übersetzungen bleiben unverändert. Das kann einen Moment dauern.">' . $hidden . '</form>';
   pg_gv_dialogs($games, $g, $i, $host);
 
   // Daten für die Logo-Platzierung (echte Texte der Spielseite)

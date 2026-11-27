@@ -99,32 +99,37 @@ nur das geöffnete Spiel. Blöcke lassen sich **ausblenden statt löschen**.
 
 ---
 
-## Mehrsprachigkeit (Deutsch / Englisch)
+## Mehrsprachigkeit (Deutsch / Englisch) – Deutsch ist die Vorlage
 
-Die Website hat einen **Sprachumschalter (DE/EN)** oben rechts. So pflegst
-du Englisch:
+Die Website hat einen **Sprachumschalter (DE/EN)** oben rechts. Gepflegt wird
+immer **auf Deutsch** – Englisch folgt automatisch:
 
-1. Im Dashboard einen Bereich öffnen (z. B. Spiele) und oben auf
-   **🇬🇧 English** umschalten.
-2. **„🌐 Automatisch aus dem Deutschen übersetzen"** klicken — füllt alle
-   Textfelder automatisch ins Englische (über den kostenlosen Dienst
-   *MyMemory*, **kein API-Key nötig**).
-3. Englisch **gegenlesen/anpassen** und **Speichern**.
+1. Du änderst einen deutschen Text und speicherst.
+2. Die englische Übersetzung dieses Textes gilt ab sofort als **veraltet** – die
+   Website zeigt englischen Besuchern **so lange den aktuellen deutschen Text**,
+   bis das Englische nachgezogen ist (nie eine alte, falsche Übersetzung).
+3. Ist **„Automatisch nachziehen“** an (Standard), übersetzt das Admin die
+   geänderten Texte im Hintergrund neu (unten links erscheint kurz „Englisch wird
+   nachgezogen …“). Kostenloser Dienst *MyMemory*, **kein API-Key nötig**.
 
-Bei **Spielen** zeigt der englische Modus nur die übersetzbaren Texte – jeweils
-mit dem deutschen Original darunter. *„Fehlende automatisch übersetzen“* füllt
-nur leere Felder und überschreibt keine vorhandenen Übersetzungen.
+**Englisch ansehen/anpassen:** in jedem Bereich oben auf **EN** umschalten. Die
+Ansicht ist überall gleich: links das deutsche Original, rechts das Englische, je
+Text ein Status – *aktuell*, *veraltet*, *fehlt* (selten *ungeprüft*).
+- **Neu übersetzen** (je Text) · **✓ Passt** (Übersetzung bleibt, gilt als aktuell)
+- **Veraltete & fehlende übersetzen** · **Alles neu aus dem Deutschen übersetzen**
+  (legt vorher eine Sicherheitskopie an) · **Alle als geprüft markieren**
 
 Gut zu wissen:
-- Englische Übersetzungen liegen in `data/*.en.json` (getrennt vom Deutschen).
-- Zuordnung: Spiele & Beiträge über die Web-Adresse, Seiten-Blöcke über Typ und
-  Reihenfolge – Umsortieren auf Deutsch bringt das Englische nicht mehr durcheinander.
-- **Leere** englische Felder fallen auf der Website automatisch auf Deutsch
-  zurück — die Seite ist also nie „halb leer".
-- **Nicht-Textfelder** (Bilder, Farben, Slugs, Links) gelten für beide
-  Sprachen.
-- Der Auto-Übersetzer braucht **Internet-Zugriff vom Server** (bei All-Inkl
-  vorhanden). Qualität ist maschinell — für den Feinschliff kurz drüberlesen.
+- Englische Texte liegen in `data/*.en.json`; jeder merkt sich unter `_src` einen
+  Fingerabdruck des deutschen Textes, aus dem er übersetzt wurde.
+- Beim ersten Aufruf des neuen Admins werden alte Übersetzungen einmalig geprüft
+  (vorher Sicherheitskopie unter *Backups*): Texte, die offensichtlich nicht mehr
+  zum Deutschen passen (z. B. alter Spielname „WARCATS“, andere Zahlen, fehlende
+  Absätze), werden als veraltet markiert und neu übersetzt.
+- **Gleich in allen Sprachen:** Spielname, Studio-Name, Personennamen, E-Mail-
+  Adressen, Links, Bilder, Farben, Zahlen/Jahreszahlen und der Seitenaufbau.
+- Ist der Übersetzungsdienst nicht erreichbar (z. B. Tageskontingent), bleibt es
+  beim deutschen Text – später geht es automatisch weiter.
 
 ---
 

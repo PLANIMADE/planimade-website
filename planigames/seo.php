@@ -48,12 +48,30 @@ function pg_seo_org() {
     return $org;
 }
 
-/* Englisches Overlay (falls vorhanden) auf ein Element legen */
-function pg_seo_en($file, $matchKey, $matchVal, $listKey) {
-    if (pg_seo_lang() !== 'en') return null;
+/* Englisches Overlay: nur Texte, die zum aktuellen deutschen Stand passen.
+   Jeder englische Text merkt sich in „_src“ einen Fingerabdruck seines deutschen Originals
+   (gleiche Berechnung wie admin/lib.php und assets/app.js). Ist das Deutsche neuer,
+   bleibt der deutsche Text stehen – so zeigt Englisch nie veraltete Inhalte. */
+function pg_seo_hash($s) {
+    $s = trim((string)$s); $h = 0x811c9dc5;
+    for ($i = 0, $n = strlen($s); $i < $n; $i++) { $h ^= ord($s[$i]); $h = ($h * 0x01000193) & 0xffffffff; }
+    return sprintf('%08x', $h);
+}
+function pg_seo_en_apply($file, $listKey, $slug, $de, $keys) {
+    if (pg_seo_lang() !== 'en') return $de;
     $en = pg_seo_json(preg_replace('/\.json$/', '.en.json', $file));
-    foreach (($en[$listKey] ?? []) as $x) if (($x[$matchKey] ?? '') === $matchVal) return $x;
-    return null;
+    $src = is_array($en['_src'] ?? null) ? $en['_src'] : null;
+    $hit = null;
+    foreach (($en[$listKey] ?? []) as $x) if (is_array($x) && ($x['slug'] ?? '') === $slug) { $hit = $x; break; }
+    if (!$hit) return $de;
+    foreach ($keys as $k) {
+        $d = trim((string)($de[$k] ?? '')); $e = trim((string)($hit[$k] ?? ''));
+        if ($d === '' || $e === '') continue;
+        $h = $src[$listKey . '.@' . $slug . '.' . $k] ?? null;
+        if ($src !== null && $h !== null && $h !== pg_seo_hash($d)) continue;   // veraltet → Deutsch
+        $de[$k] = $e;
+    }
+    return $de;
 }
 
 function pg_seo_head($o) {
@@ -88,10 +106,7 @@ function pg_seo_game() {
         pg_seo_head(['title' => 'Spiele — ' . $name, 'desc' => pg_seo_clip($studio['tagline'] ?? ''), 'url' => $base . '/games.html', 'image' => '']);
         pg_seo_jsonld(pg_seo_org()); return;
     }
-    if ($en = pg_seo_en(__DIR__ . '/data/games.json', 'slug', $slug, 'games')) {
-        if (!empty($en['title'])) $g['title'] = $en['title'];
-        if (!empty($en['tagline'])) $g['tagline'] = $en['tagline'];
-    }
+    $g = pg_seo_en_apply(__DIR__ . '/data/games.json', 'games', $slug, $g, ['tagline']);   // Spielname ist in allen Sprachen gleich
     $title = $g['title'] . ' — ' . $name;
     $desc = pg_seo_clip($g['tagline'] ?? '');
     $url = $base . '/game.php?slug=' . $slug . (pg_seo_lang() === 'en' ? '&lang=en' : '');
@@ -122,10 +137,7 @@ function pg_seo_post() {
         pg_seo_head(['title' => 'Devlog — ' . $name, 'desc' => '', 'url' => $base . '/devlog.php', 'image' => '']);
         pg_seo_jsonld(pg_seo_org()); return;
     }
-    if ($en = pg_seo_en(__DIR__ . '/data/patchnotes.json', 'slug', $slug, 'posts')) {
-        if (!empty($en['title'])) $p['title'] = $en['title'];
-        if (!empty($en['excerpt'])) $p['excerpt'] = $en['excerpt'];
-    }
+    $p = pg_seo_en_apply(__DIR__ . '/data/patchnotes.json', 'posts', $slug, $p, ['title', 'excerpt']);
     $title = $p['title'] . ' — ' . $name;
     $desc = pg_seo_clip(($p['excerpt'] ?? '') ?: ($p['body'] ?? ''));
     $url = $base . '/devlog.php?slug=' . $slug;

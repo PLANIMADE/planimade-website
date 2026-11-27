@@ -981,6 +981,7 @@
         if (j.ok) {
           dirty = false; setStatus("Gespeichert ✓", "ok"); toast("Automatisch gespeichert", "ok", 1800);
           if (j.sent) toast("📣 Newsletter an " + j.sent + " gesendet", "info", 4000);
+          if (j.tr_pending && window.pgTrKick) window.pgTrKick(j.tr_pending, 15000);
           reloadPreview();
         } else { setStatus("Fehler", "err"); toast(j.error || "Speichern fehlgeschlagen", "err", 6000); }
       } catch (e) { setStatus("Offline", "err"); }
@@ -1880,9 +1881,254 @@
     });
   }
 
+  /* =========================================================
+     Übersetzung – Deutsch ist die Vorlage
+     ========================================================= */
+  async function trCall(action, data) {
+    const fd = new FormData();
+    fd.append("csrf", csrf());
+    Object.entries(data).forEach(([k, v]) => (Array.isArray(v) ? v.forEach((x) => fd.append(k + "[]", x)) : fd.append(k, v)));
+    try {
+      const r = await fetch("index.php?action=" + action, { method: "POST", body: fd, headers: { "X-Requested-With": "fetch" } });
+      return await readJson(r);
+    } catch (e) { return { ok: false, error: "Keine Verbindung zum Server." }; }
+  }
+  const trSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const trCfg = (() => { try { return JSON.parse((document.getElementById("pg-tr-cfg") || {}).textContent || "{}"); } catch (e) { return {}; } })();
+
+  // ---- Hintergrund: veraltete/fehlende englische Texte automatisch nachziehen ----
+  let trBgRunning = false, trBgTimer = null;
+  function trPill(text) {
+    let p = document.getElementById("tr-pill");
+    if (text === null) { if (p) { p.classList.remove("show"); setTimeout(() => p.remove(), 350); } return; }
+    if (!p) { p = document.createElement("div"); p.id = "tr-pill"; p.className = "tr-pill"; p.setAttribute("role", "status"); document.body.appendChild(p); }
+    p.innerHTML = '<span class="tr-pill-spin"></span><span></span>';
+    p.lastChild.textContent = text;
+    requestAnimationFrame(() => p.classList.add("show"));
+  }
+  async function trBackground(pending) {
+    const keys = Object.keys(pending || {}).filter((k) => pending[k] > 0);
+    if (trBgRunning || !keys.length) return;
+    trBgRunning = true;
+    const total = keys.reduce((a, k) => a + Number(pending[k] || 0), 0);
+    let done = 0;
+    trPill(`Englisch wird nachgezogen … 0 / ${total}`);
+    try {
+      outer: for (const key of keys) {
+        for (let round = 0; round < 60; round++) {
+          const j = await trCall("tr_sync", { collection: key, scope: "", mode: "auto" });
+          if (j.busy) break outer;                                   // läuft bereits (z. B. anderer Tab)
+          if (!j.ok) { toast(j.error || "Englisch konnte nicht nachgezogen werden.", "err", 6000); break outer; }
+          done += j.done || 0;
+          trPill(`Englisch wird nachgezogen … ${Math.min(done, total)} / ${total}`);
+          if (j.unavailable) { toast("Übersetzungsdienst gerade nicht erreichbar – die Website zeigt solange den deutschen Text. Es geht später automatisch weiter.", "info", 7000); break outer; }
+          if (!j.pending || !j.done) break;
+        }
+      }
+    } finally {
+      trPill(null);
+      trBgRunning = false;
+    }
+    if (done) toast(`Englisch aktualisiert: ${done} Text${done === 1 ? "" : "e"} neu übersetzt`, "ok", 3500);
+  }
+  window.pgTrKick = (pending, delay) => {
+    if (!trCfg.auto || document.querySelector("form[data-tr]")) return;
+    clearTimeout(trBgTimer);
+    trBgTimer = setTimeout(() => trBackground(pending), delay || 0);
+  };
+  if (trCfg.auto && trCfg.pending && Object.keys(trCfg.pending).length) window.pgTrKick(trCfg.pending, 1500);
+
+  // ---- Übersetzungs-Ansicht ----
+  (function trView() {
+    const form = document.querySelector("form[data-tr]");
+    if (!form) return;
+    const key = form.dataset.key, scope = form.dataset.scope || "";
+    const rows = [...form.querySelectorAll("[data-tr-row]")];
+    const bar = form.querySelector("[data-tr-savebar]"), dirtyEl = form.querySelector("[data-tr-dirty]");
+    const dirty = new Set();
+    let filter = ((form.querySelector("[data-trf].on") || {}).dataset || {}).trf || "all";
+
+    const grow = (ta) => { if (ta.tagName !== "TEXTAREA") return; ta.style.height = "auto"; ta.style.height = (ta.scrollHeight + 2) + "px"; };
+    rows.forEach((row) => {
+      const inp = row.querySelector("[data-tr-input]");
+      if (inp) { inp.dataset.orig = inp.value; grow(inp); }
+      const chip = row.querySelector("[data-tr-chip]");
+      if (chip) { chip.dataset.cls = chip.className; chip.dataset.txt = chip.textContent; }
+    });
+    addEventListener("resize", () => rows.forEach((r) => { const t = r.querySelector("textarea"); if (t) grow(t); }));
+
+    function setChip(row, cls, txt) {
+      const chip = row.querySelector("[data-tr-chip]");
+      if (!chip) return;
+      if (!cls) { chip.className = chip.dataset.cls; chip.innerHTML = "<i></i>" + chip.dataset.txt.trim(); return; }
+      chip.className = "tr-chip " + cls; chip.innerHTML = "<i></i>" + txt;
+    }
+    function refreshBar() {
+      const n = dirty.size;
+      if (dirtyEl) dirtyEl.textContent = n ? `${n} ungespeicherte Änderung${n === 1 ? "" : "en"}` : "Keine ungespeicherten Änderungen";
+      if (bar) bar.classList.toggle("is-dirty", n > 0);
+    }
+    function markDirty(row, on) {
+      if (on) dirty.add(row); else dirty.delete(row);
+      row.classList.toggle("is-dirty", on);
+      refreshBar();
+    }
+    function applyFilter() {
+      let any = 0;
+      form.querySelectorAll("[data-tr-item]").forEach((it) => {
+        let itemAny = false;
+        it.querySelectorAll("[data-tr-group]").forEach((g) => {
+          let gAny = false;
+          g.querySelectorAll("[data-tr-row]").forEach((row) => {
+            const show = filter === "all" || row.dataset.status !== "ok" || dirty.has(row);
+            row.hidden = !show; if (show) gAny = true;
+          });
+          g.hidden = !gAny; if (gAny) itemAny = true;
+        });
+        it.hidden = !itemAny; if (itemAny) any++;
+      });
+      const none = form.querySelector("[data-tr-none]");
+      if (none) none.hidden = !(filter === "todo" && !any);
+      rows.forEach((r) => { if (!r.hidden) { const t = r.querySelector("textarea"); if (t) grow(t); } });
+    }
+    form.querySelectorAll("[data-trf]").forEach((b) => b.addEventListener("click", () => {
+      filter = b.dataset.trf;
+      form.querySelectorAll("[data-trf]").forEach((x) => x.classList.toggle("on", x === b));
+      applyFilter();
+    }));
+    applyFilter();
+
+    form.addEventListener("input", (e) => {
+      const row = e.target.closest("[data-tr-row]");
+      if (!row || !e.target.matches("[data-tr-input]")) return;
+      grow(e.target);
+      const changed = e.target.value !== e.target.dataset.orig;
+      const okd = !!row.querySelector('input[name^="trok["]');
+      if (changed) setChip(row, "st-edited", "geändert");
+      else if (okd) setChip(row, "st-confirmed", "bestätigt");
+      else setChip(row, null);
+      markDirty(row, changed || okd);
+    });
+    form.addEventListener("click", async (e) => {
+      const one = e.target.closest("[data-tr-one]"), okb = e.target.closest("[data-tr-ok]");
+      if (okb) {
+        const row = okb.closest("[data-tr-row]");
+        if (!row.querySelector('input[name^="trok["]')) {
+          const h = document.createElement("input");
+          h.type = "hidden"; h.name = "trok[" + row.dataset.ip + "]"; h.value = "1";
+          row.appendChild(h);
+        }
+        setChip(row, "st-confirmed", "bestätigt");
+        markDirty(row, true);
+        okb.remove();
+        return;
+      }
+      if (one) {
+        const row = one.closest("[data-tr-row]");
+        one.disabled = true; one.classList.add("busy");
+        const j = await trCall("tr_one", { collection: key, scope, ip: row.dataset.ip });
+        one.disabled = false; one.classList.remove("busy");
+        if (!j.ok) { toast(j.error || "Übersetzen fehlgeschlagen", "err", 6000); return; }
+        const inp = row.querySelector("[data-tr-input]");
+        inp.value = j.en; grow(inp);
+        const hh = row.querySelector("[data-tr-hash]"); if (hh && j.h) hh.value = j.h;
+        setChip(row, "st-fresh", "neu übersetzt");
+        markDirty(row, true);
+      }
+    });
+
+    // Nur geänderte Zeilen absenden (kleine Anfrage, nichts wird versehentlich überschrieben)
+    function strip(fd) {
+      rows.forEach((row) => {
+        if (dirty.has(row)) return;
+        fd.delete("tr[" + row.dataset.ip + "]"); fd.delete("trh[" + row.dataset.ip + "]");
+      });
+      return fd;
+    }
+    let submitting = false;
+    form.addEventListener("submit", (e) => {
+      submitting = true;
+      rows.forEach((row) => {
+        if (dirty.has(row)) return;
+        row.querySelectorAll("[data-tr-input],[data-tr-hash]").forEach((x) => { x.disabled = true; });
+      });
+    });
+    addEventListener("beforeunload", (e) => { if (dirty.size && !submitting) { e.preventDefault(); e.returnValue = ""; } });
+
+    async function saveFirst() {
+      if (!dirty.size) return true;
+      const fd = strip(new FormData(form)); fd.append("ajax", "1");
+      try {
+        const r = await fetch(form.action, { method: "POST", body: fd, headers: { "X-Requested-With": "fetch" } });
+        const j = await readJson(r);
+        if (!j.ok) { toast(j.error || "Speichern fehlgeschlagen", "err", 6000); return false; }
+      } catch (err) { toast("Keine Verbindung zum Server.", "err", 6000); return false; }
+      dirty.clear(); rows.forEach((r) => r.classList.remove("is-dirty")); refreshBar();
+      return true;
+    }
+    function progress(mode) {
+      const back = document.createElement("div");
+      back.className = "pg-modal-back tr-prog";
+      back.innerHTML = `<div class="pg-modal" role="dialog" aria-modal="true" aria-live="polite"><h3>${mode === "confirm" ? "Wird als geprüft markiert …" : "Englisch wird aus dem Deutschen übersetzt …"}</h3>`
+        + `<div class="tr-prog-bar"><i></i></div><p class="tr-prog-n">Einen Moment …</p>`
+        + `<div class="pg-modal-f"><button type="button" class="btn btn-sm" data-c>Abbrechen</button></div></div>`;
+      document.body.appendChild(back);
+      const api = {
+        stop: false,
+        update(n, t) {
+          back.querySelector(".tr-prog-n").textContent = t ? `${n} von ${t} Texten erledigt` : `${n} Texte erledigt`;
+          back.querySelector(".tr-prog-bar i").style.width = (t ? Math.min(100, (n / t) * 100) : 100) + "%";
+        },
+        close() { back.remove(); },
+      };
+      back.querySelector("[data-c]").addEventListener("click", (ev) => { api.stop = true; ev.target.textContent = "Wird beendet …"; ev.target.disabled = true; });
+      return api;
+    }
+    async function run(mode) {
+      if (mode === "force" && !confirm("Alle englischen Texte hier neu aus dem Deutschen übersetzen?\n\nEigene Anpassungen am Englischen werden dabei ersetzt. Vorher wird automatisch eine Sicherheitskopie angelegt (Backups).")) return;
+      if (mode === "confirm" && !confirm("Alle ungeprüften und veralteten englischen Texte als „passt“ markieren?\n\nSie gelten dann als aktuell und erscheinen so auf der Website.")) return;
+      if (!(await saveFirst())) return;
+      const ui = progress(mode);
+      let queue = mode === "force" ? rows.map((r) => r.dataset.ip) : [];
+      const total = mode === "force" ? queue.length : Number(form.dataset.run || 0);
+      let done = 0, first = true, busy = 0, failed = "";
+      ui.update(0, total);
+      while (!ui.stop) {
+        const payload = { collection: key, scope, mode };
+        if (mode === "force") { if (!queue.length) break; payload.ips = queue.slice(0, 30); if (first) payload.first = "1"; }
+        const j = await trCall("tr_sync", payload);
+        if (j.busy) { if (++busy > 6) { failed = "busy"; break; } await trSleep(2500); continue; }
+        first = false;
+        if (!j.ok) { failed = "err"; break; }
+        done += j.done || 0;
+        if (mode === "force") { const got = new Set(Object.keys(j.texts || {})); queue = queue.filter((ip) => !got.has(ip)); }
+        ui.update(done, total || done + (j.pending || 0));
+        if (j.unavailable) { failed = "unavail"; break; }
+        if (mode === "confirm") break;
+        if (mode === "auto" && (!j.pending || !j.done)) break;
+        if (mode === "force" && !j.done) break;
+      }
+      ui.close();
+      const u = new URL(location.href);
+      u.searchParams.delete("saved"); u.searchParams.delete("trfail");
+      u.searchParams.set("trdone", String(done));
+      if (failed) u.searchParams.set("trfail", failed);
+      location.href = u.toString();
+    }
+    form.querySelectorAll("[data-tr-run]").forEach((b) => b.addEventListener("click", () => run(b.dataset.trRun)));
+
+    const auto = form.querySelector("[data-tr-auto]");
+    if (auto) auto.addEventListener("change", async () => {
+      const j = await trCall("tr_settings", { auto: auto.checked ? "1" : "" });
+      if (!j.ok) { auto.checked = !auto.checked; toast(j.error || "Konnte die Einstellung nicht speichern.", "err", 5000); return; }
+      toast(auto.checked ? "Englisch wird ab jetzt automatisch nachgezogen." : "Automatisches Nachziehen aus – veraltete Texte zeigen auf der Website solange Deutsch.", "ok", 4000);
+    });
+  })();
+
   // ---- Tastatur-Shortcuts ----
   function primarySaveButton() {
-    return document.querySelector('#editor button[name="save"], button[name="save"], form .btn-primary[type="submit"], form button.btn-primary');
+    return document.querySelector('[data-tr-savebar] button[type="submit"]')
+      || document.querySelector('#editor button[name="save"], button[name="save"], form .btn-primary[type="submit"]');
   }
   document.addEventListener("keydown", (e) => {
     // Strg/Cmd + S = Speichern

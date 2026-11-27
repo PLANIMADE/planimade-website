@@ -9,7 +9,7 @@ const PG_MEDIA_DIR   = __DIR__ . '/../media';
 const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
 const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
 const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip'];
-const PG_ADMIN_V     = '66';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
+const PG_ADMIN_V     = '67';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -1539,10 +1539,24 @@ function pg_view_foot(){
        . '<ul class="pal-list" id="palList"></ul>'
        . '<div class="pal-foot"><span>↑↓ auswählen</span><span>↵ öffnen</span><span>Esc schließen</span></div></div></div>';
     echo '<script>window.PG_PAL=' . json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
+    // ---- Englisch im Hintergrund nachziehen (Deutsch ist die Vorlage) ----
+    if (isset($GLOBALS['SCHEMA'])) {
+      $auto = !empty(pg_tr_settings()['auto']);
+      $pend = ($auto && empty($GLOBALS['pg_tr_view_active'])) ? pg_tr_pending_all($GLOBALS['SCHEMA']) : [];
+      echo '<script type="application/json" id="pg-tr-cfg">' . json_encode(['auto' => $auto, 'pending' => (object) $pend]) . '</script>';
+    }
     echo '</div>';
   }
   echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
   echo '<script src="assets/admin.js?v=' . PG_ADMIN_V . '"></script></body></html>';
+}
+
+/* ---------------- Sprach-Umschalter (DE = Vorlage, EN = Übersetzung) ---------------- */
+function pg_lang_switch($deHref, $enHref, $lang, $pct = 100, $open = 0){
+  return '<div class="g-seg g-lang" role="tablist" aria-label="Sprache der Inhalte">'
+       . '<a class="' . ($lang === 'de' ? 'on' : '') . '" href="' . pg_h($deHref) . '" title="Deutsch – die Vorlage für alle Sprachen">DE</a>'
+       . '<a class="' . ($lang === 'en' ? 'on' : '') . '" href="' . pg_h($enHref) . '" title="' . pg_h($open ? $open . ' englische Text' . ($open === 1 ? '' : 'e') . ' veraltet oder fehlen' : 'Englisch passt zum Deutschen') . '">EN '
+       . ($open ? '<span class="n warn">' . (int) $open . '</span>' : '<span class="n ok">✓</span>') . '</a></div>';
 }
 
 /* ---------------- Mehrsprachigkeit ---------------- */
@@ -1572,166 +1586,7 @@ function pg_translate_contact(){
   return filter_var($e, FILTER_VALIDATE_EMAIL) ? $e : '';
 }
 
-// Einzeltext via MyMemory (kein API-Key nötig) übersetzen; bei Fehlern Original behalten
-function pg_translate_text($text, $from = 'de', $to = 'en'){
-  $text = (string)$text;
-  if (trim($text) === '') return $text;
-  $email = pg_translate_contact();
-  $out = '';
-  foreach (pg_chunk_text($text, 480) as $part) {
-    if (trim($part) === '') { $out .= $part; continue; }
-    $url = 'https://api.mymemory.translated.net/get?q=' . rawurlencode($part) . '&langpair=' . $from . '|' . $to
-         . ($email ? '&de=' . rawurlencode($email) : '');
-    $tr = null;
-    for ($try = 0; $try < 2 && $tr === null; $try++) {
-      if ($try) usleep(900000); // bei Fehler kurz warten und erneut versuchen
-      $res = pg_http_get($url);
-      $j = $res ? json_decode($res, true) : null;
-      $cand = $j['responseData']['translatedText'] ?? null;
-      if ($cand && (int)($j['responseStatus'] ?? 0) === 200) $tr = html_entity_decode($cand, ENT_QUOTES, 'UTF-8');
-    }
-    $out .= $tr !== null ? $tr : $part; // Fallback: Original behalten
-    usleep(120000); // freundlich zum kostenlosen Dienst
-  }
-  // Markdown reparieren: Leerzeichen direkt innerhalb von **fett** / *kursiv* entfernen
-  $out = preg_replace_callback('/\*\*\s*(.+?)\s*\*\*/s', fn($m) => '**' . trim($m[1]) . '**', $out);
-  $out = preg_replace_callback('/(?<!\*)\*(?!\*)\s*(.+?)\s*(?<!\*)\*(?!\*)/s', fn($m) => '*' . trim($m[1]) . '*', $out);
-  return $out;
-}
-
-// Lange Texte an Absätzen/Sätzen in <= $max-Stücke teilen
-function pg_chunk_text($text, $max = 480){
-  if (mb_strlen($text) <= $max) return [$text];
-  $chunks = [];
-  foreach (preg_split('/(\n{2,})/', $text, -1, PREG_SPLIT_DELIM_CAPTURE) as $para) {
-    if (mb_strlen($para) <= $max) { $chunks[] = $para; continue; }
-    $buf = '';
-    foreach (preg_split('/(?<=[.!?]) /', $para) as $sent) {
-      if (mb_strlen($buf . ' ' . $sent) > $max && $buf !== '') { $chunks[] = $buf; $buf = $sent; }
-      else { $buf = $buf === '' ? $sent : $buf . ' ' . $sent; }
-    }
-    if ($buf !== '') $chunks[] = $buf;
-  }
-  return $chunks;
-}
-
-// Komplette Datenstruktur gemäß Schema übersetzen (nur Textfelder)
-function pg_translate_data($fields, $data){
-  $out = is_array($data) ? $data : [];
-  foreach ($fields as $f) {
-    if (($f['widget'] ?? '') === 'heading') continue;
-    if (!array_key_exists($f['name'], $out)) continue;
-    $out[$f['name']] = pg_translate_value($f, $out[$f['name']]);
-  }
-  return $out;
-}
-function pg_translate_value($f, $val){
-  $w = $f['widget'];
-  if (in_array($w, ['select','date','image','file','color','number','boolean'], true)) return $val;
-  if (!empty($f['slug'])) return $val;
-  if (in_array($w, ['string','text','markdown'], true) && !pg_i18n_translatable($f)) return $val;
-  switch ($w) {
-    case 'string': case 'text': case 'markdown':
-      return pg_translate_text((string)$val);
-    case 'object':
-      return pg_translate_data($f['fields'], is_array($val) ? $val : []);
-    case 'list':
-      if (!is_array($val)) return $val;
-      if (isset($f['field'])) {
-        if (in_array($f['field']['widget'], ['image','file'], true)) return $val;
-        return array_map(fn($v) => pg_translate_text((string)$v), $val);
-      }
-      return array_map(fn($it) => pg_translate_data($f['fields'], is_array($it) ? $it : []), $val);
-    case 'blocks':
-      if (!is_array($val)) return $val;
-      return array_map(function($it) use ($f){
-        $type = $it['type'] ?? '';
-        if (!isset($f['types'][$type])) return $it;
-        return ['type'=>$type] + pg_translate_data($f['types'][$type]['fields'], $it);
-      }, $val);
-  }
-  return $val;
-}
-
-/* ---------------- Übersetzungs-Status (DE → EN Lücken) ----------------
- * Zählt übersetzbare Textfelder und wie viele davon auf Englisch noch leer sind.
- * Die Auswahl, was übersetzbar ist, spiegelt pg_translate_value() exakt wider. */
-function pg_i18n_count($fields, $de, $en){
-  $t = 0; $m = 0;
-  $de = is_array($de) ? $de : [];
-  $en = is_array($en) ? $en : [];
-  foreach ($fields as $f) {
-    if (($f['widget'] ?? '') === 'heading') continue;
-    $name = $f['name'] ?? '';
-    if ($name === '' || !array_key_exists($name, $de)) continue;
-    [$ct, $cm] = pg_i18n_value($f, $de[$name], $en[$name] ?? null);
-    $t += $ct; $m += $cm;
-  }
-  return [$t, $m];
-}
-function pg_i18n_value($f, $dval, $eval){
-  $w = $f['widget'] ?? '';
-  if (in_array($w, ['select','date','datetime','image','file','color','number','boolean'], true)) return [0, 0];
-  if (!empty($f['slug'])) return [0, 0];
-  if (in_array($w, ['string','text','markdown'], true) && !pg_i18n_translatable($f)) return [0, 0];
-  switch ($w) {
-    case 'string': case 'text': case 'markdown':
-      if (trim((string) $dval) === '') return [0, 0];          // auf Deutsch leer = nichts zu übersetzen
-      return [1, trim((string) $eval) === '' ? 1 : 0];
-    case 'object':
-      return pg_i18n_count($f['fields'] ?? [], is_array($dval) ? $dval : [], is_array($eval) ? $eval : []);
-    case 'list':
-      if (!is_array($dval)) return [0, 0];
-      if (isset($f['field'])) {                                 // einfache Werteliste
-        if (in_array($f['field']['widget'] ?? '', ['image','file'], true)) return [0, 0];
-        $t = 0; $m = 0;
-        foreach ($dval as $i => $v) {
-          if (trim((string) $v) === '') continue;
-          $t++;
-          $ev = (is_array($eval) && array_key_exists($i, $eval)) ? trim((string) $eval[$i]) : '';
-          if ($ev === '') $m++;
-        }
-        return [$t, $m];
-      }
-      $t = 0; $m = 0;
-      foreach ($dval as $i => $it) {
-        $eit = (is_array($eval) && isset($eval[$i])) ? $eval[$i] : [];
-        [$ct, $cm] = pg_i18n_count($f['fields'] ?? [], is_array($it) ? $it : [], is_array($eit) ? $eit : []);
-        $t += $ct; $m += $cm;
-      }
-      return [$t, $m];
-    case 'blocks':
-      if (!is_array($dval)) return [0, 0];
-      $t = 0; $m = 0;
-      foreach ($dval as $i => $it) {
-        $type = $it['type'] ?? '';
-        if (!isset($f['types'][$type])) continue;
-        $eit = (is_array($eval) && isset($eval[$i])) ? $eval[$i] : [];
-        if (($eit['type'] ?? '') !== $type) $eit = [];           // anders sortiert/abweichend = nicht übersetzt
-        [$ct, $cm] = pg_i18n_count($f['types'][$type]['fields'] ?? [], is_array($it) ? $it : [], is_array($eit) ? $eit : []);
-        $t += $ct; $m += $cm;
-      }
-      return [$t, $m];
-  }
-  return [0, 0];
-}
-/* Pro Sammlung: [key => [label,icon,total,missing,enExists]] – nur bearbeitbare mit Textinhalt. */
-function pg_i18n_report($SCHEMA){
-  $rows = [];
-  foreach ($SCHEMA as $key => $coll) {
-    if (empty($coll['file']) || !pg_can($key)) continue;
-    $de = pg_load_json($coll['file']);
-    $enFile = pg_lang_file($coll['file'], 'en');
-    $enExists = is_file($enFile);
-    $en = $enExists ? pg_load_json($enFile) : [];
-    $de = is_array($de) ? $de : [];
-    [$t, $m] = pg_i18n_count($coll['fields'] ?? [], $de, pg_i18n_align($coll['fields'] ?? [], $de, is_array($en) ? $en : []));
-    if ($t === 0) continue;                                      // nichts Übersetzbares → uninteressant
-    $rows[$key] = ['label' => $coll['label'], 'icon' => $coll['icon'] ?? '📄',
-      'total' => $t, 'missing' => $m, 'enExists' => $enExists];
-  }
-  return $rows;
-}
+// pg_translate_try()/pg_translate_text() und der Übersetzungs-Abgleich: Abschnitt „ÜBERSETZUNG – Deutsch ist die Hauptseite“ am Ende
 
 /* ---------------- CSRF ---------------- */
 function pg_csrf(){ if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(18)); return $_SESSION['csrf']; }
@@ -2301,23 +2156,6 @@ function pg_game_save_de($SCHEMA, $idx, $orig, $raw){
   $d['games'][$i] = $new + array_diff_key($old, $new);            // unbekannte Felder behalten
   return [pg_games_save($d, 'de'), $d['games'][$i]];
 }
-function pg_game_save_en($SCHEMA, $idx, $orig, $raw, $sig){
-  $de = pg_games_data('de');
-  $i = pg_game_locate($de['games'], $idx, $orig);
-  if ($i < 0) return [false, 'Dieses Spiel wurde inzwischen gelöscht oder umbenannt. Bitte die Seite neu laden.'];
-  $fields = pg_game_fields($SCHEMA);
-  $deGame = $de['games'][$i];
-  if ($sig !== '' && $sig !== pg_i18n_signature($fields, $deGame))
-    return [false, 'Die deutsche Fassung wurde inzwischen umgebaut (Blöcke/Listen). Bitte die Seite neu laden – deine Eingaben sind sonst nicht eindeutig zuzuordnen.'];
-  $en = pg_games_data('en');
-  $ei = pg_game_en_idx($en['games'], $de['games'], $deGame['slug'] ?? '', $i);
-  $oldAligned = pg_i18n_align($fields, $deGame, $ei >= 0 ? $en['games'][$ei] : []);
-  $enGame = ['slug' => (string) ($deGame['slug'] ?? '')] + pg_i18n_from_post($fields, $deGame, is_array($raw) ? $raw : [], $oldAligned);
-  if ($ei >= 0) $en['games'][$ei] = $enGame; else $en['games'][] = $enGame;
-  $en['games'] = pg_games_en_sorted($en['games'], $de['games']);
-  return [pg_games_save($en, 'en'), $enGame];
-}
-
 /* ---- Reihenfolge (Drag & Drop in der Spieleliste) ---- */
 function pg_games_reorder($slugs){
   $d = pg_games_data('de');
@@ -2362,6 +2200,23 @@ function pg_game_duplicate($idx, $orig){
   array_splice($d['games'], $i + 1, 0, [$copy]);
   if (!pg_games_save($d, 'de')) return [false, 'Konnte nicht speichern.'];
   pg_redirect_clear('games', $copy['slug']);
+  // Englisch des Originals mitkopieren – samt Herkunft, damit nichts neu übersetzt werden muss
+  $enFile = pg_lang_file(PG_GAMES_FILE, 'en');
+  if (is_file($enFile)) {
+    $en = pg_games_data('en');
+    $ei = pg_game_en_idx($en['games'], $d['games'], (string) ($d['games'][$i]['slug'] ?? ''), $i);
+    if ($ei >= 0) {
+      $enCopy = $en['games'][$ei]; $enCopy['slug'] = $copy['slug'];
+      $en['games'][] = $enCopy;
+      $pre = 'games.@' . ($d['games'][$i]['slug'] ?? '') . '.';
+      $src = is_array($en['_src'] ?? null) ? $en['_src'] : [];
+      foreach ($src as $k => $v) if (strpos($k, $pre) === 0) $src['games.@' . $copy['slug'] . '.' . substr($k, strlen($pre))] = $v;
+      ksort($src);
+      if ($src) $en['_src'] = $src;
+      $en['games'] = pg_games_en_sorted($en['games'], $d['games']);
+      pg_games_save($en, 'en');
+    }
+  }
   pg_log_activity('Spiel dupliziert', $copy['title']);
   return [true, $copy['slug']];
 }
@@ -2422,6 +2277,7 @@ function pg_game_rename($idx, $orig, $newRaw){
     $en = pg_games_data('en');
     $ei = pg_game_en_idx($en['games'], $d['games'], $old, $i);
     if ($ei >= 0) { $en['games'][$ei]['slug'] = $new; if (pg_games_save($en, 'en')) $c['en'] = 1; }
+    pg_tr_rename_src($enFile, 'games', $old, $new);                // Übersetzungs-Herkunft zieht mit um
   }
   // 2) Das Spiel selbst
   $d['games'][$i]['slug'] = $new;
@@ -2491,9 +2347,9 @@ function pg_game_rename($idx, $orig, $newRaw){
 function pg_i18n_translatable($f){
   $w = $f['widget'] ?? '';
   if (!in_array($w, ['string', 'text', 'markdown'], true)) return false;
-  if (!empty($f['slug'])) return false;
+  if (!empty($f['slug']) || (isset($f['i18n']) && $f['i18n'] === false)) return false;   // Eigennamen (Spielname, Personen) bleiben gleich
   $n = $f['name'] ?? '';
-  if (preg_match('/url$/i', $n)) return false;
+  if (preg_match('/(url|e?mail)$/i', $n)) return false;
   return !in_array($n, ['email', 'accent', 'accent2', 'game', 'slug', 'icon', 'emoji', 'youtube', 'itchEmbed', 'steamAppId', 'version'], true);
 }
 // Englische Werte in der Struktur der deutschen Daten (nur übersetzbare Felder + Identität)
@@ -2551,111 +2407,6 @@ function pg_i18n_align_value($f, $dv, $ev){
       if (!pg_i18n_translatable($f)) return null;
       return is_scalar($ev) ? (string) $ev : '';
   }
-}
-// Gepostete EN-Texte → ausgerichtete EN-Daten (Struktur kommt IMMER aus Deutsch)
-function pg_i18n_from_post($fields, $de, $raw, $old = []){
-  $de = is_array($de) ? $de : []; $raw = is_array($raw) ? $raw : []; $old = is_array($old) ? $old : [];
-  $out = [];
-  foreach ($fields as $f) {
-    if (($f['widget'] ?? '') === 'heading' || empty($f['name'])) continue;
-    $n = $f['name'];
-    if (!array_key_exists($n, $de)) continue;
-    $dv = $de[$n]; $rv = $raw[$n] ?? null; $ov = $old[$n] ?? null;
-    switch ($f['widget']) {
-      case 'object':
-        $r = pg_i18n_from_post($f['fields'] ?? [], $dv, $rv, $ov);
-        if ($r) $out[$n] = $r;
-        break;
-      case 'list':
-        if (!is_array($dv)) break;
-        $dv = array_values($dv); $rv = is_array($rv) ? $rv : [];
-        if (isset($f['field'])) {
-          if (pg_i18n_translatable($f['field'])) $out[$n] = array_map(fn($k) => is_scalar($rv[$k] ?? null) ? trim((string) $rv[$k]) : (is_scalar($ov[$k] ?? null) ? (string) $ov[$k] : ''), array_keys($dv));
-          break;
-        }
-        $out[$n] = [];
-        foreach ($dv as $k => $it) {
-          $row = pg_i18n_from_post($f['fields'] ?? [], $it, $rv[$k] ?? [], is_array($ov) ? ($ov[$k] ?? []) : []);
-          if (is_array($it) && !empty($it['slug'])) $row = ['slug' => (string) $it['slug']] + $row;
-          $out[$n][] = $row;
-        }
-        break;
-      case 'blocks':
-        if (!is_array($dv)) break;
-        $rv = is_array($rv) ? $rv : []; $ov = is_array($ov) ? array_values($ov) : [];
-        $out[$n] = []; $ai = 0;
-        foreach (array_values($dv) as $k => $it) {
-          $t = is_array($it) ? (string) ($it['type'] ?? '') : '';
-          if (!isset($f['types'][$t])) continue;
-          $out[$n][] = ['type' => $t] + pg_i18n_from_post($f['types'][$t]['fields'] ?? [], $it, $rv[$k] ?? [], $ov[$ai++] ?? []);
-        }
-        break;
-      default:
-        if (pg_i18n_translatable($f)) $out[$n] = is_scalar($rv) ? trim((string) $rv) : (is_scalar($ov) ? (string) $ov : '');
-    }
-  }
-  return $out;
-}
-// Fingerabdruck der deutschen Struktur (Blocktypen, Listenlängen) – schützt EN-Speichern vor Verwechslung
-function pg_i18n_signature($fields, $de){
-  $walk = function ($fields, $d) use (&$walk) {
-    $s = '';
-    foreach ($fields as $f) {
-      if (($f['widget'] ?? '') === 'heading' || empty($f['name'])) continue;
-      $v = is_array($d) ? ($d[$f['name']] ?? null) : null;
-      if ($f['widget'] === 'object') $s .= '{' . $walk($f['fields'] ?? [], $v) . '}';
-      elseif ($f['widget'] === 'list') {
-        $s .= '[' . (is_array($v) ? count($v) : 0);
-        if (isset($f['fields']) && is_array($v)) foreach ($v as $it) $s .= '(' . $walk($f['fields'], $it) . ')';
-        $s .= ']';
-      } elseif ($f['widget'] === 'blocks') {
-        $s .= '<';
-        foreach ((is_array($v) ? $v : []) as $it) {
-          $t = is_array($it) ? (string) ($it['type'] ?? '') : '';
-          if (isset($f['types'][$t])) $s .= $t . '(' . $walk($f['types'][$t]['fields'] ?? [], $it) . ')';
-        }
-        $s .= '>';
-      }
-    }
-    return $s;
-  };
-  return substr(md5($walk($fields, $de)), 0, 12);
-}
-// Fehlende englische Texte automatisch füllen (vorhandene Übersetzungen bleiben unangetastet)
-function pg_i18n_fill_missing($fields, $de, $en, &$count){
-  $de = is_array($de) ? $de : []; $en = is_array($en) ? $en : [];
-  foreach ($fields as $f) {
-    if (($f['widget'] ?? '') === 'heading' || empty($f['name'])) continue;
-    $n = $f['name'];
-    if (!array_key_exists($n, $de)) continue;
-    $dv = $de[$n];
-    switch ($f['widget']) {
-      case 'object':
-        if (array_key_exists($n, $en)) $en[$n] = pg_i18n_fill_missing($f['fields'] ?? [], $dv, $en[$n], $count);
-        break;
-      case 'list':
-        if (!is_array($dv) || !is_array($en[$n] ?? null)) break;
-        foreach (array_values($dv) as $k => $it) {
-          if (isset($f['field'])) {
-            if (pg_i18n_translatable($f['field']) && trim((string) $it) !== '' && trim((string) ($en[$n][$k] ?? '')) === '') { $en[$n][$k] = pg_translate_text((string) $it); $count++; }
-          } elseif (isset($en[$n][$k])) $en[$n][$k] = pg_i18n_fill_missing($f['fields'] ?? [], $it, $en[$n][$k], $count);
-        }
-        break;
-      case 'blocks':
-        if (!is_array($dv) || !is_array($en[$n] ?? null)) break;
-        $k = 0;
-        foreach (array_values($dv) as $it) {
-          $t = is_array($it) ? (string) ($it['type'] ?? '') : '';
-          if (!isset($f['types'][$t])) continue;
-          if (isset($en[$n][$k])) $en[$n][$k] = pg_i18n_fill_missing($f['types'][$t]['fields'] ?? [], $it, $en[$n][$k], $count);
-          $k++;
-        }
-        break;
-      default:
-        if (pg_i18n_translatable($f) && trim((string) $dv) !== '' && trim((string) ($en[$n] ?? '')) === '') { $en[$n] = pg_translate_text((string) $dv); $count++; }
-    }
-  }
-  return $en;
 }
 
 /* =====================================================================
@@ -2750,4 +2501,396 @@ function pg_ini_bytes($v){
   $n = (float) $v;
   switch (strtolower(substr($v, -1))) { case 'g': $n *= 1024; /* weiter */ case 'm': $n *= 1024; /* weiter */ case 'k': $n *= 1024; }
   return (int) $n;
+}
+
+/* =====================================================================
+   ÜBERSETZUNG – Deutsch ist die Hauptseite
+   Jeder englische Text merkt sich in „_src“ (in der .en.json) einen Fingerabdruck
+   des deutschen Textes, aus dem er entstanden ist. Ändert sich das Deutsche, ist die
+   Übersetzung „veraltet“: Die Website zeigt dann das aktuelle Deutsch, und das Admin
+   zieht das Englische (auf Wunsch automatisch) nach.
+   Pfade sind stabil gegen Umsortieren:
+     Listen mit Web-Adresse → @slug · Seiten-Blöcke → typ#n (n = Vorkommen) · sonst Position
+   Website (assets/app.js) und seo.php berechnen Pfade & Fingerabdrücke identisch.
+   Status je Text: ok (passt zum Deutschen) · outdated (Deutsch ist neuer) ·
+                   unchecked (Altbestand ohne Herkunft) · missing (noch kein Englisch)
+   ===================================================================== */
+const PG_I18N_FILE = PG_DATA_DIR . '/i18n.json';
+const PG_TR_STALE  = 'stale';            // Markierung „sicher veraltet“ (z. B. anderer Spielname im Englischen)
+
+function pg_tr_hash($s){
+  $s = trim((string) $s); $h = 0x811c9dc5;
+  for ($i = 0, $n = strlen($s); $i < $n; $i++) { $h ^= ord($s[$i]); $h = ($h * 0x01000193) & 0xffffffff; }
+  return sprintf('%08x', $h);
+}
+function pg_tr_settings(){ $s = pg_load_json(PG_I18N_FILE); return (is_array($s) ? $s : []) + ['auto' => true]; }
+function pg_tr_settings_save($s){ return pg_save_json(PG_I18N_FILE, $s + pg_tr_settings()); }
+
+// Wie werden Einträge einer Liste identifiziert? (wie mergeLang in app.js)
+function pg_tr_list_mode($list){
+  $slug = false; $type = false;
+  foreach ((array) $list as $it) { if (is_array($it) && !empty($it['slug'])) $slug = true; if (is_array($it) && !empty($it['type'])) $type = true; }
+  return $slug ? 'slug' : ($type ? 'type' : 'index');
+}
+
+/* Alle übersetzbaren deutschen Texte einer Sammlung.
+   ip = Identitätspfad (für _src & Website) · sp = Strukturpfad (Position in den ausgerichteten Daten)
+   item = Eintrag mit Web-Adresse (Spiel/Beitrag) · grp = Abschnitt · label = Feldbezeichnung */
+function pg_tr_leaves($fields, $de, $ip = '', $sp = '', $item = '', $grp = '', $lbl = '', $top = true, &$out = []){
+  $de = is_array($de) ? $de : [];
+  foreach ($fields as $f) {
+    $w = $f['widget'] ?? '';
+    if ($w === 'heading') { if ($top) $grp = (string) ($f['label'] ?? ''); continue; }
+    if (empty($f['name']) || !array_key_exists($f['name'], $de)) continue;
+    $n = $f['name']; $v = $de[$n];
+    $ipn = $ip === '' ? $n : "$ip.$n"; $spn = $sp === '' ? $n : "$sp.$n";
+    $fl = (string) ($f['label'] ?? $n);
+    switch ($w) {
+      case 'object':
+        if ($top) pg_tr_leaves($f['fields'] ?? [], $v, $ipn, $spn, $item, $grp !== '' && $item !== '' ? $grp : $fl, '', false, $out);
+        else pg_tr_leaves($f['fields'] ?? [], $v, $ipn, $spn, $item, $grp, $lbl . $fl . ' · ', false, $out);
+        break;
+      case 'list':
+        if (!is_array($v)) break;
+        $v = array_values($v);
+        if (isset($f['field'])) {
+          if (!pg_i18n_translatable($f['field'])) break;
+          foreach ($v as $k => $x) if (is_scalar($x) && preg_match('/\p{L}/u', (string) $x))
+            $out[] = ['ip' => "$ipn.$k", 'sp' => "$spn.$k", 'de' => (string) $x, 'label' => $lbl . ($f['field']['label'] ?? $fl) . ' ' . ($k + 1),
+                      'w' => $f['field']['widget'] ?? 'string', 'grp' => $grp !== '' ? $grp : $fl, 'item' => $item];
+          break;
+        }
+        $mode = pg_tr_list_mode($v); $occ = [];
+        $sing = (string) ($f['label_singular'] ?? $fl);
+        foreach ($v as $k => $it) {
+          if (!is_array($it)) continue;
+          if ($mode === 'slug' && !empty($it['slug'])) $seg = '@' . $it['slug'];
+          elseif ($mode === 'type' && !empty($it['type'])) { $t = (string) $it['type']; $occ[$t] = ($occ[$t] ?? 0) + 1; $seg = $t . '#' . $occ[$t]; }
+          else $seg = (string) $k;
+          $sum = !empty($f['summary']) && is_scalar($it[$f['summary']] ?? null) ? trim((string) $it[$f['summary']]) : '';
+          $name = $sing . ' ' . ($k + 1) . ($sum !== '' ? ' · ' . mb_strimwidth($sum, 0, 60, '…') : '');
+          if ($mode === 'slug' && $top && $item === '')                       // Spiel / Beitrag: eigener Eintrag
+            pg_tr_leaves($f['fields'] ?? [], $it, "$ipn.$seg", "$spn.$k", $sum !== '' ? $sum : (string) ($it['slug'] ?? $name), '', '', true, $out);
+          elseif ($top)
+            pg_tr_leaves($f['fields'] ?? [], $it, "$ipn.$seg", "$spn.$k", $item, ($grp !== '' && $item !== '' ? $grp . ' › ' : '') . $name, '', false, $out);
+          else
+            pg_tr_leaves($f['fields'] ?? [], $it, "$ipn.$seg", "$spn.$k", $item, $grp, $lbl . $sing . ' ' . ($k + 1) . ' · ', false, $out);
+        }
+        break;
+      case 'blocks':
+        if (!is_array($v)) break;
+        $occ = [];
+        foreach (array_values($v) as $k => $it) {
+          $t = is_array($it) ? (string) ($it['type'] ?? '') : '';
+          if ($t === '') continue;
+          $occ[$t] = ($occ[$t] ?? 0) + 1;
+          if (!isset($f['types'][$t])) continue;
+          $meta = pg_block_meta($t, $it);
+          pg_tr_leaves($f['types'][$t]['fields'] ?? [], $it, "$ipn.$t#{$occ[$t]}", "$spn.$k", $item,
+            'Block: ' . $f['types'][$t]['label'] . ($meta !== '' ? ' · ' . mb_strimwidth($meta, 0, 60, '…') : '') . (!empty($it['hidden']) ? ' (ausgeblendet)' : ''), '', false, $out);
+        }
+        break;
+      default:
+        if (pg_i18n_translatable($f) && is_scalar($v) && preg_match('/\p{L}/u', (string) $v))   // ohne Buchstaben (z. B. „2025“) = sprachneutral
+          $out[] = ['ip' => $ipn, 'sp' => $spn, 'de' => (string) $v, 'label' => $lbl . $fl, 'w' => $w, 'grp' => $grp !== '' ? $grp : 'Allgemein', 'item' => $item];
+    }
+  }
+  return $out;
+}
+function pg_arr_get($a, $path){
+  foreach (explode('.', $path) as $k) { if (!is_array($a) || !array_key_exists($k, $a)) return null; $a = $a[$k]; }
+  return $a;
+}
+function pg_arr_set(&$a, $path, $val){
+  $ref = &$a;
+  foreach (explode('.', $path) as $k) { if (!is_array($ref)) $ref = []; if (!array_key_exists($k, $ref)) $ref[$k] = []; $ref = &$ref[$k]; }
+  $ref = $val;
+}
+
+/* Rohstand laden (ohne Umstellung): Deutsch, Englisch (roh + ausgerichtet), Herkunft, alle Texte mit Status */
+function pg_tr_load($SCHEMA, $key){
+  $coll = $SCHEMA[$key];
+  $de = pg_load_json($coll['file']);
+  $enRaw = pg_load_json(pg_lang_file($coll['file'], 'en'));
+  $aligned = pg_i18n_align($coll['fields'], $de, $enRaw);
+  $src = is_array($enRaw['_src'] ?? null) ? $enRaw['_src'] : [];
+  $leaves = pg_tr_leaves($coll['fields'], $de);
+  foreach ($leaves as &$l) {
+    $en = pg_arr_get($aligned, $l['sp']);
+    $l['en'] = is_scalar($en) ? (string) $en : '';
+    $l['h'] = pg_tr_hash($l['de']);
+    $s = $src[$l['ip']] ?? null;
+    $l['status'] = trim($l['en']) === '' ? 'missing' : ($s === null ? 'unchecked' : ($s === $l['h'] ? 'ok' : 'outdated'));
+    $l['stale'] = $s === PG_TR_STALE;                                   // bei der Umstellung als unpassend erkannt
+  }
+  unset($l);
+  return ['de' => $de, 'enRaw' => $enRaw, 'aligned' => $aligned, 'src' => $src, 'leaves' => $leaves];
+}
+/* Stand für Ansichten & Berichte (stellt Altbestand vorher einmalig um), optional nur ein Bereich (z. B. games.@frontliners) */
+function pg_tr_state($SCHEMA, $key, $scope = ''){
+  pg_tr_migrate($SCHEMA, $key);
+  $st = pg_tr_load($SCHEMA, $key);
+  if ($scope !== '') $st['leaves'] = array_values(array_filter($st['leaves'], fn($l) => strpos($l['ip'] . '.', $scope . '.') === 0));
+  $c = ['total' => 0, 'ok' => 0, 'outdated' => 0, 'unchecked' => 0, 'missing' => 0];
+  foreach ($st['leaves'] as $l) { $c['total']++; $c[$l['status']]++; }
+  $st['count'] = $c;
+  return $st;
+}
+
+/* Lesen-Ändern-Schreiben unter Sperre (verhindert, dass sich zwei Speichervorgänge überschreiben) */
+function pg_tr_apply($SCHEMA, $key, callable $fn){
+  $lock = @fopen(PG_DATA_DIR . '/.i18n.lock', 'c');
+  if ($lock) flock($lock, LOCK_EX);
+  try {
+    $st = pg_tr_load($SCHEMA, $key);
+    $aligned = $st['aligned']; $src = $st['src'];
+    $fn($st, $aligned, $src);
+    $ok = pg_tr_write($SCHEMA, $key, $st, $aligned, $src);
+  } finally {
+    if ($lock) { flock($lock, LOCK_UN); fclose($lock); }
+  }
+  return $ok;
+}
+/* Englische Datei schreiben: Struktur aus Deutsch (nur Texte), verwaiste Spiele/Beiträge bleiben erhalten */
+function pg_tr_write($SCHEMA, $key, $st, $aligned, $src){
+  $coll = $SCHEMA[$key];
+  $out = $aligned;
+  foreach ($coll['fields'] as $f) {
+    if (($f['widget'] ?? '') !== 'list' || empty($f['name']) || isset($f['field'])) continue;
+    $n = $f['name'];
+    $deSlugs = [];
+    foreach ((array) ($st['de'][$n] ?? []) as $it) if (is_array($it) && !empty($it['slug'])) $deSlugs[strtolower((string) $it['slug'])] = true;
+    if (!$deSlugs) continue;
+    foreach ((array) ($st['enRaw'][$n] ?? []) as $it)                 // z. B. ein Spiel im Papierkorb – sein Englisch bleibt
+      if (is_array($it) && !empty($it['slug']) && empty($deSlugs[strtolower((string) $it['slug'])])) $out[$n][] = $it;
+  }
+  $valid = [];
+  foreach ($st['leaves'] as $l) $valid[$l['ip']] = true;
+  foreach ($src as $k => $v) {                                          // Herkunft verwaister Spiele/Beiträge mit aufheben
+    if (isset($valid[$k])) continue;
+    if (!preg_match('/^[^.]+\.@([^.]+)\./', $k, $m)) { unset($src[$k]); continue; }
+    $alive = false;
+    foreach ($out as $lst) if (is_array($lst)) foreach ($lst as $it) if (is_array($it) && strtolower((string) ($it['slug'] ?? '')) === strtolower($m[1])) { $alive = true; break 2; }
+    if (!$alive) unset($src[$k]);
+  }
+  ksort($src);
+  $out['_src'] = $src ? $src : new stdClass();
+  $file = pg_lang_file($coll['file'], 'en');
+  $cmp = $st['enRaw'];
+  if (($cmp['_src'] ?? null) === []) $cmp['_src'] = new stdClass();
+  if (is_file($file) && json_encode($out) === json_encode($cmp)) return true;          // nichts geändert
+  return pg_save_json($file, $out);
+}
+
+/* Ist ein alter englischer Text plausibel eine Übersetzung des aktuellen Deutschs?
+   Fehlen Eigennamen (z. B. FRONTLINERS) oder Zahlen, weicht die Länge stark ab oder ist es
+   unübersetztes Deutsch, gilt er als veraltet. */
+function pg_tr_plausible($de, $en, $w = 'string'){
+  $de = trim((string) $de); $en = trim((string) $en);
+  if ($en === '') return false;
+  $low = mb_strtolower($en, 'UTF-8'); $lowDe = mb_strtolower($de, 'UTF-8');
+  $caps = '/(?<![\p{L}\p{N}])[A-ZÄÖÜ][A-ZÄÖÜ0-9]{2,}(?![\p{L}\p{N}])/u';
+  preg_match_all($caps, $de, $m);
+  foreach (array_unique($m[0]) as $tok) if (mb_strpos($low, mb_strtolower($tok, 'UTF-8')) === false) return false;
+  preg_match_all($caps, $en, $m);                                       // Name im Englischen, den es im Deutschen nicht gibt (z. B. WARCATS)
+  foreach (array_unique($m[0]) as $tok) if (mb_strpos($lowDe, mb_strtolower($tok, 'UTF-8')) === false) return false;
+  $sent = fn($x) => preg_match_all('/[.!?…]+(?=\s|$)/u', $x);            // Satzanzahl bleibt beim Übersetzen fast immer gleich
+  if (max($sent($de), $sent($en)) >= 2 && $sent($de) !== $sent($en)) return false;
+  preg_match_all('/\d+/', $de, $m); preg_match_all('/\d+/', $en, $m2);
+  if (array_diff(array_unique($m[0]), $m2[0])) return false;
+  $ld = mb_strlen($de); $le = mb_strlen($en);
+  if ($ld >= 60 && ($le < $ld * 0.45 || $le > $ld * 2.2)) return false;
+  if ($w !== 'string' && abs(count(preg_split('/\n\s*\n/', $de)) - count(preg_split('/\n\s*\n/', $en))) >= 2) return false;
+  if ($en === $de && preg_match_all('/\p{L}{2,}/u', $de) >= 3
+      && preg_match('/(?<!\p{L})(und|der|die|das|ist|nicht|mit|für|ein|eine|wir|du|dein|deine|auf|zu|von|jetzt|neu)(?!\p{L})/iu', $de)) return false;
+  return true;
+}
+/* Einmalige Umstellung einer alten .en.json (ohne „_src“): vorher Sicherheitskopie aller Daten.
+   Plausible Übersetzungen gelten als aktuell, offensichtlich veraltete werden markiert. */
+function pg_tr_migrate($SCHEMA, $key){
+  static $done = [], $backup = false;
+  if (isset($done[$key])) return; $done[$key] = true;
+  $file = pg_lang_file($SCHEMA[$key]['file'], 'en');
+  if (!is_file($file)) return;
+  $raw = pg_load_json($file);
+  if (array_key_exists('_src', $raw)) return;
+  if (!$backup) { $backup = true; if (pg_backup_write('safety') === false) return; }   // ohne Sicherung keine Umstellung
+  $stale = 0;
+  pg_tr_apply($SCHEMA, $key, function ($st, &$aligned, &$src) use (&$stale) {
+    foreach ($st['leaves'] as $l) {
+      if (trim($l['en']) === '' || isset($src[$l['ip']])) continue;
+      if (pg_tr_plausible($l['de'], $l['en'], $l['w'])) $src[$l['ip']] = $l['h'];
+      else { $src[$l['ip']] = PG_TR_STALE; $stale++; }
+    }
+  });
+  pg_log_activity('Übersetzung umgestellt', $SCHEMA[$key]['label'] . ': Deutsch ist jetzt die Vorlage' . ($stale ? ' · ' . $stale . ' veraltete Texte erkannt' : ''));
+}
+
+/* Englische Texte aus dem Formular speichern.
+   Geänderte oder als „passt“ bestätigte Texte gelten als Übersetzung des deutschen Stands,
+   den der Bearbeiter gesehen hat ($hashes) – ist Deutsch inzwischen neuer, bleiben sie „veraltet“. */
+function pg_tr_save($SCHEMA, $key, $posted, $hashes = [], $okMarks = []){
+  $posted = is_array($posted) ? $posted : []; $hashes = is_array($hashes) ? $hashes : []; $okMarks = is_array($okMarks) ? $okMarks : [];
+  $changed = 0;
+  $ok = pg_tr_apply($SCHEMA, $key, function ($st, &$aligned, &$src) use ($posted, $hashes, $okMarks, &$changed) {
+    foreach ($st['leaves'] as $l) {
+      $ip = $l['ip'];
+      if (!array_key_exists($ip, $posted) && empty($okMarks[$ip])) continue;
+      $h = (isset($hashes[$ip]) && preg_match('/^[0-9a-f]{8}$/', (string) $hashes[$ip])) ? (string) $hashes[$ip] : $l['h'];
+      $cur = trim($l['en']);
+      $new = array_key_exists($ip, $posted) ? trim(str_replace("\r", '', (string) $posted[$ip])) : $cur;
+      if ($new === '') { if ($cur !== '' || isset($src[$ip])) $changed++; pg_arr_set($aligned, $l['sp'], ''); unset($src[$ip]); continue; }
+      if ($new !== $cur) { pg_arr_set($aligned, $l['sp'], $new); $src[$ip] = $h; $changed++; }
+      elseif (!empty($okMarks[$ip]) && ($src[$ip] ?? null) !== $h) { $src[$ip] = $h; $changed++; }
+    }
+  });
+  return [$ok, $changed];
+}
+
+/* ---------------- Maschinelle Übersetzung (MyMemory, kein API-Key) ----------------
+   pg_translate_try: Übersetzung oder null bei Fehler/Kontingent – nie ein halb übersetzter Text.
+   Markdown bleibt erhalten: Zeilen werden einzeln übersetzt, Listen-/Überschriften-Zeichen bleiben stehen. */
+function pg_translate_try($text, $from = 'de', $to = 'en'){
+  $text = str_replace("\r\n", "\n", (string) $text);
+  if (trim($text) === '') return $text;
+  $out = [];
+  foreach (explode("\n", $text) as $line) {
+    if (trim($line) === '') { $out[] = $line; continue; }
+    preg_match('/^(\s*(?:[-*+]|\d+[.)]|#{1,6}|>)\s+)?(.*)$/su', $line, $m);
+    $tr = pg_translate_line($m[2] ?? $line, $from, $to);
+    if ($tr === null) return null;
+    $out[] = ($m[1] ?? '') . $tr;
+  }
+  $res = implode("\n", $out);
+  return preg_replace_callback('/\*\*\s*(.+?)\s*\*\*/s', fn($x) => '**' . trim($x[1]) . '**', $res);
+}
+function pg_translate_line($s, $from, $to){
+  $t = trim($s);
+  if ($t === '' || !preg_match('/\p{L}/u', $t)) return $s;                                 // nur Zahlen/Zeichen
+  // Links & Adressen nicht übersetzen: durch Platzhalter ersetzen und danach zurücksetzen
+  $keep = [];
+  $t = preg_replace_callback('~\]\(([^)\s]+)\)|\bhttps?://\S+|\b[\w.+-]+@[\w-]+\.[\w.]+\b~u', function ($m) use (&$keep) {
+    $keep[] = $m[0]; return '⟦' . count($keep) . '⟧';
+  }, $t);
+  $restore = function ($r) use ($keep) {
+    if ($r === null) return null;
+    foreach ($keep as $i => $v) {
+      $tok = '⟦' . ($i + 1) . '⟧';
+      if (mb_strpos($r, $tok) === false) return null;                                     // Platzhalter verloren → lieber nicht übernehmen
+      if (strncmp($v, '](', 2) === 0) $r = preg_replace('/\s+' . preg_quote($tok, '/') . '/u', $tok, $r);   // „[Text ](…)“ → „[Text](…)“
+      $r = str_replace($tok, $v, $r);
+    }
+    return $r;
+  };
+  if ($keep && trim(preg_replace('/⟦\d+⟧/u', '', $t)) === '') return $s;
+  if (mb_strlen($t) <= 40 && preg_match('/^[\p{Lu}0-9][\p{Lu}0-9\-_.:!?&+\/]*$/u', $t)) return $s;    // ein Name/Kürzel in Großbuchstaben (z. B. FRONTLINERS)
+  if (getenv('PG_TRANSLATE_MOCK')) return $restore('EN: ' . $t);                         // nur Testumgebung
+  // in Stücke ≤ 450 Zeichen an Satzgrenzen teilen
+  $parts = []; $buf = '';
+  foreach (preg_split('/(?<=[.!?…])\s+/u', $t) as $sent) {
+    if ($buf !== '' && mb_strlen($buf . ' ' . $sent) > 450) { $parts[] = $buf; $buf = $sent; }
+    else $buf = $buf === '' ? $sent : $buf . ' ' . $sent;
+  }
+  if ($buf !== '') $parts[] = $buf;
+  $email = pg_translate_contact(); $res = [];
+  foreach ($parts as $part) {
+    $piece = mb_strlen($part) > 480 ? mb_substr($part, 0, 480) : $part;
+    $url = 'https://api.mymemory.translated.net/get?q=' . rawurlencode($piece) . '&langpair=' . $from . '|' . $to . ($email ? '&de=' . rawurlencode($email) : '');
+    $tr = null;
+    for ($try = 0; $try < 2 && $tr === null; $try++) {
+      if ($try) usleep(800000);
+      $raw = pg_http_get($url);
+      $j = $raw ? json_decode($raw, true) : null;
+      $cand = is_array($j) ? ($j['responseData']['translatedText'] ?? null) : null;
+      if (!is_string($cand) || trim($cand) === '' || (int) ($j['responseStatus'] ?? 0) !== 200 || !empty($j['quotaFinished'])) continue;
+      if (preg_match('/^(MYMEMORY WARNING|QUERY LENGTH LIMIT|INVALID )/i', $cand)) return null;   // Kontingent/Fehler: nicht weiter versuchen
+      $tr = html_entity_decode($cand, ENT_QUOTES, 'UTF-8');
+    }
+    if ($tr === null) return null;
+    $res[] = trim($tr);
+    usleep(100000);                                                                      // freundlich zum kostenlosen Dienst
+  }
+  return $restore(implode(' ', $res));
+}
+// Kompatibel für ältere Aufrufer: bei Fehler den Originaltext zurückgeben
+function pg_translate_text($text, $from = 'de', $to = 'en'){
+  $r = pg_translate_try($text, $from, $to);
+  return $r === null ? (string) $text : $r;
+}
+
+/* Abgleich in Etappen (Zeitbudget je Aufruf). Übersetzt wird ohne Sperre, eingetragen wird
+   unter Sperre und nur, wenn das Deutsche sich zwischenzeitlich nicht geändert hat.
+   auto    = veraltete + fehlende
+   force   = genau die übergebenen Texte neu aus dem Deutschen
+   confirm = ungeprüfte & veraltete als „passt“ bestätigen (ohne Übersetzung) */
+function pg_tr_sync($SCHEMA, $key, $scope = '', $mode = 'auto', $ips = [], $budget = 15){
+  @set_time_limit($budget + 40);
+  $t0 = microtime(true);
+  $st = pg_tr_state($SCHEMA, $key, $scope);
+  $want = array_flip(array_map('strval', (array) $ips));
+  $todo = [];
+  foreach ($st['leaves'] as $l) {
+    if ($mode === 'force') { if (isset($want[$l['ip']])) $todo[] = $l; }
+    elseif ($mode === 'confirm') { if ($l['status'] === 'unchecked' || $l['status'] === 'outdated') $todo[] = $l; }
+    elseif ($l['status'] === 'outdated' || $l['status'] === 'missing') $todo[] = $l;
+  }
+  $res = []; $failed = 0;
+  foreach ($todo as $l) {
+    if ($mode === 'confirm') { $res[$l['ip']] = [null, $l['h']]; continue; }
+    if (microtime(true) - $t0 > $budget) break;
+    $en = pg_translate_try($l['de']);
+    if ($en === null) { $failed++; if ($failed >= 2) break; continue; }
+    $res[$l['ip']] = [$en, $l['h']];
+  }
+  if ($res) pg_tr_apply($SCHEMA, $key, function ($st2, &$aligned, &$src) use ($res) {
+    foreach ($st2['leaves'] as $l) {
+      if (!isset($res[$l['ip']])) continue;
+      [$en, $h] = $res[$l['ip']];
+      if ($h !== $l['h']) continue;                                     // Deutsch hat sich inzwischen geändert
+      if ($en !== null) pg_arr_set($aligned, $l['sp'], $en);
+      elseif (trim($l['en']) === '') continue;
+      $src[$l['ip']] = $h;
+    }
+  });
+  $after = pg_tr_state($SCHEMA, $key, $scope);
+  $texts = [];
+  foreach ($after['leaves'] as $l) if (isset($res[$l['ip']])) $texts[$l['ip']] = ['en' => $l['en'], 'status' => $l['status'], 'h' => $l['h']];
+  return ['ok' => true, 'done' => count($res), 'failed' => $failed, 'unavailable' => $failed >= 2 || ($failed > 0 && !$res),
+          'count' => $after['count'], 'pending' => $after['count']['outdated'] + $after['count']['missing'], 'texts' => $texts];
+}
+
+/* Überblick je Sammlung (nur Bereiche mit übersetzbarem Text, die der Nutzer bearbeiten darf) */
+function pg_tr_report($SCHEMA){
+  $rows = [];
+  foreach ($SCHEMA as $k => $coll) {
+    if (empty($coll['file']) || !pg_can($k)) continue;
+    $c = pg_tr_state($SCHEMA, $k)['count'];
+    if ($c['total'] === 0) continue;
+    $rows[$k] = ['label' => $coll['label'], 'icon' => $coll['icon'] ?? '', 'pct' => (int) floor($c['ok'] / $c['total'] * 100)] + $c;
+  }
+  return $rows;
+}
+/* Was muss im Hintergrund nachgezogen werden? (zwischengespeichert, solange sich keine Datei ändert) */
+function pg_tr_pending_all($SCHEMA){
+  $sig = '';
+  foreach ($SCHEMA as $k => $coll) {
+    if (empty($coll['file'])) continue;
+    foreach ([$coll['file'], pg_lang_file($coll['file'], 'en')] as $f) $sig .= $k . (is_file($f) ? filemtime($f) . ':' . filesize($f) : '-') . '|';
+  }
+  $sig = md5($sig . pg_current_email());
+  if (($_SESSION['pg_tr_pend']['sig'] ?? '') === $sig) return $_SESSION['pg_tr_pend']['rows'];
+  $rows = [];
+  foreach (pg_tr_report($SCHEMA) as $k => $r) if ($r['outdated'] + $r['missing'] > 0) $rows[$k] = $r['outdated'] + $r['missing'];
+  $_SESSION['pg_tr_pend'] = ['sig' => $sig, 'rows' => $rows];
+  return $rows;
+}
+// Slug-Umzug: Herkunftsangaben mitnehmen (games.@alt.… → games.@neu.…)
+function pg_tr_rename_src($file, $listKey, $old, $new){
+  $en = pg_load_json($file);
+  if (!is_array($en['_src'] ?? null) || !$en['_src']) return true;
+  $pre = $listKey . '.@' . $old . '.'; $out = [];
+  foreach ($en['_src'] as $k => $v) $out[strpos($k, $pre) === 0 ? $listKey . '.@' . $new . '.' . substr($k, strlen($pre)) : $k] = $v;
+  ksort($out);
+  $en['_src'] = $out;
+  return pg_save_json($file, $en);
 }

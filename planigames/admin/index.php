@@ -265,8 +265,63 @@ if (!pg_logged_in()) {
 // Ab hier: eingeloggt. Tägliches Auto-Backup anstoßen (cron-frei, idempotent).
 if (pg_is_owner()) pg_backup_auto_maybe();
 
+/* ---- Übersetzung (Deutsch ist die Vorlage) ---- */
+if (in_array($action, ['tr_save', 'tr_sync', 'tr_one', 'tr_settings'], true)) {
+  $json = $action !== 'tr_save';
+  $fail = function ($code, $msg) use ($json) {
+    http_response_code($code);
+    if ($json) { header('Content-Type: application/json; charset=utf-8'); exit(json_encode(['ok' => false, 'error' => $msg], JSON_UNESCAPED_UNICODE)); }
+    exit($msg);
+  };
+  if ($_SERVER['REQUEST_METHOD'] !== 'POST') $fail(405, 'Nur per Formular.');
+  pg_csrf_check();
+  if ($action === 'tr_settings') {
+    if (!pg_can('studio') && !pg_is_owner()) $fail(403, 'Keine Berechtigung.');
+    $ok = pg_tr_settings_save(['auto' => !empty($_POST['auto'])]);
+    unset($_SESSION['pg_tr_pend']);
+    header('Content-Type: application/json; charset=utf-8');
+    exit(json_encode(['ok' => (bool) $ok, 'auto' => !empty($_POST['auto'])]));
+  }
+  $key = (string) ($_POST['collection'] ?? '');
+  if (!isset($SCHEMA[$key]) || empty($SCHEMA[$key]['file'])) $fail(404, 'Unbekannter Bereich.');
+  if (!pg_can($key)) $fail(403, 'Keine Berechtigung für diesen Bereich.');
+  $scope = preg_replace('/[^\w.@#\-]/u', '', (string) ($_POST['scope'] ?? ''));
+  if ($scope !== '' && strpos($scope, $key === 'games' ? 'games.' : '') !== 0) $scope = '';
+
+  if ($action === 'tr_save') {
+    [$ok, $n] = pg_tr_save($SCHEMA, $key, $_POST['tr'] ?? [], $_POST['trh'] ?? [], $_POST['trok'] ?? []);
+    if ($ok && $n) pg_log_activity('Gespeichert', $SCHEMA[$key]['label'] . ' (EN · ' . $n . ' Text' . ($n === 1 ? '' : 'e') . ')');
+    unset($_SESSION['pg_tr_pend']);
+    $back = (string) ($_POST['back'] ?? '');
+    if (!preg_match('/^index\.php\?[\w=&%.@#\-]*$/', $back)) $back = 'index.php?collection=' . rawurlencode($key) . '&lang=en';
+    if (isset($_POST['ajax'])) { header('Content-Type: application/json; charset=utf-8'); exit(json_encode(['ok' => (bool) $ok, 'changed' => $n, 'time' => date('H:i')])); }
+    header('Location: ' . $back . ($ok ? '&saved=1' : '&error=1')); exit;
+  }
+  // lange Übersetzungsläufe dürfen andere Admin-Seiten nicht blockieren
+  session_write_close();
+  header('Content-Type: application/json; charset=utf-8');
+  if ($action === 'tr_one') {
+    $ip = (string) ($_POST['ip'] ?? '');
+    $hit = null;
+    foreach (pg_tr_state($SCHEMA, $key, $scope)['leaves'] as $l) if ($l['ip'] === $ip) { $hit = $l; break; }
+    if (!$hit) $fail(404, 'Text nicht gefunden – bitte Seite neu laden.');
+    $en = pg_translate_try($hit['de']);
+    exit(json_encode($en === null ? ['ok' => false, 'error' => 'Der Übersetzungsdienst ist gerade nicht erreichbar. Bitte später erneut versuchen.']
+                                  : ['ok' => true, 'en' => $en, 'h' => $hit['h']], JSON_UNESCAPED_UNICODE));
+  }
+  // tr_sync: nur ein Lauf gleichzeitig (z. B. zwei offene Tabs)
+  $lk = @fopen(PG_DATA_DIR . '/.i18n-sync.lock', 'c');
+  if ($lk && !flock($lk, LOCK_EX | LOCK_NB)) exit(json_encode(['ok' => true, 'busy' => true]));
+  $mode = in_array($_POST['mode'] ?? '', ['auto', 'force', 'confirm'], true) ? $_POST['mode'] : 'auto';
+  if ($mode === 'force' && !empty($_POST['first'])) pg_backup_write('safety');   // vor „Alles neu übersetzen“ sichern
+  $res = pg_tr_sync($SCHEMA, $key, $scope, $mode, (array) ($_POST['ips'] ?? []), 14);
+  if ($res['done'] > 0) pg_log_activity($mode === 'confirm' ? 'Übersetzung bestätigt' : 'Automatisch übersetzt', $SCHEMA[$key]['label'] . ' (EN · ' . $res['done'] . ' Text' . ($res['done'] === 1 ? '' : 'e') . ')');
+  if ($lk) { flock($lk, LOCK_UN); fclose($lk); }
+  exit(json_encode($res, JSON_UNESCAPED_UNICODE));
+}
+
 /* ---- Spiele: Aktionen der Spiele-Verwaltung (Master-Detail) ---- */
-if (in_array($action, ['game_create', 'game_duplicate', 'game_delete', 'game_rename', 'games_reorder', 'game_translate'], true)) {
+if (in_array($action, ['game_create', 'game_duplicate', 'game_delete', 'game_rename', 'games_reorder'], true)) {
   if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: index.php?collection=games'); exit; }
   pg_csrf_check();
   if (!pg_can('games')) { http_response_code(403); exit('Keine Berechtigung.'); }
@@ -297,23 +352,6 @@ if (in_array($action, ['game_create', 'game_duplicate', 'game_delete', 'game_ren
     header('Location: ' . $back($res['new'], '&tab=settings&renamed=' . rawurlencode($res['old'])
       . '&mc=' . rawurlencode(implode(',', [$c['waitlist'], $c['suggestions'], $c['board'], $c['posts'], $c['views'], $c['en']])))); exit;
   }
-  if ($action === 'game_translate') {
-    @set_time_limit(180);
-    $de = pg_games_data('de');
-    $i = pg_game_locate($de['games'], $gIdx, $gOrig);
-    if ($i < 0) { header('Location: ' . $back('', '&gerr=' . rawurlencode('Spiel nicht gefunden.'))); exit; }
-    $fields = pg_game_fields($SCHEMA);
-    $en = pg_games_data('en');
-    $ei = pg_game_en_idx($en['games'], $de['games'], $de['games'][$i]['slug'] ?? '', $i);
-    $aligned = pg_i18n_align($fields, $de['games'][$i], $ei >= 0 ? $en['games'][$ei] : []);
-    $n = 0;
-    $filled = ['slug' => (string) ($de['games'][$i]['slug'] ?? '')] + pg_i18n_fill_missing($fields, $de['games'][$i], $aligned, $n);
-    if ($ei >= 0) $en['games'][$ei] = $filled; else $en['games'][] = $filled;
-    $en['games'] = pg_games_en_sorted($en['games'], $de['games']);
-    $ok = pg_games_save($en, 'en');
-    if ($ok) pg_log_activity('Gespeichert', 'Spiele · ' . ($de['games'][$i]['title'] ?? '') . ' (EN, automatisch übersetzt: ' . $n . ')');
-    header('Location: ' . $back((string) ($de['games'][$i]['slug'] ?? ''), '&lang=en&' . ($ok ? 'translated=' . $n : 'error=1'))); exit;
-  }
 }
 
 /* ---- Speichern ---- */
@@ -322,18 +360,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
   $key = $_POST['collection'] ?? '';
   if (!isset($SCHEMA[$key])) { http_response_code(404); exit('Unbekannter Bereich.'); }
   if (!pg_can($key)) { http_response_code(403); exit('Keine Berechtigung für diesen Bereich.'); }
-  $lang = ($_POST['lang'] ?? 'de') === 'en' ? 'en' : 'de';
+  // Englisch wird ausschließlich über die Übersetzungs-Ansicht gespeichert (Deutsch ist die Vorlage)
+  $lang = 'de';
 
   // Spiele: es wird nur DAS bearbeitete Spiel gespeichert – alle anderen bleiben unangetastet
   if ($key === 'games' && isset($_POST['game_orig'])) {
     $gIdx = (int) ($_POST['game_idx'] ?? -1); $gOrig = (string) $_POST['game_orig'];
-    [$ok, $res] = $lang === 'en'
-      ? pg_game_save_en($SCHEMA, $gIdx, $gOrig, $_POST['g'] ?? [], (string) ($_POST['game_sig'] ?? ''))
-      : pg_game_save_de($SCHEMA, $gIdx, $gOrig, $_POST['g'] ?? []);
+    [$ok, $res] = pg_game_save_de($SCHEMA, $gIdx, $gOrig, $_POST['g'] ?? []);
     if ($ok) pg_log_activity('Gespeichert', 'Spiele · ' . (is_array($res) ? ($res['title'] ?? $gOrig) : $gOrig) . ' (' . strtoupper($lang) . ')');
     if (isset($_POST['ajax'])) {
       header('Content-Type: application/json');
-      echo json_encode(['ok' => (bool) $ok, 'time' => date('H:i'), 'error' => $ok ? '' : (is_string($res) ? $res : 'Speichern fehlgeschlagen')]);
+      echo json_encode(['ok' => (bool) $ok, 'time' => date('H:i'), 'error' => $ok ? '' : (is_string($res) ? $res : 'Speichern fehlgeschlagen'),
+        'tr_pending' => $ok ? pg_tr_pending_all($SCHEMA) : (object) []]);
       exit;
     }
     $tab = preg_replace('/[^a-z]/', '', (string) ($_POST['game_tab'] ?? ''));
@@ -373,7 +411,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
   // Autosave/AJAX: JSON zurückgeben statt Redirect
   if (isset($_POST['ajax'])) {
     header('Content-Type: application/json');
-    echo json_encode(['ok' => $ok, 'sent' => $sentCount, 'time' => date('H:i')]);
+    echo json_encode(['ok' => $ok, 'sent' => $sentCount, 'time' => date('H:i'), 'tr_pending' => $ok ? pg_tr_pending_all($SCHEMA) : (object) []]);
     exit;
   }
   $extra = $sentCount > 0 ? '&sent=' . $sentCount : '';
@@ -381,18 +419,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
   exit;
 }
 
-/* ---- Automatisch ins Englische übersetzen ---- */
-if ($action === 'translate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-  pg_csrf_check();
-  $key = $_POST['collection'] ?? '';
-  if (!isset($SCHEMA[$key]) || !pg_can($key)) { http_response_code(403); exit('Keine Berechtigung.'); }
-  @set_time_limit(180);
-  $de = pg_load_json($SCHEMA[$key]['file']);
-  $en = pg_translate_data($SCHEMA[$key]['fields'], $de);
-  $ok = pg_save_json(pg_lang_file($SCHEMA[$key]['file'], 'en'), $en);
-  header('Location: index.php?collection=' . urlencode($key) . '&lang=en&' . ($ok ? 'translated=1' : 'error=1'));
-  exit;
-}
 
 /* ---- Backup: Export (alle Inhalte als eine Datei) ---- */
 if ($action === 'backup_export') {
@@ -2115,38 +2141,41 @@ if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
   $lang = ($_GET['lang'] ?? 'de') === 'en' ? 'en' : 'de';
   // Spiele: eigene Verwaltung (Liste + Einzel-Editor mit Reitern)
   if ($key === 'games') { require __DIR__ . '/view-games.php'; pg_games_view($SCHEMA, $lang); exit; }
-  $enFile = pg_lang_file($coll['file'], 'en');
-  $enExists = is_file($enFile);
-  // EN-Datei laden falls vorhanden, sonst Deutsch als Startvorlage übernehmen
-  $data = ($lang === 'en' && $enExists) ? pg_load_json($enFile) : pg_load_json($coll['file']);
-
-  pg_view_head($coll['label']);
-  pg_view_topbar($SCHEMA, $key);
-  if (isset($_GET['saved']))      echo '<div class="flash ok">✓ Gespeichert (' . strtoupper($lang) . '). Änderungen sind live auf der Website.</div>';
-  if (isset($_GET['sent']))       echo '<div class="flash ok">📣 Newsletter verschickt: ' . (int)$_GET['sent'] . ' Abonnent' . ((int)$_GET['sent'] === 1 ? '' : 'en') . ' benachrichtigt.</div>';
-  if (isset($_GET['translated'])) echo '<div class="flash ok">🌐 Automatisch übersetzt. Bitte gegenlesen und ggf. anpassen, dann speichern reicht – ist bereits gesichert.</div>';
-  if (isset($_GET['error']))      echo '<div class="flash err">Konnte nicht speichern/übersetzen – Schreibrechte am Ordner data/ bzw. Internet-Zugriff prüfen.</div>';
-
-  // Sprach-Umschalter
-  echo '<div class="editor lang-bar">';
-  echo '<div class="lang-toggle">'
-     . '<a class="' . ($lang === 'de' ? 'on' : '') . '" href="index.php?collection=' . pg_h($key) . '&lang=de">🇩🇪 Deutsch</a>'
-     . '<a class="' . ($lang === 'en' ? 'on' : '') . '" href="index.php?collection=' . pg_h($key) . '&lang=en">🇬🇧 English' . ($enExists ? '' : ' <span class="muted">(neu)</span>') . '</a>'
-     . '</div>';
-  if ($lang === 'en') {
-    echo '<form method="post" action="index.php?action=translate" class="tr-form" '
-       . 'onsubmit="return confirm(\'Englische Felder automatisch aus dem Deutschen füllen? Vorhandene englische Inhalte werden überschrieben. Das kann einen Moment dauern.\')">'
-       . '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
-       . '<input type="hidden" name="collection" value="' . pg_h($key) . '">'
-       . '<button class="btn-translate" type="submit">🌐 Automatisch aus dem Deutschen übersetzen</button></form>';
-  }
-  echo '</div>';
-  if ($lang === 'en') echo '<div class="editor lang-hint-wrap"><p class="muted lang-hint">Tipp: Leere englische Felder fallen auf der Website automatisch auf Deutsch zurück. Nicht-Textfelder (Bilder, Farben, Links) gelten für beide Sprachen.</p></div>';
-
   $previewUrl = [
     'studio' => '../index.html', 'team' => '../index.html#team-section',
     'games' => '../games.html', 'patchnotes' => '../devlog.php', 'legal' => '../rechtliches.html',
   ][$key] ?? '../index.html';
+  $withLang = fn($u, $l) => preg_replace('/(#.*)?$/', (strpos($u, '?') === false ? '?' : '&') . 'lang=' . $l . '$1', $u, 1);
+  $trc = pg_tr_state($SCHEMA, $key)['count'];
+  $trOpen = $trc['outdated'] + $trc['missing'] + $trc['unchecked'];
+  $trPct = $trc['total'] ? (int) floor($trc['ok'] / $trc['total'] * 100) : 100;
+  $langSw = pg_lang_switch('index.php?collection=' . $key, 'index.php?collection=' . $key . '&lang=en', $lang, $trPct, $trOpen);
+
+  /* ---- Englisch: einheitliche Übersetzungs-Ansicht (Deutsch ist die Vorlage) ---- */
+  if ($lang === 'en') {
+    require_once __DIR__ . '/view-translate.php';
+    pg_view_head($coll['label'] . ' · Englisch');
+    pg_view_topbar($SCHEMA, $key);
+    if (isset($_GET['saved'])) echo '<div class="flash ok">✓ Englisch gespeichert – die Website ist aktuell.</div>';
+    if (isset($_GET['error'])) echo '<div class="flash err">Konnte nicht speichern – Schreibrechte am Ordner data/ prüfen.</div>';
+    echo '<div class="tr-page"><div class="tr-pagehead"><div><h1>' . pg_h($coll['label']) . ' <span>· Englisch</span></h1>'
+       . '<p>Alle englischen Texte dieses Bereichs – links jeweils das deutsche Original.</p></div>'
+       . '<div class="tr-ph-acts">' . $langSw
+       . '<a class="btn btn-sm" href="' . pg_h($withLang($previewUrl, 'en')) . '" target="_blank" rel="noopener">' . pg_icon('ext') . 'Ansehen (EN)</a>'
+       . '<button class="btn-primary btn-sm" type="submit" form="trf">' . pg_icon('check') . 'Englisch speichern</button></div></div>';
+    echo pg_tr_view($SCHEMA, $key, '', ['back' => 'index.php?collection=' . rawurlencode($key) . '&lang=en']);
+    echo '</div>';
+    pg_view_foot();
+    exit;
+  }
+  $data = pg_load_json($coll['file']);
+
+  pg_view_head($coll['label']);
+  pg_view_topbar($SCHEMA, $key);
+  if (isset($_GET['saved']))      echo '<div class="flash ok">✓ Gespeichert. Änderungen sind live auf der Website.</div>';
+  if (isset($_GET['sent']))       echo '<div class="flash ok">📣 Newsletter verschickt: ' . (int)$_GET['sent'] . ' Abonnent' . ((int)$_GET['sent'] === 1 ? '' : 'en') . ' benachrichtigt.</div>';
+  if (isset($_GET['error']))      echo '<div class="flash err">Konnte nicht speichern – Schreibrechte am Ordner data/ prüfen.</div>';
+  $previewUrl = $withLang($previewUrl, 'de');
   // Bei „Spiele" direkt die erste Spielseite zeigen (dort baut man die Blöcke), nicht nur die Übersicht
   if ($key === 'games') {
     $firstSlug = '';
@@ -2156,11 +2185,10 @@ if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
   echo '<form method="post" class="editor" id="editor" data-autosave data-preview="' . pg_h($previewUrl) . '">';
   echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
   echo '<input type="hidden" name="collection" value="' . pg_h($key) . '">';
-  echo '<input type="hidden" name="lang" value="' . pg_h($lang) . '">';
-  echo '<div class="editor-head"><div><h1>' . pg_h($coll['icon']) . ' ' . pg_h($coll['label'])
-     . ' <span class="lang-pill">' . strtoupper($lang) . '</span></h1>'
-     . '<p class="muted">Änderungen werden direkt auf dem Server gespeichert.</p></div>'
-     . '<div class="editor-actions"><span class="save-status" data-save-status></span>'
+  echo '<input type="hidden" name="lang" value="de">';
+  echo '<div class="editor-head"><div><h1>' . pg_h($coll['icon']) . ' ' . pg_h($coll['label']) . '</h1>'
+     . '<p class="muted">Änderungen werden direkt auf dem Server gespeichert. Englisch zieht automatisch nach.</p></div>'
+     . '<div class="editor-actions"><span class="save-status" data-save-status></span>' . $langSw
      . '<button type="button" class="btn-add" data-split-toggle title="Live-Vorschau neben dem Editor">⊟ Vorschau</button>'
      . '<a class="btn-preview" href="' . pg_h($previewUrl) . '" target="_blank" rel="noopener">↗ Tab</a>'
      . '<button class="btn-primary" type="submit" name="save" value="1">Speichern</button></div></div>';
@@ -2231,11 +2259,13 @@ if ($due) {
     (count($due) > 1 ? '+' . (count($due) - 1) . ' weitere Karte' . (count($due) > 2 ? 'n' : '') . ' bald fällig' : ($first['g'] !== '' ? $scopeName($first['g']) : 'Planungs-Board')),
     'index.php?view=board' . ($first['b'] !== '' ? '&board=' . rawurlencode($first['b']) : ''), 'Ansehen'];
 }
-$i18n = pg_i18n_report($SCHEMA);
-$gaps = array_filter($i18n, fn($r) => $r['missing'] > 0);
-uasort($gaps, fn($a, $b) => $b['missing'] <=> $a['missing']);
+$i18n = pg_tr_report($SCHEMA);
+foreach ($i18n as $k => $r) $i18n[$k]['open'] = $r['outdated'] + $r['missing'] + $r['unchecked'];
+$gaps = array_filter($i18n, fn($r) => $r['open'] > 0);
+uasort($gaps, fn($a, $b) => $b['open'] <=> $a['open']);
 foreach (array_slice($gaps, 0, 2, true) as $k => $r) {
-  $todo[] = ['globe', 'info', $r['label'] . ': Englisch unvollständig', $r['missing'] . ' Text' . ($r['missing'] === 1 ? '' : 'e') . ' noch nicht übersetzt', 'index.php?collection=' . rawurlencode($k) . '&lang=en', 'Übersetzen'];
+  $bits = array_filter([$r['outdated'] ? $r['outdated'] . ' veraltet' : '', $r['missing'] ? $r['missing'] . ' fehlen' : '', $r['unchecked'] ? $r['unchecked'] . ' ungeprüft' : '']);
+  $todo[] = ['globe', 'info', $r['label'] . ': Englisch nachziehen', implode(' · ', $bits) . (!empty(pg_tr_settings()['auto']) && ($r['outdated'] + $r['missing']) ? ' – wird automatisch übersetzt' : ''), 'index.php?collection=' . rawurlencode($k) . '&lang=en', 'Ansehen'];
 }
 if ($me && !pg_user_has_2fa($me)) $todo[] = ['shield', 'warn', 'Zwei-Faktor-Anmeldung aktivieren', 'schützt dein Konto zusätzlich zum Passwort', 'index.php?view=account', 'Einrichten'];
 $backups = $isOwner ? pg_backup_list() : [];
@@ -2416,10 +2446,10 @@ foreach ($sys as [$ic, $tone, $label, $val]) {
 echo '</ul></section>';
 // Übersetzungen
 if ($i18n) {
-  uasort($i18n, fn($a, $b) => ($b['missing'] <=> $a['missing']) ?: strcmp($a['label'], $b['label']));
-  echo '<section class="ck-card"><div class="ck-card-h"><span class="ck-card-t">' . pg_icon('globe') . 'Übersetzungen (Englisch)</span></div><div class="ck-i18n">';
+  uasort($i18n, fn($a, $b) => ($b['open'] <=> $a['open']) ?: strcmp($a['label'], $b['label']));
+  echo '<section class="ck-card"><div class="ck-card-h"><span class="ck-card-t">' . pg_icon('globe') . 'Englisch (passt zum Deutschen)</span></div><div class="ck-i18n">';
   foreach ($i18n as $k => $r) {
-    $pct = $r['total'] > 0 ? (int) round(($r['total'] - $r['missing']) / $r['total'] * 100) : 100;
+    $pct = $r['pct'];
     echo '<a class="ck-i18n-row" href="index.php?collection=' . pg_h($k) . '&amp;lang=en"><span>' . pg_h($r['label']) . '</span>'
        . '<span class="ck-bar' . ($pct === 100 ? ' full' : '') . '"><i style="width:' . $pct . '%"></i></span>'
        . '<span class="ck-pct' . ($pct === 100 ? ' full' : '') . '">' . $pct . '%</span></a>';
