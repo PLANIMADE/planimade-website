@@ -9,6 +9,16 @@ Options -Indexes
 # sitemap.xml auf die dynamische sitemap.php leiten + saubere URLs ohne .html
 <IfModule mod_rewrite.c>
   RewriteEngine On
+
+  # --- SICHERHEIT: interne Daten NIE ausliefern ---
+  # Whitelist statt Sperrliste: In /data/ sind per HTTP ausschließlich die
+  # Inhalts-JSONs erreichbar, die die Website selbst lädt. Alles andere
+  # (Mail-Zugang, Passwörter, Wartelisten, Kontakte, Keys, Logs, künftige
+  # Dateien) wird mit 403 abgewiesen. Steht bewusst HIER in der Root-Datei,
+  # weil der data/-Ordner beim Deployment nicht hochgeladen wird.
+  RewriteRule ^data/(?!(?:studio|team|games|patchnotes|legal)(?:\.en)?\.json$) - [F,L,NC]
+  RewriteRule ^data/?$ - [F,L,NC]
+
   RewriteRule ^sitemap\.xml$ sitemap.php [L]
 
   # --- Saubere URLs: /games statt /games.html ---

@@ -1,11 +1,11 @@
-# Öffentlich sind NUR die Inhalts-JSONs, die die Website lädt
+# Interne Daten NIEMALS ausliefern – Whitelist statt Sperrliste.
+# Öffentlich sind ausschließlich die Inhalts-JSONs, die die Website lädt
 # (studio, team, games, patchnotes, legal + deren .en-Varianten).
-# Alles andere – Passwort-Hashes, SMTP-Zugang, personenbezogene Daten,
-# interne Zustände – darf NIE ausgeliefert werden.
-<FilesMatch "\.(php|tmp|bak)$">
-  Require all denied
-</FilesMatch>
-<FilesMatch "(auth\.php|secret\.php|users\.json|invites\.json|subscribers\.json|contacts\.json|mail\.json|mail_unread\.json|mail_sent\.json|login_attempts\.json|activity\.json|reactions\.json|trash\.json|templates\.json|board\.json|comments\.json|suggestions\.json|keys\.json|waitlist\.json)$">
-  Require all denied
+# Alles andere – Passwort-Hashes, Mail-Zugang, personenbezogene Daten,
+# Keys, Logs und jede künftig neu angelegte Datei – ist automatisch gesperrt.
+# (Zweite Schutzschicht; die erste steht in der Root-.htaccess.)
+Require all denied
+<FilesMatch "^(studio|team|games|patchnotes|legal)(\.en)?\.json$">
+  Require all granted
 </FilesMatch>
 Options -Indexes
