@@ -62,6 +62,26 @@ if ($action === 'confirm') {
   pg_subs_page('✅', $msg);
 }
 
+/* ---- Einwilligung per Klick aus einer Mail (z. B. Warteliste: „Weiter informiert bleiben?“) ----
+   Der Link wurde an genau diese Adresse geschickt und ist signiert → gilt als bestätigte Anmeldung. */
+if ($action === 'optin') {
+  $email = trim($_GET['e'] ?? ''); $token = $_GET['t'] ?? '';
+  $valid = filter_var($email, FILTER_VALIDATE_EMAIL) && hash_equals(pg_optin_token($email), (string) $token);
+  if (!$valid) pg_subs_page('⚠️', 'Dieser Link ist ungültig.');
+  $src = mb_substr(preg_replace('/[^\p{L}\p{N} .:\-]/u', '', (string) ($_GET['src'] ?? 'E-Mail')), 0, 60);
+  $list = pg_subs_load($file); $found = false; $already = false;
+  foreach ($list as &$r) {
+    if (strcasecmp($r['email'] ?? '', $email) !== 0) continue;
+    $found = true; if (!empty($r['confirmed'])) $already = true;
+    $r['confirmed'] = true; $r['confirmedAt'] = $r['confirmedAt'] ?? date('c');
+  }
+  unset($r);
+  if (!$found) $list[] = ['email' => mb_substr($email, 0, 180), 'date' => date('c'), 'source' => $src !== '' ? $src : 'E-Mail', 'confirmed' => true, 'confirmedAt' => date('c'), 'optin' => 'link'];
+  pg_subs_save($file, $list);
+  if (!$already) pg_send_welcome_mail($email);
+  pg_subs_page('🧡', $already ? 'Du bist schon dabei – danke! Wir halten dich auf dem Laufenden.' : 'Super – du bekommst ab jetzt unseren Newsletter! Abmelden geht jederzeit über den Link in jeder Mail.');
+}
+
 /* ---- Anmeldung (POST, JSON) ---- */
 header('Content-Type: application/json; charset=utf-8');
 $studio = pg_load_json($DATA . '/studio.json');

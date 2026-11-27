@@ -388,26 +388,7 @@ function pg_mx_text_to_html($t){
   return (preg_match('/^\s*\n/', $t) ? '<p><br></p>' : '') . $out;
 }
 
-/* ---- Editor (Formatierung) – gemeinsam für Verfassen & Newsletter ---- */
-function pg_mx_editor($html, $withTpl){
-  $b = function ($cmd, $ic, $title) { return '<button type="button" class="rte-b" data-cmd="' . $cmd . '" title="' . pg_h($title) . '" aria-label="' . pg_h($title) . '">' . pg_icon($ic) . '</button>'; };
-  $h = '<div class="rte" data-rte><div class="rte-bar" role="toolbar" aria-label="Formatierung">'
-     . $b('bold', 'bold', 'Fett (Strg+B)') . $b('italic', 'italic', 'Kursiv (Strg+I)') . $b('underline', 'underline', 'Unterstrichen (Strg+U)')
-     . '<span class="rte-sep"></span>' . $b('h3', 'heading', 'Zwischenüberschrift') . $b('insertUnorderedList', 'ul', 'Aufzählung') . $b('insertOrderedList', 'ol', 'Nummerierte Liste') . $b('quote', 'quote', 'Zitat')
-     . '<span class="rte-sep"></span>' . $b('link', 'link', 'Link einfügen') . $b('clear', 'undo', 'Formatierung entfernen');
-  if ($withTpl) {
-    $tpls = pg_templates_load();
-    if ($tpls) {
-      $h .= '<span class="rte-sp"></span><select class="rte-tpl" data-tpl-select aria-label="Schnellantwort einfügen"><option value="">⚡ Vorlage einfügen …</option>';
-      foreach ($tpls as $ti => $t) $h .= '<option value="' . $ti . '">' . pg_h($t['title'] ?: ('Vorlage ' . ($ti + 1))) . '</option>';
-      $h .= '</select><script type="application/json" data-tpl-data>' . json_encode(array_map(fn($t) => (string) ($t['body'] ?? ''), $tpls), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) . '</script>';
-    }
-  }
-  $h .= '</div><div class="rte-area" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Nachricht" data-rte-area data-placeholder="Deine Nachricht …">' . $html . '</div>'
-      . '<input type="hidden" name="message_html" value="" data-rte-input data-mail-input>'
-      . '<noscript><textarea name="message" rows="10" placeholder="Deine Nachricht …"></textarea></noscript></div>';
-  return $h;
-}
+/* ---- Editor: pg_mx_editor() steht in lib.php (auch für „Warteliste anschreiben“) ---- */
 
 /* ---------------- VERFASSEN ---------------- */
 if ($tab === 'compose') {

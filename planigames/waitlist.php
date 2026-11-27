@@ -9,8 +9,34 @@
  * Speicherung: data/waitlist.json (per data/.htaccess nicht abrufbar).
  */
 require __DIR__ . '/admin/lib.php';
-header('Content-Type: application/json; charset=utf-8');
 $file = PG_DATA_DIR . '/waitlist.json';
+
+/* ---- Abmelden aus einer Wartelisten-Mail (signierter Link, nur dieser Eintrag) ---- */
+if (($_GET['action'] ?? '') === 'leave') {
+  $email = trim((string) ($_GET['e'] ?? '')); $sc = preg_replace('/[^a-z0-9\-]/', '', strtolower((string) ($_GET['s'] ?? '')));
+  $ok = filter_var($email, FILTER_VALIDATE_EMAIL) && hash_equals(pg_wl_leave_token($email, $sc), (string) ($_GET['t'] ?? ''));
+  $msg = 'Dieser Abmeldelink ist ungültig.';
+  if ($ok) {
+    $list = pg_load_json($file); $n = 0;
+    if (is_array($list)) {
+      $keep = [];
+      foreach ($list as $e) {
+        if (is_array($e) && strcasecmp(trim((string) ($e['email'] ?? '')), $email) === 0 && preg_replace('/[^a-z0-9\-]/', '', strtolower((string) ($e['scope'] ?? ''))) === $sc) { $n++; continue; }
+        $keep[] = $e;
+      }
+      if ($n) pg_save_json($file, $keep);
+    }
+    $msg = $n ? 'Du wurdest von der Warteliste abgemeldet. Danke für dein Interesse! 🧡' : 'Diese Adresse steht nicht (mehr) auf der Warteliste.';
+  }
+  header('Content-Type: text/html; charset=utf-8');
+  echo '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Warteliste · PLANIGAMES</title><meta name="robots" content="noindex">'
+     . '<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#050505;color:#ececf0;font-family:system-ui,Arial,sans-serif;text-align:center;padding:2rem}.c{max-width:430px}h1{font-size:1.4rem}'
+     . 'a{display:inline-block;margin-top:1.5rem;color:#ff8a2b;text-decoration:none;border:1px solid rgba(255,255,255,.2);padding:.7rem 1.4rem;border-radius:999px}</style></head>'
+     . '<body><div class="c"><div style="font-size:2.4rem;margin-bottom:1rem">📭</div><h1>' . htmlspecialchars($msg, ENT_QUOTES) . '</h1><a href="index.html">Zur Startseite</a></div></body></html>';
+  exit;
+}
+
+header('Content-Type: application/json; charset=utf-8');
 
 function pg_wl_scope($raw){
   $s = preg_replace('/[^a-z0-9\-]/', '', strtolower((string) $raw));

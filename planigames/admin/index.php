@@ -331,6 +331,59 @@ if (in_array($action, ['tr_save', 'tr_sync', 'tr_one', 'tr_settings'], true)) {
   exit(json_encode($res, JSON_UNESCAPED_UNICODE));
 }
 
+/* ---- Warteliste anschreiben: Vorschau, Testmail, Versand in Etappen ---- */
+if (in_array($action, ['wl_preview', 'wl_test', 'wl_start', 'wl_step'], true)) {
+  if (!pg_logged_in() || !pg_can('subscribers') || !pg_can('mail')) { http_response_code(403); exit('Keine Berechtigung.'); }
+  if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
+  pg_csrf_check();
+  $scope = pg_adm_wl_scope_lib($_POST['scope'] ?? '');
+  $opts = ['card' => !empty($_POST['card']), 'optin' => !empty($_POST['optin']), 'keys' => !empty($_POST['keys']) && pg_is_owner(),
+           'platform' => trim((string) ($_POST['platform'] ?? '')), 'sig' => (string) ($_POST['sig'] ?? '')];
+  $subject = trim((string) ($_POST['subject'] ?? ''));
+  $html = (string) ($_POST['message_html'] ?? '');
+  $empty = trim(strip_tags($html)) === '' && strpos($html, '[[spiel:') === false;
+  if ($action === 'wl_preview') {
+    header('Content-Type: text/html; charset=utf-8');
+    header("Content-Security-Policy: default-src 'none'; img-src https: http: data:; style-src 'unsafe-inline'");
+    $sample = $opts['keys'] ? ['key' => 'ABCDE-FGHIJ-KLMNO', 'platform' => $opts['platform'] !== '' ? $opts['platform'] : 'Steam'] : null;
+    echo pg_wl_mail_html($empty ? '<p>Hier steht deine Nachricht …</p>' : $html, $scope, 'beispiel@warteliste.de', 1, $sample, $opts);
+    exit;
+  }
+  header('Content-Type: application/json; charset=utf-8');
+  if ($action === 'wl_step') {
+    session_write_close();
+    exit(json_encode(pg_wl_campaign_step(preg_replace('/[^a-f0-9]/', '', (string) ($_POST['id'] ?? ''))), JSON_UNESCAPED_UNICODE));
+  }
+  if ($subject === '' || $empty) exit(json_encode(['ok' => false, 'error' => 'Betreff und Nachricht dürfen nicht leer sein.']));
+  $gTitle = (string) ((pg_mail_game_info($scope) ?? [])['title'] ?? $scope);
+  if ($action === 'wl_test') {
+    $me = pg_current_email();
+    [$fName, $fEmail, $fReply] = pg_mail_sender($opts['sig']);
+    $sample = $opts['keys'] ? ['key' => 'TEST-KEY-12345', 'platform' => $opts['platform'] !== '' ? $opts['platform'] : 'Steam'] : null;
+    $ok = pg_send_mail($me, '[Test] ' . strtr($subject, ['{platz}' => '1', '{spiel}' => $gTitle]), pg_wl_mail_html($html, $scope, $me, 1, $sample, $opts), $fReply, ['from_name' => $fName, 'from_email' => $fEmail]);
+    exit(json_encode(['ok' => (bool) $ok, 'to' => $me, 'error' => $ok ? '' : 'Testmail konnte nicht gesendet werden – bitte SMTP-Einstellungen prüfen.'], JSON_UNESCAPED_UNICODE));
+  }
+  // wl_start: Empfänger festlegen und Versand anlegen (gesendet wird in Etappen über wl_step)
+  $mode = in_array($_POST['mode'] ?? '', ['all', 'new', 'top'], true) ? $_POST['mode'] : 'all';
+  $rcpt = pg_wl_recipients($scope, $mode, (int) ($_POST['n'] ?? 0));
+  if ($opts['keys']) { $avail = pg_wl_keys_available($scope, $opts['platform']); if ($avail < count($rcpt)) $rcpt = array_slice($rcpt, 0, $avail); }
+  if (!$rcpt) exit(json_encode(['ok' => false, 'error' => $opts['keys'] ? 'Keine freien Keys vorhanden.' : 'Keine Empfänger ausgewählt.'], JSON_UNESCAPED_UNICODE));
+  $id = bin2hex(random_bytes(6));
+  $camp = pg_wl_campaigns();
+  $camp[$id] = ['scope' => $scope, 'title' => $gTitle, 'subject' => $subject, 'html' => pg_mail_sanitize_html($html), 'opts' => $opts,
+                'recipients' => $rcpt, 'sent' => [], 'failed' => [], 'skipped' => [], 'created' => date('c'), 'by' => pg_current_email()];
+  pg_wl_campaigns_save($camp);
+  exit(json_encode(['ok' => true, 'id' => $id, 'total' => count($rcpt)]));
+}
+
+/* ---- Warteliste anschreiben: Seite ---- */
+if (($_GET['view'] ?? '') === 'waitlist_mail') {
+  if (!pg_can('subscribers') || !pg_can('mail')) { header('Location: index.php?view=waitlist'); exit; }
+  require_once __DIR__ . '/view-waitlist-mail.php';
+  pg_wl_mail_view($SCHEMA);
+  exit;
+}
+
 /* ---- Devlog & Team: Einträge anlegen, duplizieren, löschen, sortieren ---- */
 if (in_array($action, ['item_create', 'item_duplicate', 'item_delete', 'items_reorder'], true)) {
   $key = (string) ($_POST['collection'] ?? '');
@@ -723,94 +776,63 @@ if ($action === 'keys_export') {
   header('Content-Type: text/csv; charset=utf-8');
   header('Content-Disposition: attachment; filename="planigames-keys-' . date('Y-m-d') . '.csv"');
   $out = fopen('php://output', 'w'); fwrite($out, "\xEF\xBB\xBF");
-  fputcsv($out, ['Key', 'Plattform', 'Status', 'Empfänger', 'E-Mail', 'Notiz', 'Datum']);
-  foreach (pg_keys_load() as $k) fputcsv($out, [$k['key'] ?? '', $k['platform'] ?? '', $k['status'] ?? '', $k['recipient'] ?? '', $k['email'] ?? '', $k['note'] ?? '', substr($k['date'] ?? '', 0, 10)]);
+  fputcsv($out, ['Key', 'Spiel', 'Plattform', 'Status', 'Empfänger', 'E-Mail', 'Notiz', 'Datum']);
+  foreach (pg_keys_load() as $k) fputcsv($out, [$k['key'] ?? '', $k['game'] ?? '', $k['platform'] ?? '', $k['status'] ?? '', $k['recipient'] ?? '', $k['email'] ?? '', $k['note'] ?? '', substr($k['date'] ?? '', 0, 10)]);
   fclose($out); exit;
 }
-$pg_keys_posts = ['keys_add', 'key_assign', 'key_redeem', 'key_reset', 'key_del'];
+$pg_keys_posts = ['keys_add', 'key_assign', 'key_redeem', 'key_reset', 'key_del', 'keys_set_game'];
 if (($_GET['view'] ?? '') === 'keys' || array_intersect($pg_keys_posts, array_keys($_POST))) {
   if (!pg_is_owner()) { header('Location: index.php'); exit; }
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     pg_csrf_check();
     $keys = pg_keys_load();
     $id = (string) ($_POST['id'] ?? '');
+    $gameOk = function ($g) { $g = strtolower(trim((string) $g)); foreach (pg_games_data('de')['games'] as $x) if (is_array($x) && strtolower((string) ($x['slug'] ?? '')) === $g) return $g; return ''; };
+    $extra = '';
     if (isset($_POST['keys_add'])) {
       $platform = trim((string) ($_POST['platform'] ?? '')) ?: 'Steam';
-      $added = 0;
+      $game = $gameOk($_POST['game'] ?? '');
+      $have = []; foreach ($keys as $k) $have[strtoupper(trim((string) ($k['key'] ?? '')))] = true;
+      $added = 0; $dup = 0;
       foreach (preg_split('/\r?\n/', (string) ($_POST['bulk'] ?? '')) as $line) {
         $code = trim($line); if ($code === '') continue;
-        $keys[] = ['id' => bin2hex(random_bytes(5)), 'key' => mb_substr($code, 0, 80), 'platform' => $platform,
+        $code = mb_substr($code, 0, 80);
+        if (!empty($have[strtoupper($code)])) { $dup++; continue; }               // doppelt → überspringen
+        $have[strtoupper($code)] = true;
+        $keys[] = ['id' => bin2hex(random_bytes(5)), 'key' => $code, 'platform' => $platform, 'game' => $game,
           'status' => 'available', 'recipient' => '', 'email' => '', 'note' => '', 'date' => date('c')];
         $added++;
       }
-      if ($added) { pg_keys_save($keys); pg_log_activity('Keys hinzugefügt', $added . '× ' . $platform); }
+      if ($added) { pg_keys_save($keys); pg_log_activity('Keys hinzugefügt', $added . '× ' . $platform . ($game !== '' ? ' · ' . $game : '')); }
+      $extra = '&added=' . $added . ($dup ? '&dup=' . $dup : '');
     } elseif (isset($_POST['key_assign'])) {
       foreach ($keys as &$k) if (($k['id'] ?? '') === $id) {
         $k['recipient'] = trim((string) ($_POST['recipient'] ?? '')); $k['email'] = trim((string) ($_POST['email'] ?? '')); $k['note'] = trim((string) ($_POST['note'] ?? ''));
-        $k['status'] = $k['recipient'] !== '' ? 'assigned' : 'available';
+        if (isset($_POST['game'])) $k['game'] = $gameOk($_POST['game']);
+        $was = $k['status'] ?? 'available';
+        if ($was !== 'redeemed') $k['status'] = $k['recipient'] !== '' || $k['email'] !== '' ? 'assigned' : 'available';
+        if (($k['status'] ?? '') === 'assigned' && $was !== 'assigned') $k['assignedAt'] = date('c');
       }
       unset($k); pg_keys_save($keys);
+    } elseif (isset($_POST['keys_set_game'])) {
+      $game = $gameOk($_POST['game'] ?? ''); $n = 0;
+      if ($game !== '') {
+        foreach ($keys as &$k) { if ($gameOk($k['game'] ?? '') === '') { $k['game'] = $game; $n++; } }
+        unset($k); pg_keys_save($keys);
+      }
+      $extra = '&moved=' . $n; $_POST['ret'] = 'game=' . rawurlencode($game);
     } elseif (isset($_POST['key_redeem'])) {
-      foreach ($keys as &$k) if (($k['id'] ?? '') === $id) $k['status'] = 'redeemed'; unset($k); pg_keys_save($keys);
+      foreach ($keys as &$k) if (($k['id'] ?? '') === $id) { $k['status'] = 'redeemed'; $k['redeemedAt'] = date('c'); } unset($k); pg_keys_save($keys);
     } elseif (isset($_POST['key_reset'])) {
-      foreach ($keys as &$k) if (($k['id'] ?? '') === $id) { $k['status'] = 'available'; $k['recipient'] = ''; $k['email'] = ''; } unset($k); pg_keys_save($keys);
+      foreach ($keys as &$k) if (($k['id'] ?? '') === $id) { $k['status'] = 'available'; $k['recipient'] = ''; $k['email'] = ''; unset($k['assignedAt'], $k['redeemedAt']); } unset($k); pg_keys_save($keys);
     } elseif (isset($_POST['key_del'])) {
       $keys = array_values(array_filter($keys, fn($k) => ($k['id'] ?? '') !== $id)); pg_keys_save($keys);
     }
-    header('Location: index.php?view=keys' . (isset($_GET['filter']) ? '&filter=' . urlencode($_GET['filter']) : '')); exit;
+    $ret = preg_replace('/[^a-z0-9=&%_\-]/i', '', (string) ($_POST['ret'] ?? ''));
+    header('Location: index.php?view=keys' . ($ret !== '' ? '&' . $ret : '') . $extra); exit;
   }
-  $keys = pg_keys_load();
-  $st = pg_keys_stats();
-  $filter = (string) ($_GET['filter'] ?? '');
-  $stLabels = ['available' => 'Verfügbar', 'assigned' => 'Vergeben', 'redeemed' => 'Eingelöst'];
-  pg_view_head('Key-Verteilung');
-  pg_view_topbar($SCHEMA, null);
-  $csrf = pg_h(pg_csrf());
-  echo '<div class="editor wide">';
-  echo '<div class="editor-head"><div><h1>🔑 Key-Verteilung</h1><p class="muted">Steam-/itch-Keys an Presse &amp; Streamer vergeben und die Einlösung verfolgen.</p></div>'
-     . ($keys ? '<a class="btn-add" href="index.php?action=keys_export">⬇ CSV</a>' : '') . '</div>';
-  echo '<div class="stat-cards">';
-  echo '<div class="stat-card"><span class="stat-num">' . $st['available'] . '</span><span class="stat-lbl">Verfügbar</span></div>';
-  echo '<div class="stat-card"><span class="stat-num">' . $st['assigned'] . '</span><span class="stat-lbl">Vergeben</span></div>';
-  echo '<div class="stat-card"><span class="stat-num">' . $st['redeemed'] . '</span><span class="stat-lbl">Eingelöst</span></div>';
-  echo '</div>';
-  // Keys hinzufügen
-  echo '<h2 class="sub-h">Keys hinzufügen</h2>';
-  echo '<form method="post" class="key-add"><input type="hidden" name="csrf" value="' . $csrf . '">';
-  echo '<input type="text" name="platform" placeholder="Plattform (z. B. Steam)" value="Steam">';
-  echo '<textarea name="bulk" rows="3" placeholder="Ein Key pro Zeile …" required></textarea>';
-  echo '<button class="btn-primary" name="keys_add" value="1">＋ Hinzufügen</button></form>';
-  if ($keys) {
-    // Filter
-    echo '<div class="cfilter" style="margin-top:1.4rem"><span class="kb-filter-lbl">Filter:</span>';
-    $tabs = ['' => 'Alle (' . $st['total'] . ')'] + ['available' => 'Verfügbar (' . $st['available'] . ')', 'assigned' => 'Vergeben (' . $st['assigned'] . ')', 'redeemed' => 'Eingelöst (' . $st['redeemed'] . ')'];
-    foreach ($tabs as $k => $lbl) echo '<a class="cfilter-tab' . ($k === $filter ? ' on' : '') . '" href="index.php?view=keys' . ($k ? '&filter=' . $k : '') . '">' . pg_h($lbl) . '</a>';
-    echo '</div>';
-    echo '<table class="subs"><thead><tr><th>Key</th><th>Plattform</th><th>Status</th><th>Empfänger</th><th></th></tr></thead><tbody>';
-    foreach (array_reverse($keys) as $k) {
-      $kst = $k['status'] ?? 'available';
-      if ($filter !== '' && $kst !== $filter) continue;
-      $badge = '<span class="cstatus st-' . ($kst === 'redeemed' ? 'erledigt' : ($kst === 'assigned' ? 'beantwortet' : 'offen')) . '">' . $stLabels[$kst] . '</span>';
-      echo '<tr><td><code class="keycode" data-copy="' . pg_h($k['key']) . '" title="Kopieren">' . pg_h($k['key']) . '</code></td>'
-         . '<td>' . pg_h($k['platform'] ?? '') . '</td><td>' . $badge . '</td>'
-         . '<td><details class="key-edit"><summary>' . ($k['recipient'] !== '' ? pg_h($k['recipient']) : '<span class="muted">— zuweisen —</span>') . '</summary>'
-         . '<form method="post" class="key-form"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($k['id']) . '">'
-         . '<input type="text" name="recipient" value="' . pg_h($k['recipient'] ?? '') . '" placeholder="Name / Outlet">'
-         . '<input type="text" name="email" value="' . pg_h($k['email'] ?? '') . '" placeholder="E-Mail (optional)">'
-         . '<input type="text" name="note" value="' . pg_h($k['note'] ?? '') . '" placeholder="Notiz">'
-         . '<button class="btn-primary" name="key_assign" value="1">Speichern</button></form></details></td>'
-         . '<td style="white-space:nowrap">'
-         . ($kst !== 'redeemed' ? '<form method="post" style="display:inline"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($k['id']) . '"><button class="btn-add" name="key_redeem" value="1" title="Als eingelöst markieren">✓</button></form> ' : '')
-         . ($kst !== 'available' ? '<form method="post" style="display:inline"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($k['id']) . '"><button class="btn-add" name="key_reset" value="1" title="Zurücksetzen">↺</button></form> ' : '')
-         . '<form method="post" style="display:inline" onsubmit="return confirm(\'Key löschen?\')"><input type="hidden" name="csrf" value="' . $csrf . '"><input type="hidden" name="id" value="' . pg_h($k['id']) . '"><button class="btn-danger sm" name="key_del" value="1">✕</button></form>'
-         . '</td></tr>';
-    }
-    echo '</tbody></table>';
-  } else {
-    echo '<div class="mailnote" style="margin-top:1.2rem">Noch keine Keys. Füge oben welche hinzu (einen pro Zeile).</div>';
-  }
-  echo '</div>';
-  pg_view_foot();
+  require_once __DIR__ . '/view-keys.php';
+  pg_keys_view($SCHEMA);
   exit;
 }
 

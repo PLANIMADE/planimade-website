@@ -9,7 +9,7 @@ const PG_MEDIA_DIR   = __DIR__ . '/../media';
 const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
 const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
 const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip'];
-const PG_ADMIN_V     = '85';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
+const PG_ADMIN_V     = '89';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -139,6 +139,36 @@ function pg_mail_unread_live($maxAge = 20){
   $n = is_array($unseen) ? count($unseen) : 0;
   pg_mail_unread_store($n);
   return $n;
+}
+
+/* ---- Editor (Formatierung) – gemeinsam für Verfassen & Newsletter ---- */
+function pg_mx_editor($html, $withTpl){
+  $b = function ($cmd, $ic, $title) { return '<button type="button" class="rte-b" data-cmd="' . $cmd . '" title="' . pg_h($title) . '" aria-label="' . pg_h($title) . '">' . pg_icon($ic) . '</button>'; };
+  $h = '<div class="rte" data-rte><div class="rte-bar" role="toolbar" aria-label="Formatierung">'
+     . $b('bold', 'bold', 'Fett (Strg+B)') . $b('italic', 'italic', 'Kursiv (Strg+I)') . $b('underline', 'underline', 'Unterstrichen (Strg+U)')
+     . '<span class="rte-sep"></span>' . $b('h3', 'heading', 'Zwischenüberschrift') . $b('insertUnorderedList', 'ul', 'Aufzählung') . $b('insertOrderedList', 'ol', 'Nummerierte Liste') . $b('quote', 'quote', 'Zitat')
+     . '<span class="rte-sep"></span>' . $b('link', 'link', 'Link einfügen') . $b('clear', 'undo', 'Formatierung entfernen');
+  // Spiel-Karte (Cover, Name, Wishlist-Button) einfügen
+  $games = [];
+  foreach (pg_games_data('de')['games'] as $g) if (is_array($g) && !empty($g['slug']))
+    $games[] = ['slug' => (string) $g['slug'], 'title' => (string) ($g['title'] ?? $g['slug']), 'tagline' => (string) ($g['tagline'] ?? ''),
+                'cover' => ($c = explode('#', (string) ($g['cover'] ?? ''))[0]) !== '' ? '../' . ltrim($c, '/') : '',
+                'accent' => preg_match('/^#[0-9a-f]{6}$/i', (string) ($g['accent'] ?? '')) ? $g['accent'] : '#ff7d1a',
+                'wish' => (string) ($g['wishlistUrl'] ?? '')];
+  if ($games) $h .= '<span class="rte-sep"></span><span class="rte-gamewrap"><button type="button" class="rte-b rte-game" data-game-menu title="Spiel-Karte mit Wishlist-Button einfügen" aria-label="Spiel einfügen">' . pg_icon('game') . '<span>Spiel</span></button>'
+                  . '<div class="rte-gamemenu" data-game-list hidden></div></span><script type="application/json" data-games-data>' . json_encode($games, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) . '</script>';
+  if ($withTpl) {
+    $tpls = pg_templates_load();
+    if ($tpls) {
+      $h .= '<span class="rte-sp"></span><select class="rte-tpl" data-tpl-select aria-label="Schnellantwort einfügen"><option value="">⚡ Vorlage einfügen …</option>';
+      foreach ($tpls as $ti => $t) $h .= '<option value="' . $ti . '">' . pg_h($t['title'] ?: ('Vorlage ' . ($ti + 1))) . '</option>';
+      $h .= '</select><script type="application/json" data-tpl-data>' . json_encode(array_map(fn($t) => (string) ($t['body'] ?? ''), $tpls), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) . '</script>';
+    }
+  }
+  $h .= '</div><div class="rte-area" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Nachricht" data-rte-area data-placeholder="Deine Nachricht …">' . $html . '</div>'
+      . '<input type="hidden" name="message_html" value="" data-rte-input data-mail-input>'
+      . '<noscript><textarea name="message" rows="10" placeholder="Deine Nachricht …"></textarea></noscript></div>';
+  return $h;
 }
 
 /* ---------------- Postfach-Ordnerleiste (Postfach, Kontaktformular, Schnellantworten teilen sie) ---------------- */
@@ -1051,8 +1081,59 @@ function pg_mail_html_to_text($html){
 }
 /* Nachrichtenteil als HTML: formatiertes HTML (Editor) oder Klartext (Altbestand/Vorlagen) */
 function pg_mail_message_html($message, $isHtml = false){
-  if ($isHtml) return pg_mail_sanitize_html($message);
-  return nl2br(pg_h($message));
+  $out = $isHtml ? pg_mail_sanitize_html($message) : nl2br(pg_h($message));
+  return pg_mail_expand_games($out);                              // [[spiel:slug]] → Spiel-Karte mit Wishlist-Button
+}
+
+/* ---------------- Spiel-Karte für E-Mails (Cover, Name, Kurztext, Wishlist-Button) ----------------
+   Im Editor steht ein Platzhalter [[spiel:slug]]; beim Bauen der Mail wird daraus eine
+   mailtaugliche Karte (Tabellen-Layout, absolute Bild-Links, kein SVG – Gmail & Outlook zeigen sie korrekt). */
+function pg_mail_game_info($slug){
+  foreach (pg_games_data('de')['games'] as $g) if (is_array($g) && strtolower((string) ($g['slug'] ?? '')) === strtolower((string) $slug)) return $g;
+  return null;
+}
+function pg_mail_abs_url($p){
+  $p = trim(explode('#', (string) $p)[0]);
+  if ($p === '') return '';
+  if (preg_match('#^https?://#i', $p)) return $p;
+  return pg_site_url() . '/' . ltrim($p, '/');
+}
+function pg_mail_game_card($slug){
+  $g = pg_mail_game_info($slug);
+  if (!$g) return '';
+  $site = pg_site_url();
+  $title = (string) ($g['title'] ?? $slug);
+  $page = $site . '/game.php?slug=' . rawurlencode((string) $g['slug']);
+  $wish = trim((string) ($g['wishlistUrl'] ?? ''));
+  $isSteam = $wish !== '' && stripos($wish, 'steampowered.com') !== false;
+  $btnUrl = $wish !== '' ? $wish : $page;
+  $btnLabel = $isSteam ? 'Jetzt auf Steam wunschlisten' : ($wish !== '' ? 'Jetzt auf die Wunschliste' : 'Zum Spiel');
+  $acc = preg_match('/^#[0-9a-f]{6}$/i', (string) ($g['accent'] ?? '')) ? strtolower($g['accent']) : '#ff7d1a';
+  [$r, $gg, $b] = sscanf($acc, '#%02x%02x%02x');
+  $lum = (0.2126 * $r + 0.7152 * $gg + 0.0722 * $b) / 255;
+  $ink = $lum > 0.55 ? '#14100c' : '#ffffff';
+  $cover = pg_mail_abs_url($g['cover'] ?? '');
+  $logo = pg_mail_abs_url($g['logo'] ?? '');
+  if ($logo !== '' && preg_match('/\.svg(\?|$)/i', $logo)) $logo = '';   // SVG zeigen viele Mailprogramme nicht an
+  $tag = trim((string) ($g['tagline'] ?? ''));
+  $h = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-collapse:separate;border-radius:16px;overflow:hidden;background:#0b0b0e;border:1px solid #26262c">';
+  if ($cover !== '') $h .= '<tr><td style="padding:0;line-height:0"><a href="' . pg_h($page) . '" style="text-decoration:none"><img src="' . pg_h($cover) . '" width="600" alt="' . pg_h($title) . '" style="display:block;width:100%;max-width:600px;height:auto;border:0"></a></td></tr>';
+  $h .= '<tr><td style="padding:20px 22px 22px;font-family:Arial,Helvetica,sans-serif">'
+      . ($logo !== '' ? '<img src="' . pg_h($logo) . '" height="44" alt="' . pg_h($title) . '" style="display:block;height:44px;width:auto;max-width:260px;border:0;margin:0 0 10px">'
+                      : '<div style="font-size:22px;line-height:1.2;font-weight:800;color:#ffffff;letter-spacing:.02em;margin:0 0 6px">' . pg_h($title) . '</div>')
+      . ($tag !== '' ? '<div style="color:#b9b9c4;font-size:14px;line-height:1.6;margin:0 0 16px">' . pg_h($tag) . '</div>' : '<div style="height:10px"></div>')
+      . '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:separate"><tr><td style="border-radius:999px;background:' . $acc . '">'
+      . '<a href="' . pg_h($btnUrl) . '" style="display:inline-block;padding:13px 26px;color:' . $ink . ';font-weight:700;font-size:15px;text-decoration:none;border-radius:999px;font-family:Arial,Helvetica,sans-serif">' . pg_h($btnLabel) . ' →</a>'
+      . '</td></tr></table>'
+      . '<div style="margin-top:12px;font-size:12px"><a href="' . pg_h($page) . '" style="color:#8b8b97;text-decoration:none">Mehr zu ' . pg_h($title) . ' auf ' . pg_h(preg_replace('#^https?://#', '', $site)) . ' →</a></div>'
+      . '</td></tr></table>';
+  return $h;
+}
+function pg_mail_expand_games($html){
+  if (strpos((string) $html, '[[spiel:') === false) return $html;
+  // ganzer Absatz mit nur dem Platzhalter → Karte statt Absatz
+  $html = preg_replace_callback('#<p[^>]*>\s*\[\[spiel:([a-z0-9\-]+)\]\]\s*</p>#i', fn($m) => pg_mail_game_card($m[1]), $html);
+  return preg_replace_callback('#\[\[spiel:([a-z0-9\-]+)\]\]#i', fn($m) => pg_mail_game_card($m[1]), $html);
 }
 /* Fertiges HTML für eine persönliche Mail (Verfassen/Antworten) inkl. Signatur.
    $opts: html (bool, Nachricht ist HTML aus dem Editor), sig (Signatur-ID, '' = keine, null = Standard) */
@@ -2419,6 +2500,12 @@ function pg_game_rename($idx, $orig, $newRaw){
     }
     if ($n && pg_save_json($file, $p) && $lg === 'de') $c['posts'] = $n;
   }
+  // 5b) Keys, die dem Spiel zugeordnet sind
+  if (is_file(PG_KEYS_FILE)) {
+    $ks = pg_keys_load(); $n = 0;
+    foreach ($ks as $j => $k) if (is_array($k) && $eq($k['game'] ?? '')) { $ks[$j]['game'] = $new; $n++; }
+    if ($n) pg_keys_save($ks);
+  }
   // 6) Statistik: Aufrufe der Spiel- und Lore-Seite übernehmen (mit Sperre wie stats.php)
   $sf = PG_DATA_DIR . '/stats.json';
   if (is_file($sf) && ($fp = @fopen($sf, 'c+'))) {
@@ -3196,4 +3283,151 @@ function pg_items_reorder($SCHEMA, $key, $order){
   foreach ($order as $new => $old) $map[$old] = $new;
   pg_item_en_reindex($SCHEMA, $key, $map);
   return true;
+}
+
+/* =====================================================================
+   WARTELISTE ANSCHREIBEN – jede Mail einzeln (niemand sieht andere Adressen),
+   mit Abmelde-Link, optional eigenem Key und Newsletter-Einwilligung.
+   Versand in Etappen (Kampagne in data/wl_campaigns.json), damit nichts
+   doppelt rausgeht und ein Abbruch einfach fortgesetzt werden kann.
+   ===================================================================== */
+const PG_WL_CAMPAIGNS = PG_DATA_DIR . '/wl_campaigns.json';
+function pg_wl_leave_token($email, $scope){ return hash_hmac('sha256', strtolower(trim((string) $email)) . '|' . strtolower((string) $scope) . '|wl-leave', pg_app_secret()); }
+function pg_wl_leave_link($email, $scope){
+  return pg_site_url() . '/waitlist.php?action=leave&e=' . rawurlencode($email) . '&s=' . rawurlencode($scope) . '&t=' . pg_wl_leave_token($email, $scope);
+}
+function pg_optin_token($email){ return hash_hmac('sha256', strtolower(trim((string) $email)) . '|optin', pg_app_secret()); }
+function pg_optin_link($email, $src){
+  return pg_site_url() . '/subscribe.php?action=optin&e=' . rawurlencode($email) . '&src=' . rawurlencode(mb_substr($src, 0, 60)) . '&t=' . pg_optin_token($email);
+}
+function pg_key_redeem_url($platform, $key){
+  return stripos((string) $platform, 'steam') !== false ? 'https://store.steampowered.com/account/registerkey?key=' . rawurlencode($key) : '';
+}
+// Rangliste eines Spiels (wie auf der Website) + Platz
+function pg_wl_ranked_scope($scope){
+  $list = pg_load_json(PG_DATA_DIR . '/waitlist.json');
+  $rows = array_values(array_filter(is_array($list) ? $list : [], fn($e) => is_array($e) && !empty($e['email']) && pg_adm_wl_scope_lib($e['scope'] ?? '') === $scope));
+  usort($rows, function ($a, $b) use ($rows) {
+    $cnt = function ($code) use ($rows) { if ($code === '') return 0; $n = 0; foreach ($rows as $e) if (($e['ref'] ?? '') === $code) $n++; return $n; };
+    $ra = $cnt($a['code'] ?? ''); $rb = $cnt($b['code'] ?? '');
+    return $ra !== $rb ? $rb <=> $ra : strcmp((string) ($a['date'] ?? ''), (string) ($b['date'] ?? ''));
+  });
+  return $rows;
+}
+function pg_adm_wl_scope_lib($raw){ return preg_replace('/[^a-z0-9\-]/', '', strtolower((string) $raw)); }
+// Empfänger: all | new (noch nie angeschrieben) | top (die ersten $n laut Rangliste)
+function pg_wl_recipients($scope, $mode, $n = 0){
+  $out = []; $pos = 0;
+  foreach (pg_wl_ranked_scope($scope) as $e) {
+    $pos++;
+    if ($mode === 'new' && !empty($e['mailed'])) continue;
+    if (!filter_var($e['email'], FILTER_VALIDATE_EMAIL)) continue;
+    $out[] = ['email' => strtolower(trim($e['email'])), 'rank' => $pos];
+    if ($mode === 'top' && count($out) >= max(1, (int) $n)) break;
+  }
+  return $out;
+}
+function pg_wl_keys_available($scope, $platform = ''){
+  $n = 0;
+  foreach (pg_keys_load() as $k) if (strtolower((string) ($k['game'] ?? '')) === $scope && ($k['status'] ?? 'available') === 'available' && ($platform === '' || strcasecmp((string) ($k['platform'] ?? ''), $platform) === 0)) $n++;
+  return $n;
+}
+// Einen freien Key fest vergeben (unter Sperre – nie zweimal derselbe Key)
+function pg_wl_claim_key($scope, $platform, $email){
+  $fp = @fopen(PG_DATA_DIR . '/.keys.lock', 'c'); if ($fp) flock($fp, LOCK_EX);
+  $keys = pg_keys_load(); $got = null;
+  foreach ($keys as $i => $k) {
+    if (strtolower((string) ($k['game'] ?? '')) !== $scope || ($k['status'] ?? 'available') !== 'available') continue;
+    if ($platform !== '' && strcasecmp((string) ($k['platform'] ?? ''), $platform) !== 0) continue;
+    $keys[$i]['status'] = 'assigned'; $keys[$i]['recipient'] = 'Warteliste'; $keys[$i]['email'] = $email;
+    $keys[$i]['note'] = 'per Warteliste-Mail'; $keys[$i]['assignedAt'] = date('c');
+    $got = $keys[$i]; break;
+  }
+  if ($got) pg_keys_save($keys);
+  if ($fp) { flock($fp, LOCK_UN); fclose($fp); }
+  return $got;
+}
+function pg_wl_release_key($id){                                  // Versand fehlgeschlagen → Key wieder freigeben
+  $keys = pg_keys_load();
+  foreach ($keys as $i => $k) if (($k['id'] ?? '') === $id) { $keys[$i]['status'] = 'available'; $keys[$i]['recipient'] = ''; $keys[$i]['email'] = ''; $keys[$i]['note'] = ''; unset($keys[$i]['assignedAt']); }
+  pg_keys_save($keys);
+}
+// Versand im Wartelisten-Eintrag vermerken
+function pg_wl_mark_mailed($scope, $email, $subject, $keyCode){
+  $file = PG_DATA_DIR . '/waitlist.json';
+  $list = pg_load_json($file); if (!is_array($list)) return;
+  foreach ($list as $i => $e) {
+    if (!is_array($e) || strtolower(trim((string) ($e['email'] ?? ''))) !== $email || pg_adm_wl_scope_lib($e['scope'] ?? '') !== $scope) continue;
+    $m = is_array($e['mailed'] ?? null) ? $e['mailed'] : [];
+    $m[] = ['date' => date('c'), 'subject' => mb_substr($subject, 0, 120)] + ($keyCode !== '' ? ['key' => true] : []);
+    $list[$i]['mailed'] = array_slice($m, -10);
+  }
+  pg_save_json($file, $list);
+}
+// Die fertige Mail für EINEN Empfänger
+function pg_wl_mail_html($msgHtml, $scope, $email, $rank, $key, $opts){
+  $game = pg_mail_game_info($scope);
+  $title = $game ? (string) ($game['title'] ?? $scope) : $scope;
+  $repl = ['{platz}' => (string) $rank, '{spiel}' => $title, '{email}' => $email, '{key}' => $key ? (string) $key['key'] : ''];
+  $msg = strtr(pg_mail_message_html($msgHtml, true), array_map('pg_h', $repl));
+  $body = '<div style="color:#d7d7df;line-height:1.7;font-size:15px;padding:6px 0">' . $msg . '</div>';
+  if ($key) {
+    $redeem = pg_key_redeem_url($key['platform'] ?? '', (string) $key['key']);
+    $body .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0;border-collapse:separate;border-radius:14px;background:#17171c;border:1px dashed #ff8a2b"><tr><td style="padding:16px 18px;font-family:Arial,Helvetica,sans-serif">'
+      . '<div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#ff8a2b;font-weight:700">Dein ' . pg_h((string) ($key['platform'] ?? 'Steam')) . '-Key für ' . pg_h($title) . '</div>'
+      . '<div style="font-family:Consolas,Menlo,monospace;font-size:20px;color:#ffffff;letter-spacing:.06em;margin:8px 0 6px">' . pg_h((string) $key['key']) . '</div>'
+      . ($redeem !== '' ? '<a href="' . pg_h($redeem) . '" style="color:#ff8a2b;font-size:13px;text-decoration:none">Direkt auf Steam aktivieren →</a>' : '<span style="color:#8b8b97;font-size:12px">Bitte nicht weitergeben – der Key ist nur für dich.</span>')
+      . '</td></tr></table>';
+  }
+  if (!empty($opts['card']) && $game && strpos((string) $msgHtml, '[[spiel:') === false) $body .= pg_mail_game_card($scope);
+  if (!empty($opts['optin'])) {
+    $body .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0;border-collapse:separate;border-radius:14px;background:#111114;border:1px solid #26262c"><tr><td style="padding:16px 18px;font-family:Arial,Helvetica,sans-serif">'
+      . '<div style="font-size:15px;color:#ffffff;font-weight:700">Weiter auf dem Laufenden bleiben?</div>'
+      . '<div style="font-size:13px;color:#b9b9c4;line-height:1.6;margin:4px 0 12px">Mit einem Klick bekommst du unseren Newsletter – neue Spiele, Devlogs und Termine. Jederzeit abbestellbar.</div>'
+      . '<a href="' . pg_h(pg_optin_link($email, 'Warteliste ' . $title)) . '" style="display:inline-block;padding:10px 20px;border-radius:999px;border:1px solid #ff8a2b;color:#ff8a2b;font-weight:700;font-size:14px;text-decoration:none">Ja, Newsletter abonnieren</a>'
+      . '</td></tr></table>';
+  }
+  $body .= pg_mail_signature(array_key_exists('sig', $opts) ? $opts['sig'] : null);
+  $body .= '<p style="color:#6f6f7a;font-size:12px;margin:22px 0 0">Du erhältst diese Mail, weil du dich für die Beta-Warteliste von ' . pg_h($title) . ' eingetragen hast. '
+         . '<a href="' . pg_h(pg_wl_leave_link($email, $scope)) . '" style="color:#ff8a2b">Von der Warteliste abmelden</a></p>';
+  return pg_mail_shell($body, mb_substr(pg_mail_html_to_text($msg), 0, 90));
+}
+function pg_wl_campaigns(){ $c = pg_load_json(PG_WL_CAMPAIGNS); return is_array($c) ? $c : []; }
+function pg_wl_campaigns_save($all){ return pg_save_json(PG_WL_CAMPAIGNS, array_slice($all, -30, null, true)); }
+// Etappe senden: bis zu $budget Sekunden; gibt Fortschritt zurück
+function pg_wl_campaign_step($id, $budget = 12){
+  @set_time_limit($budget + 40);
+  $lk = @fopen(PG_DATA_DIR . '/.wl-campaign.lock', 'c');
+  if ($lk && !flock($lk, LOCK_EX | LOCK_NB)) return ['ok' => true, 'busy' => true];
+  $all = pg_wl_campaigns();
+  if (!isset($all[$id])) { if ($lk) fclose($lk); return ['ok' => false, 'error' => 'Versand nicht gefunden.']; }
+  $c = $all[$id]; $t0 = microtime(true);
+  [$fName, $fEmail, $fReply] = pg_mail_sender($c['opts']['sig'] ?? null);
+  foreach ($c['recipients'] as $r) {
+    if (microtime(true) - $t0 > $budget) break;
+    $em = $r['email'];
+    if (isset($c['sent'][$em]) || isset($c['failed'][$em]) || isset($c['skipped'][$em])) continue;
+    $key = null;
+    if (!empty($c['opts']['keys'])) {
+      $key = pg_wl_claim_key($c['scope'], (string) ($c['opts']['platform'] ?? ''), $em);
+      if (!$key) { $c['skipped'][$em] = 'kein Key mehr frei'; continue; }
+    }
+    $html = pg_wl_mail_html($c['html'], $c['scope'], $em, $r['rank'], $key, $c['opts']);
+    $subject = strtr($c['subject'], ['{platz}' => (string) $r['rank'], '{spiel}' => (string) ($c['title'] ?? '')]);
+    $ok = pg_send_mail($em, $subject, $html, $fReply, ['from_name' => $fName, 'from_email' => $fEmail]);
+    if ($ok) { $c['sent'][$em] = date('c'); pg_wl_mark_mailed($c['scope'], $em, $subject, $key ? (string) $key['key'] : ''); }
+    else { $c['failed'][$em] = date('c'); if ($key) pg_wl_release_key($key['id']); }
+    $all[$id] = $c; pg_wl_campaigns_save($all);             // nach jeder Mail sichern → kein Doppelversand
+    usleep(120000);
+  }
+  $done = count($c['sent'] ?? []) + count($c['failed'] ?? []) + count($c['skipped'] ?? []);
+  $left = count($c['recipients']) - $done;
+  if ($left <= 0 && empty($c['finished'])) {
+    $c['finished'] = date('c'); $all[$id] = $c; pg_wl_campaigns_save($all);
+    pg_mail_sent_log('📣 Warteliste ' . ($c['title'] ?? $c['scope']) . ' · ' . count($c['sent'] ?? []) . ' Empfänger', $c['subject'],
+      pg_wl_mail_html($c['html'], $c['scope'], 'beispiel@warteliste.de', 1, !empty($c['opts']['keys']) ? ['key' => 'XXXXX-XXXXX-XXXXX', 'platform' => $c['opts']['platform'] ?: 'Steam'] : null, $c['opts']));
+    pg_log_activity('Warteliste angeschrieben', ($c['title'] ?? $c['scope']) . ' · ' . count($c['sent'] ?? []) . ' Mails' . (!empty($c['opts']['keys']) ? ' mit Key' : ''));
+  }
+  if ($lk) { flock($lk, LOCK_UN); fclose($lk); }
+  return ['ok' => true, 'sent' => count($c['sent'] ?? []), 'failed' => count($c['failed'] ?? []), 'skipped' => count($c['skipped'] ?? []), 'left' => max(0, $left), 'total' => count($c['recipients'])];
 }

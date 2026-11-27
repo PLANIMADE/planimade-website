@@ -703,6 +703,7 @@
     const done = () => {
       const t = document.getElementById("media-copied");
       if (t) { t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1400); }
+      else toast("Kopiert: " + (path.length > 40 ? path.slice(0, 40) + "…" : path), "ok", 1600);
     };
     if (navigator.clipboard) navigator.clipboard.writeText(path).then(done).catch(() => fallbackCopy(path, done));
     else fallbackCopy(path, done);
@@ -1652,12 +1653,62 @@
   }
   document.querySelectorAll("[data-rte]").forEach((rte) => {
     const area = rte.querySelector("[data-rte-area]"), input = rte.querySelector("[data-rte-input]");
+    // ---- Spiel-Karten: im Editor sichtbar, im Formular als Platzhalter [[spiel:slug]] ----
+    let GAMES = [];
+    try { GAMES = JSON.parse((rte.querySelector("[data-games-data]") || {}).textContent || "[]"); } catch (e) {}
+    const gameBlock = (slug) => {
+      const g = GAMES.find((x) => x.slug === slug); if (!g) return null;
+      const el = document.createElement("div");
+      el.className = "mc-game"; el.contentEditable = "false"; el.dataset.game = slug; el.style.setProperty("--acc", g.accent);
+      el.innerHTML = (g.cover ? '<img alt="">' : "") + '<div class="mc-game-b"><b></b><span></span><em></em></div><button type="button" class="mc-game-x" title="Spiel-Karte entfernen" aria-label="Spiel-Karte entfernen">×</button>';
+      if (g.cover) el.querySelector("img").src = g.cover;
+      el.querySelector("b").textContent = g.title;
+      el.querySelector("span").textContent = g.tagline;
+      el.querySelector("em").textContent = (/steampowered\.com/i.test(g.wish) ? "Jetzt auf Steam wunschlisten" : (g.wish ? "Jetzt auf die Wunschliste" : "Zum Spiel")) + " →";
+      return el;
+    };
+    const hydrate = () => {                 // Platzhalter (z. B. aus einem Entwurf) wieder als Karte zeigen
+      area.querySelectorAll("p").forEach((p) => {
+        const m = p.textContent.trim().match(/^\[\[spiel:([a-z0-9-]+)\]\]$/i);
+        if (m) { const b = gameBlock(m[1]); if (b) p.replaceWith(b); }
+      });
+    };
+    const serialize = () => {
+      const c = area.cloneNode(true);
+      c.querySelectorAll(".mc-game").forEach((g) => { const p = document.createElement("p"); p.textContent = "[[spiel:" + g.dataset.game + "]]"; g.replaceWith(p); });
+      return c.innerHTML;
+    };
     const sync = () => {
-      const empty = !area.textContent.trim() && !area.querySelector("li, blockquote");
+      const empty = !area.textContent.trim() && !area.querySelector("li, blockquote, .mc-game");
       area.classList.toggle("is-empty", empty);
-      input.value = empty ? "" : area.innerHTML;
+      input.value = empty ? "" : serialize();
       input.dispatchEvent(new Event("input", { bubbles: true }));
     };
+    const gBtn = rte.querySelector("[data-game-menu]"), gList = rte.querySelector("[data-game-list]");
+    if (gBtn && gList) {
+      gList.innerHTML = GAMES.map((g, i) => `<button type="button" data-gi="${i}">${g.cover ? `<img src="${escHtml(g.cover)}" alt="">` : "<i></i>"}<span>${escHtml(g.title)}</span></button>`).join("");
+      let saved = null;
+      gBtn.addEventListener("mousedown", (e) => { e.preventDefault(); const sel = getSelection(); saved = sel.rangeCount && area.contains(sel.anchorNode) ? sel.getRangeAt(0).cloneRange() : null; });
+      gBtn.addEventListener("click", () => { gList.hidden = !gList.hidden; });
+      document.addEventListener("click", (e) => { if (!e.target.closest(".rte-gamewrap")) gList.hidden = true; });
+      gList.addEventListener("mousedown", (e) => e.preventDefault());
+      gList.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-gi]"); if (!b) return;
+        const block = gameBlock(GAMES[+b.dataset.gi].slug);
+        let blk = null;
+        if (saved) { let n = saved.startContainer; while (n && n.parentNode !== area) n = n.parentNode; blk = n; }
+        if (blk && blk.parentNode === area) blk.after(block); else area.appendChild(block);
+        const after = document.createElement("p"); after.innerHTML = "<br>"; block.after(after);
+        // Schreibmarke hinter die Karte setzen, damit weitergeschrieben werden kann
+        area.focus();
+        const r = document.createRange(); r.setStart(after, 0); r.collapse(true);
+        const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        gList.hidden = true; sync();
+        toast("Spiel-Karte eingefügt – in der Mail mit Cover und Wishlist-Button", "ok", 2600);
+      });
+    }
+    area.addEventListener("click", (e) => { const x = e.target.closest(".mc-game-x"); if (x) { x.closest(".mc-game").remove(); sync(); } });
+    hydrate();
     const blockOf = () => {
       const sel = getSelection(); if (!sel.rangeCount) return "";
       let n = sel.anchorNode; while (n && n !== area) { if (n.nodeType === 1 && /^(H3|BLOCKQUOTE|P|LI)$/.test(n.nodeName)) return n.nodeName; n = n.parentNode; }
@@ -1714,7 +1765,7 @@
         sync();
       });
     }
-    window.pgRteSet = (html) => { area.innerHTML = html; sync(); };
+    window.pgRteSet = (html) => { area.innerHTML = html; hydrate(); sync(); };
     sync();
   });
 
@@ -2373,6 +2424,84 @@
       table.querySelectorAll("tbody tr").forEach((tr) => { tr.hidden = !!q && !(tr.dataset.q || tr.textContent.toLowerCase()).includes(q); });
     });
   });
+
+  /* ---- Warteliste anschreiben ---- */
+  (function wlMail() {
+    const form = document.querySelector("[data-wl-form]"); if (!form) return;
+    const frame = form.querySelector("[data-wl-frame]"), sum = form.querySelector("[data-wl-sum]");
+    let D = { all: 0, new: 0, keys: {}, title: "" };
+    try { D = JSON.parse(document.getElementById("wl-data").textContent); } catch (e) {}
+    const post = (a, extra) => { const f = new FormData(form); Object.entries(extra || {}).forEach(([k, v]) => f.set(k, v)); return fetch("index.php?action=" + a, { method: "POST", body: f, headers: { "X-Requested-With": "fetch" } }); };
+    let pt = null;
+    const preview = () => { clearTimeout(pt); pt = setTimeout(async () => { try { const r = await post("wl_preview"); frame.srcdoc = await r.text(); } catch (e) {} }, 400); };
+    const count = () => {
+      const m = (form.querySelector("[name=mode]:checked") || {}).value;
+      let n = m === "new" ? D.new : m === "top" ? Math.min(+form.querySelector("[name=n]").value || 0, D.all) : D.all;
+      const k = form.querySelector("[name=keys]");
+      if (k && k.checked) {
+        const free = D.keys[(form.querySelector("[name=platform]") || {}).value] || 0;
+        if (free < n) { sum.textContent = `Nur ${free} freie Keys – es gehen ${free} von ${n} Mails raus`; sum.classList.add("warn"); return free; }
+      }
+      sum.classList.remove("warn");
+      sum.textContent = n + " Empfänger";
+      return n;
+    };
+    form.addEventListener("input", () => { preview(); count(); });
+    form.addEventListener("change", () => { preview(); count(); });
+    form.addEventListener("submit", (e) => e.preventDefault());
+    preview(); count();
+    const ready = () => {
+      if (!form.querySelector("[name=subject]").value.trim()) { toast("Bitte einen Betreff eingeben.", "info"); form.querySelector("[name=subject]").focus(); return false; }
+      if (!form.querySelector("[data-rte-input]").value.trim()) { toast("Bitte eine Nachricht schreiben.", "info"); form.querySelector("[data-rte-area]").focus(); return false; }
+      return true;
+    };
+    form.querySelector("[data-wl-test]").addEventListener("click", async (e) => {
+      if (!ready()) return;
+      e.target.disabled = true;
+      const j = await post("wl_test").then(readJson).catch(() => ({ ok: false, error: "Keine Verbindung." }));
+      e.target.disabled = false;
+      toast(j.ok ? "Testmail an " + j.to + " gesendet" : (j.error || "Fehler"), j.ok ? "ok" : "err", 5000);
+    });
+    async function run(id, total) {
+      const back = document.createElement("div");
+      back.className = "pg-modal-back tr-prog";
+      back.innerHTML = `<div class="pg-modal" role="dialog" aria-modal="true" aria-live="polite"><h3>Mails werden gesendet …</h3><div class="tr-prog-bar"><i></i></div><p class="tr-prog-n">Einen Moment …</p><div class="pg-modal-f"><button type="button" class="btn btn-sm" data-c>Pause</button></div></div>`;
+      document.body.appendChild(back);
+      let stop = false, busy = 0, last = null;
+      back.querySelector("[data-c]").addEventListener("click", (ev) => { stop = true; ev.target.textContent = "Wird angehalten …"; ev.target.disabled = true; });
+      while (!stop) {
+        const j = await fetch("index.php?action=wl_step", { method: "POST", body: new URLSearchParams({ csrf: csrf(), id }), headers: { "X-Requested-With": "fetch" } }).then(readJson).catch(() => ({ ok: false, error: "Keine Verbindung." }));
+        if (j.busy) { if (++busy > 8) break; await trSleep(2000); continue; }
+        if (!j.ok) { toast(j.error || "Fehler beim Senden", "err", 7000); break; }
+        last = j;
+        const done = j.sent + j.failed + j.skipped;
+        back.querySelector(".tr-prog-n").textContent = `${j.sent} gesendet${j.failed ? " · " + j.failed + " fehlgeschlagen" : ""}${j.skipped ? " · " + j.skipped + " übersprungen" : ""} – ${done} von ${j.total}`;
+        back.querySelector(".tr-prog-bar i").style.width = Math.round((done / Math.max(1, j.total)) * 100) + "%";
+        if (!j.left) break;
+      }
+      back.remove();
+      if (last) {
+        const u = new URL(location.href);
+        ["wlsent", "wlfail", "wlskip", "wlpause"].forEach((k) => u.searchParams.delete(k));
+        u.searchParams.set("wlsent", last.sent); if (last.failed) u.searchParams.set("wlfail", last.failed); if (last.skipped) u.searchParams.set("wlskip", last.skipped); if (last.left) u.searchParams.set("wlpause", "1");
+        location.href = u.toString();
+      }
+    }
+    form.querySelector("[data-wl-send]").addEventListener("click", async (e) => {
+      if (!ready()) return;
+      const n = count();
+      if (!n) { toast("Keine Empfänger ausgewählt.", "info"); return; }
+      const keys = form.querySelector("[name=keys]")?.checked;
+      if (!confirm(`Jetzt ${n} Mail${n === 1 ? "" : "s"} an die Warteliste von ${D.title} senden${keys ? " – jede mit einem eigenen Key" : ""}?\n\nJede Mail geht einzeln raus und enthält einen Abmelde-Link.`)) return;
+      e.target.disabled = true;
+      const j = await post("wl_start").then(readJson).catch(() => ({ ok: false, error: "Keine Verbindung." }));
+      if (!j.ok) { e.target.disabled = false; toast(j.error || "Fehler", "err", 6000); return; }
+      try { localStorage.removeItem("pg_mail_draft_compose"); } catch (err) {}
+      run(j.id, j.total);
+    });
+    const res = document.querySelector("[data-wl-resume]");
+    if (res) res.addEventListener("click", () => run(res.dataset.wlResume, 0));
+  })();
 
   // ---- Tastatur-Shortcuts ----
   function primarySaveButton() {
