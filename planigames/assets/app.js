@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "53";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "54";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
@@ -224,7 +224,7 @@
     // - Leeres Englisch (oder leeres Deutsch) → Deutsch.
     const SHARED_KEYS = new Set(["type", "slug", "hidden", "status", "align", "platform", "effect", "density", "game",
         "steamAppId", "itchEmbed", "youtube", "version", "publishAt", "draft", "notify", "featured", "enabled",
-        "icon", "emoji", "email", "accent", "accent2", "particleColor", "logoScale", "logoLayout", "logoPos"]);
+        "icon", "emoji", "email", "accent", "accent2", "particleColor", "logoScale", "logoLayout", "logoPos", "logoGap", "logoBox"]);
     const looksShared = (v) => /^(\/|https?:\/\/|www\.|#|data:|mailto:|tel:)/i.test(v)
         || /\.(png|jpe?g|webp|gif|svg|avif|mp4|webm|mov|zip|pdf)(\?[^#]*)?(#.*)?$/i.test(v)
         || /^\d{4}-\d{2}-\d{2}/.test(v);
@@ -682,7 +682,7 @@
                 if (de[k] !== undefined) merged[k] = de[k];
             });
         } else if (name === "games" && Array.isArray(merged.games) && Array.isArray(de.games)) {
-            const SHARED_GAME = ["title", "accent", "accent2", "particleColor", "cover", "logo", "logoScale", "logoPos", "logoLayout", "wishlistUrl", "status", "featured", "slug"];
+            const SHARED_GAME = ["title", "accent", "accent2", "particleColor", "cover", "logo", "logoScale", "logoPos", "logoLayout", "logoGap", "logoBox", "wishlistUrl", "status", "featured", "slug"];
             merged.games.forEach((g, i) => {
                 const d = de.games[i]; if (!d) return;
                 SHARED_GAME.forEach(k => { if (d[k] !== undefined) g[k] = d[k]; });
@@ -766,7 +766,7 @@
 
         // Featured Game + Games-Teaser
         const featured = games.find(g => g.featured) || games[0];
-        if (featured) renderFeatured(featured);
+        if (featured) { await ensureLogoBox(featured, 1200); renderFeatured(featured); }
         const grid = $("[data-games='teaser']");
         if (grid && games.length) {
             grid.innerHTML = games.map(gameCard).join("");
@@ -1050,7 +1050,7 @@
                 <div class="p-5 md:p-8">
                     <div class="flex items-center gap-3 mb-5">${statusBadge(g.status)}
                         <span class="badge text-zinc-500">${t("current_project")}</span></div>
-                    ${g.logo ? `<img src="${esc(g.logo)}" alt="${esc(g.title)}" class="mb-4 object-contain object-left" style="height:${Math.round(80 * ls)}px;width:auto;max-width:100%">`
+                    ${logoPath(g) ? logoMarkup(g, { h: Math.round(80 * ls) + "px", cls: "pg-feat-logo mb-4 object-contain object-left", style: logoBoxOf(g) ? "" : "width:auto;max-width:100%" })
                              : `<h2 class="font-display text-4xl md:text-6xl font-extrabold text-white mb-4">${esc(g.title)}</h2>`}
                     <p class="text-zinc-300 text-lg leading-relaxed mb-7 max-w-xl">${esc(g.tagline || "")}</p>
                     <div class="flex flex-wrap gap-3">
@@ -1132,6 +1132,7 @@
         setParticleColor(g.particleColor || g.accent);   // Partikel an die Spielwelt anpassen
         document.title = `${g.title} — PLANIGAMES`;
 
+        await ensureLogoBox(g, 1500);   // Logo ohne durchsichtigen Rand → bündig, ohne Lücken
         // ausgeblendete Blöcke bleiben gespeichert, werden aber nicht gezeigt
         const blocks = (Array.isArray(g.blocks) ? g.blocks : []).filter(b => b && !b.hidden);
         root.innerHTML = blocks.map((b, i) => renderBlock(b, g, i)).join("");
@@ -1215,6 +1216,102 @@
         `<section class="relative px-6 ${extra}"><div class="max-w-6xl mx-auto">${inner}</div></section>`;
 
     function logoScale(g) { return Math.min(3, Math.max(0.3, (+g.logoScale || 100) / 100)); }
+    // Abstand zwischen Status-Badge, Logo und Text (px, einstellbar unter „Kopfbereich gestalten“)
+    function logoGap(g) { const n = Number(g.logoGap); return Number.isFinite(n) && String(g.logoGap ?? "").trim() !== "" ? Math.min(160, Math.max(0, Math.round(n))) : 20; }
+
+    /* ---------- Logo ohne durchsichtigen Rand ----------
+       Viele Logo-Dateien haben rundum durchsichtigen Rand. Gezeigt wird nur der sichtbare Teil (Ausschnitt,
+       die Datei bleibt unverändert) – so steht das Logo exakt bündig am Text und es entstehen keine Lücken.
+       Den sichtbaren Bereich misst das Admin einmal und speichert ihn als „logoBox“
+       (x0,y0,x1,y1 als Anteile, Seitenverhältnis, Prüfsumme der Datei-Adresse). Fehlt er, misst die
+       Website selbst (einmal je Browser, gemerkt im localStorage). */
+    const LOGO_BOX_LS = "pg_logobox_v1";
+    const logoBoxMem = Object.create(null), logoBoxJobs = Object.create(null);
+    const logoPath = (g) => String((g && g.logo) || "").split("#")[0].trim();
+    function parseLogoBox(raw, src) {
+        const v = String(raw || "").split(",");
+        if (v.length !== 6 || !src || v[5] !== trHash(src)) return null;
+        const [x0, y0, x1, y1, ar] = v.slice(0, 5).map(Number);
+        if (![x0, y0, x1, y1, ar].every(Number.isFinite) || x0 < 0 || y0 < 0 || x1 > 1.0001 || y1 > 1.0001
+            || x1 - x0 < 0.01 || y1 - y0 < 0.01 || ar <= 0 || ar > 100) return null;
+        return { x0, y0, x1: Math.min(1, x1), y1: Math.min(1, y1), ar };
+    }
+    // Ergebnis: Ausschnitt {x0,y0,x1,y1,ar} · null = kein Rand / nicht messbar · undefined = noch unbekannt
+    function logoBoxOf(g) {
+        const src = logoPath(g); if (!src) return null;
+        const own = parseLogoBox(g.logoBox, src); if (own) return own;
+        if (src in logoBoxMem) return logoBoxMem[src];
+        try {
+            const c = JSON.parse(localStorage.getItem(LOGO_BOX_LS) || "{}")[src];
+            if (c && Date.now() - (c.t || 0) < 14 * 864e5) return (logoBoxMem[src] = c.b === "-" ? null : parseLogoBox(c.b, src));
+        } catch (e) {}
+        return undefined;
+    }
+    function measureLogoBox(src) {
+        if (logoBoxJobs[src]) return logoBoxJobs[src];
+        return (logoBoxJobs[src] = (async () => {
+            let box = null, blobUrl = null;
+            try {
+                let url = src, ar = 0;
+                if (/\.svg(\?|$)/i.test(src)) {
+                    // SVG: Seitenverhältnis aus der Datei, feste Pixelgröße setzen (sonst zeichnen manche Browser nichts)
+                    const doc = new DOMParser().parseFromString(await (await fetch(src, { credentials: "same-origin" })).text(), "image/svg+xml");
+                    const svg = doc.documentElement;
+                    if (svg && svg.nodeName.toLowerCase() === "svg") {
+                        const num = (v) => { const m = String(v || "").trim().match(/^([\d.]+)(px)?$/i); const n = m ? parseFloat(m[1]) : 0; return n > 0 ? n : 0; };
+                        const vb = (svg.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
+                        const w = num(svg.getAttribute("width")), h = num(svg.getAttribute("height"));
+                        ar = w && h ? w / h : (vb.length === 4 && vb[2] > 0 && vb[3] > 0 ? vb[2] / vb[3] : 0);
+                        if (ar) {
+                            svg.setAttribute("width", ar >= 1 ? 2000 : Math.round(2000 * ar));
+                            svg.setAttribute("height", ar >= 1 ? Math.round(2000 / ar) : 2000);
+                            url = blobUrl = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(doc)], { type: "image/svg+xml" }));
+                        }
+                    }
+                }
+                const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+                if (!ar && im.naturalWidth && im.naturalHeight) ar = im.naturalWidth / im.naturalHeight;
+                if (ar) {
+                    let W = ar >= 1 ? 1600 : Math.round(1600 * ar), H = ar >= 1 ? Math.round(1600 / ar) : 1600;
+                    if (!blobUrl && im.naturalWidth && im.naturalWidth < W) { W = im.naturalWidth; H = im.naturalHeight; }   // Pixelbild: nie hochrechnen
+                    W = Math.max(1, W); H = Math.max(1, H);
+                    const c = document.createElement("canvas"); c.width = W; c.height = H;
+                    const cx = c.getContext("2d", { willReadFrequently: true });
+                    cx.drawImage(im, 0, 0, W, H);
+                    const d = cx.getImageData(0, 0, W, H).data;
+                    let x0 = W, y0 = H, x1 = -1, y1 = -1;
+                    for (let y = 0; y < H; y++) { const row = y * W * 4; for (let x = 0; x < W; x++) if (d[row + x * 4 + 3] > 10) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+                    if (x1 >= 0 && (x0 > 0 || y0 > 0 || x1 < W - 1 || y1 < H - 1)) box = { x0: x0 / W, y0: y0 / H, x1: (x1 + 1) / W, y1: (y1 + 1) / H, ar };
+                }
+            } catch (e) { box = null; }
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+            logoBoxMem[src] = box;
+            try {
+                const all = JSON.parse(localStorage.getItem(LOGO_BOX_LS) || "{}");
+                all[src] = { b: box ? fmtLogoBox(box, src) : "-", t: Date.now() };
+                const keys = Object.keys(all); if (keys.length > 40) keys.slice(0, keys.length - 40).forEach(k => delete all[k]);
+                localStorage.setItem(LOGO_BOX_LS, JSON.stringify(all));
+            } catch (e) {}
+            return box;
+        })());
+    }
+    const fmtLogoBox = (b, src) => [b.x0, b.y0, b.x1, b.y1].map(n => n.toFixed(4)).concat(b.ar.toFixed(4), trHash(src)).join(",");
+    // vor dem Anzeigen messen (nur falls nötig; höchstens ms Millisekunden warten)
+    async function ensureLogoBox(g, ms = 1500) {
+        const src = logoPath(g);
+        if (!src || logoBoxOf(g) !== undefined) return;
+        await Promise.race([measureLogoBox(src), new Promise(r => setTimeout(r, ms))]);
+    }
+    // Logo-HTML: h = CSS-Höhe des ganzen Bildes (wie bisher). Mit Ausschnitt bleibt das sichtbare Logo
+    // genauso groß – nur der durchsichtige Rand fällt weg.
+    function logoMarkup(g, { h, cls = "", attrs = "", style = "" }) {
+        const src = logoPath(g), box = logoBoxOf(g);
+        if (!box) return `<img ${attrs} src="${esc(src)}" alt="${esc(g.title || "")}" class="${cls}" style="height:${h};${style}">`;
+        const fw = box.x1 - box.x0, fh = box.y1 - box.y0, va = box.ar * fw / fh;
+        const vh = `calc(${h} * ${fh.toFixed(4)})`;
+        return `<span ${attrs} data-logo-crop class="pg-logo-crop ${cls}" role="img" aria-label="${esc(g.title || "")}" style="width:min(100%, calc(${vh} * ${va.toFixed(4)}));aspect-ratio:${va.toFixed(4)};${style}">`
+            + `<img src="${esc(src)}" alt="" style="width:${(100 / fw).toFixed(4)}%;left:${(-100 * box.x0 / fw).toFixed(4)}%;top:${(-100 * box.y0 / fh).toFixed(4)}%"></span>`;
+    }
 
     // Kopfbereich: Das Logo sitzt IMMER im Textblock (nie frei über dem Bild). Dadurch steht es auf jedem
     // Bildschirm gleich zum Text und kann nichts überdecken. Anordnung: links (Standard) · mittig · rechts neben dem Text.
@@ -1242,8 +1339,8 @@
         const h = layout === "split"
             ? `clamp(${Math.round(72 * ls)}px, ${(11 * ls).toFixed(2)}vw, ${Math.round(220 * ls)}px)`
             : `clamp(${Math.round(56 * ls)}px, ${(8.5 * ls).toFixed(2)}vw, ${Math.round(150 * ls)}px)`;
-        const logo = g.logo
-            ? `<img data-hero-logo="inline" src="${esc(g.logo)}" alt="${esc(g.title)}" class="pg-hero-logo reveal" style="height:${h}">`
+        const logo = logoPath(g)
+            ? logoMarkup(g, { h, cls: "pg-hero-logo reveal", attrs: 'data-hero-logo="inline"' })
             : `<h1 data-hero-logo="title" class="pg-hero-title font-display text-6xl md:text-8xl font-extrabold text-white reveal-on"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`;
         const badge = `<div data-hero-badge class="pg-hero-badge reveal-on">${statusBadge(g.status)}</div>`;
         const tag = `<p data-hero-tagline class="pg-hero-tag text-xl md:text-2xl text-zinc-200 reveal">${esc(b.tagline || g.tagline || "")}</p>`;
@@ -1259,7 +1356,7 @@
             ${media}
             <div class="absolute inset-0" style="background:linear-gradient(to top, var(--bg) 4%, color-mix(in srgb, var(--accent) 18%, transparent) 55%, rgba(0,0,0,.35))"></div>
             <div class="absolute inset-0 bg-black/30"></div>
-            <div data-hero-inner class="pg-hero-inner pg-hero--${layout} relative max-w-6xl mx-auto w-full px-6 pb-16 md:pb-24">${inner}</div>
+            <div data-hero-inner class="pg-hero-inner pg-hero--${layout} relative max-w-6xl mx-auto w-full px-6 pb-16 md:pb-24" style="--logo-gap:${logoGap(g)}px">${inner}</div>
         </section>`;
     }
 
@@ -2694,11 +2791,12 @@
         const heroBlock = () => (cur.blocks || []).find(b => b && b.type === "hero" && !b.hidden) || { type: "hero" };
         const rect = (el) => { if (!el) return null; const r = el.getBoundingClientRect(); return r.width || r.height ? { x: r.left, y: r.top, w: r.width, h: r.height } : null; };
         (window.PLANIGAMES = window.PLANIGAMES || {}).placer = {
-            update(patch) {
+            async update(patch) {
                 const p = patch || {};
                 const { hero, ...rest } = p;
                 cur = { ...cur, ...rest };
                 if (hero) { const hb = heroBlock(); Object.assign(hb, hero); if (!(cur.blocks || []).includes(hb)) cur.blocks = [hb, ...(cur.blocks || [])]; }
+                if (logoPath(cur) && logoBoxOf(cur) === undefined) await measureLogoBox(logoPath(cur));   // neues Logo: Rand erst messen
                 applyAccent(cur.accent || "#8b5cf6", cur.accent2 || "#22d3ee");
                 const old = document.querySelector("[data-hero]");
                 const tmp = document.createElement("div");
@@ -2714,7 +2812,11 @@
                     section: rect(document.querySelector("[data-hero]")),
                     inner: rect(document.querySelector("[data-hero-inner]")),
                     logo: rect(vis(document.querySelector('[data-hero-logo="inline"], [data-hero-logo="title"]'))),
-                    nat: (() => { const im = document.querySelector('[data-hero-logo="inline"]'); return im ? { w: im.naturalWidth, h: im.naturalHeight, done: im.complete } : null; })(),
+                    // Ausschnitt aktiv: logo ist bereits genau der sichtbare Teil
+                    cropped: !!document.querySelector('[data-hero-logo="inline"][data-logo-crop]'),
+                    box: (() => { const b = logoBoxOf(cur); return b ? fmtLogoBox(b, logoPath(cur)) : ""; })(),
+                    gap: logoGap(cur),
+                    nat: (() => { const el = document.querySelector('[data-hero-logo="inline"]'); const im = el && (el.tagName === "IMG" ? el : el.querySelector("img")); return im ? { w: im.naturalWidth, h: im.naturalHeight, done: im.complete } : null; })(),
                     header: rect(document.getElementById("site-header")),
                     tagline: rect(document.querySelector("[data-hero-tagline]")),
                 };

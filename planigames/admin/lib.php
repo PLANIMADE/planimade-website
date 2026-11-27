@@ -9,7 +9,7 @@ const PG_MEDIA_DIR   = __DIR__ . '/../media';
 const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
 const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
 const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip'];
-const PG_ADMIN_V     = '93';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
+const PG_ADMIN_V     = '96';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -1061,6 +1061,33 @@ function pg_mail_sender($sig){
   return [$label, $studioEmail, $studioEmail, false];
 }
 
+/* Signatur eines persönlichen Postfachs: fest eingestellt (sig = ID, „-“ = keine) oder automatisch passend –
+   gleiche E-Mail-Adresse, Name einer eingetragenen Person, Vorname = Name im Umschalter bzw. Adresse.
+   Rückgabe: Signatur-ID, '' (keine) oder null (nichts Passendes → Standard des Admins). */
+function pg_mailbox_signature($mb){
+  if (!is_array($mb)) return null;
+  $want = (string) ($mb['sig'] ?? '');
+  if ($want === '-') return '';
+  if ($want !== '' && pg_mail_signature_find($want)) return $want;
+  $sigs = array_values(array_filter(pg_mail_signatures(), fn($x) => (string) ($x['id'] ?? '') !== 'studio'));
+  if (!$sigs) return null;
+  $email = strtolower(trim((string) ($mb['email'] ?? '')));
+  foreach ($sigs as $x) if ($email !== '' && strtolower(trim((string) ($x['email'] ?? ''))) === $email) return (string) $x['id'];
+  $owners = array_map('strtolower', (array) ($mb['owners'] ?? []));
+  $names = [];
+  foreach (pg_users_load() as $u) if (in_array(strtolower((string) ($u['email'] ?? '')), $owners, true) && trim((string) ($u['name'] ?? '')) !== '') $names[] = mb_strtolower(trim((string) $u['name']));
+  foreach ($sigs as $x) if (in_array(mb_strtolower(trim((string) ($x['name'] ?? ''))), $names, true)) return (string) $x['id'];
+  $first = fn($x) => pg_slugify(explode(' ', trim((string) ($x['name'] ?? '')))[0] ?? '');
+  foreach ([pg_slugify((string) ($mb['label'] ?? '')), pg_slugify((string) strstr($email, '@', true))] as $key)
+    if ($key !== '') foreach ($sigs as $x) if ($first($x) === $key) return (string) $x['id'];
+  return null;
+}
+// Vorauswahl „Von“/Signatur beim Verfassen im aktiven Postfach
+function pg_mail_signature_default_active(){
+  if (pg_mb_key() !== 'main' && ($mb = pg_mailbox_find(pg_mb_key()))) { $s = pg_mailbox_signature($mb); if ($s !== null) return $s; }
+  return pg_mail_signature_default();
+}
+
 /* Absender beim Verfassen im aktiven Postfach: im persönlichen Postfach kommt jede Mail
    von dessen Adresse (sonst lehnt der Mailserver sie ab) – die Signatur bestimmt nur den Namen. */
 function pg_mail_sender_active($sig){
@@ -1095,6 +1122,7 @@ function pg_mail_signature($sig = null){
   $phone   = trim((string) ($sig['phone'] ?? ''));
   $closing = trim((string) ($sig['closing'] ?? ''));
   $email   = trim((string) ($sig['email'] ?? '')) ?: trim((string) ($s['email'] ?? ''));
+  if (pg_mb_key() !== 'main' && ($mbx = pg_mailbox_find(pg_mb_key()))) $email = (string) $mbx['email'];   // persönliches Postfach: dessen Adresse
   $siteUrl = pg_site_url();
   $siteTxt = preg_replace('#^https?://#', '', $siteUrl);
   $socials = array_filter(is_array($s['socials'] ?? null) ? $s['socials'] : [],
@@ -1580,9 +1608,11 @@ function pg_mailbox_upsert(array $in){
   if (!$owners) return [false, 'Bitte mindestens eine Person auswählen, die dieses Postfach sieht.'];
   $label = mb_substr(trim((string) ($in['label'] ?? '')), 0, 40);
   if ($label === '') $label = mb_convert_case(preg_replace('/[._\-]+/', ' ', strstr($email, '@', true)), MB_CASE_TITLE);
+  $sig = (string) ($in['sig'] ?? ($old['sig'] ?? ''));
+  if ($sig !== '' && $sig !== '-' && !pg_mail_signature_find($sig)) $sig = '';
   $mb = ['id' => $old['id'] ?? ('mb_' . bin2hex(random_bytes(4))), 'label' => $label, 'email' => $email,
          'from_name' => mb_substr(trim(str_replace(["\r", "\n"], ' ', (string) ($in['from_name'] ?? ''))), 0, 80),
-         'pass' => $pass, 'owners' => $owners, 'same_server' => !empty($in['same_server'])];
+         'pass' => $pass, 'owners' => $owners, 'same_server' => !empty($in['same_server']), 'sig' => $sig];
   if (!$mb['same_server']) {
     foreach (['imap' => [993, 'ssl'], 'smtp' => [587, 'tls']] as $k => [$defPort, $defSec]) {
       $mb[$k . '_host'] = preg_replace('/[^a-z0-9.\-]/i', '', (string) ($in[$k . '_host'] ?? ''));
@@ -2563,6 +2593,50 @@ function pg_redirect_clear($type, $slug){
   if (!isset($r[$type][$slug])) return true;
   unset($r[$type][$slug]);
   return pg_save_json(PG_REDIRECTS_FILE, $r);
+}
+
+/* ---- Logo ohne durchsichtigen Rand ----
+   „logoBox“ = sichtbarer Bereich der Logo-Datei: x0,y0,x1,y1 (Anteile 0..1), Seitenverhältnis, Prüfsumme der
+   Datei-Adresse. Gemessen im Browser (Admin), gespeichert pro Spiel. Website & Cockpit zeigen damit nur den
+   sichtbaren Teil (Ausschnitt) – die Datei selbst bleibt unverändert. Passt die Prüfsumme nicht (anderes
+   Logo), wird der Wert ignoriert. */
+function pg_logo_src($g){ return trim(explode('#', (string) (is_array($g) ? ($g['logo'] ?? '') : $g))[0]); }
+function pg_logo_box_parse($raw, $src){
+  $v = explode(',', (string) $raw);
+  if (count($v) !== 6 || $src === '' || $v[5] !== pg_tr_hash($src)) return null;
+  foreach (array_slice($v, 0, 5) as $n) if (!is_numeric($n)) return null;
+  [$x0, $y0, $x1, $y1, $ar] = array_map('floatval', array_slice($v, 0, 5));
+  if ($x0 < 0 || $y0 < 0 || $x1 > 1.0001 || $y1 > 1.0001 || $x1 - $x0 < 0.01 || $y1 - $y0 < 0.01 || $ar <= 0 || $ar > 100) return null;
+  return ['x0' => $x0, 'y0' => $y0, 'x1' => min(1.0, $x1), 'y1' => min(1.0, $y1), 'ar' => $ar];
+}
+function pg_logo_box_fmt($b, $src){
+  return implode(',', array_map(fn($n) => number_format((float) $n, 4, '.', ''), [$b['x0'], $b['y0'], $b['x1'], $b['y1'], $b['ar']])) . ',' . pg_tr_hash($src);
+}
+// Ausschnitt-HTML (Hülle mit Seitenverhältnis des sichtbaren Teils, Bild darin verschoben)
+function pg_logo_crop_html($src, $box, $alt, $cls = ''){
+  $fw = $box['x1'] - $box['x0']; $fh = $box['y1'] - $box['y0']; $va = $box['ar'] * $fw / $fh;
+  $src2 = preg_match('#^(https?:)?//|^data:#', $src) ? $src : '../' . ltrim($src, '/');
+  return '<span class="pg-crop ' . pg_h($cls) . '" role="img" aria-label="' . pg_h($alt) . '" style="--va:' . number_format($va, 4, '.', '') . '">'
+       . '<img src="' . pg_h($src2) . '" alt="" loading="lazy" style="width:' . number_format(100 / $fw, 4, '.', '') . '%;left:' . number_format(-100 * $box['x0'] / $fw, 4, '.', '')
+       . '%;top:' . number_format(-100 * $box['y0'] / $fh, 4, '.', '') . '%"></span>';
+}
+// Gemessenen Ausschnitt speichern – nur, wenn das Spiel noch genau dieses Logo hat
+function pg_game_logobox_set($slug, $logo, $raw){
+  $src = pg_logo_src((string) $logo);
+  $box = pg_logo_box_parse($raw, $src);
+  if (!$box) return ['ok' => false, 'error' => 'invalid'];
+  $lk = @fopen(PG_DATA_DIR . '/.games-logobox.lock', 'c');
+  if ($lk) flock($lk, LOCK_EX);
+  try {
+    $d = pg_games_data('de');
+    $i = pg_game_idx($d['games'], (string) $slug);
+    if ($i < 0) return ['ok' => false, 'error' => 'not_found'];
+    if (pg_logo_src($d['games'][$i]) !== $src) return ['ok' => false, 'error' => 'logo_changed'];
+    $val = pg_logo_box_fmt($box, $src);
+    if (($d['games'][$i]['logoBox'] ?? '') === $val) return ['ok' => true, 'box' => $val, 'unchanged' => true];
+    $d['games'][$i]['logoBox'] = $val;
+    return pg_games_save($d, 'de') ? ['ok' => true, 'box' => $val] : ['ok' => false, 'error' => 'write'];
+  } finally { if ($lk) { flock($lk, LOCK_UN); fclose($lk); } }
 }
 
 /* ---- Einzelnes Spiel speichern ---- */

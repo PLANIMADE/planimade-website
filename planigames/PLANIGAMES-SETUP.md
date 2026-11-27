@@ -108,8 +108,10 @@ nur das geöffnete Spiel. Blöcke lassen sich **ausblenden statt löschen**.
   Adress-Umzug“), und die alte Adresse leitet dauerhaft weiter (`data/redirects.json`).
 - **Logo platzieren** (*Darstellung*): zeigt die echte Spielseite in Laptop-,
   Full-HD-, 1440p- und Handy-Größe; eine Ampel meldet, ob das Logo Badge, Text,
-  Buttons oder das Menü überdeckt. Transparenter Rand wird beim Hochladen
-  automatisch entfernt (bzw. per „Rand entfernen“ bei bestehenden Logos).
+  Buttons oder das Menü überdeckt. Durchsichtiger Rand in der Logo-Datei wird
+  automatisch ignoriert – das Logo steht bei „Links“ exakt bündig am Text, ohne
+  Lücken darüber oder darunter. Der **Abstand** zwischen Status-Badge, Logo und
+  Text ist einstellbar (Standard 20 px, am Handy etwas kleiner).
 
 ---
 
@@ -203,8 +205,10 @@ Gut zu wissen:
   Adressen (z. B. `dominic@…`): Adresse und Passwort aus dem KAS eintragen und
   ankreuzen, wer das Postfach sehen darf. Wer mehrere Postfächer sieht, schaltet
   oben im Postfach um; Cockpit und Glocke zählen alle eigenen Postfächer zusammen.
-  Mails aus einem persönlichen Postfach gehen immer von dessen Adresse raus,
-  Newsletter und Warteliste immer über das Hauptpostfach. „Verbindung testen“
+  Mails aus einem persönlichen Postfach gehen immer von dessen Adresse raus –
+  mit der passenden Signatur (gleiche Adresse bzw. Name der Person; im
+  Postfach-Dialog auch fest einstellbar). Newsletter und Warteliste gehen immer
+  über das Hauptpostfach. „Verbindung testen“
   prüft die Zugangsdaten, ohne etwas zu senden. Die Mails selbst bleiben auf dem
   Mailserver – „Entfernen“ trennt nur die Verbindung zum Dashboard.
 - **Datenschutz der Daten:** In `data/` sind per Web nur `studio`, `team`,

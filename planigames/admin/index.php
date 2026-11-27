@@ -43,6 +43,17 @@ if ($action === 'ck_inbox') {
   exit;
 }
 
+/* ---- Logo-Ausschnitt speichern (im Browser gemessen: sichtbarer Teil ohne durchsichtigen Rand) ---- */
+if ($action === 'game_logobox') {
+  header('Content-Type: application/json; charset=utf-8');
+  if (!pg_logged_in() || !pg_can('games')) { http_response_code(403); exit('{"ok":false,"error":"Keine Berechtigung"}'); }
+  if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit('{"ok":false}'); }
+  pg_csrf_check();
+  session_write_close();
+  echo json_encode(pg_game_logobox_set((string) ($_POST['slug'] ?? ''), (string) ($_POST['logo'] ?? ''), (string) ($_POST['box'] ?? '')));
+  exit;
+}
+
 /* ---- Medien-Liste (für „Aus Bibliothek wählen") ---- */
 if ($action === 'medialist') {
   header('Content-Type: application/json');
@@ -2007,7 +2018,14 @@ if (pg_can('games') && $gamesData) {
        . ($cpath !== '' ? '<img class="cv" src="' . pg_h($cpath) . '" alt="" loading="lazy" style="object-position:' . $fp . '">' : '')
        . '<span class="chip ' . $stt[1] . '"><i></i>' . pg_h($stt[0]) . '</span>'
        . (!empty($g['featured']) ? '<span class="ck-star">★ Startseite</span>' : '')
-       . (!empty($g['logo']) ? '<img class="lg" src="' . pg_h(explode('#', (string) $g['logo'])[0]) . '" alt="' . pg_h($g['title'] ?? '') . '">' : '<span class="ttl">' . pg_h($g['title'] ?? $slug) . '</span>')
+       . (function () use ($g, $slug) {               // Logo groß & mittig – nur der sichtbare Teil (ohne durchsichtigen Rand)
+           $src = pg_logo_src($g);
+           if ($src === '') return '<span class="ttl">' . pg_h($g['title'] ?? $slug) . '</span>';
+           $box = pg_logo_box_parse($g['logoBox'] ?? '', $src);
+           if ($box) return pg_logo_crop_html($src, $box, (string) ($g['title'] ?? ''), 'ck-glogo');
+           $src2 = preg_match('#^(https?:)?//|^data:#', $src) ? $src : '../' . ltrim($src, '/');
+           return '<span class="ck-glogo is-plain" data-logo-sync="' . pg_h($slug) . '" data-logo-src="' . pg_h($src) . '"><img src="' . pg_h($src2) . '" alt="' . pg_h($g['title'] ?? '') . '"></span>';
+         })()
        . '</a><div class="ck-game-stats">'
        . '<div><b>' . number_format($nW, 0, ',', '.') . '</b><span>Warteliste</span></div>'
        . '<div><b>' . $nS . '</b><span>Vorschläge</span></div>'

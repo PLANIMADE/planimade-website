@@ -212,11 +212,12 @@ return [
         ['widget'=>'heading','label'=>'Cover & Logo','tab'=>'look','hint'=>'Bilder für Karten, Startseite und den Kopfbereich der Spielseite.'],
         ['name'=>'cover','label'=>'Cover-Bild','widget'=>'image','hint'=>'Querformat 16:10, ca. 1600×1000 px (JPG/WebP). Für Karten & Startseite.'],
         ['name'=>'coverAlt','label'=>'Cover – Alt-Text','widget'=>'string','hint'=>'Bildbeschreibung für SEO & Screenreader. Leer = Spieltitel.'],
-        ['name'=>'logo','label'=>'Logo (transparent)','widget'=>'image','hint'=>'Transparentes PNG/SVG – wird im Kopfbereich statt des Titels gezeigt. Transparenter Rand wird beim Hochladen automatisch entfernt.'],
+        ['name'=>'logo','label'=>'Logo (transparent)','widget'=>'image','hint'=>'Transparentes PNG/SVG – wird im Kopfbereich statt des Titels gezeigt. Durchsichtiger Rand in der Datei wird automatisch ignoriert – das Logo steht immer bündig am Text.'],
         ['name'=>'logoScale','label'=>'Logo-Größe (%)','widget'=>'number','default'=>100,'hint'=>'100 = Standard. Wirkt auf Kopfbereich & Startseiten-Karte. Am einfachsten über „Kopfbereich gestalten“.'],
         ['name'=>'logoLayout','label'=>'Anordnung im Kopfbereich','widget'=>'select','default'=>'left','options'=>[
           'left'=>'Links über dem Text (Standard)','center'=>'Mittig – alles zentriert','split'=>'Logo rechts neben dem Text',
         ],'hint'=>'Das Logo steht immer im Textblock – auf jedem Bildschirm gleich zum Text, ohne etwas zu überdecken. Auf dem Handy ist alles mittig.'],
+        ['name'=>'logoGap','label'=>'Abstand ums Logo (px)','widget'=>'number','default'=>20,'hint'=>'Abstand zwischen Status-Badge, Logo und Text darunter (bei „Links“ und „Mittig“). Am Handy automatisch etwas kleiner. Am einfachsten über „Kopfbereich gestalten“.'],
         ['widget'=>'heading','label'=>'Seiten-Blöcke','tab'=>'page','hint'=>'Der Aufbau der Spielseite – Blöcke hinzufügen, sortieren, ausblenden.'],
         ['name'=>'blocks','label'=>'Seiten-Blöcke (Website-Builder)','widget'=>'blocks','types'=>[
           'hero'=>['label'=>'Hero (Kopfbereich)','fields'=>[

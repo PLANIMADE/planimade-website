@@ -473,8 +473,8 @@ if ($tab === 'compose') {
     imap_close($mb);
   }
   $sigs = pg_mail_signatures();
-  $sigSel = $draft !== null ? (string) ($draft['sig'] ?? '') : pg_mail_signature_default();
-  $withSigOn = $draft !== null ? !empty($draft['with_sig']) : true;
+  $sigSel = $draft !== null ? (string) ($draft['sig'] ?? '') : pg_mail_signature_default_active();   // persönliches Postfach → dessen Signatur
+  $withSigOn = $draft !== null ? !empty($draft['with_sig']) : !($mbId !== 'main' && $sigSel === '');   // „Keine Signatur“ im Postfach → aus
   $maxUp = min(PG_MAIL_ATT_MAX, (int) (pg_ini_bytes(ini_get('upload_max_filesize')) ?: PG_MAIL_ATT_MAX), (int) (pg_ini_bytes(ini_get('post_max_size')) ?: PG_MAIL_ATT_MAX));
   echo '<form method="post" enctype="multipart/form-data" class="ck-card mx-compose" data-composer data-mail-compose data-mode="compose" data-html data-max="' . $maxUp . '">';
   echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '"><input type="hidden" name="send_mail" value="1"><input type="hidden" name="mb" value="' . pg_h($mbId) . '">'
@@ -548,7 +548,17 @@ function pg_mbx_dialog($m, $users, $draft = null){
     $h .= '<label class="wlm-check"><input type="checkbox" name="owners[]" value="' . pg_h($e) . '"' . (in_array($e, $owners, true) ? ' checked' : '') . '>'
         . '<span><b>' . pg_h(trim((string) ($u['name'] ?? '')) ?: $e) . '</b><small>' . pg_h($e) . ' · ' . (($u['role'] ?? '') === 'owner' ? 'Owner' : 'Editor') . '</small></span></label>';
   }
+  $sigs = pg_mail_signatures();
+  $sigCur = (string) ($draft['sig'] ?? ($m['sig'] ?? ''));
+  $auto = $isNew ? null : pg_mailbox_signature(['sig' => ''] + $m);
+  $autoTxt = '';
+  if ($auto) foreach ($sigs as $x) if ((string) $x['id'] === $auto) $autoTxt = ' – jetzt: ' . (trim((string) ($x['name'] ?? '')) ?: (string) ($x['label'] ?? ''));
   $h .= '</div><p class="hint">Nur diese Personen sehen das Postfach im Dashboard. Das Hauptpostfach sehen alle mit dem Recht „E-Mail-Postfach“.</p>'
+     . '<div class="field mbx-sig"><label class="flabel" for="' . $dlg . '-sig">Signatur in diesem Postfach</label><select id="' . $dlg . '-sig" name="sig">'
+     . '<option value=""' . ($sigCur === '' ? ' selected' : '') . '>Automatisch passend' . pg_h($autoTxt) . '</option>';
+  foreach ($sigs as $x) $h .= '<option value="' . pg_h($x['id']) . '"' . ($sigCur === (string) $x['id'] ? ' selected' : '') . '>' . pg_h(trim((string) ($x['name'] ?? '')) ?: (string) ($x['label'] ?? '')) . ((string) $x['id'] === 'studio' ? ' (Studio)' : '') . '</option>';
+  $h .= '<option value="-"' . ($sigCur === '-' ? ' selected' : '') . '>Keine Signatur</option></select>'
+     . '<p class="hint">„Automatisch“ nimmt die Signatur mit derselben E-Mail-Adresse bzw. dem Namen der Person. Die Adresse in der Signatur ist immer die dieses Postfachs.</p></div>'
      . '<label class="wlm-check mbx-same"><input type="checkbox" name="same_server" value="1"' . ($same ? ' checked' : '') . '><span><b>Gleicher Mailserver wie das Hauptpostfach</b>'
      . '<small>Bei All-Inkl liegen alle Adressen auf demselben Server – einfach angehakt lassen. Benutzername ist die E-Mail-Adresse.</small></span></label>'
      . '<div class="mbx-srv"><div class="mailgrid">';
@@ -619,10 +629,13 @@ if ($tab === 'settings') {
     echo '<ul class="mbx-list">';
     foreach ($boxes as $m) {
       $who = array_map(fn($e) => $names[strtolower($e)] ?? $e, (array) ($m['owners'] ?? []));
+      $sgId = pg_mailbox_signature($m); $sgTxt = $sgId === '' ? 'keine Signatur' : ($sgId === null ? 'Signatur wie Hauptpostfach' : '');
+      if ($sgId) foreach (pg_mail_signatures() as $x) if ((string) $x['id'] === $sgId) $sgTxt = 'Signatur: ' . (trim((string) ($x['name'] ?? '')) ?: (string) ($x['label'] ?? ''));
       echo '<li class="mbx-row"' . ($justSaved === $m['id'] ? ' data-mb-autotest="' . pg_h($m['id']) . '"' : '') . '>'
          . '<span class="mx-box-av">' . pg_h(mb_strtoupper(mb_substr((string) ($m['label'] ?: $m['email']), 0, 1))) . '</span>'
          . '<div class="mbx-tx"><b>' . pg_h($m['label'] ?: $m['email']) . '</b><span>' . pg_h($m['email']) . '</span>'
-         . '<small>' . pg_icon('user') . 'Sichtbar für ' . pg_h($who ? implode(', ', $who) : 'niemanden') . (empty($m['same_server']) ? ' · eigener Mailserver' : '') . '</small></div>'
+         . '<small>' . pg_icon('user') . 'Sichtbar für ' . pg_h($who ? implode(', ', $who) : 'niemanden') . (empty($m['same_server']) ? ' · eigener Mailserver' : '') . '</small>'
+         . '<small>' . pg_icon('edit') . pg_h($sgTxt) . '</small></div>'
          . '<div class="mbx-acts"><button type="button" class="btn btn-sm" data-mb-test="' . pg_h($m['id']) . '">' . pg_icon('refresh') . 'Testen</button>'
          . '<button type="button" class="icon-btn" data-open-dialog="dlg-mb-' . pg_h($m['id']) . '" title="Bearbeiten" aria-label="Bearbeiten">' . pg_icon('edit') . '</button>'
          . '<form method="post" action="mail.php?tab=settings" onsubmit="return confirm(\'Postfach „' . pg_h(addslashes($m['email'])) . '“ aus dem Dashboard entfernen? Die Mails bleiben auf dem Mailserver.\')">'
