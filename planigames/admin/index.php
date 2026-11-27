@@ -25,6 +25,7 @@ if ($action === 'upload') {
 if ($action === 'notif_counts') {
   header('Content-Type: application/json');
   if (!pg_logged_in()) { http_response_code(403); exit('{"error":"Nicht eingeloggt"}'); }
+  session_write_close();         // IMAP-Abfragen dürfen andere Admin-Seiten nicht blockieren
   $n = pg_notifications(true);   // Mail live vom IMAP (gedrosselt) -> neue Mails ohne Reload
   echo json_encode(['counts' => $n, 'notes' => pg_notif_notes($n)], JSON_UNESCAPED_UNICODE);
   exit;
@@ -35,7 +36,8 @@ if ($action === 'ck_inbox') {
   header('Content-Type: application/json; charset=utf-8');
   if (!pg_logged_in()) { http_response_code(403); exit('{"ok":false,"error":"Nicht eingeloggt"}'); }
   session_write_close();                                    // IMAP darf andere Admin-Seiten nicht blockieren
-  [$items, $mailUnread] = pg_can('mail') ? pg_inbox_preview_live(45) : [[], 0];
+  $items = []; $mailUnread = 0;
+  if (pg_mailbox_access()) { $items = pg_inbox_preview_all(true, 45)['items']; $mailUnread = pg_mail_unread_total(); }   // alle eigenen Postfächer
   $contUnread = pg_can('contacts') ? pg_contacts_unread() : 0;
   echo json_encode(['ok' => true, 'html' => pg_ck_messages($items), 'unread' => ($mailUnread ?: 0) + $contUnread, 'mail' => $mailUnread, 'contacts' => $contUnread], JSON_UNESCAPED_UNICODE);
   exit;
@@ -1272,7 +1274,7 @@ if (($_GET['view'] ?? '') === 'contacts') {
     $ini = mb_strtoupper(implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(preg_split('/\s+/', preg_replace('/[^\p{L} ]/u', '', $name)) ?: [], 0, 2)))) ?: '✉';
     $replySubj = rawurlencode('Re: ' . ($subj ?: 'Deine Anfrage'));
     $quote = "\n\n\n— Deine Nachricht vom " . substr((string) ($r['date'] ?? ''), 0, 10) . " —\n" . preg_replace('/^/m', '> ', (string) ($r['message'] ?? ''));
-    $replyHref = pg_can('mail') ? 'mail.php?tab=compose&to=' . rawurlencode($r['email'] ?? '') . '&subject=' . $replySubj . '&body=' . rawurlencode($quote)
+    $replyHref = pg_can('mail') ? 'mail.php?tab=compose&mb=main&to=' . rawurlencode($r['email'] ?? '') . '&subject=' . $replySubj . '&body=' . rawurlencode($quote)
                                 : 'mailto:' . ($r['email'] ?? '') . '?subject=' . $replySubj;
     $csrfIn = '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '"><input type="hidden" name="idx" value="' . $sel . '">';
     echo '<div class="mx-read-h"><a class="btn btn-ghost btn-sm mx-back" href="' . pg_h($q('')) . '">' . pg_icon('back') . 'Zurück</a>'
@@ -1387,7 +1389,7 @@ if (($_GET['view'] ?? '') === 'backup') {
   // Automatische Snapshots auf dem Server
   $snaps = pg_backup_list();
   $lastAuto = pg_backup_last_auto_time();
-  echo '<h2 class="sub-h" style="border-top:1px solid var(--line);padding-top:1.2rem;margin-top:1.6rem">🗄️ Automatische Backups</h2>';
+  echo '<h2 class="sub-h" style="border-top:1px solid var(--line);padding-top:1.2rem;margin-top:1.6rem">Automatische Backups</h2>';
   echo '<p class="hint" style="margin:0 0 .8rem">Das System legt <b>einmal täglich</b> automatisch einen Snapshot auf dem Server an (im Ordner <code>data/backups/</code>, nicht öffentlich abrufbar). '
      . 'Letztes Auto-Backup: <b>' . ($lastAuto ? pg_h(date('d.m.Y H:i', $lastAuto)) : 'noch keins') . '</b>. '
      . 'Es werden die letzten ' . PG_BACKUP_KEEP_AUTO . ' Tage + ' . PG_BACKUP_KEEP_MANUAL . ' manuelle Snapshots behalten.</p>';
@@ -1840,7 +1842,8 @@ pg_view_topbar($SCHEMA, null);
 $me = pg_current_user() ?: [];
 $firstName = trim(explode(' ', trim((string) ($me['name'] ?? '')))[0] ?? '');
 $isOwner = pg_is_owner();
-$canSubs = pg_can('subscribers'); $canCont = pg_can('contacts'); $canMail = pg_can('mail');
+$canSubs = pg_can('subscribers'); $canCont = pg_can('contacts');
+$canMail = pg_mailbox_access(); $canMailMain = pg_can('mail');   // irgendein Postfach / Hauptpostfach
 $gamesData = array_values(array_filter((array) (pg_load_json(PG_DATA_DIR . '/games.json')['games'] ?? []), 'is_array'));
 $gameTitle = [];
 foreach ($gamesData as $g) if (!empty($g['slug'])) $gameTitle[strtolower((string) $g['slug'])] = (string) ($g['title'] ?? $g['slug']);
@@ -1862,7 +1865,7 @@ $todo = [];   // [icon, ton, titel, info, link, button]
 $sec = pg_selfcheck_data();
 $alarm = ($sec['exposed'] ?? null) === true;   // wird als Banner ganz oben gezeigt
 // Ungelesene Mails & Kontaktanfragen stehen prominent unter „Neue Nachrichten“ (nicht doppelt als Aufgabe)
-$mailUnread = $canMail ? pg_mail_unread_cached() : 0;
+$mailUnread = $canMail ? pg_mail_unread_total() : 0;
 $contUnread = $canCont ? pg_contacts_unread() : 0;
 if ($canCont && ($n = pg_suggestions_pending())) {
   $by = [];
@@ -1954,15 +1957,15 @@ echo '</div></div>';
 /* ── Neue Nachrichten (prominent) + Aufgaben (kompakt, rechts) ── */
 echo '<div class="ck-main">';
 if ($canMail || $canCont) {
-  $prev = pg_inbox_preview_cached();
-  $needRefresh = $canMail && pg_mail_configured_recv() && pg_imap_available() && time() - $prev['time'] > 60;
+  $prev = $canMail ? pg_inbox_preview_all(false, 60) : ['items' => [], 'stale' => false];
+  $needRefresh = $canMail && $prev['stale'];
   echo '<section class="ck-card ck-inbox"' . ($needRefresh ? ' data-ck-refresh' : '') . '><div class="ck-card-h"><span class="ck-card-t">' . pg_icon('inbox') . 'Neue Nachrichten</span>'
      . '<span class="ck-count' . ($nNew ? '' : ' zero') . '" data-ck-unread>' . $nNew . '</span>'
      . '<span class="ck-sync" data-ck-sync' . ($needRefresh ? '' : ' hidden') . '>' . pg_icon('refresh') . 'wird aktualisiert …</span>'
      . '<span class="ck-links">' . ($canMail ? '<a class="ck-more" href="mail.php">Postfach' . ($mailUnread ? ' <b>' . $mailUnread . '</b>' : '') . pg_icon('chev') . '</a>' : '')
      . ($canCont ? '<a class="ck-more" href="index.php?view=contacts">Anfragen' . ($contUnread ? ' <b>' . $contUnread . '</b>' : '') . pg_icon('chev') . '</a>' : '') . '</span></div>'
      . '<div data-ck-msgs>' . pg_ck_messages($prev['items']) . '</div>'
-     . ($canMail && !pg_mail_configured_recv() ? '<p class="ck-hint">' . pg_icon('mail') . 'Postfach noch nicht verbunden – ' . (pg_is_owner() ? '<a href="mail.php?tab=settings">jetzt einrichten</a>' : 'der Owner kann es unter „Postfach → Einstellungen“ verbinden') . '.</p>' : '')
+     . ($canMailMain && !pg_mail_configured_recv() ? '<p class="ck-hint">' . pg_icon('mail') . 'Postfach noch nicht verbunden – ' . (pg_is_owner() ? '<a href="mail.php?tab=settings">jetzt einrichten</a>' : 'der Owner kann es unter „Postfach → Einstellungen“ verbinden') . '.</p>' : '')
      . '</section>';
 }
 echo '<section class="ck-card ck-tasks"><div class="ck-card-h"><span class="ck-card-t">' . pg_icon('zap') . 'Zu erledigen</span>'
@@ -2081,7 +2084,7 @@ if ($isOwner) {
 } else {
   $sys[] = ['shield', $me && pg_user_has_2fa($me) ? 'ok' : 'warn', 'Zwei-Faktor-Anmeldung', $me && pg_user_has_2fa($me) ? 'aktiv' : 'aus'];
 }
-if ($canMail) {
+if ($canMailMain) {
   $ms = pg_mail_configured_send(); $mr = pg_mail_configured_recv();
   $sys[] = ['server', $ms && $mr ? 'ok' : 'warn', 'Mail (Senden / Empfangen)', ($ms ? 'Senden ✓' : 'Senden fehlt') . ' · ' . ($mr ? 'Empfang ✓' : 'Empfang fehlt')];
 }

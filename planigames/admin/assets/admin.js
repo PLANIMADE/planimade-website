@@ -2542,4 +2542,30 @@
     d.addEventListener("click", (e) => { if (e.target === d || e.target.closest("[data-kbd-close]")) d.remove(); });
     document.body.appendChild(d);
   }
+
+  /* ---- Postfach-Einstellungen: Verbindung testen (Hauptpostfach & persönliche Postfächer) ---- */
+  const mbTest = (id, btn) => {
+    const box = document.querySelector(`[data-mb-status="${CSS.escape(id)}"]`);
+    if (!box) return;
+    const esc = (t) => String(t || "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const row = (cls, ic, label, msg) => `<div class="mbx-t ${cls}"><i>${ic}</i><span><b>${label}:</b> ${esc(msg)}</span></div>`;
+    box.hidden = false;
+    box.innerHTML = row("wait", "…", "Verbindung", "wird geprüft – das kann ein paar Sekunden dauern …");
+    if (btn) btn.disabled = true;
+    const fd = new URLSearchParams(); fd.append("csrf", csrf()); fd.append("id", id);
+    fetch("mail.php?action=mb_test", { method: "POST", body: fd, credentials: "same-origin", headers: { "X-Requested-With": "fetch" } })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j || !j.ok) { box.innerHTML = row("bad", "✕", "Test", (j && j.error) || "Fehlgeschlagen."); return; }
+        const one = (r, label) => row(r.ok === null ? "na" : r.ok ? "ok" : "bad", r.ok === null ? "!" : r.ok ? "✓" : "✕", label, r.msg);
+        box.innerHTML = one(j.imap, "Empfang (IMAP)") + one(j.smtp, "Versand (SMTP)");
+      })
+      .catch(() => { box.innerHTML = row("bad", "✕", "Test", "Keine Antwort vom Server – bitte erneut versuchen."); })
+      .finally(() => { if (btn) btn.disabled = false; });
+  };
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-mb-test]");
+    if (b) { e.preventDefault(); mbTest(b.dataset.mbTest, b); }
+  });
+  { const auto = document.querySelector("[data-mb-autotest]"); if (auto) mbTest(auto.dataset.mbAutotest, auto.querySelector("[data-mb-test]")); }
 })();

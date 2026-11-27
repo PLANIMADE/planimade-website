@@ -2240,3 +2240,84 @@ a.mx-att:hover{border-color:var(--accent-line)}
 .sys .media-tile{border-radius:14px;background:var(--panel2)}
 .sys .media-row button{border-radius:8px}
 @media (max-width:760px){ .sys .editor-head > a,.sys .editor-head > form,.sys .editor-head > .editor-actions{margin-left:0} }
+
+/* ===== Mehrere Postfächer: Umschalter in der Ordnerleiste ===== */
+.mx-boxes{display:flex;flex-direction:column;gap:3px}
+.mx-box{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:12px;color:var(--ink2);text-decoration:none;border:1px solid transparent;min-width:0}
+.mx-box:hover{background:var(--panel2);color:var(--ink)}
+.mx-box.on{background:var(--accent-soft);border-color:var(--accent-line);color:var(--ink)}
+.mx-box-av{width:30px;height:30px;border-radius:10px;flex:none;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--panel3);color:var(--ink)}
+.mx-box-av.is-main{background:var(--accent);color:#1a0d00}
+.mx-box-av .ic{width:16px;height:16px}
+.mx-box-tx{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.25}
+.mx-box-tx b{font-size:13px;font-weight:600;color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx-box-tx small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx-box .n{font-family:var(--mono);font-size:11px;border-radius:999px;padding:0 7px;background:var(--accent);color:#1a0d00;font-weight:700;flex:none}
+.mx-folders{display:contents}
+@media (max-width:860px){
+  /* mehrere Postfächer: Umschalter oben, darunter die Ordner als wischbare Zeile */
+  .mx-nav:has(.mx-boxes){flex-direction:column;overflow:visible;gap:8px}
+  .mx-boxes{flex-direction:row;gap:6px;overflow-x:auto;scrollbar-width:none}
+  .mx-boxes::-webkit-scrollbar{display:none}
+  .mx-box{flex:1 0 auto;padding:6px 10px 6px 6px;background:var(--panel2)}
+  .mx-box-av{width:28px;height:28px;border-radius:9px}
+  .mx-box-tx small{display:none}
+  .mx-nav:has(.mx-boxes) .mx-folders{display:flex;flex-direction:row;gap:4px;overflow-x:auto;scrollbar-width:none;margin:0 -8px;padding:0 8px}
+  .mx-nav:has(.mx-boxes) .mx-folders::-webkit-scrollbar{display:none}
+}
+
+/* ===== Einstellungen: Hauptpostfach + persönliche Postfächer ===== */
+.mx-settings.mx-set-main{grid-column:2;max-width:none}
+.mx-settings.mx-set-boxes{grid-column:3;max-width:none;padding-bottom:12px}
+.mx-set-main .mx-note,.mx-set-boxes .mx-note{margin:12px 18px}
+.mbx-head-mail{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.mx-set-boxes .cmp-h .btn{margin-left:auto}
+.mbx-intro{margin:6px 18px 14px;font-size:13px;color:var(--ink2);line-height:1.55}
+.mbx-intro b{color:var(--ink);font-weight:600}
+.mbx-empty{margin:0 18px;padding:26px 18px;border:1px dashed var(--line2);border-radius:16px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.mbx-empty .ic{width:26px;height:26px;color:var(--muted)}
+.mbx-empty b{color:var(--ink);font-size:14px}
+.mbx-empty span{color:var(--muted);font-size:12.5px;max-width:320px;margin-bottom:8px}
+.mbx-list{list-style:none;margin:0 18px;padding:0;display:flex;flex-direction:column;gap:10px}
+.mx-set-boxes{container-type:inline-size}
+.mbx-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 12px 12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--panel2)}
+@container (max-width:520px){
+  .mbx-row{grid-template-columns:auto minmax(0,1fr);align-items:start}
+  .mbx-acts{grid-column:2;justify-content:flex-start;margin-left:-6px}
+}
+.mbx-row .mx-box-av{width:38px;height:38px;border-radius:12px;font-size:15px}
+.mbx-tx{display:flex;flex-direction:column;gap:1px;min-width:0}
+.mbx-tx b{font-size:14px;color:var(--ink);font-weight:600}
+.mbx-tx span{font-family:var(--mono);font-size:12px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mbx-tx small{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);margin-top:3px}
+.mbx-tx small .ic{width:13px;height:13px;flex:none}
+.mbx-acts{display:flex;align-items:center;gap:4px}
+.mbx-acts form{margin:0}
+.mbx-test{grid-column:1 / -1;display:flex;flex-direction:column;gap:6px}
+.mx-set-main .mbx-test{margin:16px 0 0}
+.mbx-test[hidden]{display:none}
+.mbx-t{display:flex;align-items:flex-start;gap:8px;padding:8px 11px;border-radius:10px;font-size:12.5px;line-height:1.45;background:var(--panel3);color:var(--ink2)}
+.mbx-t b{color:var(--ink);font-weight:600;white-space:nowrap}
+.mbx-t i{font-style:normal;font-weight:700;flex:none;width:16px;text-align:center}
+.mbx-t.ok{background:var(--ok-soft)} .mbx-t.ok i{color:var(--ok)}
+.mbx-t.bad{background:var(--danger-soft)} .mbx-t.bad i{color:var(--danger)}
+.mbx-t.na{background:var(--warn-soft)} .mbx-t.na i{color:var(--warn)}
+.mbx-t.wait i{color:var(--muted)}
+/* Dialog */
+.mbx-form .mailgrid{gap:0 14px}
+.mbx-form .field{margin:0 0 12px}
+.mbx-form .flabel small{font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0}
+.mbx-sub{font-size:12px;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.08em;margin:6px 0 8px}
+.mbx-owners{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.mbx-form .hint{margin:8px 0 14px}
+.mbx-same{margin:0 0 12px}
+.mbx-form:has(.mbx-same input:checked) .mbx-srv{display:none}
+.mbx-srv{padding:12px 14px 2px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.mbx-port-row{display:flex;gap:8px}
+.mbx-port-row input{width:90px;flex:none}
+.mbx-port-row select{flex:1;min-width:0}
+.mbx-err{margin:0 0 14px!important}
+@media (max-width:1180px){ .mx-settings.mx-set-main,.mx-settings.mx-set-boxes{grid-column:2} }
+@media (max-width:860px){
+  .mx-settings.mx-set-main,.mx-settings.mx-set-boxes{grid-column:1}
+}

@@ -158,6 +158,15 @@ Gut zu wissen:
   Anhänge senden (zusammen bis 10 MB) und empfangen/herunterladen, Weiterleiten
   inkl. Anhängen, mehrere Signaturen (Studio + pro Person, Standard je Admin).
   Jede Mail geht mit Text- und HTML-Fassung raus (besser für Spamfilter).
+- **Mehrere Postfächer:** Neben dem Hauptpostfach (z. B. `hello@…`) verbindet
+  der Owner unter *Postfach → Einstellungen → Persönliche Postfächer* weitere
+  Adressen (z. B. `dominic@…`): Adresse und Passwort aus dem KAS eintragen und
+  ankreuzen, wer das Postfach sehen darf. Wer mehrere Postfächer sieht, schaltet
+  oben im Postfach um; Cockpit und Glocke zählen alle eigenen Postfächer zusammen.
+  Mails aus einem persönlichen Postfach gehen immer von dessen Adresse raus,
+  Newsletter und Warteliste immer über das Hauptpostfach. „Verbindung testen“
+  prüft die Zugangsdaten, ohne etwas zu senden. Die Mails selbst bleiben auf dem
+  Mailserver – „Entfernen“ trennt nur die Verbindung zum Dashboard.
 - **Datenschutz der Daten:** In `data/` sind per Web nur `studio`, `team`,
   `games`, `patchnotes`, `legal` (+ `.en`) und `redirects.json` abrufbar – alles
   andere sperrt die Root-`.htaccess` (zweite Sperre: `data/.htaccess`). Das

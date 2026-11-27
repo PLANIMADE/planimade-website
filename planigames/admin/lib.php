@@ -9,7 +9,7 @@ const PG_MEDIA_DIR   = __DIR__ . '/../media';
 const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
 const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
 const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip'];
-const PG_ADMIN_V     = '90';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
+const PG_ADMIN_V     = '93';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -118,27 +118,52 @@ function pg_contacts_unread(){
   foreach ((array) pg_load_json(PG_DATA_DIR . '/contacts.json') as $r) if (empty($r['read'])) $n++;
   return $n;
 }
-function pg_mail_unread_cached(){
+// Ungelesene je Postfach (Hauptpostfach oben in der Datei, persönliche unter „mb“)
+function pg_mail_unread_row($mb){
   $c = pg_load_json(PG_MAIL_UNREAD_FILE);
-  return is_array($c) ? max(0, (int) ($c['count'] ?? 0)) : 0;
+  $r = $mb === 'main' ? (is_array($c) ? $c : []) : (array) ($c['mb'][$mb] ?? []);
+  return ['count' => max(0, (int) ($r['count'] ?? 0)), 'time' => (int) ($r['time'] ?? 0), 'fail' => (int) ($r['fail'] ?? 0)];
 }
-function pg_mail_unread_store($count){
-  pg_save_json(PG_MAIL_UNREAD_FILE, ['count' => max(0, (int) $count), 'time' => time()]);
+// Verbindung fehlgeschlagen (z. B. falsches Passwort): 5 Minuten Pause, damit der Mailserver
+// uns nicht wegen vieler Fehlversuche sperrt – das Postfach selbst zeigt den Fehler sofort.
+function pg_mail_unread_fail($mb){
+  $c = pg_load_json(PG_MAIL_UNREAD_FILE); $c = is_array($c) ? $c : [];
+  if ($mb === 'main') $c['fail'] = time();
+  else { if (!is_array($c['mb'] ?? null)) $c['mb'] = []; $c['mb'][$mb] = (array) ($c['mb'][$mb] ?? []); $c['mb'][$mb]['fail'] = time(); }
+  pg_save_json(PG_MAIL_UNREAD_FILE, $c);
 }
-// Live-Ungelesen vom IMAP holen (gedrosselt: höchstens alle $maxAge Sekunden, sonst Cache).
-// Dadurch zeigt die Glocke neue Mails ohne Inbox-Besuch / ohne Seiten-Reload.
+function pg_mail_backoff($mb){ $f = pg_mail_unread_row($mb)['fail']; return $f && time() - $f < 300; }
+function pg_mail_unread_cached($mb = null){ return pg_mail_unread_row($mb ?? pg_mb_key())['count']; }
+function pg_mail_unread_store($count, $mb = null){
+  $mb = $mb ?? pg_mb_key();
+  $c = pg_load_json(PG_MAIL_UNREAD_FILE); $c = is_array($c) ? $c : [];
+  if ($mb === 'main') { $c['count'] = max(0, (int) $count); $c['time'] = time(); unset($c['fail']); }
+  else { if (!is_array($c['mb'] ?? null)) $c['mb'] = []; $c['mb'][$mb] = ['count' => max(0, (int) $count), 'time' => time()]; }
+  pg_save_json(PG_MAIL_UNREAD_FILE, $c);
+}
+// Summe über alle Postfächer, die der Admin sieht (Seitenleiste, Glocke, Cockpit)
+function pg_mail_unread_total(){
+  $t = 0; foreach (array_keys(pg_mailboxes_visible()) as $id) $t += pg_mail_unread_cached($id);
+  return $t;
+}
+// Live vom IMAP (gedrosselt je Postfach) – Glocke zeigt neue Mails ohne Seiten-Reload
 function pg_mail_unread_live($maxAge = 20){
-  $c = pg_load_json(PG_MAIL_UNREAD_FILE);
-  $age = is_array($c) ? (time() - (int) ($c['time'] ?? 0)) : PHP_INT_MAX;
-  if ($age < $maxAge && is_array($c)) return max(0, (int) ($c['count'] ?? 0));   // frisch genug
-  if (!pg_imap_available() || !pg_mail_configured_recv()) return pg_mail_unread_cached();
-  $mbox = pg_imap_connect('INBOX');
-  if (!$mbox) return pg_mail_unread_cached();
-  $unseen = @imap_search($mbox, 'UNSEEN');
-  @imap_close($mbox);
-  $n = is_array($unseen) ? count($unseen) : 0;
-  pg_mail_unread_store($n);
-  return $n;
+  $total = 0;
+  foreach (array_keys(pg_mailboxes_visible()) as $id) {
+    $total += pg_mailbox_with($id, function () use ($id, $maxAge) {
+      $row = pg_mail_unread_row($id);
+      if (time() - $row['time'] < $maxAge || pg_mail_backoff($id)) return $row['count'];
+      if (!pg_imap_available() || !pg_mail_configured_recv()) return $row['count'];
+      $mbox = pg_imap_connect('INBOX');
+      if (!$mbox) { pg_mail_unread_fail($id); return $row['count']; }
+      $unseen = @imap_search($mbox, 'UNSEEN');
+      @imap_close($mbox);
+      $n = is_array($unseen) ? count($unseen) : 0;
+      pg_mail_unread_store($n, $id);
+      return $n;
+    });
+  }
+  return $total;
 }
 
 /* ---- Editor (Formatierung) – gemeinsam für Verfassen & Newsletter ---- */
@@ -174,61 +199,95 @@ function pg_mx_editor($html, $withTpl){
 /* ---------------- Postfach-Ordnerleiste (Postfach, Kontaktformular, Schnellantworten teilen sie) ---------------- */
 function pg_mx_nav($active){
   $onMail = basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')) === 'mail.php';
-  $mail = pg_can('mail');
+  $mail = pg_mailbox_access();
   $fl = function ($href, $ic, $label, $on, $n = 0, $hot = false) {
     return '<a class="mx-folder' . ($on ? ' on' : '') . '" href="' . pg_h($href) . '">' . pg_icon($ic) . '<span>' . pg_h($label) . '</span>'
          . ($n ? '<span class="n' . ($hot ? ' hot' : '') . '">' . (int) $n . '</span>' : '') . '</a>';
   };
   $h = '<nav class="ck-card mx-nav" aria-label="Postfach-Ordner">';
+  $boxes = $mail ? pg_mailboxes_visible() : [];
+  // aktuelles Postfach: auf mail.php das aktive, sonst das zuletzt benutzte (ohne etwas umzustellen)
+  $cur = $onMail ? pg_mb_key() : (string) ($_SESSION['pg_mb'] ?? 'main');
+  if ($boxes && !isset($boxes[$cur])) $cur = isset($boxes['main']) ? 'main' : (string) array_key_first($boxes);
+  if (count($boxes) > 1) {                          // mehrere Postfächer → Umschalter oben
+    $h .= '<div class="mx-boxes" role="group" aria-label="Postfach wählen">';
+    foreach ($boxes as $id => $b) {
+      $u = pg_mail_unread_cached($id);
+      $on = $id === $cur && in_array($active, ['inbox', 'sent', 'compose'], true);
+      $h .= '<a class="mx-box' . ($on ? ' on' : '') . '" href="mail.php?tab=inbox&amp;mb=' . rawurlencode($id) . '" title="' . pg_h($b['email']) . '"' . ($on ? ' aria-current="true"' : '') . '>'
+          . '<span class="mx-box-av' . ($id === 'main' ? ' is-main' : '') . '">' . ($id === 'main' ? pg_icon('inbox') : pg_h(mb_strtoupper(mb_substr($b['label'], 0, 1)))) . '</span>'
+          . '<span class="mx-box-tx"><b>' . pg_h($b['label']) . '</b><small>' . pg_h($b['email'] !== '' ? $b['email'] : 'noch nicht eingerichtet') . '</small></span>'
+          . ($u ? '<span class="n hot">' . $u . '</span>' : '') . '</a>';
+    }
+    $h .= '</div><div class="mx-nav-sep"></div>';
+  }
+  $h .= '<div class="mx-folders">';                // Ordner (am Handy eigene, wischbare Zeile unter dem Umschalter)
   if ($mail) {
-    $unread = pg_mail_unread_cached();
+    $unread = pg_mail_unread_cached($cur);
     $h .= '<a class="btn btn-primary mx-new" href="mail.php?tab=compose">' . pg_icon('edit') . 'Verfassen</a>'
         . $fl('mail.php?tab=inbox', 'inbox', 'Posteingang', $active === 'inbox', $unread, $unread > 0)
-        . $fl('mail.php?tab=sent', 'send', 'Gesendet', $active === 'sent', count(pg_mail_sent_load()))
-        . (pg_can('subscribers') ? $fl('mail.php?tab=newsletter', 'mega', 'Newsletter', $active === 'newsletter') : '')
+        . $fl('mail.php?tab=sent', 'send', 'Gesendet', $active === 'sent', count(array_filter(pg_mail_sent_load(), fn($r) => (string) ($r['mb'] ?? 'main') === $cur)))
+        . (pg_can('mail') && pg_can('subscribers') ? $fl('mail.php?tab=newsletter', 'mega', 'Newsletter', $active === 'newsletter') : '')
         . '<div class="mx-nav-sep"></div>';
   }
   if (pg_can('contacts')) { $cu = pg_contacts_unread(); $h .= $fl('index.php?view=contacts', 'chat', 'Kontaktformular', $active === 'contacts', $cu, $cu > 0); }
-  $h .= $fl('index.php?view=templates', 'zap', 'Schnellantworten', $active === 'templates');
+  if (pg_can('mail') || pg_can('contacts')) $h .= $fl('index.php?view=templates', 'zap', 'Schnellantworten', $active === 'templates');
   if ($mail) $h .= $onMail ? '<button type="button" class="mx-folder" data-open-sigs>' . pg_icon('user') . '<span>Signaturen</span></button>'
                            : $fl('mail.php?tab=inbox&sigs=1', 'user', 'Signaturen', false);
   if ($mail && pg_is_owner()) $h .= $fl('mail.php?tab=settings', 'settings', 'Einstellungen', $active === 'settings');
-  return $h . '</nav>';
+  return $h . '</div></nav>';
 }
 
 /* ---------------- Neue Nachrichten fürs Cockpit (Postfach + Kontaktformular) ----------------
    Das Cockpit zeigt sofort den zuletzt bekannten Stand (data/mail_preview.json) und holt
    im Hintergrund frisch vom Mailserver (action=ck_inbox) – die Seite wartet nie auf IMAP. */
 const PG_MAIL_PREVIEW_FILE = __DIR__ . '/../data/mail_preview.json';
-function pg_inbox_preview_cached(){
+function pg_inbox_preview_cached($mb = null){
+  $mb = $mb ?? pg_mb_key();
   $c = pg_load_json(PG_MAIL_PREVIEW_FILE);
-  return ['time' => (int) ($c['time'] ?? 0), 'items' => array_values(array_filter((array) ($c['items'] ?? []), 'is_array'))];
+  $r = $mb === 'main' ? (is_array($c) ? $c : []) : (array) ($c['mb'][$mb] ?? []);
+  return ['time' => (int) ($r['time'] ?? 0), 'items' => array_values(array_filter((array) ($r['items'] ?? []), 'is_array'))];
 }
-function pg_inbox_preview_store($items){
+function pg_inbox_preview_store($items, $mb = null){
+  $mb = $mb ?? pg_mb_key();
   $keep = [];
   foreach (array_slice((array) $items, 0, 10) as $it) $keep[] = array_intersect_key((array) $it, array_flip(['uid', 'subject', 'from', 'from_email', 'date', 'seen']));
-  pg_save_json(PG_MAIL_PREVIEW_FILE, ['time' => time(), 'items' => $keep]);
+  $c = pg_load_json(PG_MAIL_PREVIEW_FILE); $c = is_array($c) ? $c : [];
+  if ($mb === 'main') { $c['time'] = time(); $c['items'] = $keep; }
+  else { if (!is_array($c['mb'] ?? null)) $c['mb'] = []; $c['mb'][$mb] = ['time' => time(), 'items' => $keep]; }
+  pg_save_json(PG_MAIL_PREVIEW_FILE, $c);
 }
-// frisch vom Mailserver (gedrosselt); gibt [items, unread] zurück
-function pg_inbox_preview_live($maxAge = 60){
-  $c = pg_inbox_preview_cached();
-  if (time() - $c['time'] < $maxAge) return [$c['items'], pg_mail_unread_cached()];
-  if (!pg_imap_available() || !pg_mail_configured_recv()) return [$c['items'], pg_mail_unread_cached()];
-  $mbox = pg_imap_connect('INBOX');
-  if (!$mbox) return [$c['items'], pg_mail_unread_cached()];
-  $list = pg_imap_list($mbox, 10, 0);
-  $unseen = @imap_search($mbox, 'UNSEEN');
-  @imap_close($mbox);
-  pg_inbox_preview_store($list['items']);
-  pg_mail_unread_store(is_array($unseen) ? count($unseen) : 0);
-  return [$list['items'], is_array($unseen) ? count($unseen) : 0];
+// alle sichtbaren Postfächer zusammen (jede Mail weiß, aus welchem Postfach sie kommt)
+function pg_inbox_preview_all($live = false, $maxAge = 60){
+  $vis = pg_mailboxes_visible(); $items = []; $stale = false;
+  foreach ($vis as $id => $box) {
+    $c = pg_inbox_preview_cached($id);
+    if (time() - $c['time'] >= $maxAge && !pg_mail_backoff($id) && pg_imap_available() && pg_mailbox_with($id, 'pg_mail_configured_recv')) {
+      if (!$live) $stale = true;
+      else {
+        $fresh = pg_mailbox_with($id, function () use ($id) {
+          $mbox = pg_imap_connect('INBOX'); if (!$mbox) { pg_mail_unread_fail($id); return null; }
+          $list = pg_imap_list($mbox, 10, 0);
+          $unseen = @imap_search($mbox, 'UNSEEN');
+          @imap_close($mbox);
+          pg_inbox_preview_store($list['items'], $id);
+          pg_mail_unread_store(is_array($unseen) ? count($unseen) : 0, $id);
+          return $list['items'];
+        });
+        if (is_array($fresh)) $c['items'] = $fresh;
+      }
+    }
+    foreach ($c['items'] as $it) $items[] = $it + ['mb' => $id, 'mb_label' => count($vis) > 1 ? $box['label'] : ''];
+  }
+  return ['items' => $items, 'stale' => $stale];
 }
 // Gemeinsame Liste: ungelesene Mails & neue Kontaktanfragen zuerst, dann die letzten gelesenen (gedimmt)
 function pg_ck_messages($mailItems, $max = 6){
   $rows = [];
-  if (pg_can('mail')) foreach ((array) $mailItems as $m) {
+  if (pg_mailbox_access()) foreach ((array) $mailItems as $m) {
     $rows[] = ['src' => 'mail', 'name' => (string) ($m['from'] ?? ''), 'email' => (string) ($m['from_email'] ?? ''), 'subject' => (string) ($m['subject'] ?? ''),
-               'text' => '', 'time' => (int) ($m['date'] ?? 0), 'unread' => empty($m['seen']), 'href' => 'mail.php?tab=inbox&uid=' . (int) ($m['uid'] ?? 0)];
+               'text' => '', 'time' => (int) ($m['date'] ?? 0), 'unread' => empty($m['seen']), 'box' => (string) ($m['mb_label'] ?? ''),
+               'href' => 'mail.php?tab=inbox&mb=' . rawurlencode((string) ($m['mb'] ?? 'main')) . '&uid=' . (int) ($m['uid'] ?? 0)];
   }
   if (pg_can('contacts')) foreach ((array) pg_load_json(PG_DATA_DIR . '/contacts.json') as $i => $r) {
     if (!is_array($r)) continue;
@@ -248,7 +307,7 @@ function pg_ck_messages($mailItems, $max = 6){
     $h .= '<li><a class="ck-msg' . ($r['unread'] ? ' is-new' : '') . '" href="' . pg_h($r['href']) . '">'
         . '<span class="ck-av" style="--h:' . (int) $hue . '">' . pg_h($ini) . '</span>'
         . '<span class="ck-msg-tx"><span class="ck-msg-top"><b>' . pg_h(mb_strimwidth($nm, 0, 40, '…')) . '</b>'
-        . '<span class="ck-src ' . $r['src'] . '">' . ($r['src'] === 'mail' ? pg_icon('mail') . 'Postfach' : pg_icon('inbox') . 'Kontaktformular') . '</span>'
+        . '<span class="ck-src ' . $r['src'] . '">' . ($r['src'] === 'mail' ? pg_icon('mail') . (($r['box'] ?? '') !== '' ? pg_h($r['box']) : 'Postfach') : pg_icon('inbox') . 'Kontaktformular') . '</span>'
         . '<span class="ck-msg-time">' . ($r['time'] ? pg_h(pg_time_ago($r['time'])) : '') . '</span></span>'
         . '<span class="ck-msg-sub">' . pg_h(mb_strimwidth($r['subject'] !== '' ? $r['subject'] : '(kein Betreff)', 0, 90, '…')) . '</span>'
         . ($r['text'] !== '' ? '<span class="ck-msg-pre">' . pg_h(mb_strimwidth(preg_replace('/\s+/u', ' ', $r['text']), 0, 140, '…')) . '</span>' : '')
@@ -293,7 +352,7 @@ function pg_keys_stats(){
 
 // Sammelt alle Zähler; $total = handlungsrelevante (Mail + Kontakt + Kommentare)
 function pg_notifications($liveMail = false){
-  $mail     = pg_can('mail') ? ($liveMail ? pg_mail_unread_live() : pg_mail_unread_cached()) : 0;
+  $mail     = pg_mailbox_access() ? ($liveMail ? pg_mail_unread_live() : pg_mail_unread_total()) : 0;
   $contacts = pg_can('contacts') ? pg_contacts_unread() : 0;
   $comments = pg_comments_pending();
   $subs     = pg_can('subscribers') ? pg_subscribers_recent(7) : 0;
@@ -324,7 +383,7 @@ function pg_notif_bell(){
   $h .= '<button type="button" class="tb-group-btn tb-notif-btn" data-notif-bell aria-label="Benachrichtigungen" aria-expanded="false">' . pg_icon('bell')
       . '<span class="nbadge" data-notif-total' . ($n['total'] ? '' : ' hidden') . '>' . ($n['total'] ?: '') . '</span></button>';
   $h .= '<div class="tb-notif-panel"><div class="tn-head">Benachrichtigungen</div>';
-  if (pg_can('mail'))     $h .= pg_notif_row('mail.php', pg_icon('mail'), 'E-Mail-Postfach', $n['mail'], $note['mail'], 'mail');
+  if (pg_mailbox_access()) $h .= pg_notif_row('mail.php', pg_icon('mail'), 'E-Mail-Postfach', $n['mail'], $note['mail'], 'mail');
   if (pg_can('contacts')) $h .= pg_notif_row('index.php?view=contacts', pg_icon('inbox'), 'Kontakt-Anfragen', $n['contacts'], $note['contacts'], 'contacts');
   if (pg_can('subscribers')) $h .= pg_notif_row('index.php?view=subscribers', pg_icon('mega'), 'Newsletter', 0, $note['subs'], 'subs');
   $h .= pg_notif_row('index.php?view=comments', pg_icon('chat'), 'Kommentare', $n['comments'], $note['comments'], 'comments');
@@ -842,7 +901,67 @@ function pg_send_welcome_mail($email){
    ================================================================= */
 const PG_MAIL_FILE = __DIR__ . '/../data/mail.json';
 
+/* ---------------- Mehrere Postfächer ----------------
+   Das bisherige Postfach (Einstellungen oben in mail.json) ist das Hauptpostfach (z. B. hello@).
+   Persönliche Postfächer stehen in mail.json unter „mailboxes“ und sind nur für die eingetragenen
+   Admins sichtbar. pg_mail_config() liefert immer die Daten des gerade aktiven Postfachs. */
 function pg_mail_config(){
+  $c = pg_mail_config_main();
+  $id = (string) ($GLOBALS['pg_mb_active'] ?? 'main');
+  if ($id === 'main' || !($mb = pg_mailbox_find($id))) return $c;
+  $c['from_email'] = (string) $mb['email'];
+  $c['from_name'] = trim((string) ($mb['from_name'] ?? '')) !== '' ? (string) $mb['from_name']
+                  : (trim((string) ($mb['label'] ?? '')) !== '' ? $mb['label'] . ' | ' . (trim($c['from_name']) ?: 'PLANIGAMES') : $c['from_name']);
+  $c['imap_user'] = (string) (($mb['imap_user'] ?? '') ?: $mb['email']); $c['imap_pass'] = (string) ($mb['pass'] ?? '');
+  $c['smtp_user'] = (string) (($mb['smtp_user'] ?? '') ?: $mb['email']); $c['smtp_pass'] = (string) ($mb['pass'] ?? '');
+  if (empty($mb['same_server'])) foreach (['imap_host', 'imap_port', 'imap_secure', 'smtp_host', 'smtp_port', 'smtp_secure'] as $k) if (isset($mb[$k]) && $mb[$k] !== '') $c[$k] = $mb[$k];
+  return $c;
+}
+function pg_mailboxes_all(){
+  $raw = pg_load_json(PG_MAIL_FILE);
+  return array_values(array_filter((array) ($raw['mailboxes'] ?? []), fn($m) => is_array($m) && !empty($m['id']) && filter_var($m['email'] ?? '', FILTER_VALIDATE_EMAIL)));
+}
+function pg_mailbox_find($id){ foreach (pg_mailboxes_all() as $m) if ($m['id'] === $id) return $m; return null; }
+function pg_mailboxes_save($list){
+  $raw = pg_load_json(PG_MAIL_FILE); $raw = is_array($raw) ? $raw : [];
+  $raw['mailboxes'] = array_values($list);
+  return pg_save_json(PG_MAIL_FILE, $raw);
+}
+// Postfächer, die der angemeldete Admin sehen darf: Hauptpostfach (Recht „E-Mail-Postfach“) + eigene
+function pg_mailboxes_visible($fresh = false){
+  static $cache = null;
+  if ($cache !== null && !$fresh) return $cache;
+  $out = [];
+  if (!pg_logged_in() || !pg_current_user()) return $cache = $out;
+  if (pg_can('mail')) {
+    $main = pg_mail_config_main();
+    $out['main'] = ['id' => 'main', 'label' => 'Hauptpostfach', 'email' => trim((string) ($main['from_email'] ?: $main['imap_user']))];
+  }
+  $me = strtolower(pg_current_email());
+  foreach (pg_mailboxes_all() as $m)
+    if ($me !== '' && in_array($me, array_map('strtolower', (array) ($m['owners'] ?? [])), true))
+      $out[$m['id']] = ['id' => $m['id'], 'label' => trim((string) ($m['label'] ?? '')) ?: (string) $m['email'], 'email' => (string) $m['email']];
+  return $cache = $out;
+}
+// darf der Admin überhaupt ein Postfach sehen? (Hauptpostfach oder ein eigenes)
+function pg_mailbox_access(){ return (bool) pg_mailboxes_visible(); }
+// aktives Postfach festlegen (?mb=… oder zuletzt benutztes)
+function pg_mailbox_activate($want = null){
+  $vis = pg_mailboxes_visible();
+  $id = $want !== null && $want !== '' ? $want : (string) ($_SESSION['pg_mb'] ?? 'main');
+  if (!isset($vis[$id])) $id = isset($vis['main']) ? 'main' : (string) (array_key_first($vis) ?? 'main');
+  $_SESSION['pg_mb'] = $id; $GLOBALS['pg_mb_active'] = $id;
+  return $id;
+}
+function pg_mb_key(){ return (string) ($GLOBALS['pg_mb_active'] ?? 'main'); }
+// kurz in einem anderen Postfach arbeiten (z. B. Ungelesene zählen) und danach zurück
+function pg_mailbox_with($id, callable $fn){
+  $prev = $GLOBALS['pg_mb_active'] ?? 'main';
+  $GLOBALS['pg_mb_active'] = $id;
+  try { return $fn(); } finally { $GLOBALS['pg_mb_active'] = $prev; }
+}
+
+function pg_mail_config_main(){
   $c = pg_load_json(PG_MAIL_FILE);
   $c = is_array($c) ? $c : [];
   return $c + [
@@ -940,6 +1059,29 @@ function pg_mail_sender($sig){
   $email = trim((string) ($sig['email'] ?? ''));
   if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) return [$label, $email, $email, true];
   return [$label, $studioEmail, $studioEmail, false];
+}
+
+/* Absender beim Verfassen im aktiven Postfach: im persönlichen Postfach kommt jede Mail
+   von dessen Adresse (sonst lehnt der Mailserver sie ab) – die Signatur bestimmt nur den Namen. */
+function pg_mail_sender_active($sig){
+  if (pg_mb_key() === 'main') return pg_mail_sender($sig);
+  [$mbName, $mbEmail] = pg_mail_from();
+  if (!is_array($sig)) $sig = $sig === '' || $sig === null ? null : pg_mail_signature_find($sig);
+  $studio = trim((string) pg_mail_config_main()['from_name']) ?: 'PLANIGAMES';
+  $person = $sig && (string) ($sig['id'] ?? '') !== 'studio' ? trim((string) ($sig['name'] ?? '')) : '';
+  return [$person !== '' ? $person . ' | ' . $studio : $mbName, $mbEmail, $mbEmail, true];
+}
+// Einträge für „Von“ (Verfassen & Signaturen-Dialog): [['id'=>…, 'text'=>…], …]
+function pg_mail_from_options($sigs = null){
+  $sigs = $sigs ?? pg_mail_signatures();
+  [$stN, $stE] = pg_mail_from();
+  $opts = array_filter($sigs, fn($x) => (string) ($x['id'] ?? '') === 'studio') ? [] : [['id' => '', 'text' => $stN . ' · ' . $stE]];
+  foreach ($sigs as $x) {
+    [$sn, $se] = pg_mail_sender_active($x);
+    $isStudio = (string) $x['id'] === 'studio';
+    $opts[] = ['id' => (string) $x['id'], 'text' => (!$isStudio && ($x['name'] ?? '') !== '' ? $x['name'] : (($x['label'] ?? '') ?: $sn)) . ' · ' . $se];
+  }
+  return $opts;
 }
 
 /* Gebrandete Signatur (HTML) – $sig = Signatur-Array, ID oder null (= Standard des Admins). */
@@ -1187,8 +1329,8 @@ function pg_newsletter_send_post($post){
 }
 
 function pg_mail_config_save(array $c){
-  // Bestehende Passwörter behalten, wenn das Formular sie leer lässt
-  $old = pg_mail_config();
+  // Bestehende Passwörter behalten, wenn das Formular sie leer lässt (gilt fürs Hauptpostfach)
+  $old = pg_mail_config_main();
   foreach (['smtp_pass','imap_pass'] as $k) {
     if (($c[$k] ?? '') === '') $c[$k] = $old[$k] ?? '';
   }
@@ -1229,6 +1371,7 @@ function pg_mail_sent_log($to, $subject, $html, $atts = [], $from = ''){
     'by'      => (string) (pg_current_email() ?: ''),
   ];
   if ($from !== '') $row['from'] = mb_substr((string) $from, 0, 200);
+  if (pg_mb_key() !== 'main') $row['mb'] = pg_mb_key();
   // Anhänge nur als Liste (Name + Größe) merken – die Dateien selbst liegen nicht im Protokoll
   if ($atts) $row['atts'] = array_map(fn($a) => ['name' => (string) ($a['name'] ?? ''), 'size' => (int) strlen((string) ($a['data'] ?? ''))], $atts);
   array_unshift($list, $row);
@@ -1368,11 +1511,105 @@ function pg_imap_mailbox($folder = 'INBOX'){
 function pg_imap_connect($folder = 'INBOX'){
   if (!pg_imap_available() || !pg_mail_configured_recv()) return null;
   static $clean = false;   // IMAP-Hinweise am Ende abholen, sonst landen sie als PHP-Notice im Fehlerlog
-  if (!$clean) { register_shutdown_function(function () { @imap_errors(); @imap_alerts(); }); $clean = true; }
+  if (!$clean) {
+    register_shutdown_function(function () { @imap_errors(); @imap_alerts(); }); $clean = true;
+    @imap_timeout(IMAP_OPENTIMEOUT, 12); @imap_timeout(IMAP_READTIMEOUT, 20); @imap_timeout(IMAP_WRITETIMEOUT, 20);   // hängender Server blockiert nicht ewig
+  }
   $c = pg_mail_config();
   $mbox = @imap_open(pg_imap_mailbox($folder), $c['imap_user'], $c['imap_pass'], 0, 1);
   return $mbox ?: null;
 }
+/* ---- Verbindung testen (für die Einstellungen) – prüft das aktive Postfach, sendet nichts ---- */
+function pg_imap_test(){
+  if (!pg_imap_available()) return [null, 'Die IMAP-Erweiterung ist auf diesem Server nicht aktiv (Empfang im Dashboard nicht möglich).'];
+  if (!pg_mail_configured_recv()) return [false, 'Kein IMAP-Server eingetragen.'];
+  $c = pg_mail_config();
+  @imap_timeout(IMAP_OPENTIMEOUT, 12); @imap_timeout(IMAP_READTIMEOUT, 20);
+  $m = @imap_open(pg_imap_mailbox('INBOX'), $c['imap_user'], $c['imap_pass'], OP_READONLY, 1);
+  $err = (string) imap_last_error(); @imap_errors(); @imap_alerts();
+  if (!$m) return [false, 'Anmeldung fehlgeschlagen' . ($err !== '' ? ' (' . mb_substr($err, 0, 160) . ')' : '') . '.'];
+  $n = (int) @imap_num_msg($m);
+  imap_close($m); @imap_errors(); @imap_alerts();
+  if (pg_mail_backoff(pg_mb_key())) pg_mail_unread_store(pg_mail_unread_row(pg_mb_key())['count']);   // Pause nach Fehlversuchen aufheben
+  return [true, 'Verbunden · ' . $n . ' Mail' . ($n === 1 ? '' : 's') . ' im Posteingang.'];
+}
+function pg_smtp_test(){
+  $c = pg_mail_config();
+  if ($c['smtp_host'] === '' || $c['smtp_user'] === '') return [false, 'Kein SMTP-Server eingetragen.'];
+  $secure = $c['smtp_secure']; $port = (int) $c['smtp_port'] ?: 587;
+  $errno = 0; $errstr = '';
+  $fp = @stream_socket_client(($secure === 'ssl' ? 'ssl://' : '') . $c['smtp_host'] . ':' . $port, $errno, $errstr, 12, STREAM_CLIENT_CONNECT,
+        stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]]));
+  if (!$fp) return [false, 'Server nicht erreichbar' . ($errstr !== '' ? ' (' . $errstr . ')' : '') . ' – Server & Port prüfen.'];
+  stream_set_timeout($fp, 15);
+  $read = function () use ($fp) { $d = ''; while (($l = fgets($fp, 512)) !== false) { $d .= $l; if (isset($l[3]) && $l[3] === ' ') break; } return $d; };
+  $cmd = function ($x) use ($fp, $read) { fwrite($fp, $x . "\r\n"); return $read(); };
+  $code = fn($r) => (int) substr(trim($r), 0, 3);
+  $fail = function ($m) use ($fp) { @fwrite($fp, "QUIT\r\n"); @fclose($fp); return [false, $m]; };
+  if ($code($read()) !== 220) return $fail('Unerwartete Antwort vom Mailserver.');
+  $cmd('EHLO ' . ($_SERVER['HTTP_HOST'] ?? 'planigames.com'));
+  if ($secure === 'tls') {
+    if ($code($cmd('STARTTLS')) !== 220) return $fail('STARTTLS wird nicht angeboten – Verschlüsselung/Port prüfen.');
+    if (!@stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT)) return $fail('Verschlüsselte Verbindung fehlgeschlagen.');
+    $cmd('EHLO ' . ($_SERVER['HTTP_HOST'] ?? 'planigames.com'));
+  }
+  if ($code($cmd('AUTH LOGIN')) !== 334 || $code($cmd(base64_encode($c['smtp_user']))) !== 334 || $code($cmd(base64_encode($c['smtp_pass']))) !== 235)
+    return $fail('Anmeldung abgelehnt – Benutzername oder Passwort stimmt nicht.');
+  $cmd('QUIT'); @fclose($fp);
+  return [true, 'Anmeldung erfolgreich – Versand möglich.'];
+}
+
+/* ---- Persönliches Postfach anlegen/ändern (nur Owner) – gibt [true, Postfach] oder [false, Fehler] zurück ---- */
+function pg_mailbox_upsert(array $in){
+  $list = pg_mailboxes_all();
+  $id = preg_replace('/[^a-z0-9_]/', '', (string) ($in['id'] ?? ''));
+  $idx = null;
+  foreach ($list as $i => $m) if ($id !== '' && $m['id'] === $id) $idx = $i;
+  $old = $idx !== null ? $list[$idx] : [];
+  $email = strtolower(trim((string) ($in['email'] ?? '')));
+  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return [false, 'Bitte eine gültige E-Mail-Adresse eingeben.'];
+  $main = pg_mail_config_main();
+  foreach ([$main['from_email'], $main['imap_user']] as $mainMail)
+    if (strcasecmp(trim((string) $mainMail), $email) === 0) return [false, $email . ' ist schon das Hauptpostfach.'];
+  foreach ($list as $i => $m) if ($i !== $idx && strcasecmp($m['email'], $email) === 0) return [false, 'Für ' . $email . ' gibt es schon ein Postfach.'];
+  $pass = (string) ($in['pass'] ?? '');
+  if ($pass === '') $pass = (string) ($old['pass'] ?? '');
+  if ($pass === '') return [false, 'Bitte das Passwort des Postfachs eingeben (steht im KAS bei der E-Mail-Adresse).'];
+  $known = array_map(fn($u) => strtolower((string) ($u['email'] ?? '')), pg_users_load());
+  $owners = array_values(array_unique(array_filter(array_map(fn($e) => strtolower(trim((string) $e)), (array) ($in['owners'] ?? [])), fn($e) => in_array($e, $known, true))));
+  if (!$owners) return [false, 'Bitte mindestens eine Person auswählen, die dieses Postfach sieht.'];
+  $label = mb_substr(trim((string) ($in['label'] ?? '')), 0, 40);
+  if ($label === '') $label = mb_convert_case(preg_replace('/[._\-]+/', ' ', strstr($email, '@', true)), MB_CASE_TITLE);
+  $mb = ['id' => $old['id'] ?? ('mb_' . bin2hex(random_bytes(4))), 'label' => $label, 'email' => $email,
+         'from_name' => mb_substr(trim(str_replace(["\r", "\n"], ' ', (string) ($in['from_name'] ?? ''))), 0, 80),
+         'pass' => $pass, 'owners' => $owners, 'same_server' => !empty($in['same_server'])];
+  if (!$mb['same_server']) {
+    foreach (['imap' => [993, 'ssl'], 'smtp' => [587, 'tls']] as $k => [$defPort, $defSec]) {
+      $mb[$k . '_host'] = preg_replace('/[^a-z0-9.\-]/i', '', (string) ($in[$k . '_host'] ?? ''));
+      $mb[$k . '_port'] = max(1, min(65535, (int) ($in[$k . '_port'] ?? $defPort) ?: $defPort));
+      $mb[$k . '_secure'] = in_array($in[$k . '_secure'] ?? $defSec, ['ssl', 'tls', ''], true) ? (string) ($in[$k . '_secure'] ?? $defSec) : $defSec;
+    }
+    if ($mb['imap_host'] === '' || $mb['smtp_host'] === '') return [false, 'Bitte IMAP- und SMTP-Server eintragen (oder „gleicher Server wie das Hauptpostfach“ wählen).'];
+  }
+  $mb += array_diff_key($old, $mb);           // unbekannte Felder behalten
+  if ($idx === null) $list[] = $mb; else $list[$idx] = $mb;
+  if (!pg_mailboxes_save($list)) return [false, 'Konnte nicht speichern (Schreibrechte data/ prüfen).'];
+  if (pg_mail_backoff($mb['id'])) pg_mail_unread_store(pg_mail_unread_row($mb['id'])['count'], $mb['id']);   // neue Zugangsdaten sofort wieder versuchen
+  pg_mailboxes_visible(true);
+  return [true, $mb];
+}
+function pg_mailbox_delete($id){
+  $list = pg_mailboxes_all(); $keep = array_values(array_filter($list, fn($m) => $m['id'] !== $id));
+  if (count($keep) === count($list)) return false;
+  if (!pg_mailboxes_save($keep)) return false;
+  foreach ([PG_MAIL_UNREAD_FILE, PG_MAIL_PREVIEW_FILE] as $f) {          // Zwischenspeicher aufräumen
+    $c = pg_load_json($f);
+    if (is_array($c) && isset($c['mb'][$id])) { unset($c['mb'][$id]); pg_save_json($f, $c); }
+  }
+  pg_mailboxes_visible(true);
+  return true;
+}
+
 // Liste der letzten $limit Mails als einfache Arrays
 function pg_imap_list($mbox, $limit = 30, $offset = 0){
   $total = imap_num_msg($mbox);
@@ -1391,7 +1628,8 @@ function pg_imap_list($mbox, $limit = 30, $offset = 0){
       'from'    => $from ? pg_imap_decode(($from->personal ?? '') ?: ($from->mailbox . '@' . $from->host)) : '',
       'from_email' => $from ? ($from->mailbox . '@' . $from->host) : '',
       'date'    => isset($o->udate) ? (int)$o->udate : 0,
-      'seen'    => isset($o->Unseen) ? trim($o->Unseen) === '' : true,
+      // ungelesen = „U“ (alt & ungelesen) oder „N“ bei Recent (gerade eingetroffen & ungelesen)
+      'seen'    => !((isset($o->Unseen) && $o->Unseen === 'U') || (isset($o->Recent) && $o->Recent === 'N')),
     ];
   }
   return ['total'=>$total, 'items'=>$items];
@@ -1556,7 +1794,7 @@ function pg_nav_model($SCHEMA){
     $inhalte[] = ['c:' . $key, 'index.php?collection=' . rawurlencode($key), $collIcons[$key] ?? 'devlog', $SCHEMA[$key]['label'], $n, false];
   }
   $com = [];
-  if (pg_can('mail'))        $com[] = ['mail', 'mail.php', 'mail', 'Postfach', pg_mail_unread_cached(), true];
+  if (pg_mailbox_access())   $com[] = ['mail', 'mail.php', 'mail', 'Postfach', pg_mail_unread_total(), true];
   if (pg_can('contacts'))    $com[] = ['v:contacts', 'index.php?view=contacts', 'inbox', 'Kontakt-Anfragen', pg_contacts_unread(), true];
   if (pg_can('contacts'))    $com[] = ['v:suggestions', 'index.php?view=suggestions', 'bulb', 'Vorschläge', pg_suggestions_pending(), true];
   if (pg_can('subscribers')) $com[] = ['v:waitlist', 'index.php?view=waitlist', 'list', 'Beta-Warteliste', 0, false];
@@ -1681,7 +1919,7 @@ function pg_view_foot(){
     $route = pg_route();
     $tabs = [['cockpit', 'index.php', 'cockpit', 'Cockpit', 0]];
     if (pg_can('games')) $tabs[] = ['c:games', 'index.php?collection=games', 'game', 'Spiele', 0];
-    if (pg_can('mail'))  $tabs[] = ['mail', 'mail.php', 'mail', 'Postfach', pg_mail_unread_cached()];
+    if (pg_mailbox_access()) $tabs[] = ['mail', 'mail.php', 'mail', 'Postfach', pg_mail_unread_total()];
     $tabs[] = ['v:board', 'index.php?view=board', 'kanban', 'Board', 0];
     echo '<nav class="tabbar" aria-label="Schnellnavigation">';
     foreach ($tabs as [$r, $href, $ic, $label, $n]) {
@@ -1696,7 +1934,7 @@ function pg_view_foot(){
       if (!is_array($g) || trim((string) ($g['title'] ?? '')) === '') continue;
       $items[] = ['s' => 'Spiele', 'i' => 'game', 'l' => (string) $g['title'], 'h' => 'index.php?collection=games&game=' . rawurlencode((string) ($g['slug'] ?? $gi)), 'k' => '/' . ($g['slug'] ?? '')];
     }
-    if (pg_can('mail')) $items[] = ['s' => 'Aktionen', 'i' => 'mail', 'l' => 'Neue E-Mail schreiben', 'h' => 'mail.php?tab=compose', 'k' => ''];
+    if (pg_mailbox_access()) $items[] = ['s' => 'Aktionen', 'i' => 'mail', 'l' => 'Neue E-Mail schreiben', 'h' => 'mail.php?tab=compose', 'k' => ''];
     if (pg_can('patchnotes')) $items[] = ['s' => 'Aktionen', 'i' => 'devlog', 'l' => 'Devlog-Beitrag schreiben', 'h' => 'index.php?collection=patchnotes&new=1', 'k' => ''];
     if (pg_is_owner()) $items[] = ['s' => 'Aktionen', 'i' => 'archive', 'l' => 'Backup erstellen', 'h' => 'index.php?view=backup', 'k' => ''];
     $items[] = ['s' => 'Aktionen', 'i' => 'ext', 'l' => 'Website ansehen', 'h' => '../index.html', 'k' => ''];
