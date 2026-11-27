@@ -982,6 +982,15 @@
           dirty = false; setStatus("Gespeichert ✓", "ok"); toast("Automatisch gespeichert", "ok", 1800);
           if (j.sent) toast("📣 Newsletter an " + j.sent + " gesendet", "info", 4000);
           if (j.tr_pending && window.pgTrKick) window.pgTrKick(j.tr_pending, 15000);
+          if (j.fp) { const f = form.querySelector("[data-item-fp]"); if (f) f.value = j.fp; }
+          if (j.item_key !== undefined) {
+            const o = form.querySelector('input[name="item_orig"]');
+            if (o && o.value !== String(j.item_key)) {
+              o.value = j.item_key;
+              try { const u = new URL(location.href); u.searchParams.set("item", j.item_key); history.replaceState(null, "", u); } catch {}
+            }
+          }
+          if (j.note) toast(j.note, "info", 5000);
           reloadPreview();
         } else { setStatus("Fehler", "err"); toast(j.error || "Speichern fehlgeschlagen", "err", 6000); }
       } catch (e) { setStatus("Offline", "err"); }
@@ -1226,6 +1235,8 @@
     if (e.target.closest(".pg-modal [data-close]") || e.target.classList.contains("pg-modal-back")) { e.preventDefault(); closeDialogs(); }
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.querySelector(".pg-modal-back:not([hidden])")) closeDialogs(); });
+  // ?new=1 → Dialog „Neu“ direkt öffnen (z. B. „Devlog-Beitrag“ im Cockpit)
+  { const auto = document.querySelector(".pg-modal-back[data-autoopen]"); if (auto) openDialog(auto.id); }
 
   const slugify = (v) => String(v || "").toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/&/g, "-und-").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   // Neues Spiel: Adresse live anzeigen
@@ -2144,6 +2155,94 @@
       b.remove();
     }));
   })();
+
+  /* ---- Devlog & Team: Liste durchsuchen, filtern, (Team) per Ziehen sortieren ---- */
+  (function itemList() {
+    const rows = document.querySelector(".it-rows");
+    if (!rows) return;
+    const search = document.querySelector("[data-it-search]"), filter = document.querySelector("[data-it-filter]");
+    let want = "";
+    const apply = () => {
+      const q = (search ? search.value : "").trim().toLowerCase();
+      rows.querySelectorAll(".gm-row").forEach((r) => {
+        r.style.display = (!q || (r.dataset.q || "").includes(q)) && (!want || r.dataset.state === want) ? "" : "none";
+      });
+    };
+    if (search) search.addEventListener("input", apply);
+    if (filter) filter.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-if]"); if (!b) return;
+      want = b.dataset.if; filter.querySelectorAll("[data-if]").forEach((x) => x.classList.toggle("on", x === b)); apply();
+    });
+    if (!rows.hasAttribute("data-it-reorder")) return;
+    let dg = null;
+    rows.addEventListener("pointerdown", (e) => {
+      const grip = e.target.closest("[data-it-grip]"); if (!grip) return;
+      const row = grip.closest(".gm-row"); e.preventDefault();
+      dg = { row, before: [...rows.querySelectorAll(".gm-row")].map((r) => r.dataset.key).join("|") };
+      row.classList.add("dragging"); document.body.classList.add("is-dragging");
+      try { grip.setPointerCapture(e.pointerId); } catch {}
+    });
+    rows.addEventListener("pointermove", (e) => {
+      if (!dg) return; e.preventDefault();
+      const others = [...rows.querySelectorAll(".gm-row")].filter((r) => r !== dg.row);
+      let placed = false;
+      for (const r of others) { const b = r.getBoundingClientRect(); if (e.clientY < b.top + b.height / 2) { rows.insertBefore(dg.row, r); placed = true; break; } }
+      if (!placed) rows.appendChild(dg.row);
+    });
+    const end = async () => {
+      if (!dg) return;
+      const { row, before } = dg; dg = null;
+      row.classList.remove("dragging"); document.body.classList.remove("is-dragging");
+      const order = [...rows.querySelectorAll(".gm-row")].map((r) => Number(r.dataset.key));
+      if (order.join("|") === before) return;
+      const fd = new URLSearchParams(); fd.append("csrf", csrf()); fd.append("collection", "team"); fd.append("order", JSON.stringify(order));
+      const j = await fetch("index.php?action=items_reorder", { method: "POST", body: fd, headers: { "X-Requested-With": "fetch" } }).then(readJson).catch(() => ({ ok: false }));
+      if (!j.ok) { toast("Reihenfolge konnte nicht gespeichert werden", "err"); return; }
+      toast("Reihenfolge gespeichert – so erscheint sie auch auf der Website", "ok");
+      // Positionen haben sich geändert → Links & Auswahl neu laden
+      setTimeout(() => { const on = order.indexOf(Number((rows.querySelector(".gm-row.on") || {}).dataset?.key)); const u = new URL(location.href); if (on >= 0) u.searchParams.set("item", on); location.href = u.toString(); }, 600);
+    };
+    rows.addEventListener("pointerup", end);
+    rows.addEventListener("pointercancel", end);
+  })();
+
+  /* ---- Bildfelder: Vorschau aktuell halten ---- */
+  document.addEventListener("input", (e) => {
+    const inp = e.target.closest("[data-media-input]"); if (!inp) return;
+    const th = inp.closest("[data-media]")?.querySelector("[data-media-thumb]"); if (!th) return;
+    const v = inp.value.split("#")[0].trim();
+    th.innerHTML = v ? `<img src="${/^(https?:)?\/\/|^data:/.test(v) ? v : "../" + v.replace(/^\/+/, "")}" alt="">` : '<svg class="ic" aria-hidden="true"><use href="#i-image"/></svg>';
+  });
+
+  /* ---- Wortlisten (Tags) als Chips ---- */
+  document.querySelectorAll("[data-tags]").forEach((box) => {
+    const inp = box.querySelector("[data-tag-in]"), name = box.dataset.name;
+    const add = (raw) => {
+      raw.split(",").map((x) => x.trim()).filter(Boolean).forEach((v) => {
+        const exists = [...box.querySelectorAll('input[type="hidden"]')].some((h) => h.value.toLowerCase() === v.toLowerCase());
+        if (exists) return;
+        const chip = document.createElement("span");
+        chip.className = "tag-chip";
+        chip.innerHTML = '<span></span><input type="hidden"><button type="button" data-tag-del><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>';
+        chip.firstChild.textContent = v;
+        const h = chip.querySelector("input"); h.name = name + "[n" + (uid++) + "]"; h.value = v;
+        chip.querySelector("button").setAttribute("aria-label", v + " entfernen");
+        inp.before(chip);
+      });
+      inp.value = "";
+      box.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    inp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === ",") { e.preventDefault(); add(inp.value); }
+      else if (e.key === "Backspace" && inp.value === "") { const last = inp.previousElementSibling; if (last && last.classList.contains("tag-chip")) { last.remove(); box.dispatchEvent(new Event("input", { bubbles: true })); } }
+    });
+    inp.addEventListener("blur", () => { if (inp.value.trim()) add(inp.value); });
+    box.addEventListener("click", (e) => {
+      const del = e.target.closest("[data-tag-del]");
+      if (del) { del.closest(".tag-chip").remove(); box.dispatchEvent(new Event("input", { bubbles: true })); return; }
+      if (e.target.closest(".tags-box") && e.target.tagName !== "INPUT") inp.focus();
+    });
+  });
 
   // ---- Tastatur-Shortcuts ----
   function primarySaveButton() {

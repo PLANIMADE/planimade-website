@@ -331,6 +331,30 @@ if (in_array($action, ['tr_save', 'tr_sync', 'tr_one', 'tr_settings'], true)) {
   exit(json_encode($res, JSON_UNESCAPED_UNICODE));
 }
 
+/* ---- Devlog & Team: Einträge anlegen, duplizieren, löschen, sortieren ---- */
+if (in_array($action, ['item_create', 'item_duplicate', 'item_delete', 'items_reorder'], true)) {
+  $key = (string) ($_POST['collection'] ?? '');
+  if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !pg_item_list_key($key)) { header('Location: index.php'); exit; }
+  pg_csrf_check();
+  if (!pg_can($key)) { http_response_code(403); exit('Keine Berechtigung.'); }
+  $to = fn($item, $q = '') => 'index.php?collection=' . $key . ($item !== '' ? '&item=' . rawurlencode($item) : '') . $q;
+  if ($action === 'items_reorder') {
+    header('Content-Type: application/json');
+    exit(json_encode(['ok' => $key === 'team' && pg_items_reorder($SCHEMA, $key, json_decode((string) ($_POST['order'] ?? '[]'), true))]));
+  }
+  if ($action === 'item_create') {
+    [$ok, $res] = pg_item_create($SCHEMA, $key, $_POST['title'] ?? '', (string) ($_POST['game'] ?? ''));
+    header('Location: ' . ($ok ? $to($res, '&created=1') : $to('', '&ierr=' . rawurlencode($res)))); exit;
+  }
+  $args = [$SCHEMA, $key, (int) ($_POST['idx'] ?? -1), (string) ($_POST['orig'] ?? ''), (string) ($_POST['fp'] ?? '')];
+  if ($action === 'item_duplicate') {
+    [$ok, $res] = pg_item_duplicate(...$args);
+    header('Location: ' . ($ok ? $to($res, '&duplicated=1') : $to((string) ($_POST['orig'] ?? ''), '&ierr=' . rawurlencode($res)))); exit;
+  }
+  [$ok, $res] = pg_item_delete(...$args);
+  header('Location: ' . ($ok ? $to('', '&deleted=' . rawurlencode($res)) : $to((string) ($_POST['orig'] ?? ''), '&ierr=' . rawurlencode($res)))); exit;
+}
+
 /* ---- Spiele: Aktionen der Spiele-Verwaltung (Master-Detail) ---- */
 if (in_array($action, ['game_create', 'game_duplicate', 'game_delete', 'game_rename', 'games_reorder'], true)) {
   if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: index.php?collection=games'); exit; }
@@ -388,6 +412,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
     $tab = preg_replace('/[^a-z]/', '', (string) ($_POST['game_tab'] ?? ''));
     header('Location: index.php?collection=games&game=' . rawurlencode($gOrig) . '&lang=' . $lang . ($tab !== '' ? '&tab=' . $tab : '')
       . ($ok ? '&saved=1' : '&gerr=' . rawurlencode(is_string($res) ? $res : 'Speichern fehlgeschlagen')));
+    exit;
+  }
+  // Devlog & Team: nur DER bearbeitete Eintrag wird gespeichert
+  if (pg_item_list_key($key) && isset($_POST['item_orig'])) {
+    $r = pg_item_save($SCHEMA, $key, (int) ($_POST['item_idx'] ?? -1), (string) $_POST['item_orig'], (string) ($_POST['item_fp'] ?? ''), $_POST['it'] ?? [], !isset($_POST['ajax']));
+    if ($r['ok']) pg_log_activity('Gespeichert', $SCHEMA[$key]['label'] . ' · ' . $r['title'] . ($r['sent'] ? ' · Newsletter an ' . $r['sent'] : ''));
+    if (isset($_POST['ajax'])) {
+      header('Content-Type: application/json');
+      echo json_encode($r['ok'] ? ['ok' => true, 'time' => date('H:i'), 'fp' => $r['fp'], 'item_key' => $r['key'], 'sent' => $r['sent'], 'note' => $r['note'], 'tr_pending' => pg_tr_pending_all($SCHEMA)]
+                                : ['ok' => false, 'error' => $r['error']], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+    header('Location: index.php?collection=' . $key . '&item=' . rawurlencode($r['ok'] ? $r['key'] : (string) $_POST['item_orig'])
+      . ($r['ok'] ? '&saved=1' . ($r['sent'] ? '&sent=' . $r['sent'] : '') : '&ierr=' . rawurlencode($r['error'])));
     exit;
   }
   $data = pg_normalize_fields($SCHEMA[$key]['fields'], $_POST['d'] ?? []);
@@ -2151,7 +2189,9 @@ if (isset($_GET['collection']) && isset($SCHEMA[$_GET['collection']])) {
   $coll = $SCHEMA[$key];
   $lang = ($_GET['lang'] ?? 'de') === 'en' ? 'en' : 'de';
   // Spiele: eigene Verwaltung (Liste + Einzel-Editor mit Reitern)
-  if ($key === 'games') { require __DIR__ . '/view-games.php'; pg_games_view($SCHEMA, $lang); exit; }
+  if ($key === 'games') { require_once __DIR__ . '/view-games.php'; pg_games_view($SCHEMA, $lang); exit; }
+  // Devlog & Team: Liste + Detail (wie die Spiele)
+  if ($key === 'patchnotes' || $key === 'team') { require_once __DIR__ . '/view-items.php'; pg_items_view($SCHEMA, $key, $lang); exit; }
   $previewUrl = [
     'studio' => '../index.html', 'team' => '../index.html#team-section',
     'games' => '../games.html', 'patchnotes' => '../devlog.php', 'legal' => '../rechtliches.html',
@@ -2299,7 +2339,7 @@ echo '<div class="ck-hello"><div><div class="ck-eyebrow">' . pg_h($fmtDate) . '<
    . '<p class="ck-lead">' . ($leadBits ? implode(' und ', $leadBits) . ' warten auf dich — alles andere läuft.' : 'Alles erledigt — nichts wartet auf dich. Zeit fürs Spiel! 🎮') . '</p></div>';
 echo '<div class="ck-quick">';
 if ($canMail) echo '<a class="btn" href="mail.php?tab=compose">' . pg_icon('mail') . 'Mail schreiben</a>';
-if (pg_can('patchnotes')) echo '<a class="btn" href="index.php?collection=patchnotes">' . pg_icon('devlog') . 'Devlog-Beitrag</a>';
+if (pg_can('patchnotes')) echo '<a class="btn" href="index.php?collection=patchnotes&amp;new=1">' . pg_icon('devlog') . 'Devlog-Beitrag</a>';
 if (pg_can('games')) echo '<a class="btn btn-primary" href="index.php?collection=games">' . pg_icon('game') . 'Spiele bearbeiten</a>';
 echo '</div></div>';
 

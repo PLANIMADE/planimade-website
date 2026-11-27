@@ -1,4 +1,5 @@
 <?php
+if (!function_exists('pg_h')) { http_response_code(404); exit; }   // nur über index.php nutzbar
 /**
  * Übersetzungs-Ansicht – für alle Bereiche gleich (Spiele, Studio, Team, Devlog, Rechtliches).
  * Links steht der deutsche Text (die Vorlage), rechts das Englische. Jede Zeile zeigt, ob die

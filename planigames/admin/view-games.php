@@ -17,7 +17,6 @@ function pg_gv_card($icon, $title, $body, $extra = '', $hint = ''){
        . '<div class="g-card-b">' . $body . '</div></section>';
 }
 
-/* Englisch-Modus: nur übersetzbare Texte, jeweils mit deutschem Original darunter */
 function pg_games_view($SCHEMA, $lang){
   $de = pg_games_data('de');
   $games = $de['games'];

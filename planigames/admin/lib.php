@@ -9,7 +9,7 @@ const PG_MEDIA_DIR   = __DIR__ . '/../media';
 const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
 const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
 const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip'];
-const PG_ADMIN_V     = '71';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
+const PG_ADMIN_V     = '76';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -532,7 +532,7 @@ function pg_log_activity($action, $detail = ''){
 const PG_TRASH_FILE = __DIR__ . '/../data/trash.json';
 // Welche Collection hat eine slug-basierte Liste, die in den Papierkorb wandert?
 function pg_trash_field($collection){
-  return ['games' => 'games', 'patchnotes' => 'posts'][$collection] ?? null;
+  return ['games' => 'games', 'patchnotes' => 'posts', 'team' => 'members'][$collection] ?? null;
 }
 function pg_trash_load(){ $t = pg_load_json(PG_TRASH_FILE); return is_array($t) ? $t : []; }
 function pg_trash_add($collection, $field, $item){
@@ -1591,7 +1591,7 @@ function pg_view_foot(){
       $items[] = ['s' => 'Spiele', 'i' => 'game', 'l' => (string) $g['title'], 'h' => 'index.php?collection=games&game=' . rawurlencode((string) ($g['slug'] ?? $gi)), 'k' => '/' . ($g['slug'] ?? '')];
     }
     if (pg_can('mail')) $items[] = ['s' => 'Aktionen', 'i' => 'mail', 'l' => 'Neue E-Mail schreiben', 'h' => 'mail.php?tab=compose', 'k' => ''];
-    if (pg_can('patchnotes')) $items[] = ['s' => 'Aktionen', 'i' => 'devlog', 'l' => 'Devlog-Beitrag schreiben', 'h' => 'index.php?collection=patchnotes', 'k' => ''];
+    if (pg_can('patchnotes')) $items[] = ['s' => 'Aktionen', 'i' => 'devlog', 'l' => 'Devlog-Beitrag schreiben', 'h' => 'index.php?collection=patchnotes&new=1', 'k' => ''];
     if (pg_is_owner()) $items[] = ['s' => 'Aktionen', 'i' => 'archive', 'l' => 'Backup erstellen', 'h' => 'index.php?view=backup', 'k' => ''];
     $items[] = ['s' => 'Aktionen', 'i' => 'ext', 'l' => 'Website ansehen', 'h' => '../index.html', 'k' => ''];
     $items[] = ['s' => 'Aktionen', 'i' => 'logout', 'l' => 'Abmelden', 'h' => 'index.php?action=logout', 'k' => ''];
@@ -1859,7 +1859,12 @@ function pg_render_field($f, $val, $name, $pathKey){
     case 'file':
       $accept = $w === 'image' ? 'image/*' : 'image/*,video/*,.zip,application/zip';
       $prev = $val ? '<a href="' . pg_h($val) . '" target="_blank" class="media-prev">' . pg_h($val) . '</a>' : '';
-      $field = '<div class="media" data-media>'
+      $thumb = '';
+      if ($w === 'image') {                                     // kleine Vorschau des gewählten Bildes
+        $src = explode('#', (string) $val)[0];
+        $thumb = '<span class="mf-thumb" data-media-thumb>' . ($src !== '' ? '<img src="' . pg_h(preg_match('#^(https?:)?//|^data:#', $src) ? $src : '../' . ltrim($src, '/')) . '" alt="" loading="lazy">' : pg_icon('image')) . '</span>';
+      }
+      $field = '<div class="media' . ($w === 'image' ? ' has-thumb' : '') . '" data-media>' . $thumb
              . '<input type="text" name="' . pg_h($name) . '" value="' . pg_h($val) . '" placeholder="/media/… oder URL" data-media-input>'
              . '<button type="button" class="btn-up" data-media-pick>Bibliothek</button>'
              . ($w === 'image' ? '<button type="button" class="btn-up" data-media-focus title="Bildausschnitt / Fokuspunkt">🎯 Fokus</button>' : '')
@@ -1878,6 +1883,18 @@ function pg_render_field($f, $val, $name, $pathKey){
 function pg_render_list($f, $items, $name, $pathKey){
   $token = '@@' . md5($pathKey) . '@@';
   $isSimple = isset($f['field']);
+  // Kurze Wortlisten (z. B. Tags) als Chips statt als einzelne Karten
+  if ($isSimple && ($f['field']['widget'] ?? 'string') === 'string') {
+    $h = '<div class="field tagfield" data-tags data-name="' . pg_h($name) . '"><label class="flabel">' . pg_h($f['label']) . '</label><div class="tags-box">';
+    foreach (array_values($items) as $i => $v) {
+      if (is_array($v) || trim((string) $v) === '') continue;
+      $h .= '<span class="tag-chip"><span>' . pg_h($v) . '</span><input type="hidden" name="' . pg_h($name) . '[' . $i . ']" value="' . pg_h($v) . '">'
+          . '<button type="button" data-tag-del aria-label="' . pg_h($v) . ' entfernen">' . pg_icon('x') . '</button></span>';
+    }
+    $h .= '<input type="text" class="tag-in" placeholder="' . pg_h(($f['field']['label'] ?? 'Eintrag') . ' hinzufügen …') . '" data-tag-in aria-label="' . pg_h($f['label']) . ' hinzufügen"></div>'
+        . '<p class="hint">' . pg_h(!empty($f['hint']) ? $f['hint'] : 'Enter oder Komma fügt hinzu · ✕ entfernt.') . '</p></div>';
+    return $h;
+  }
   $rows = '';
   foreach ($items as $i => $item) {
     $rows .= pg_render_list_item($f, $item, $name . '[' . $i . ']', $pathKey, $i, $isSimple);
@@ -2954,4 +2971,204 @@ function pg_tr_rename_src($file, $listKey, $old, $new){
   ksort($out);
   $en['_src'] = $out;
   return pg_save_json($file, $en);
+}
+
+/* =====================================================================
+   EINTRÄGE (Devlog-Beiträge, Teammitglieder): Einzel-Speichern, Anlegen,
+   Duplizieren, Löschen, Sortieren – nur der betroffene Eintrag wird geändert.
+   Beiträge sind über ihre Adresse (Slug) erkennbar, Teammitglieder über die
+   Position (+ Fingerabdruck gegen Verwechslung). Die englische Fassung zieht mit.
+   ===================================================================== */
+function pg_item_list_key($key){ return ['patchnotes' => 'posts', 'team' => 'members'][$key] ?? null; }
+function pg_item_fields_of($SCHEMA, $key){
+  $list = pg_item_list_key($key);
+  foreach (($SCHEMA[$key]['fields'] ?? []) as $f) if (($f['name'] ?? '') === $list) return $f['fields'] ?? [];
+  return [];
+}
+function pg_item_fingerprint($it){ return substr(md5(json_encode($it)), 0, 12); }
+function pg_item_find($items, $key, $idx, $orig, $fp = ''){
+  $idx = (int) $idx;
+  if ($key === 'patchnotes') {
+    if (isset($items[$idx]) && is_array($items[$idx]) && strtolower((string) ($items[$idx]['slug'] ?? '')) === strtolower((string) $orig)) return $idx;
+    foreach ($items as $i => $it) if (is_array($it) && $orig !== '' && strtolower((string) ($it['slug'] ?? '')) === strtolower((string) $orig)) return $i;
+    return -1;
+  }
+  if (!isset($items[$idx]) || !is_array($items[$idx]) || (string) $idx !== (string) $orig) return -1;
+  return ($fp === '' || pg_item_fingerprint($items[$idx]) === $fp) ? $idx : -1;
+}
+function pg_item_unique_slug($items, $base, $except = -1){
+  $base = pg_slugify($base) ?: 'beitrag';
+  $taken = [];
+  foreach ($items as $i => $it) if ($i !== $except && is_array($it) && !empty($it['slug'])) $taken[strtolower((string) $it['slug'])] = true;
+  $s = $base; $n = 1;
+  while (!empty($taken[$s])) $s = $base . '-' . (++$n);
+  return $s;
+}
+function pg_item_data($SCHEMA, $key){
+  $d = pg_load_json($SCHEMA[$key]['file']);
+  $list = pg_item_list_key($key);
+  $d[$list] = array_values(is_array($d[$list] ?? null) ? $d[$list] : []);
+  return $d;
+}
+// Englische Fassung neu zuordnen, wenn sich Positionen ändern ($map[alt] = neu | null = entfernt)
+function pg_item_en_reindex($SCHEMA, $key, $map){
+  $list = pg_item_list_key($key);
+  $file = pg_lang_file($SCHEMA[$key]['file'], 'en');
+  if (!is_file($file)) return true;
+  $en = pg_load_json($file);
+  $old = array_values(is_array($en[$list] ?? null) ? $en[$list] : []);
+  $new = [];
+  foreach ($map as $o => $n) if ($n !== null && isset($old[$o])) $new[$n] = $old[$o];
+  $out = [];
+  $max = $new ? max(array_keys($new)) : -1;
+  for ($k = 0; $k <= $max; $k++) $out[] = $new[$k] ?? [];
+  $en[$list] = $out;
+  if (is_array($en['_src'] ?? null)) {
+    $src = [];
+    foreach ($en['_src'] as $k => $v) {
+      if (preg_match('/^' . preg_quote($list, '/') . '\.(\d+)(\..*)$/', $k, $m)) {
+        $o = (int) $m[1];
+        if (array_key_exists($o, $map)) { if ($map[$o] !== null) $src[$list . '.' . $map[$o] . $m[2]] = $v; }
+      } else $src[$k] = $v;
+    }
+    ksort($src);
+    $en['_src'] = $src ? $src : new stdClass();
+  }
+  return pg_save_json($file, $en);
+}
+// Englisch eines Eintrags kopieren (Duplizieren): $from/$to = Slug (Beiträge) bzw. Position (Team)
+function pg_item_en_copy($SCHEMA, $key, $from, $to){
+  $list = pg_item_list_key($key);
+  $file = pg_lang_file($SCHEMA[$key]['file'], 'en');
+  if (!is_file($file)) return;
+  $en = pg_load_json($file);
+  $rows = array_values(is_array($en[$list] ?? null) ? $en[$list] : []);
+  if ($key === 'patchnotes') {
+    foreach ($rows as $r) if (is_array($r) && strtolower((string) ($r['slug'] ?? '')) === strtolower((string) $from)) { $c = $r; $c['slug'] = $to; $rows[] = $c; break; }
+    $pre = $list . '.@' . $from . '.'; $npre = $list . '.@' . $to . '.';
+  } else {
+    if (!isset($rows[(int) $from])) return;
+    while (count($rows) < (int) $to) $rows[] = [];
+    $rows[(int) $to] = $rows[(int) $from];
+    $pre = $list . '.' . (int) $from . '.'; $npre = $list . '.' . (int) $to . '.';
+  }
+  $en[$list] = $rows;
+  if (is_array($en['_src'] ?? null)) {
+    foreach ($en['_src'] as $k => $v) if (strpos($k, $pre) === 0) $en['_src'][$npre . substr($k, strlen($pre))] = $v;
+    ksort($en['_src']);
+  }
+  pg_save_json($file, $en);
+}
+
+/* Einen Eintrag speichern. $explicit = Klick auf „Speichern“ (nur dann geht ein Newsletter raus). */
+function pg_item_save($SCHEMA, $key, $idx, $orig, $fp, $raw, $explicit = true){
+  $list = pg_item_list_key($key);
+  $d = pg_item_data($SCHEMA, $key);
+  $i = pg_item_find($d[$list], $key, $idx, $orig, $fp);
+  if ($i < 0) return ['ok' => false, 'error' => 'Dieser Eintrag wurde inzwischen an anderer Stelle geändert oder gelöscht. Bitte die Seite neu laden – deine Eingaben bleiben im Browser stehen.'];
+  $old = $d[$list][$i];
+  $new = pg_normalize_fields(pg_item_fields_of($SCHEMA, $key), is_array($raw) ? $raw : []);
+  $sent = 0; $note = '';
+  if ($key === 'patchnotes') {
+    if (($new['slug'] ?? '') === '') $new['slug'] = pg_slugify($new['title'] ?? '') ?: 'beitrag';
+    $new['slug'] = pg_item_unique_slug($d[$list], $new['slug'], $i);
+    $new['notified'] = (string) ($old['notified'] ?? '');                 // Versand-Status bleibt (nicht im Formular)
+    $public = empty($new['draft']) && (empty($new['publishAt']) || strtotime((string) $new['publishAt']) <= time());
+    if (!empty($new['notify']) && $public && $new['notified'] === '') {
+      if ($explicit) { $n = pg_newsletter_send_post($new); if ($n > 0) { $new['notified'] = date('c'); $sent = $n; } }
+      else $note = 'Der Newsletter zu diesem Beitrag geht erst beim Klick auf „Speichern“ raus.';
+    }
+  }
+  $d[$list][$i] = $new + array_diff_key($old, $new);                       // unbekannte Felder behalten
+  if (!pg_save_json($SCHEMA[$key]['file'], $d)) return ['ok' => false, 'error' => 'Konnte nicht speichern – bitte Schreibrechte am Ordner data/ prüfen.'];
+  if ($key === 'patchnotes' && ($old['slug'] ?? '') !== '' && $old['slug'] !== $new['slug']) {
+    // Adresse geändert: englische Fassung & Übersetzungs-Herkunft ziehen mit
+    $file = pg_lang_file($SCHEMA[$key]['file'], 'en');
+    if (is_file($file)) {
+      $en = pg_load_json($file);
+      foreach ((array) ($en[$list] ?? []) as $k => $r) if (is_array($r) && ($r['slug'] ?? '') === $old['slug']) $en[$list][$k]['slug'] = $new['slug'];
+      pg_save_json($file, $en);
+      pg_tr_rename_src($file, $list, $old['slug'], $new['slug']);
+    }
+  }
+  $it = $d[$list][$i];
+  return ['ok' => true, 'item' => $it, 'idx' => $i, 'key' => $key === 'patchnotes' ? (string) $it['slug'] : (string) $i,
+          'fp' => pg_item_fingerprint($it), 'sent' => $sent, 'note' => $note, 'title' => (string) ($it['title'] ?? $it['name'] ?? '')];
+}
+function pg_item_create($SCHEMA, $key, $title, $game = ''){
+  $title = trim((string) $title);
+  if ($title === '') return [false, 'Bitte einen ' . ($key === 'patchnotes' ? 'Titel' : 'Namen') . ' eingeben.'];
+  $list = pg_item_list_key($key);
+  $d = pg_item_data($SCHEMA, $key);
+  $fields = pg_item_fields_of($SCHEMA, $key);
+  if ($key === 'patchnotes') {
+    $games = [];
+    foreach ((array) (pg_load_json(PG_GAMES_FILE)['games'] ?? []) as $g) if (is_array($g) && !empty($g['slug'])) $games[] = $g['slug'];
+    $it = pg_normalize_fields($fields, ['title' => $title, 'date' => date('Y-m-d'), 'draft' => '1', 'game' => in_array($game, $games, true) ? $game : '']);
+    $it['slug'] = pg_item_unique_slug($d[$list], $title);
+    array_unshift($d[$list], $it);                                           // neueste zuerst
+    // Positionen verschieben sich – Beiträge werden aber über ihre Adresse zugeordnet: nichts weiter nötig
+    $res = $it['slug'];
+  } else {
+    $it = pg_normalize_fields($fields, ['name' => $title, 'emoji' => '🙂']);
+    $d[$list][] = $it;                                                       // hinten anfügen: Positionen bleiben
+    $res = (string) (count($d[$list]) - 1);
+  }
+  if (!pg_save_json($SCHEMA[$key]['file'], $d)) return [false, 'Konnte nicht speichern (Schreibrechte data/ prüfen).'];
+  pg_log_activity($key === 'patchnotes' ? 'Beitrag angelegt' : 'Teammitglied angelegt', $title);
+  return [true, $res];
+}
+function pg_item_duplicate($SCHEMA, $key, $idx, $orig, $fp){
+  $list = pg_item_list_key($key);
+  $d = pg_item_data($SCHEMA, $key);
+  $i = pg_item_find($d[$list], $key, $idx, $orig, $fp);
+  if ($i < 0) return [false, 'Eintrag nicht gefunden – bitte Seite neu laden.'];
+  $c = $d[$list][$i];
+  if ($key === 'patchnotes') {
+    $c['title'] = trim((string) ($c['title'] ?? 'Beitrag')) . ' (Kopie)';
+    $c['slug'] = pg_item_unique_slug($d[$list], ($d[$list][$i]['slug'] ?? 'beitrag') . '-kopie');
+    $c['draft'] = true; $c['notify'] = false; $c['notified'] = '';
+    array_splice($d[$list], $i + 1, 0, [$c]);
+    $res = $c['slug'];
+  } else {
+    $c['name'] = trim((string) ($c['name'] ?? 'Mitglied')) . ' (Kopie)';
+    $d[$list][] = $c;
+    $res = (string) (count($d[$list]) - 1);
+  }
+  if (!pg_save_json($SCHEMA[$key]['file'], $d)) return [false, 'Konnte nicht speichern.'];
+  pg_item_en_copy($SCHEMA, $key, $key === 'patchnotes' ? ($d[$list][$i]['slug'] ?? '') : $i, $res);
+  pg_log_activity('Dupliziert', $SCHEMA[$key]['label'] . ' · ' . ($c['title'] ?? $c['name'] ?? ''));
+  return [true, $res];
+}
+function pg_item_delete($SCHEMA, $key, $idx, $orig, $fp){
+  $list = pg_item_list_key($key);
+  $d = pg_item_data($SCHEMA, $key);
+  $i = pg_item_find($d[$list], $key, $idx, $orig, $fp);
+  if ($i < 0) return [false, 'Eintrag nicht gefunden – bitte Seite neu laden.'];
+  $it = $d[$list][$i];
+  pg_trash_add($key, $list, $it);
+  array_splice($d[$list], $i, 1);
+  if (!pg_save_json($SCHEMA[$key]['file'], $d)) return [false, 'Konnte nicht speichern.'];
+  if ($key === 'team') {                                                      // Team: Positionen der Übersetzung nachziehen
+    $map = [];
+    for ($o = 0; $o <= count($d[$list]); $o++) $map[$o] = $o < $i ? $o : ($o === $i ? null : $o - 1);
+    pg_item_en_reindex($SCHEMA, $key, $map);
+  }
+  $t = (string) ($it['title'] ?? $it['name'] ?? '');
+  pg_log_activity('In den Papierkorb', $SCHEMA[$key]['label'] . ' · ' . $t);
+  return [true, $t];
+}
+function pg_items_reorder($SCHEMA, $key, $order){
+  $list = pg_item_list_key($key);
+  $d = pg_item_data($SCHEMA, $key);
+  $n = count($d[$list]);
+  $order = array_map('intval', (array) $order);
+  $check = $order; sort($check);
+  if ($check !== range(0, $n - 1)) return false;                              // nur echte Umsortierung, nie etwas verlieren
+  $d[$list] = array_map(fn($o) => $d[$list][$o], $order);
+  if (!pg_save_json($SCHEMA[$key]['file'], $d)) return false;
+  $map = [];
+  foreach ($order as $new => $old) $map[$old] = $new;
+  pg_item_en_reindex($SCHEMA, $key, $map);
+  return true;
 }
