@@ -85,15 +85,32 @@ auf iPhone SE/13, Pixel 7, iPad Mini, 320/820/960/1024/1440 px – nichts ragt �
 
 ## Phasen (jede einzeln hochladbar, Admin funktioniert durchgehend)
 
-1. **Fundament:** eigene CSS-Datei statt Tailwind-Laufzeit (schnellerer Seitenaufbau), Montserrat, Farben je Spiel,
-   Abstände & Breiten vereinheitlichen, Kopfzeile + Footer; Bilder beim Upload zusätzlich als WebP.
-2. **Startseite:** Spiele-Durchlauf, Abschnitte und Karten wie im Probedesign, eine Anmeldung statt drei.
+Hochladen wie immer: alles aus `planigames/` außer `data/` und `media/` (siehe PLANIGAMES-SETUP.md).
+Man kann jede Phase einzeln hochladen oder mehrere zusammen.
+
+1. **Fundament – erledigt (27.11.2026):** neue Stildatei `assets/site.css`; Montserrat überall (alte Schriften
+   Clash Display/Archivo/JetBrains entfernt); ruhigere Überschriften auf allen noch alten Seiten;
+   neue Kopfzeile (Ring-Logo + Schriftzug, Spiele · Studio · Devlog · Kontakt, DE/EN, „Unterstützen“,
+   „Zum Playtest“ → Warteliste des aktuellen Projekts; blendet sich beim Runterscrollen aus) und neues Handy-Menü;
+   neuer Footer (Spiele-Liste aus den Daten, Studio, Kontakt, Kanäle) und „Bleib dran“-Block (Newsletter + Folge uns)
+   auf Spiele-, Devlog-, Kontakt- und Presse-Seite; „Unterstützen“ sitzt in Kopfzeile/Footer statt schwebend;
+   eigener Mauszeiger-Ersatz und Scroll-Balken entfernt; Discord erscheint automatisch (Startseite, „Folge uns“,
+   Footer), sobald im Admin unter *Studio → Community-Banner* ein echter Einladungslink steht.
+   Geändert: alle Seiten-Dateien (Kopfbereich), `assets/app.js`, `assets/planigames.css`, `assets/site.css` (neu),
+   `admin/schema.php` (nur Hinweistexte).
+2. **Startseite:** Spiele-Durchlauf (startet immer mit FRONTLINERS), Abschnitte und Karten wie im Probedesign,
+   eine Anmeldung statt drei.
 3. **Spielseite:** feste Reihenfolge, Steckbrief-Leiste, Abschnitts-Menü, Medien-Raster, Roadmap-Zeitleiste,
    Mitmachen an einem Ort, „Pausiert“-Logik.
 4. **Unterseiten:** Spiele-Übersicht, Devlog (Liste + Beitrag), Presse-Kit, Kontakt, Lore, Rechtliches, 404.
-5. **Feinschliff:** Handy-Ansichten, Ladezeit, englische Texte, Gesamttest.
+5. **Feinschliff:** Tailwind-Laufzeit entfernen (schnellerer Seitenaufbau), Bilder beim Upload zusätzlich als WebP,
+   Handy-Ansichten, Ladezeit, englische Texte, Gesamttest.
+
+**Hinweis Hintergrund-Effekt:** Im Admin steht unter *Studio → Hintergrund & Atmosphäre* noch „Nur Partikel, viel,
+lebhaft“. Die aufsteigenden Partikel gibt es in der Design-Vorschau nicht – für denselben ruhigen Look dort
+„Aus / minimal“ wählen (Einstellung bleibt euch überlassen, die Funktion selbst ist unverändert).
 
 ## Offene Fragen
 
-- Soll der Durchlauf immer mit FRONTLINERS starten (aktuelles Projekt) oder in Listen-Reihenfolge?
-- Gibt es einen Discord-Link (sonst bleiben YouTube & TikTok im Newsletter-Block)?
+- ~~Durchlauf-Start~~ → entschieden: immer mit FRONTLINERS (aktuelles Projekt).
+- ~~Discord~~ → entschieden: Link kommt später in den Admin; die Website zeigt Discord automatisch, sobald er eingetragen ist.

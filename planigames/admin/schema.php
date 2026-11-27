@@ -73,7 +73,7 @@ return [
         ['name'=>'doubleOptIn','label'=>'Double-Opt-In (Bestätigungslink)','widget'=>'boolean','default'=>true,'hint'=>'Empfohlen (DSGVO): Neue Abonnenten müssen ihre Anmeldung per E-Mail-Link bestätigen.'],
         ['name'=>'welcomeMessage','label'=>'Willkommens-Nachricht','widget'=>'text','hint'=>'Wird nach der Bestätigung per Mail verschickt. Leer = Standardtext.'],
       ]],
-      ['name'=>'background','label'=>'Hintergrund & Atmosphäre','widget'=>'object','hint'=>'Steuert die Animation im Seitenhintergrund.','fields'=>[
+      ['name'=>'background','label'=>'Hintergrund & Atmosphäre','widget'=>'object','hint'=>'Steuert die Animation im Seitenhintergrund. Im neuen Website-Design wirkt „Aus / minimal“ am ruhigsten (so wie in der Design-Vorschau).','fields'=>[
         ['name'=>'effect','label'=>'Effekt','widget'=>'select','default'=>'particles','options'=>[
           'particles'=>'Partikel + Glow (Standard)','particles_only'=>'Nur Partikel','glow'=>'Nur Glow-Lichter','off'=>'Aus / minimal',
         ]],
@@ -86,12 +86,12 @@ return [
         ['name'=>'color','label'=>'Partikel-Farbe','widget'=>'color','default'=>'#ff7d1a','hint'=>'Standard: Orange. Für eine andere Stimmung anpassbar.'],
         ['name'=>'cursorSparkles','label'=>'Magie-Funken am Mauszeiger','widget'=>'boolean','default'=>false,'hint'=>'Feiner Funken-/Glitzerschweif, der dem Mauszeiger folgt (nur am PC mit Maus).'],
       ]],
-      ['name'=>'community','label'=>'Community-Banner (Discord)','widget'=>'object','hint'=>'Auffälliger Aufruf auf der Startseite, der zur Community führt.','fields'=>[
+      ['name'=>'community','label'=>'Community-Banner (Discord)','widget'=>'object','hint'=>'Discord erscheint auf der Startseite, im „Folge uns“-Bereich und im Footer – sobald unten ein Einladungslink eingetragen ist.','fields'=>[
         ['name'=>'enabled','label'=>'Banner anzeigen','widget'=>'boolean','default'=>true],
         ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Komm in unsere Community'],
         ['name'=>'text','label'=>'Text','widget'=>'text','default'=>'Sei beim Chaos dabei: Devlogs aus erster Hand, Playtests, Abstimmungen und ein Haufen wackeliger Magier warten auf dich.'],
         ['name'=>'buttonLabel','label'=>'Button-Text','widget'=>'string','default'=>'Discord beitreten'],
-        ['name'=>'url','label'=>'Discord-Einladungslink','widget'=>'string','hint'=>'z. B. https://discord.gg/…'],
+        ['name'=>'url','label'=>'Discord-Einladungslink','widget'=>'string','hint'=>'z. B. https://discord.gg/… – ohne Link (oder mit einem Link auf die eigene Website) wird Discord nirgends angezeigt.'],
       ]],
       // Vorschlagsbox & Beta-Warteliste gibt es ausschließlich als Spiel-Seiten-Blöcke
       // (im Spiel-Editor unter „Block hinzufügen"), nicht mehr auf der Startseite.
@@ -121,7 +121,7 @@ return [
         ['name'=>'draggable','label'=>'Verschiebbar','widget'=>'boolean','default'=>true,'hint'=>'Besucher können das Maskottchen ziehen; die Position wird im Browser gemerkt.'],
         ['name'=>'closable','label'=>'Schließen erlauben','widget'=>'boolean','default'=>true,'hint'=>'Zeigt beim Drüberfahren ein ✕, mit dem Besucher es ausblenden können.'],
       ]],
-      ['name'=>'tipjar','label'=>'Unterstützen-Button (Ko-fi / Tip-Jar)','widget'=>'object','hint'=>'Schwebender Button unten rechts, der zu deiner Support-Seite führt.','fields'=>[
+      ['name'=>'tipjar','label'=>'Unterstützen-Button (Ko-fi / Tip-Jar)','widget'=>'object','hint'=>'Button „Unterstützen“ oben in der Kopfzeile (am Handy im Menü) und im Footer – führt zu deiner Support-Seite.','fields'=>[
         ['name'=>'enabled','label'=>'Button anzeigen','widget'=>'boolean','default'=>false],
         ['name'=>'label','label'=>'Beschriftung','widget'=>'string','default'=>'Unterstützen'],
         ['name'=>'url','label'=>'Link','widget'=>'string','hint'=>'z. B. https://ko-fi.com/deinstudio'],

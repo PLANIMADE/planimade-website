@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "54";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "55";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
@@ -132,7 +132,7 @@
        ========================================================= */
     const I18N = {
         de: {
-            nav_studio: "Studio", nav_games: "Games", nav_devlog: "Devlog", nav_contact: "Kontakt",
+            nav_studio: "Studio", nav_games: "Spiele", nav_devlog: "Devlog", nav_contact: "Kontakt",
             cta_discover: "Spiele entdecken", cta_explore: "Spiele entdecken →", cta_devlog: "Devlog lesen",
             foot_discover: "Entdecken", foot_allgames: "Alle Spiele", foot_devlog: "Devlog & Patch Notes",
             foot_about: "Über das Studio", foot_contact: "Kontakt & Presse", foot_newsletter_btn: "Abonnieren",
@@ -162,6 +162,15 @@
             c_name_ph: "Wie heißt du?", c_email_ph: "deine@mail.de", c_subject_ph: "Worum geht's?",
             c_message_ph: "Schreib uns …", c_send: "Nachricht senden", c_or_mail: "Oder schreib direkt an",
             read_time: "Min Lesezeit", share: "Teilen", link_copied: "Link kopiert ✓", copy_link: "Link kopieren",
+            cta_playtest: "Zum Playtest", foot_games: "Spiele", foot_studio: "Studio", foot_contact_h: "Kontakt",
+            foot_form: "Kontaktformular", foot_about_short: "Über uns", support: "Unterstützen",
+            nl_kicker: "Newsletter", nl_email_label: "E-Mail-Adresse", follow_h: "Folge uns",
+            follow_sub: "Clips, Devlogs und Abstimmungen – direkt aus der Werkstatt.",
+            soc_youtube: "Trailer, Gameplay & Devlogs", soc_tiktok: "Kurze Clips aus der Werkstatt",
+            soc_discord: "Community, Playtests & Abstimmungen", soc_instagram: "Bilder & Einblicke",
+            soc_x: "News & Updates", soc_steam: "Wunschliste & News", soc_twitch: "Live aus der Entwicklung",
+            soc_bsky: "News & Updates", menu_open: "Menü öffnen", menu_close: "Menü schließen",
+            home_label: "Startseite", lang_label: "Sprache",
         },
         en: {
             nav_studio: "Studio", nav_games: "Games", nav_devlog: "Devlog", nav_contact: "Contact",
@@ -194,6 +203,15 @@
             c_name_ph: "What's your name?", c_email_ph: "your@mail.com", c_subject_ph: "What's it about?",
             c_message_ph: "Write to us …", c_send: "Send message", c_or_mail: "Or email us directly at",
             read_time: "min read", share: "Share", link_copied: "Link copied ✓", copy_link: "Copy link",
+            cta_playtest: "Join the playtest", foot_games: "Games", foot_studio: "Studio", foot_contact_h: "Contact",
+            foot_form: "Contact form", foot_about_short: "About us", support: "Support us",
+            nl_kicker: "Newsletter", nl_email_label: "Email address", follow_h: "Follow us",
+            follow_sub: "Clips, devlogs and polls – straight from the workshop.",
+            soc_youtube: "Trailers, gameplay & devlogs", soc_tiktok: "Short clips from the workshop",
+            soc_discord: "Community, playtests & polls", soc_instagram: "Pictures & insights",
+            soc_x: "News & updates", soc_steam: "Wishlist & news", soc_twitch: "Live from development",
+            soc_bsky: "News & updates", menu_open: "Open menu", menu_close: "Close menu",
+            home_label: "Home", lang_label: "Language",
         },
     };
     function detectLang() {
@@ -503,8 +521,19 @@
     function initHeader() {
         const h = $("#site-header");
         if (!h) return;
-        const upd = () => h.classList.toggle("scrolled", scrollY > 40);
+        const body = document.body;
+        let lastY = scrollY;
+        const kbFocus = () => { try { return h.contains(document.activeElement) && document.activeElement.matches(":focus-visible"); } catch { return false; } };
+        const upd = () => {
+            const y = scrollY;
+            h.classList.toggle("scrolled", y > 20);
+            if (PLACER || body.classList.contains("menu-open") || kbFocus() || y < 160) body.classList.remove("pg-hd-up");
+            else if (y > lastY + 6) body.classList.add("pg-hd-up");
+            else if (y < lastY - 6) body.classList.remove("pg-hd-up");
+            lastY = y;
+        };
         addEventListener("scroll", upd, { passive: true }); upd();
+        h.addEventListener("focusin", () => body.classList.remove("pg-hd-up"));
     }
 
     function initMobileMenu() {
@@ -514,7 +543,7 @@
             menu.classList.toggle("open", open);
             btn.classList.toggle("open", open);
             btn.setAttribute("aria-expanded", String(open));
-            btn.setAttribute("aria-label", open ? "Menü schließen" : "Menü öffnen");
+            btn.setAttribute("aria-label", open ? t("menu_close") : t("menu_open"));
             menu.setAttribute("aria-hidden", String(!open));
             document.body.classList.toggle("menu-open", open);
         };
@@ -784,6 +813,7 @@
 
         // Warteliste & Vorschlagsbox gibt es nur als Spiel-Seiten-Blöcke, nicht auf der Startseite.
         renderCommunity(s);
+        scrollToHash();
     }
 
     // Vorschlagsbox (Community-Ideen mit Upvotes) – nur als Spiel-Seiten-Block.
@@ -1014,7 +1044,7 @@
     // Discord-/Community-Banner (vor der Newsletter-Sektion einsetzen)
     function renderCommunity(s) {
         const c = s.community || {};
-        if (c.enabled === false || !c.url || c.url === "#") return;
+        if (c.enabled === false || !communityLink(s)) return;   // ohne echten (externen) Einladungslink nichts zeigen
         const nl = $("[data-newsletter-section]");
         const sec = document.createElement("section");
         sec.className = "relative px-6 py-12 md:py-20";
@@ -1169,6 +1199,10 @@
         // Interaktive Community-Blöcke dieses Spiels starten (Vorschläge / Warteliste)
         $$("[data-sugg-form]", root).forEach(f => initSuggestions(f.closest("section")));
         $$("[data-wl-form]", root).forEach(f => initWaitlist(f.closest("section")));
+        // Erste Warteliste als Sprungziel (Kopfzeilen-Button „Zum Playtest" → #warteliste)
+        const wlSec = $("[data-wl-form]", root)?.closest("section");
+        if (wlSec && !document.getElementById("warteliste")) wlSec.id = "warteliste";
+        scrollToHash();
     }
 
     // Roadmap-Fortschrittsbalken auf die Zielbreite animieren, sobald sichtbar
@@ -2129,6 +2163,21 @@
             <a href="index.html" class="btn-ghost magnetic inline-block px-7 py-3 rounded-full">${t("nf_home")}</a></div></div>`;
     }
 
+    // Nach dem dynamischen Rendern die Sprungmarke aus der Adresse (z. B. #warteliste) anfahren
+    function scrollToHash() {
+        let id = ""; try { id = decodeURIComponent((location.hash || "").slice(1)); } catch {}
+        if (!id || PLACER) return;
+        const el = document.getElementById(id);
+        if (!el) return;
+        let moved = false;
+        const onUser = () => { moved = true; };
+        addEventListener("wheel", onUser, { once: true, passive: true });
+        addEventListener("touchstart", onUser, { once: true, passive: true });
+        const go = () => { if (!moved) el.scrollIntoView({ block: "start" }); };
+        requestAnimationFrame(go);
+        if (document.readyState !== "complete") addEventListener("load", () => setTimeout(go, 30), { once: true });
+    }
+
     /* ---------- mini DOM-Helfer für statische Slots ---------- */
     function setText(sel, val) { $$(sel).forEach(el => { if (val != null) el.textContent = val; }); }
     function setHTML(sel, val) { $$(sel).forEach(el => { if (val != null) el.innerHTML = val; }); }
@@ -2138,154 +2187,236 @@
        wird in jede Seite injiziert, damit die HTML-Dateien
        schlank bleiben und Navigation überall identisch ist.
        ========================================================= */
-    // Navigation – global, ohne Lore (die Story-Seite gehört jetzt zu einzelnen Spielen).
+    // Navigation – global (v7): Spiele · Studio · Devlog · Kontakt. Markiert wird der Bereich der aktuellen Seite.
     function getNav() {
         return [
-            ["index.html", "nav_studio"],
-            ["games.html", "nav_games"],
-            ["devlog.php", "nav_devlog"],
-            ["kontakt.html", "nav_contact"],
+            ["games.html", "nav_games", ["games", "game"]],
+            ["index.html#studio", "nav_studio", []],
+            ["devlog.php", "nav_devlog", ["devlog"]],
+            ["kontakt.html", "nav_contact", ["contact"]],
         ];
     }
-    const navLabel = (key, lit) => lit != null ? esc(lit) : t(key);
-    function navLinks(extra = "") {
-        const here = location.pathname.split("/").pop() || "index.html";
-        return getNav().map(([href, key, lit]) => {
-            const active = !href.includes("#") && href === here;
-            return `<a href="${href}" class="${extra} ${active ? "text-white" : "text-zinc-400 hover:text-white"} transition-colors">${navLabel(key, lit)}</a>`;
-        }).join("");
+    const navActive = (pages) => pages.includes(document.body.dataset.page || "");
+    function navLinks() {
+        return getNav().map(([href, key, pages]) =>
+            `<a href="${href}"${navActive(pages) ? ' class="on" aria-current="page"' : ""}>${t(key)}</a>`).join("");
     }
-    function mobileNavLinks() {
-        const here = location.pathname.split("/").pop() || "index.html";
-        return getNav().map(([href, key, lit], i) => {
-            const active = !href.includes("#") && href === here;
-            return `<a href="${href}" class="mm-link${active ? " is-active" : ""}" style="--i:${i}">${navLabel(key, lit)}</a>`;
-        }).join("");
-    }
+    function mobileNavLinks() { return navLinks(); }
     function langSwitch() {
-        const o = LANG === "en" ? "de" : "en";
-        return `<button type="button" data-setlang="${o}" class="font-mono text-[11px] uppercase tracking-widest border border-white/15 rounded-full px-3 py-1.5 text-zinc-300 hover:text-white hover:border-white/40 transition-colors" aria-label="Sprache wechseln">
-            <span class="${LANG === "de" ? "text-white" : "text-zinc-500"}">DE</span><span class="text-zinc-600 mx-1">/</span><span class="${LANG === "en" ? "text-white" : "text-zinc-500"}">EN</span></button>`;
+        const b = (l) => LANG === l
+            ? `<span class="on" aria-current="true">${l.toUpperCase()}</span>`
+            : `<button type="button" data-setlang="${l}" aria-label="${l === "en" ? "English" : "Deutsch"}">${l.toUpperCase()}</button>`;
+        return `<span class="pg-lang" role="group" aria-label="${t("lang_label")}">${b("de")}${b("en")}</span>`;
     }
 
-    // Marken-Inhalt: eigenes Logo-Bild, falls hinterlegt – sonst Wortmarke.
-    // Wird schon beim ersten Rendern genutzt (Studio-Daten sind da bereits geladen),
-    // damit nicht erst die Wortmarke aufblitzt und dann das Bild nachlädt.
+    // Marke: Zeichen (eigenes Logo-Bild aus dem CMS, sonst Raute) + Schriftzug PLANI|GAMES.
+    // Ist das hinterlegte Logo ein breiter Schriftzug, entfällt der Text automatisch (siehe fitBrand).
     function brandHTML(size) {
         const s = DATA.studio || {};
-        const lg = size === "lg";
-        if (s.logo) {
-            return `<img src="${esc(s.logo)}" alt="${esc(s.name || "PLANIGAMES")}" class="${lg ? "h-9 md:h-10" : "h-7 md:h-8"} w-auto object-contain">`;
-        }
-        return `<span class="inline-block ${lg ? "w-4 h-4" : "w-3 h-3"} rotate-45 rounded-[${lg ? "3px" : "2px"}] transition-transform duration-500 group-hover:rotate-[225deg]" style="background:linear-gradient(135deg,var(--accent-2),var(--accent))"></span>`
-             + `<span class="font-display ${lg ? "text-2xl" : "text-lg"} font-extrabold uppercase tracking-[0.${lg ? "15" : "18"}em] text-white">PLANI<span class="text-gradient">GAMES</span></span>`;
+        const name = String(s.name || "PLANIGAMES");
+        const m = name.match(/^(.+?)(games)$/i);
+        const wm = m ? `${esc(m[1])}<span>${esc(m[2])}</span>` : esc(name);
+        const mark = s.logo ? `<img src="${esc(s.logo)}" alt="" class="pg-mark">` : `<span class="pg-diamond" aria-hidden="true"></span>`;
+        return `${mark}<span class="pg-wm">${wm}</span>`;
+    }
+    function fitBrand() {
+        $$(".pg-brand .pg-mark").forEach(img => {
+            const f = () => { if (img.naturalWidth > img.naturalHeight * 2.2) img.closest(".pg-brand")?.classList.add("pg-logo-wide"); };
+            if (img.complete) f(); else img.addEventListener("load", f, { once: true });
+        });
     }
 
+    // Kleine Linien-Icons für Kopfzeile, Footer und Kanäle
+    const PG_IC = {
+        arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>', ext: '<path d="M7 17 17 7M8 7h9v9"/>',
+        yt: '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="m10 9 5 3-5 3z"/>',
+        tiktok: '<path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5M14 3c.5 2.6 2.4 4.5 5 4.8"/>',
+        discord: '<path d="M8.6 7.3c2.3-.7 4.5-.7 6.8 0M8.2 16.6c2.5.9 5.1.9 7.6 0"/><path d="M7.4 6.4 5 7.8c-1.4 2.7-1.9 5.6-1.6 8.6 1.5 1.2 3.1 2 4.7 2.4l1-1.9M16.6 6.4 19 7.8c1.4 2.7 1.9 5.6 1.6 8.6-1.5 1.2-3.1 2-4.7 2.4l-1-1.9"/><circle cx="9.4" cy="12.6" r="1.2"/><circle cx="14.6" cy="12.6" r="1.2"/>',
+        insta: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/>',
+        x: '<path d="M5 4l14 16M19 4 5 20"/>',
+        steam: '<circle cx="12" cy="12" r="9"/><circle cx="15" cy="9.5" r="2.4"/><path d="m3.5 13.5 6.3 2.6"/><circle cx="10.4" cy="16.3" r="1.8"/>',
+        twitch: '<path d="M4 3h16v11l-5 5h-4l-3 3v-3H4z"/><path d="M11 8v4M15 8v4"/>',
+        bsky: '<path d="M12 10.5C10.2 7 7 4.6 5.2 5.4 3.5 6.2 5 12 8.4 12.4 5.6 13.3 5 16 7.2 16.8c2.4.8 3.9-2.5 4.8-5.6.9 3.1 2.4 6.4 4.8 5.6 2.2-.8 1.6-3.5-1.2-4.4 3.4-.4 4.9-6.2 3.2-7-1.8-.8-5 1.6-6.8 5.1z"/>',
+        link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+    };
+    const pgIc = (n) => `<svg class="pg-ic" viewBox="0 0 24 24" aria-hidden="true">${PG_IC[n] || PG_IC.link}</svg>`;
+
+    // Social-Kanal erkennen (Icon, Farbe, Kurzbeschreibung) – anhand Adresse oder Beschriftung
+    function channelOf(label, url) {
+        let host = ""; try { host = new URL(url, location.href).hostname.replace(/^www\./, "").toLowerCase(); } catch {}
+        const L = String(label || "").toLowerCase();
+        const is = (re) => re.test(host) || re.test(L);
+        const mk = (ic, x, name, key) => ({ ic, x, name: label || name, desc: key ? t(key) : "" });
+        if (is(/youtube|youtu\.be/)) return mk("yt", "#ff0033", "YouTube", "soc_youtube");
+        if (is(/tiktok/)) return mk("tiktok", "#25232f", "TikTok", "soc_tiktok");
+        if (is(/discord/)) return mk("discord", "#5865f2", "Discord", "soc_discord");
+        if (is(/instagram/)) return mk("insta", "#c13584", "Instagram", "soc_instagram");
+        if (/(^|\.)(x|twitter)\.com$/.test(host) || /^(x|twitter)$/.test(L)) return mk("x", "#25232f", "X", "soc_x");
+        if (is(/steam/)) return mk("steam", "#1b2838", "Steam", "soc_steam");
+        if (is(/twitch/)) return mk("twitch", "#9146ff", "Twitch", "soc_twitch");
+        if (is(/bsky|bluesky/)) return mk("bsky", "#1185fe", "Bluesky", "soc_bsky");
+        return { ic: "link", x: "#2a2a34", name: label || host, desc: label ? host : "" };
+    }
+    // Community-/Discord-Link aus dem CMS – nur, wenn wirklich ein externer Link eingetragen ist
+    // (ein Platzhalter auf die eigene Website wird ignoriert).
+    function communityLink(s) {
+        const c = (s && s.community) || {};
+        if (c.enabled === false) return null;
+        const url = String(c.url || "").trim();
+        if (!/^https?:\/\//i.test(url)) return null;
+        let host = "";
+        try { host = new URL(url).hostname.replace(/^www\./, "").toLowerCase(); } catch { return null; }
+        const own = location.hostname.replace(/^www\./, "").toLowerCase();
+        if (!host || host === own || /(^|\.)planigames\.(com|de)$/.test(host)) return null;
+        return { url, label: c.buttonLabel || "Discord", host };
+    }
+    // Alle Kanäle für „Folge uns" und Footer: Social Links + Discord (ohne Dubletten)
+    function channels(s) {
+        const out = [], seen = new Set();
+        const add = (label, url) => {
+            url = String(url || "").trim();
+            if (!url || url === "#" || !/^(https?:)?\/\//i.test(url)) return;
+            const key = url.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/+$/, "").toLowerCase();
+            if (seen.has(key)) return; seen.add(key);
+            out.push({ url, ...channelOf(label, url) });
+        };
+        ((s && s.socials) || []).forEach(x => x && add(x.label, x.url));
+        const c = communityLink(s);
+        if (c && !out.some(o => o.ic === "discord" && /discord/.test(c.host))) add(/discord/.test(c.host) ? "Discord" : c.label, c.url);
+        return out;
+    }
+    // Hauptbutton der Kopfzeile: Playtest des aktuellen Projekts (falls es eine Warteliste hat), sonst Spiele
+    function headerCta() {
+        const games = (DATA.games && DATA.games.games) || [];
+        const f = games.find(g => g && g.featured);
+        const wl = f && (f.blocks || []).some(b => b && b.type === "waitlist" && !b.hidden);
+        return wl ? { href: `game.php?slug=${encodeURIComponent(f.slug)}#warteliste`, label: t("cta_playtest") }
+                  : { href: "games.html", label: t("cta_discover") };
+    }
+    // Seiten mit eigenem „Bleib dran"-Block (Newsletter + Kanäle) über dem Footer
+    const STAY_PAGES = ["games", "devlog", "contact", "presskit"];
+
     function injectChrome() {
-        // Pflicht-Effekte oben einsetzen (falls noch nicht vorhanden)
-        if (!$("#scroll-progress")) {
+        // Hintergrund-Effekte (im Admin unter „Hintergrund & Atmosphäre" steuerbar) einmalig einsetzen
+        if (!$("#fx-layer")) {
             document.body.insertAdjacentHTML("afterbegin", `
-                <div id="scroll-progress"></div>
-                <div id="cursor-ring"></div><div id="cursor-dot"></div>
                 <div class="glow-blob glow-1" style="top:-12%;left:-12%;width:55vw;height:55vw;background:color-mix(in srgb,var(--accent) 13%,transparent)"></div>
                 <div class="glow-blob glow-2" style="bottom:-12%;right:-12%;width:50vw;height:50vw;background:color-mix(in srgb,var(--accent-2) 11%,transparent)"></div>
                 <div id="fx-layer"></div>`);
         }
+        const cta = headerCta();
+        const ctaHTML = (cls) => `<a href="${esc(cta.href)}" class="pg-btn pg-btn-p ${cls}" data-hd-cta>${esc(cta.label)}</a>`;
+        const tipHTML = (cls) => `<a href="#" class="pg-btn pg-btn-s ${cls}" data-tipjar-slot target="_blank" rel="noopener" hidden>${t("support")}</a>`;
 
         const headerMount = $("[data-shell='header']");
         if (headerMount) headerMount.outerHTML = `
-            <header id="site-header" class="fixed top-0 left-0 w-full z-50">
-                <div class="max-w-[95%] mx-auto h-20 flex items-center justify-between">
-                    <a href="index.html" class="group" aria-label="PLANIGAMES Start">
-                        <span data-brand="sm" class="flex items-center gap-3">${brandHTML("sm")}</span>
-                    </a>
-                    <nav class="hidden md:flex items-center gap-9 font-medium text-sm">${navLinks()}</nav>
-                    <div class="hidden md:flex items-center gap-3">
+            <header id="site-header" class="pg-hd">
+                <div class="pg-wrap pg-hd-in">
+                    <a href="index.html" class="pg-brand" data-brand="sm" aria-label="${esc((DATA.studio && DATA.studio.name) || "PLANIGAMES")} – ${t("home_label")}">${brandHTML("sm")}</a>
+                    <nav class="pg-nav" aria-label="Hauptmenü">${navLinks()}</nav>
+                    <div class="pg-hd-r">
                         ${langSwitch()}
-                        <a href="games.html" class="btn-accent magnetic px-5 py-2.5 rounded-full text-sm font-semibold">${t("cta_discover")}</a>
+                        ${tipHTML("pg-btn-sm")}
+                        ${ctaHTML("pg-btn-sm")}
+                        <button id="menu-toggle" class="pg-burger" type="button" aria-label="${t("menu_open")}" aria-expanded="false" aria-controls="mobile-menu"><i></i><i></i><i></i></button>
                     </div>
-                    <button id="menu-toggle" class="burger md:hidden" aria-label="Menü öffnen" aria-expanded="false">
-                        <span></span><span></span><span></span>
-                    </button>
                 </div>
             </header>
-            <div id="mobile-menu" class="mobile-menu md:hidden" aria-hidden="true">
-                <nav class="mm-nav">
-                    ${mobileNavLinks()}
-                    <a href="rechtliches.html?doc=impressum" class="mm-sub" style="--i:5">${t("foot_impressum")}</a>
-                    <div class="mm-actions" style="--i:6">
-                        <a href="games.html" class="btn-accent magnetic px-7 py-3.5 rounded-full text-base font-semibold">${t("cta_discover")}</a>
-                        ${langSwitch()}
-                    </div>
-                </nav>
+            <div id="mobile-menu" class="pg-mn" aria-hidden="true">
+                <nav class="pg-mn-nav" aria-label="Menü">${mobileNavLinks()}</nav>
+                <div class="pg-mn-foot">
+                    <div class="pg-mn-row">${ctaHTML("")}${tipHTML("")}</div>
+                    ${langSwitch()}
+                </div>
             </div>`;
 
-        const footerMount = $("[data-shell='footer']");
-        if (footerMount) footerMount.outerHTML = `
-            <footer id="kontakt" class="relative border-t border-white/10 mt-10">
-                <div class="max-w-6xl mx-auto px-6 py-20">
-                    <div class="grid md:grid-cols-[1.5fr_1fr_1fr] gap-12">
-                        <div>
-                            <a href="index.html" data-brand="lg" class="flex items-center gap-3 mb-5">${brandHTML("lg")}
-                            </a>
-                            <p class="text-zinc-400 max-w-sm leading-relaxed" data-studio="footerNote">Ein unabhängiges Indie-Spielestudio. Wir bauen Welten, die wackeln, zaubern und im Kopf bleiben.</p>
-                            <form action="subscribe.php" method="POST" data-newsletter data-source="footer" class="mt-7 flex max-w-sm gap-2">
-                                <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
-                                <input type="hidden" name="source" value="footer">
-                                <input type="email" name="email" required placeholder="deine@mail.de" data-nl-input class="flex-1 bg-white/[0.04] border border-white/12 rounded-full px-5 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-[color:var(--accent)] outline-none">
-                                <button class="btn-accent magnetic px-5 py-3 rounded-full text-sm font-semibold shrink-0">${t("foot_newsletter_btn")}</button>
-                            </form>
-                            <p class="text-[11px] text-zinc-600 mt-2">${t("foot_newsletter_note")}</p>
-                        </div>
-                        <div>
-                            <div class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 mb-5">${t("foot_discover")}</div>
-                            <ul class="space-y-3 text-zinc-300">
-                                <li><a href="games.html" class="hover:text-white">${t("foot_allgames")}</a></li>
-                                <li><a href="devlog.php" class="hover:text-white">${t("foot_devlog")}</a></li>
-                                <li><a href="index.html#studio" class="hover:text-white">${t("foot_about")}</a></li>
-                                <li data-foot-press hidden><a href="presse.html" class="hover:text-white">${t("presskit")}</a></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <div class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 mb-5">${t("foot_contact")}</div>
-                            <ul class="space-y-3 text-zinc-300">
-                                <li><a href="mailto:hello.dominicmajewski@gmail.com" class="hover:text-white" data-studio="email">hello.dominicmajewski@gmail.com</a></li>
-                                <li class="flex gap-4 pt-2 text-zinc-400" data-studio="socials"></li>
-                            </ul>
-                        </div>
+        const page = document.body.dataset.page || "";
+        const nlSrc = page || "footer";
+        const stayHTML = STAY_PAGES.includes(page) ? `
+            <section class="pg-stay-sec" data-newsletter-section>
+                <div class="pg-wrap"><div class="pg-stay">
+                    <div class="pg-stay-main">
+                        <span class="pg-kicker">${t("nl_kicker")}</span>
+                        <h2 class="pg-h2" data-nl="heading">Sei dabei, bevor die Magie startet.</h2>
+                        <p class="pg-lead" data-nl="text">Trag dich ein und erfahre als Erste*r von Release-Terminen, Demos und großen Updates.</p>
+                        <form action="subscribe.php" method="POST" data-newsletter data-source="${esc(nlSrc)}" class="pg-nl">
+                            <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="pg-hp">
+                            <input type="hidden" name="source" value="${esc(nlSrc)}">
+                            <label class="pg-sr" for="pg-nl-mail">${t("nl_email_label")}</label>
+                            <input id="pg-nl-mail" type="email" name="email" required autocomplete="email" placeholder="deine@mail.de" data-nl-input>
+                            <button class="pg-btn pg-btn-p" data-nl="button">${t("foot_newsletter_btn")}</button>
+                        </form>
+                        <p class="pg-fine">${t("foot_newsletter_note")}</p>
                     </div>
-                    <div class="mt-16 pt-8 border-t border-white/8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-600">
-                        <div>© <span data-year></span> PLANIGAMES — ${t("foot_rights")}</div>
-                        <div class="flex items-center gap-5">
-                            <a href="rechtliches.html?doc=impressum" class="hover:text-white">${t("foot_impressum")}</a>
-                            <a href="rechtliches.html?doc=datenschutz" class="hover:text-white">${t("foot_datenschutz")}</a>
-                            <a href="#" data-cookie-open class="hover:text-white">${t("cookie_settings")}</a>
-                            <a href="admin/" class="hover:text-white inline-flex items-center gap-1" title="Zum Dashboard">🔒 Admin</a>
+                    <div class="pg-stay-side">
+                        <h3>${t("follow_h")}</h3>
+                        <p>${t("follow_sub")}</p>
+                        <div class="pg-soc" data-foot-channels></div>
+                    </div>
+                </div></div>
+            </section>` : "";
+
+        const footerMount = $("[data-shell='footer']");
+        if (footerMount) footerMount.outerHTML = `${stayHTML}
+            <footer id="kontakt" class="pg-ft">
+                <div class="pg-wrap">
+                    <div class="pg-ft-top">
+                        <div class="pg-ft-brand">
+                            <a href="index.html" class="pg-brand pg-brand-lg" data-brand="lg" aria-label="${t("home_label")}">${brandHTML("lg")}</a>
+                            <p data-studio="footerNote">Ein unabhängiges Indie-Spielestudio. Wir bauen Welten, die wackeln, zaubern und im Kopf bleiben.</p>
                         </div>
-                        <div class="font-mono uppercase tracking-widest">${t("foot_made")}</div>
+                        <div class="pg-ft-col"><b>${t("foot_games")}</b>
+                            <ul data-foot-games><li><a href="games.html">${t("foot_allgames")}</a></li></ul></div>
+                        <div class="pg-ft-col"><b>${t("foot_studio")}</b>
+                            <ul>
+                                <li><a href="index.html#studio">${t("foot_about_short")}</a></li>
+                                <li><a href="devlog.php">${t("foot_devlog")}</a></li>
+                                <li data-foot-press hidden><a href="presse.html">${t("presskit")}</a></li>
+                                <li data-tipjar-li hidden><a href="#" data-tipjar-slot target="_blank" rel="noopener">${t("support")}</a></li>
+                            </ul></div>
+                        <div class="pg-ft-col"><b>${t("foot_contact_h")}</b>
+                            <ul data-foot-contact><li><a href="kontakt.html">${t("foot_form")}</a></li></ul></div>
+                    </div>
+                    <div class="pg-ft-bot">
+                        <span>© <span data-year></span> PLANIGAMES · ${t("foot_made")}</span>
+                        <span class="pg-ft-links">
+                            <a href="rechtliches.html?doc=impressum">${t("foot_impressum")}</a>
+                            <a href="rechtliches.html?doc=datenschutz">${t("foot_datenschutz")}</a>
+                            <a href="#" data-cookie-open>${t("cookie_settings")}</a>
+                            <a href="admin/" title="Zum Dashboard">🔒 Admin</a>
+                        </span>
                     </div>
                 </div>
             </footer>`;
+        fitBrand();
     }
 
     function fillStudioFooter() {
         const s = DATA.studio;
         if (!s) return;
-        // Eigenes Logo-Bild (falls im CMS hinterlegt) ersetzt die Wortmarke überall
-        if (s.logo) {
-            $$("[data-brand]").forEach(el => {
-                const lg = el.dataset.brand === "lg";
-                el.innerHTML = `<img src="${esc(s.logo)}" alt="${esc(s.name || "PLANIGAMES")}" class="${lg ? "h-9 md:h-10" : "h-7 md:h-8"} w-auto object-contain">`;
-            });
-        }
+        // Marke (Logo-Zeichen + Schriftzug) mit den geladenen Studio-Daten neu setzen
+        $$("[data-brand]").forEach(el => { el.innerHTML = brandHTML(el.dataset.brand); });
+        fitBrand();
         if (s.footerNote) setText("[data-studio='footerNote']", s.footerNote);
-        if (s.email) {
-            setText("[data-studio='email']", s.email);
-            $$("[data-studio='email']").forEach(el => el.tagName === "A" && (el.href = "mailto:" + s.email));
-        }
-        const soc = $("[data-studio='socials']");
-        if (soc && Array.isArray(s.socials)) {
-            soc.innerHTML = s.socials.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener" class="hover:text-white">${esc(x.label)}</a>`).join("");
+        // Spiele-Spalte
+        const games = (DATA.games && DATA.games.games) || [];
+        const gl = $("[data-foot-games]");
+        if (gl && games.length) gl.innerHTML = games.map(g => `<li><a href="game.php?slug=${encodeURIComponent(g.slug || "")}">${esc(g.title || g.slug || "")}</a></li>`).join("");
+        // Kontakt-Spalte + „Folge uns"-Kanäle (Social Links + Discord)
+        const ch = channels(s);
+        const cl = $("[data-foot-contact]");
+        if (cl) cl.innerHTML = (s.email ? `<li><a href="mailto:${esc(s.email)}" data-studio="email">${esc(s.email)}</a></li>` : "")
+            + `<li><a href="kontakt.html">${t("foot_form")}</a></li>`
+            + ch.map(c => `<li><a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.name)}</a></li>`).join("");
+        const fl = $("[data-foot-channels]");
+        if (fl) {
+            if (ch.length) {
+                fl.innerHTML = ch.map(c => `<a href="${esc(c.url)}" target="_blank" rel="noopener"><span class="pg-si" style="--x:${c.x}">${pgIc(c.ic)}</span>`
+                    + `<span><b>${esc(c.name)}</b>${c.desc ? `<small>${esc(c.desc)}</small>` : ""}</span>${pgIc("ext")}</a>`).join("");
+            } else {
+                fl.closest(".pg-stay-side")?.remove();
+                $(".pg-stay")?.classList.add("solo");
+            }
         }
         // Press-Kit-Link im Footer nur zeigen, wenn aktiviert
         if (!s.presskit || s.presskit.enabled !== false) $$("[data-foot-press]").forEach(el => el.hidden = false);
@@ -2654,6 +2785,13 @@
     function initTipJar() {
         const tj = (DATA.studio && DATA.studio.tipjar) || {};
         if (!tj.enabled || !tj.url || tj.url === "#") return;
+        // v7: „Unterstützen" sitzt in Kopfzeile, Handy-Menü und Footer – kein schwebender Button mehr
+        const slots = $$("[data-tipjar-slot]");
+        if (slots.length) {
+            const label = tj.label || t("support");
+            slots.forEach(el => { el.href = tj.url; el.textContent = label; el.hidden = false; el.closest("[data-tipjar-li]")?.removeAttribute("hidden"); });
+            return;
+        }
         const a = document.createElement("a");
         a.className = "pg-tipjar";
         a.href = tj.url; a.target = "_blank"; a.rel = "noopener";
@@ -2709,7 +2847,7 @@
         const ov = document.createElement("div");
         ov.id = "pg-member-modal"; ov.className = "pg-modal";
         ov.innerHTML = `<div class="pg-modal-box"><button class="pg-modal-x" data-mm-close aria-label="Schließen">✕</button>
-            <h3 style="font-family:'Clash Display','Archivo',sans-serif;font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:.3rem">🏆 ${LANG === "en" ? "Your badges" : "Deine Abzeichen"}</h3>
+            <h3 style="font-family:'Montserrat',sans-serif;font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:.3rem">🏆 ${LANG === "en" ? "Your badges" : "Deine Abzeichen"}</h3>
             <p class="text-zinc-400" style="font-size:.88rem;margin-bottom:1.2rem">${Object.keys(earned).length}/${BADGES.length} ${LANG === "en" ? "unlocked — earned by engaging with the site." : "freigeschaltet – durch Mitmachen auf der Seite."}</p>
             <div class="pg-badge-grid">${BADGES.map(b => {
                 const got = !!earned[b.id];
@@ -2734,7 +2872,7 @@
 
     async function boot() {
         document.documentElement.lang = LANG;
-        await loadData("studio");   // früh laden (Hintergrund-Effekt braucht die Config)
+        await loadData("studio", "games");   // früh laden (Hintergrund-Effekt, Kopfzeilen-Button, Footer-Spieleliste)
         const fx = (DATA.studio && DATA.studio.background && DATA.studio.background.effect) || "particles";
         const fxClass = { particles: "fx-particles", particles_only: "fx-particles-only", glow: "fx-glow", off: "fx-off" }[fx] || "fx-particles";
         document.body.classList.add(fxClass);
