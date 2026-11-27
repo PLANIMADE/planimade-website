@@ -49,17 +49,18 @@ bewusst gesetzte Charme-Schicht.** v1 und v2 liegen im Git-Verlauf bzw. als `pro
 **Charme (v3) – jeweils an einer bestimmten Stelle statt überall:**
 - **Eure Schrift:** Clash Display für Überschriften (wie auf der Live-Seite), Archivo für Text und Beschriftungen.
 - **Freundliche Formen:** runde Ecken, Pillen-Buttons, abgerundete Bild-Bühnen.
-- **Eure Gesichter:** Team in Farbe mit Sprüchen und Orten – und der Zauberer (euer Maskottchen) als Vierter im Team.
+- **Eure Gesichter:** Team in Farbe mit Sprüchen und Orten.
 - **Eure Stimme:** Laufband „Original Worlds ✦ Handcrafted ✦ Indie & Proud ✦ Unreal Engine <3“, Werte mit
   Augenzwinkern, ein Spruch im Steckbrief jedes Spiels („Wege zu scheitern: ∞“, „Untote: Jap, auch die“),
   „Sag Hallo!“, „Mit 🧡 und zu viel Koffein gemacht“.
 - **Zwei Sticker:** „Indie & Proud“ und „Playtest offen!“.
 - **Spielereien wie in einem Spiel:** Glut im Startbild (in der Farbe des aktiven Spiels), „Wobbly Wizards“ wackelt
-  beim Drüberfahren, der Zauberer schaut mit Wackelaugen über den Footer und redet beim Anstupsen, Erfolge 🏆 mit
-  Konfetti, Konami-Code (↑↑↓↓←→←→BA, am Handy 5× aufs Logo) → Zauberer-Modus.
+  beim Drüberfahren, Erfolge 🏆 mit Konfetti.
 
-Maskottchen, Erfolge, Konami-Code, Glut-Partikel und Laufband gibt es auf der Live-Seite schon – v3 setzt sie
-gezielt ein, statt sie über den Inhalt schweben zu lassen.
+Erfolge, Glut-Partikel und Laufband gibt es auf der Live-Seite schon – v3 setzt sie gezielt ein, statt sie über
+den Inhalt schweben zu lassen. Maskottchen und Zauberer-Funktionen sind auf Wunsch komplett raus (werden nicht genutzt).
+
+**Stand:** v3 gefällt nicht („Ich mag das Design nicht“) – die Richtung für den nächsten Entwurf wird gerade abgestimmt.
 
 ## Was im Admin dazukäme (bestehende Daten bleiben gültig)
 
@@ -67,7 +68,7 @@ gezielt ein, statt sie über den Inhalt schweben zu lassen.
 - Spiel-Steckbrief (optional): Spieler, Plattform, Genre – ohne Angaben wird die Leiste ausgeblendet.
 - „Im Fokus“ auf der Startseite: Spiel + Bild wählbar.
 - Kopfzeilen-Link „Playtest“: Text + Ziel wählbar.
-- Steckbrief-Felder frei benennbar (für den Spruch je Spiel) · Sticker-Texte · Maskottchen als Team-Karte an/aus.
+- Steckbrief-Felder frei benennbar (für den Spruch je Spiel) · Sticker-Texte.
 - Studio-Kennzahlen optional (sonst automatisch aus Gründungsjahr, Spielen und Team).
 - Video-Block: mehrere Videos mit Vorschaubild und Titel.
 
@@ -85,6 +86,5 @@ Roadmap, Warteliste, Vorschläge, FAQ und Devlog nutzen die vorhandenen Daten.
 ## Offene Fragen
 
 - Passt die Mischung aus Ruhe und Charme – lieber mehr oder weniger Spielerei?
-- Darf der Zauberer als „Vierter im Team“ auftauchen – und hat er einen Namen?
 - Kopfzeile: „● Playtest“-Link fest oder im Admin wählbar?
 - Gibt es einen Discord-Link?

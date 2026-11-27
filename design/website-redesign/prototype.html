@@ -14,7 +14,7 @@
    PLANIGAMES – Probedesign v3 „Ruhe, Wucht & Charme“
    Struktur (aus v2): 1 Raster (12 Spalten, Inhalt ab Spalte 4) · Linien statt Kästen · Bild – Ruhe – Bild
    Schrift: Clash Display (Studio-Schrift) für Überschriften, Archivo für Text & Beschriftungen
-   Charme an ausgewählten Stellen: Sprüche, Gesichter, Zauberer, Sticker, Glut, Erfolge, Geheim-Code
+   Charme an ausgewählten Stellen: Sprüche, Gesichter, Sticker, Glut, Erfolge
    ===================================================================== */
 :root{
   color-scheme:dark;
@@ -183,7 +183,7 @@ button.lnk{border:0;cursor:pointer}
 .vals .lab{padding-top:5px}
 .vals .h3{margin-bottom:4px}
 .vals p{font-size:15.5px;line-height:1.5}
-.team{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:40px var(--col)}
+.team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px var(--col)}
 .team-sec{margin-top:clamp(72px,8vw,120px)}
 .tm figure{position:relative;aspect-ratio:4/5;overflow:hidden;background:var(--bg2);border-radius:var(--r);margin-bottom:18px;transition:transform .6s var(--ease),box-shadow .6s}
 .tm:nth-child(odd):hover figure{transform:rotate(-2.2deg) translateY(-6px);box-shadow:0 24px 50px -20px rgba(0,0,0,.8)}
@@ -192,18 +192,6 @@ button.lnk{border:0;cursor:pointer}
 .tm .lab{margin-top:6px}
 .tm .q{margin-top:12px;font-size:15px;line-height:1.45;color:var(--ink)}
 .tm .loc{margin-top:6px;font-size:13px;color:var(--ink3)}
-.tm-wz figure{display:flex;align-items:flex-end;justify-content:center;background:radial-gradient(120% 90% at 50% 28%,#ff9a3c 0%,#d9480f 46%,#2a0f05 100%);cursor:pointer}
-.tm-wz .wz{width:74%;margin-bottom:-6%}
-
-/* Der Zauberer (Maskottchen der Live-Seite) mit Wackelaugen, die dem Mauszeiger folgen */
-.wz{position:relative;display:block;aspect-ratio:949/1491;transition:transform .5s var(--ease)}
-.wz img{width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;pointer-events:none}
-.eye{position:absolute;width:6%;aspect-ratio:1;margin:-3% 0 0 -3%;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.3),inset 0 -2px 3px rgba(0,0,0,.18)}
-.eye b{position:absolute;left:26%;top:26%;width:48%;height:48%;border-radius:50%;background:#111;transform:translate(var(--ex,0px),var(--ey,0px));transition:transform .12s linear}
-.wiggle{animation:wiggle .7s var(--ease)}
-@keyframes wiggle{20%{transform:rotate(-8deg)}45%{transform:rotate(7deg)}70%{transform:rotate(-4deg)}}
-.spin{animation:spin .9s var(--ease)}
-@keyframes spin{to{transform:rotate(360deg)}}
 
 /* ---------- Bild-Bühnen ---------- */
 .band-w{position:relative}
@@ -261,13 +249,6 @@ button.lnk{border:0;cursor:pointer}
 .ft-bot{display:flex;justify-content:space-between;gap:16px;padding-top:22px;padding-bottom:calc(26px + env(safe-area-inset-bottom,0px));font-size:13px;color:var(--ink3)}
 .ft-bot span:last-child{display:flex;gap:24px}
 .ft-bot a:hover{color:var(--ink)}
-/* Der Zauberer schaut über die Kante des Footers */
-.peek{--pw:clamp(92px,8.6vw,124px);position:absolute;right:clamp(28px,11vw,190px);bottom:100%;width:var(--pw);height:calc(var(--pw) * .62);padding:0;border:0;background:none;cursor:pointer}
-.peek-clip{position:absolute;inset:0;clip-path:inset(-300% -100% 0 -100%)}
-.peek .wz{position:absolute;left:0;top:0;width:100%;transform:translateY(7%);transition:transform .55s var(--ease)}
-.peek:hover .wz,.peek.talk .wz{transform:translateY(-9%)}
-.bubble{position:absolute;right:calc(100% + 6px);bottom:46%;padding:10px 14px;border-radius:16px 16px 4px 16px;background:var(--ink);color:var(--bg);font-size:14px;font-weight:600;line-height:1.3;white-space:nowrap;opacity:0;transform:translateY(6px) scale(.96);transform-origin:right bottom;transition:opacity .3s,transform .4s var(--ease);pointer-events:none}
-.peek:hover .bubble,.peek:focus-visible .bubble,.peek.talk .bubble{opacity:1;transform:none}
 
 /* ---------- Seitenköpfe ---------- */
 .ph{padding-top:clamp(140px,19vh,210px);padding-bottom:clamp(56px,7vw,104px)}
@@ -429,11 +410,6 @@ textarea::placeholder{color:var(--ink3)}
 .tro-list small{display:block;font-size:12px;color:var(--ink3)}
 .tro-list button{margin-top:6px;justify-self:start;padding:6px 10px;border:0;background:none;color:var(--ink3);font-size:12px;cursor:pointer;text-decoration:underline}
 .cf{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:250}
-/* Zauberer-Modus (Konami-Code oder 5× aufs Logo) */
-body.wizard{--acc:#b26bff;--acc2:#d9b3ff}
-body.wizard img{filter:hue-rotate(235deg) saturate(1.25)}
-body.wizard .wz img{filter:none}
-body.wizard .embers i{background:#c58bff;box-shadow:0 0 12px 3px #b26bff}
 
 /* ---------- Probedesign-Menü ---------- */
 .pv{position:fixed;z-index:90;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px))}
@@ -443,7 +419,6 @@ body.wizard .embers i{background:#c58bff;box-shadow:0 0 12px 3px #b26bff}
 .pv-list a{padding:9px 10px;border-radius:8px;font-size:15px;color:var(--ink2)}
 .pv-list a:hover{color:var(--ink)}
 .pv-list a.on{color:var(--ink);background:rgba(242,239,233,.07)}
-.pv-list .hint{padding:10px 10px 4px;font-size:12px;line-height:1.45;color:var(--ink3);border-top:1px solid var(--line);margin-top:6px}
 
 /* ---------- Einblenden (nur Bewegung, Inhalte sind immer sichtbar) ---------- */
 #app.enter{animation:enter .8s var(--ease)}
@@ -464,7 +439,6 @@ body.wizard .embers i{background:#c58bff;box-shadow:0 0 12px 3px #b26bff}
   .nav{gap:24px} .hd-in{gap:28px}
   .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cards > :nth-child(3){display:none}
-  .team{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:900px){
   .nav,.live,.hd .lang{display:none}
@@ -508,7 +482,9 @@ body.wizard .embers i{background:#c58bff;box-shadow:0 0 12px 3px #b26bff}
   .st .stk{display:table;margin:14px 0 0;transform:rotate(var(--rot))}
   .cards{grid-template-columns:1fr;gap:36px}
   .cards > :nth-child(3){display:block}
-  .team{gap:28px 14px}
+  .team{grid-template-columns:1fr;gap:22px}
+  .tm{display:grid;grid-template-columns:104px minmax(0,1fr);column-gap:16px;align-content:start}
+  .tm figure{grid-row:1/6;margin:0}
   .tm .q{font-size:14px}
   .feats li{grid-template-columns:40px minmax(0,1fr);row-gap:6px}
   .feats p{grid-column:2}
@@ -529,7 +505,6 @@ body.wizard .embers i{background:#c58bff;box-shadow:0 0 12px 3px #b26bff}
   .prow figure{grid-column:1;grid-row:2}
   .prow-t{grid-row:3}
   .ft-bot{flex-direction:column}
-  .peek{right:22px}
   .pv{top:calc(env(safe-area-inset-top,0px) + 14px);bottom:auto;right:60px}
   .pv summary{padding:0 13px}
   .pv-t{display:none}
@@ -543,7 +518,7 @@ body.wizard .embers i{background:#c58bff;box-shadow:0 0 12px 3px #b26bff}
 
 <header class="hd" id="hd">
   <div class="wrap hd-in">
-    <a class="brand" href="#start" aria-label="PLANIGAMES – Startseite" data-brand><span data-mark="28"></span><span class="wm">PLANIGAMES</span></a>
+    <a class="brand" href="#start" aria-label="PLANIGAMES – Startseite"><span data-mark="28"></span><span class="wm">PLANIGAMES</span></a>
     <nav class="nav" aria-label="Hauptmenü">
       <a href="#spiele" data-nav="games">Spiele</a>
       <a href="#start" data-sec="studio" data-nav="studio">Studio</a>
@@ -578,7 +553,6 @@ body.wizard .embers i{background:#c58bff;box-shadow:0 0 12px 3px #b26bff}
     <a href="#wobbly-wizards" data-pv="wobbly-wizards">Wobbly Wizards</a>
     <a href="#devlog" data-pv="devlog">Devlog</a>
     <a href="#frontliners-devlog-2" data-pv="post">Devlog-Beitrag</a>
-    <p class="hint">Psst: Erfolge freischalten, den Zauberer anstupsen – und der Konami-Code (↑↑↓↓←→←→BA) bzw. 5× aufs Logo tippen.</p>
   </div>
 </details>
 
@@ -636,9 +610,6 @@ const TEAM = [
   { n: "Niklas Kalde", r: "Gründer · Code & Sales", p: "/media/img-8077.jpeg", q: "Koffein reicht nicht mehr aus.", l: "Wesseling" },
   { n: "Vincent Nowak", r: "Gründer · Code & Design", p: "/media/vincent.png#focus=42,51", q: "Ich liebe Formel Eins … Brumm Brumm.", l: "" },
 ];
-/* Maskottchen der Live-Seite (Bild + Augen-Position aus den Admin-Einstellungen) */
-const MASCOT = { n: "Der Zauberer", r: "Maskottchen · Chaos & Moral", p: "/media/maskottchen.png", q: "Ich wackle, also bin ich.", eyes: [[41, 26], [59, 26]],
-  lines: ["Psst … trag dich ein!", "Ich bin der Vierte im Team.", "Nicht so fest anstupsen!", "Wobble, wobble.", "Hast du schon alle Erfolge?"] };
 const ST = { announced: "Angekündigt", development: "In Entwicklung", paused: "Pausiert" };
 const GAMES = [
   { slug: "frontliners", title: "FRONTLINERS", status: "announced", acc: "#ff9d1a", genre: "Multiplayer-Shooter",
@@ -689,7 +660,7 @@ const POSTS = [
   { slug: "willkommen-im-devlog", d: "2026-06-01", g: "wobbly-wizards", t: "Willkommen im Devlog!", e: "Wir öffnen die Türen zur Werkstatt: ab jetzt teilen wir hier Fortschritt, Patch Notes und Blicke hinter die Kulissen.", i: "" },
 ];
 const BADGES = [["explorer", "🧭", "Entdecker*in", "5 Ansichten erkundet"], ["subscriber", "📬", "Eingeweiht", "Für Updates eingetragen"], ["ideator", "💡", "Ideengeber*in", "Eine Idee eingereicht"],
-  ["voter", "🗳️", "Wählerisch", "Für eine Idee abgestimmt"], ["wizard", "🧙", "Zauberer*in", "Den Geheim-Code gefunden"], ["friend", "🤝", "Maskottchen-Freund*in", "Den Zauberer 5× angestupst"]];
+  ["voter", "🗳️", "Wählerisch", "Für eine Idee abgestimmt"]];
 const G = (s) => GAMES.find((g) => g.slug === s);
 const P = (s) => POSTS.find((p) => p.slug === s);
 const gv = (g) => `--gacc:${g.acc}`;
@@ -721,9 +692,6 @@ function prose(src) {
 }
 
 /* =================== Bausteine =================== */
-function wizard() {
-  return `<span class="wz" data-wz><img src="${M(MASCOT.p)}" alt="" draggable="false">${MASCOT.eyes.map(([x, y]) => `<i class="eye" style="left:${x}%;top:${y}%"><b></b></i>`).join("")}</span>`;
-}
 function card(p) {
   const g = G(p.g);
   const fig = p.i ? `<img src="${M(p.i)}" alt="" loading="lazy" style="object-position:${focus(p.i)}">`
@@ -732,11 +700,10 @@ function card(p) {
 }
 function footer() {
   return `<footer class="ft">
-  <button class="peek" type="button" aria-label="Den Zauberer anstupsen" data-poke><span class="peek-clip">${wizard()}</span><span class="bubble" data-bubble>${esc(MASCOT.lines[0])}</span></button>
   <div class="wrap grid ft-cta">
     <h2 class="d2">Bleib dran.</h2>
     <div class="c-cta">
-      <p class="lead">Release-Termine, Playtests und neue Devlogs direkt in dein Postfach. Kein Spam – nur Updates und ab und zu ein wackeliger Zauberer.</p>
+      <p class="lead">Release-Termine, Playtests und neue Devlogs direkt in dein Postfach. Kein Spam, versprochen.</p>
       <form class="nl" data-fake data-badge="subscriber"><label class="sr" for="nl-mail">E-Mail-Adresse</label><input id="nl-mail" type="email" placeholder="deine@email.de" autocomplete="email" required><button type="submit">Eintragen${ic("arrow")}</button></form>
       <p class="ok" hidden>Fast geschafft – bitte bestätige die Mail in deinem Postfach. 🧡</p>
     </div>
@@ -780,8 +747,7 @@ function viewHome() {
   </div>
   <div class="wrap grid team-sec">
     <div class="c-lab"><p class="lab">Team</p></div>
-    <ul class="c-main team">${TEAM.map((m) => `<li class="tm rv"><figure><img src="${M(m.p)}" alt="${esc(m.n)}" loading="lazy" style="object-position:${focus(m.p)}"></figure><h3 class="h3">${esc(m.n)}</h3><p class="lab">${esc(m.r)}</p><p class="q">„${esc(m.q)}“</p>${m.l ? `<p class="loc">📍 ${esc(m.l)}</p>` : ""}</li>`).join("")}
-      <li class="tm tm-wz rv"><figure data-poke title="Anstupsen!">${wizard()}</figure><h3 class="h3">${esc(MASCOT.n)}</h3><p class="lab">${esc(MASCOT.r)}</p><p class="q">„${esc(MASCOT.q)}“</p><p class="loc">📍 überall, wo es wackelt</p></li></ul>
+    <ul class="c-main team">${TEAM.map((m) => `<li class="tm rv"><figure><img src="${M(m.p)}" alt="${esc(m.n)}" loading="lazy" style="object-position:${focus(m.p)}"></figure><h3 class="h3">${esc(m.n)}</h3><p class="lab">${esc(m.r)}</p><p class="q">„${esc(m.q)}“</p>${m.l ? `<p class="loc">📍 ${esc(m.l)}</p>` : ""}</li>`).join("")}</ul>
   </div>
 </section>
 
@@ -969,7 +935,7 @@ function viewPost(slug) {
 ${footer()}`;
 }
 
-/* =================== Charme: Konfetti, Erfolge, Zauberer =================== */
+/* =================== Charme: Konfetti & Erfolge =================== */
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 function confetti(x, y, n = 60) {
   if (reduced) return;
@@ -1010,41 +976,6 @@ function trophy() {
   el.open = open;
   el.querySelector("[data-reset]").addEventListener("click", () => { earned = {}; saveBadges(); trophy(); });
 }
-function wizardMode() {
-  const on = document.body.classList.toggle("wizard");
-  confetti(innerWidth / 2, innerHeight * .4, 150);
-  document.querySelectorAll("[data-wz]").forEach((w) => { w.classList.remove("spin"); void w.offsetWidth; w.classList.add("spin"); });
-  if (on && !earned.wizard) badge("wizard"); else toast("🧙", "Geheim-Code", on ? "Zauberer-Modus aktiviert!" : "Zauberer-Modus aus", "");
-}
-/* Wackelaugen folgen dem Mauszeiger */
-let eyeRaf = 0, px = innerWidth / 2, py = innerHeight / 2;
-function eyes() {
-  eyeRaf = 0;
-  document.querySelectorAll(".eye").forEach((e) => {
-    const r = e.getBoundingClientRect(); if (!r.width || r.bottom < 0 || r.top > innerHeight) return;
-    const dx = px - (r.left + r.width / 2), dy = py - (r.top + r.height / 2), d = Math.hypot(dx, dy) || 1, m = r.width * .26;
-    const k = Math.min(1, d / 120);
-    e.style.setProperty("--ex", (dx / d * m * k).toFixed(1) + "px"); e.style.setProperty("--ey", (dy / d * m * k).toFixed(1) + "px");
-  });
-}
-addEventListener("pointermove", (e) => { px = e.clientX; py = e.clientY; if (!eyeRaf) eyeRaf = requestAnimationFrame(eyes); }, { passive: true });
-/* Zauberer anstupsen: wackeln + Konfetti + Spruch; 5× = Pirouette + Erfolg */
-let pokes = 0, pokeTimer = null, line = 0;
-document.addEventListener("click", (e) => {
-  const t = e.target.closest("[data-poke]"); if (!t) return;
-  const w = t.querySelector("[data-wz]");
-  if (w) { w.classList.remove("wiggle"); void w.offsetWidth; w.classList.add("wiggle"); }
-  fromEl(t, 26);
-  const bub = t.querySelector("[data-bubble]");
-  if (bub) { line = (line + 1) % MASCOT.lines.length; bub.textContent = MASCOT.lines[line]; t.classList.add("talk"); clearTimeout(t._tk); t._tk = setTimeout(() => t.classList.remove("talk"), 2200); }
-  pokes++; clearTimeout(pokeTimer); pokeTimer = setTimeout(() => { pokes = 0; }, 1600);
-  if (pokes >= 5) { pokes = 0; if (w) { w.classList.remove("wiggle", "spin"); void w.offsetWidth; w.classList.add("spin"); } fromEl(t, 80); badge("friend"); }
-});
-/* Geheim-Code: Konami (↑↑↓↓←→←→BA) – am Handy 5× aufs Logo tippen */
-const KS = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"]; let ki = 0;
-addEventListener("keydown", (e) => { const k = (e.key || "").toLowerCase(); if (k === KS[ki]) { if (++ki === KS.length) { ki = 0; wizardMode(); } } else ki = k === KS[0] ? 1 : 0; });
-let taps = 0, tapTimer = null;
-document.querySelector("[data-brand]").addEventListener("click", () => { taps++; clearTimeout(tapTimer); tapTimer = setTimeout(() => { taps = 0; }, 1500); if (taps >= 5) { taps = 0; wizardMode(); } });
 
 /* =================== Verhalten =================== */
 const app = document.getElementById("app"), hd = document.getElementById("hd"), pv = document.getElementById("pv");
@@ -1130,7 +1061,7 @@ function route() {
   document.querySelectorAll("[data-nav]").forEach((n) => n.classList.toggle("on", n.dataset.nav === navKey));
   document.querySelectorAll("[data-pv]").forEach((n) => n.classList.toggle("on", n.dataset.pv === view));
   pv.open = false; setMenu(false);
-  marks(); wire(); hx(); reveals(); par(); eyes();
+  marks(); wire(); hx(); reveals(); par();
   const sec = pendingSec; pendingSec = null;
   app.classList.remove("enter");
   if (!reduced && !sec) { void app.offsetWidth; app.classList.add("enter"); }   // bei Sprüngen zu Abschnitten kein Gleiten (Ziel bleibt exakt)
@@ -1151,7 +1082,7 @@ mn.addEventListener("click", (e) => { if (e.target.closest("a")) setMenu(false);
 pv.addEventListener("click", (e) => { if (e.target.closest("a")) pv.open = false; });
 addEventListener("keydown", (e) => { if (e.key === "Escape") { setMenu(false); pv.open = false; const t = document.getElementById("tro"); if (t) t.open = false; } });
 let rafP = 0;
-addEventListener("scroll", () => { hd.classList.toggle("solid", scrollY > 24); if (!rafP) rafP = requestAnimationFrame(() => { rafP = 0; parTick(); }); if (!eyeRaf) eyeRaf = requestAnimationFrame(eyes); }, { passive: true });
+addEventListener("scroll", () => { hd.classList.toggle("solid", scrollY > 24); if (!rafP) rafP = requestAnimationFrame(() => { rafP = 0; parTick(); }); }, { passive: true });
 app.addEventListener("animationend", (e) => { if (e.target === app) app.classList.remove("enter"); });
 addEventListener("hashchange", route);
 trophy();
