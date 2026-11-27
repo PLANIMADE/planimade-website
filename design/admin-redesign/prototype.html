@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PLANIGAMES Admin · Redesign-Prototyp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   PLANIGAMES Admin — Redesign-Prototyp
+   Design-Tokens: dunkel, ruhig, Marke Orange als Signalfarbe
+   ========================================================= */
+:root{
+  --bg:#08080a; --bg-2:#0c0c0f;
+  --surface:#111114; --surface-2:#17171b; --surface-3:#1e1e23; --surface-4:#26262c;
+  --line:rgba(255,255,255,.065); --line-2:rgba(255,255,255,.11); --line-3:rgba(255,255,255,.18);
+  --text:#f3f3f6; --text-2:#b6b6c1; --text-3:#80808c; --text-4:#5a5a65;
+  --accent:#ff7d1a; --accent-2:#ffab3d; --accent-ink:#1d0e00;
+  --accent-soft:rgba(255,125,26,.12); --accent-line:rgba(255,125,26,.38);
+  --ok:#3ddc97; --ok-soft:rgba(61,220,151,.12);
+  --warn:#ffc53d; --warn-soft:rgba(255,197,61,.12);
+  --danger:#ff6b6b; --danger-soft:rgba(255,107,107,.12);
+  --info:#6ea8ff; --info-soft:rgba(110,168,255,.12);
+  --violet:#b197fc; --violet-soft:rgba(177,151,252,.12);
+  --r-xl:20px; --r-lg:16px; --r-md:12px; --r-sm:9px;
+  --shadow:0 1px 0 rgba(255,255,255,.035) inset, 0 24px 60px -28px rgba(0,0,0,.75);
+  --font:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --display:"Clash Display","Archivo",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --side-w:264px;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;min-height:100vh;color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;
+  background:
+    radial-gradient(1200px 600px at 12% -10%, rgba(255,125,26,.07), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(110,168,255,.035), transparent 60%),
+    var(--bg);
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--accent);color:var(--accent-ink)}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+input,select,textarea{font:inherit;color:inherit}
+.ic{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ic-fill{fill:currentColor;stroke:none}
+.mono{font-family:var(--mono)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* ---------- Sidebar ---------- */
+.side{
+  position:fixed;inset:0 auto 0 0;width:var(--side-w);z-index:50;
+  display:flex;flex-direction:column;padding:16px 14px 14px;
+  background:linear-gradient(180deg,rgba(14,14,17,.96),rgba(10,10,12,.98));
+  border-right:1px solid var(--line);overflow-y:auto;scrollbar-width:thin;
+}
+.brand{display:flex;align-items:center;gap:11px;padding:4px 8px 16px}
+.brand-mark{width:32px;height:32px;border-radius:10px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--accent-2),var(--accent));box-shadow:0 8px 24px -8px var(--accent)}
+.brand-mark i{width:11px;height:11px;background:#0b0b0d;transform:rotate(45deg);border-radius:2px}
+.brand-name{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.08em;line-height:1.1}
+.brand-name b{color:var(--accent);font-weight:600}
+.brand-sub{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-4);margin-top:2px}
+.side-search{display:flex;align-items:center;gap:9px;width:100%;padding:9px 11px;border-radius:11px;
+  background:var(--surface-2);border:1px solid var(--line);color:var(--text-3);font-size:13px;margin-bottom:6px}
+.side-search:hover{border-color:var(--line-2);color:var(--text-2)}
+kbd{font-family:var(--mono);font-size:10.5px;padding:2px 6px;border-radius:6px;background:var(--surface-3);border:1px solid var(--line-2);color:var(--text-3);margin-left:auto}
+.nav-group{margin-top:16px}
+.nav-label{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-4);padding:0 10px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;color:var(--text-2);
+  font-size:13.5px;font-weight:500;position:relative;transition:background .15s,color .15s}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:linear-gradient(90deg,rgba(255,125,26,.17),rgba(255,125,26,.035));color:var(--text)}
+.nav-item.active::before{content:"";position:absolute;left:-14px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+.nav-item.active .ic{color:var(--accent)}
+.nav-count{margin-left:auto;font-size:11px;font-family:var(--mono);background:var(--surface-3);color:var(--text-2);padding:1px 7px;border-radius:999px}
+.nav-count.hot{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.nav-tag{margin-left:auto;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--violet);border:1px solid rgba(177,151,252,.35);padding:1px 6px;border-radius:999px}
+.side-foot{margin-top:auto;padding-top:14px}
+.me{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;
+  background:linear-gradient(135deg,#2b2b33,#1c1c22);border:1px solid var(--line-2);color:var(--text)}
+.me-name{font-weight:600;font-size:13px}
+.me-role{font-size:11.5px;color:var(--text-3);display:flex;align-items:center;gap:5px}
+.dot-ok{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+
+/* ---------- Topbar ---------- */
+.main{margin-left:var(--side-w);min-height:100vh;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:40;height:62px;display:flex;align-items:center;gap:14px;padding:0 28px;
+  background:rgba(8,8,10,.74);backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);
+  border-bottom:1px solid var(--line)}
+.crumbs{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-3);min-width:0}
+.crumbs b{color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumbs .ic{width:14px;height:14px;opacity:.6}
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+.top-search{display:flex;align-items:center;gap:9px;padding:7px 10px 7px 12px;border-radius:10px;min-width:220px;
+  background:var(--surface);border:1px solid var(--line);color:var(--text-3);font-size:13px}
+.top-search:hover{border-color:var(--line-2)}
+.icon-btn{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;position:relative;
+  color:var(--text-2);border:1px solid transparent;transition:background .15s,border-color .15s}
+.icon-btn:hover{background:var(--surface-2);border-color:var(--line);color:var(--text)}
+.icon-btn .badge-dot{position:absolute;top:6px;right:6px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;
+  background:var(--accent);color:var(--accent-ink);font-size:10px;font-weight:800;display:grid;place-items:center;border:2px solid var(--bg)}
+.only-mobile{display:none}
+.proto-banner{display:flex;align-items:center;gap:8px;justify-content:center;padding:7px 16px;font-size:12px;color:var(--violet);
+  background:linear-gradient(90deg,transparent,rgba(177,151,252,.08),transparent);border-bottom:1px solid rgba(177,151,252,.12)}
+.page{padding:26px 28px 60px;width:100%;max-width:1480px;margin:0 auto}
+
+/* ---------- Buttons / Chips ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 15px;border-radius:11px;font-weight:600;font-size:13.5px;
+  background:var(--surface-2);border:1px solid var(--line-2);color:var(--text);transition:transform .12s var(--ease),background .15s,border-color .15s;white-space:nowrap}
+.btn:hover{background:var(--surface-3);border-color:var(--line-3)}
+.btn:active{transform:translateY(1px)}
+.btn .ic{width:16px;height:16px}
+.btn-primary{background:linear-gradient(110deg,var(--accent),var(--accent-2));color:var(--accent-ink);border-color:transparent;
+  box-shadow:0 10px 28px -12px var(--accent)}
+.btn-primary:hover{filter:brightness(1.07);background:linear-gradient(110deg,var(--accent),var(--accent-2));border-color:transparent}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--text-2)}
+.btn-ghost:hover{background:var(--surface-2);border-color:var(--line);color:var(--text)}
+.btn-danger{color:var(--danger);border-color:rgba(255,107,107,.3);background:var(--danger-soft)}
+.btn-sm{padding:6px 11px;font-size:12.5px;border-radius:9px}
+.btn-block{width:100%}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:600;
+  background:var(--surface-3);color:var(--text-2);border:1px solid var(--line);white-space:nowrap}
+.chip i{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.st-dev{color:#ffb35c;background:rgba(255,140,40,.12);border-color:rgba(255,140,40,.3)}
+.st-demo{color:var(--info);background:var(--info-soft);border-color:rgba(110,168,255,.3)}
+.st-rel{color:var(--ok);background:var(--ok-soft);border-color:rgba(61,220,151,.3)}
+.st-ann{color:var(--text-2)}
+.st-early{color:var(--violet);background:var(--violet-soft);border-color:rgba(177,151,252,.3)}
+.c-ok{color:var(--ok)} .c-warn{color:var(--warn)} .c-danger{color:var(--danger)} .c-info{color:var(--info)} .c-accent{color:var(--accent)} .c-violet{color:var(--violet)}
+
+/* ---------- Cards ---------- */
+.card{background:linear-gradient(180deg,rgba(20,20,24,.92),rgba(14,14,17,.92));border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow)}
+.card-h{display:flex;align-items:center;gap:10px;padding:16px 18px 6px}
+.card-t{font-size:13px;font-weight:600;color:var(--text-2);display:flex;align-items:center;gap:8px}
+.card-t .ic{width:16px;height:16px;color:var(--text-3)}
+.card-h .link{margin-left:auto;font-size:12.5px;color:var(--text-3);display:inline-flex;align-items:center;gap:4px}
+.card-h .link:hover{color:var(--accent)}
+.card-b{padding:8px 18px 18px}
+.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-3);font-weight:600}
+.h-display{font-family:var(--display);font-weight:600;letter-spacing:.005em;margin:0}
+.lead{color:var(--text-2);margin:6px 0 0;font-size:14.5px}
+.section-h{display:flex;align-items:center;gap:12px;margin:30px 0 12px}
+.section-h h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0}
+.section-h .link{margin-left:auto;font-size:13px;color:var(--text-3);display:inline-flex;align-items:center;gap:4px}
+.section-h .link:hover{color:var(--accent)}
+
+/* ---------- Cockpit ---------- */
+.hello{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+.hello h1{font-size:34px;line-height:1.1;margin-top:6px}
+.quick{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.cockpit-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px}
+.focus .todo{list-style:none;margin:0;padding:4px 8px 10px}
+.todo li{display:flex;align-items:center;gap:12px;padding:10px;border-radius:12px;transition:background .15s}
+.todo li:hover{background:var(--surface-2)}
+.todo-ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:none;border:1px solid var(--line)}
+.todo-ic .ic{width:17px;height:17px}
+.todo-t{font-weight:600;font-size:13.5px}
+.todo-m{font-size:12.5px;color:var(--text-3)}
+.todo .go{margin-left:auto}
+.focus-h{display:flex;align-items:center;gap:10px;padding:16px 18px 6px}
+.focus-h .count{font-family:var(--display);font-size:13px;background:var(--accent);color:var(--accent-ink);padding:1px 9px;border-radius:999px;font-weight:700}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.kpi{padding:16px 18px 12px;display:flex;flex-direction:column;gap:2px;position:relative;overflow:hidden}
+.kpi-l{font-size:12.5px;color:var(--text-3);font-weight:500;display:flex;align-items:center;gap:7px}
+.kpi-l .ic{width:15px;height:15px}
+.kpi-v{font-family:var(--display);font-size:30px;font-weight:600;letter-spacing:.01em;line-height:1.15;margin-top:6px}
+.delta{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;font-family:var(--font)}
+.delta.up{color:var(--ok);background:var(--ok-soft)}
+.delta.flat{color:var(--text-3);background:var(--surface-3)}
+.kpi-s{font-size:12px;color:var(--text-3)}
+.spark{width:100%;height:38px;margin-top:8px;display:block}
+.kpi .spark{margin-top:auto;padding-top:10px;height:62px}
+
+.games-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.gcard{position:relative;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--line);background:var(--surface);
+  display:flex;flex-direction:column;transition:transform .2s var(--ease),border-color .2s,box-shadow .2s}
+.gcard:hover{transform:translateY(-3px);border-color:var(--line-2);box-shadow:0 26px 50px -26px rgba(0,0,0,.9)}
+.gcard-media{position:relative;aspect-ratio:16/9;overflow:hidden;background:
+  radial-gradient(120% 120% at 20% 10%, color-mix(in srgb,var(--acc) 40%, transparent), transparent 60%), #141418}
+.gcard-media img.cv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease)}
+.gcard:hover .gcard-media img.cv{transform:scale(1.05)}
+.gcard-media::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(10,10,12,.92),rgba(10,10,12,.15) 55%,transparent)}
+.gcard-media .lg{position:absolute;left:14px;bottom:12px;max-height:44px;max-width:62%;object-fit:contain;z-index:2;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6))}
+.gcard-media .ttl{position:absolute;left:14px;bottom:12px;z-index:2;font-family:var(--display);font-weight:600;font-size:20px}
+.gcard-media .chip{position:absolute;top:12px;left:12px;z-index:2;backdrop-filter:blur(8px)}
+.gcard-media .star{position:absolute;top:12px;right:12px;z-index:2;color:var(--accent-2);font-size:11px;font-weight:700;letter-spacing:.06em;
+  background:rgba(0,0,0,.45);border:1px solid rgba(255,171,61,.35);padding:2px 8px;border-radius:999px;backdrop-filter:blur(8px)}
+.gcard-stats{display:grid;grid-template-columns:repeat(3,1fr);padding:12px 14px;gap:6px;border-bottom:1px solid var(--line)}
+.gcard-stats b{display:block;font-family:var(--display);font-size:17px;font-weight:600}
+.gcard-stats span{font-size:11px;color:var(--text-3)}
+.gcard-acts{display:flex;gap:6px;padding:10px 12px}
+.gcard-acts .btn{flex:1}
+
+.two-col{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;margin-top:16px}
+.feed{list-style:none;margin:0;padding:2px 18px 16px}
+.feed li{display:flex;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.feed li:last-child{border-bottom:0}
+.feed .fi{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--line);flex:none}
+.feed .fi .ic{width:14px;height:14px}
+.feed .ft{font-size:13px}
+.feed .ft b{font-weight:600}
+.feed .fm{font-size:11.5px;color:var(--text-3)}
+.health{list-style:none;margin:0;padding:2px 18px 6px}
+.health li{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.health li:last-child{border-bottom:0}
+.health .ic{width:16px;height:16px}
+.health .hv{margin-left:auto;font-size:12px;color:var(--text-3)}
+.i18n{padding:4px 18px 16px;display:grid;gap:10px}
+.i18n-row{display:grid;grid-template-columns:110px 1fr 42px;align-items:center;gap:10px;font-size:12.5px}
+.bar{height:6px;border-radius:999px;background:var(--surface-3);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+.bar.full i{background:linear-gradient(90deg,#2fbf85,var(--ok))}
+
+/* ---------- Spiele: Master-Detail ---------- */
+.md{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;align-items:start}
+.md-list{position:sticky;top:80px;padding:14px;display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 100px)}
+.md-list-h{display:flex;align-items:center;gap:8px}
+.md-list-h h2{font-family:var(--display);font-weight:600;font-size:18px;margin:0}
+.inp{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:11px;background:var(--surface-2);border:1px solid var(--line)}
+.inp:focus-within{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
+.inp input{flex:1;min-width:0;background:none;border:0;outline:0;font-size:13.5px}
+.inp .ic{width:16px;height:16px;color:var(--text-3)}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:11px;background:var(--surface-2);border:1px solid var(--line);flex-wrap:wrap}
+.seg button{padding:5px 10px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--text-3);display:inline-flex;align-items:center;gap:6px}
+.seg button:hover{color:var(--text)}
+.seg button.on{background:var(--surface-4);color:var(--text);box-shadow:0 1px 0 rgba(255,255,255,.05) inset}
+.seg .n{font-family:var(--mono);font-size:10.5px;color:var(--text-4)}
+.seg .vdot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.seg .vdot.warn{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.grows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;overflow-y:auto;scrollbar-width:thin}
+.grow{display:flex;align-items:center;gap:11px;padding:8px;border-radius:12px;border:1px solid transparent;cursor:pointer;transition:background .15s,border-color .15s}
+.grow:hover{background:var(--surface-2)}
+.grow.on{background:var(--surface-2);border-color:var(--line-2)}
+.grow.on .gthumb{box-shadow:0 0 0 2px var(--acc)}
+.gthumb{width:58px;height:40px;border-radius:9px;flex:none;overflow:hidden;position:relative;
+  background:radial-gradient(120% 120% at 20% 10%, color-mix(in srgb,var(--acc) 55%, transparent), #141418)}
+.gthumb img{width:100%;height:100%;object-fit:cover}
+.grow-t{font-weight:600;font-size:13.5px;line-height:1.2}
+.grow-m{font-size:11.5px;color:var(--text-3);display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:4px}
+.grow-m .mono{white-space:nowrap}
+.grow .grip{margin-left:auto;color:var(--text-4);cursor:grab}
+.grow .grip .ic{width:16px;height:16px}
+
+.gd{display:flex;flex-direction:column;gap:16px;min-width:0}
+.gd-hero{position:relative;border-radius:var(--r-xl);overflow:hidden;border:1px solid var(--line);min-height:210px;display:flex;align-items:flex-end;
+  background:radial-gradient(120% 120% at 15% 0%, color-mix(in srgb,var(--acc) 45%, transparent), #121216 65%)}
+.gd-hero img.cv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
+.gd-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(8,8,10,.96),rgba(8,8,10,.35) 60%,rgba(8,8,10,.25))}
+.gd-hero-in{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;padding:22px;width:100%;flex-wrap:wrap}
+.gd-hero .lg{max-height:70px;max-width:240px;object-fit:contain;filter:drop-shadow(0 6px 18px rgba(0,0,0,.6))}
+.gd-hero h2{font-family:var(--display);font-size:28px;margin:0;font-weight:600}
+.slug-pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;color:var(--text-2);
+  background:rgba(0,0,0,.42);border:1px solid var(--line-2);padding:3px 9px;border-radius:8px;margin-top:8px;backdrop-filter:blur(8px)}
+.slug-pill .ic{width:13px;height:13px}
+.gd-hero .acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{padding:10px 14px;font-weight:600;font-size:13.5px;color:var(--text-3);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+.tabs button:hover{color:var(--text)}
+.tabs button.on{color:var(--text);border-bottom-color:var(--accent)}
+.tabs .tn{font-family:var(--mono);font-size:10.5px;background:var(--surface-3);padding:0 6px;border-radius:999px;color:var(--text-2)}
+.tabp{display:none}
+.tabp.on{display:block;animation:fadeUp .25s var(--ease)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.check{list-style:none;margin:0;padding:4px 18px 16px;display:grid;gap:2px}
+.check li{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;border-bottom:1px dashed var(--line)}
+.check li:last-child{border-bottom:0}
+.check .ok{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--ok-soft);color:var(--ok)}
+.check .no{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--warn-soft);color:var(--warn)}
+.check .ok .ic,.check .no .ic{width:12px;height:12px;stroke-width:2.6}
+.check .fix{margin-left:auto}
+.mini{padding:16px 18px}
+.mini b{display:block;font-family:var(--display);font-size:24px;font-weight:600}
+.mini span{font-size:12px;color:var(--text-3)}
+
+/* Blöcke */
+.blocks{list-style:none;margin:0;padding:6px 12px 12px;display:flex;flex-direction:column;gap:6px}
+.blk{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);transition:border-color .15s,background .15s,opacity .2s}
+.blk:hover{border-color:var(--line-2)}
+.blk.dragging{opacity:.4}
+.blk.over{border-color:var(--accent-line);background:rgba(255,125,26,.06)}
+.blk.off{opacity:.5}
+.blk .grip{color:var(--text-4);cursor:grab;display:grid;place-items:center}
+.blk-ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--surface-3);border:1px solid var(--line);color:var(--accent-2)}
+.blk-ic .ic{width:16px;height:16px}
+.blk-t{font-weight:600;font-size:13.5px}
+.blk-m{font-size:12px;color:var(--text-3)}
+.blk .tools{margin-left:auto;display:flex;align-items:center;gap:4px}
+.switch{position:relative;width:34px;height:20px;border-radius:999px;background:var(--surface-4);border:1px solid var(--line-2);transition:background .2s;flex:none}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--text-2);transition:transform .2s var(--ease),background .2s}
+.switch.on{background:linear-gradient(110deg,var(--accent),var(--accent-2));border-color:transparent}
+.switch.on::after{transform:translateX(14px);background:#1a0d00}
+.add-block{margin:4px 12px 14px;border:1.5px dashed var(--line-2);border-radius:12px;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--text-3);font-weight:600;font-size:13px;width:calc(100% - 24px)}
+.add-block:hover{border-color:var(--accent-line);color:var(--accent);background:var(--accent-soft)}
+.palette-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 12px 14px}
+.pblk{display:flex;align-items:center;gap:9px;padding:10px;border-radius:11px;background:var(--surface-2);border:1px solid var(--line);font-size:12.5px;font-weight:600;text-align:left}
+.pblk:hover{border-color:var(--accent-line);background:rgba(255,125,26,.06)}
+.pblk .ic{width:16px;height:16px;color:var(--accent-2)}
+
+/* Formfelder */
+.form{padding:6px 18px 18px;display:grid;gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;font-weight:600;color:var(--text-2)}
+.field .hint{font-size:11.5px;color:var(--text-3)}
+.tinput,.tselect,.tarea{width:100%;padding:9px 11px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line-2);outline:0;font-size:13.5px}
+.tinput:focus,.tselect:focus,.tarea:focus{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
+.tarea{min-height:80px;resize:vertical;line-height:1.55}
+.colors{display:flex;gap:10px;flex-wrap:wrap}
+.colr{display:flex;align-items:center;gap:10px;padding:8px 10px 8px 8px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);flex:1;min-width:170px}
+.colr .sw{width:34px;height:34px;border-radius:9px;border:1px solid var(--line-3);flex:none}
+.colr b{display:block;font-size:12.5px}
+.colr span{font-family:var(--mono);font-size:11.5px;color:var(--text-3)}
+.logo-row{display:flex;align-items:center;gap:16px;padding:14px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);flex-wrap:wrap}
+.logo-prev{width:150px;height:84px;border-radius:10px;display:grid;place-items:center;overflow:hidden;
+  background:repeating-conic-gradient(#1b1b20 0% 25%, #222228 0% 50%) 50%/16px 16px}
+.logo-prev img{max-width:88%;max-height:70%;object-fit:contain}
+.slug-box{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2);flex-wrap:wrap}
+.slug-box code{font-family:var(--mono);font-size:13px;color:var(--text-2)}
+.slug-box code b{color:var(--text)}
+.slug-box .ic{width:16px;height:16px;color:var(--text-3)}
+.serp{padding:14px;border-radius:12px;background:#fff;color:#202124;font-family:arial,sans-serif}
+.serp .u{font-size:12px;color:#4d5156}
+.serp .t{font-size:18px;color:#1a0dab;margin:2px 0}
+.serp .d{font-size:13px;color:#4d5156;line-height:1.45}
+
+/* Community */
+.slist{list-style:none;margin:0;padding:2px 12px 12px}
+.slist li{display:flex;align-items:center;gap:12px;padding:10px 8px;border-bottom:1px dashed var(--line)}
+.slist li:last-child{border-bottom:0}
+.votes{width:44px;text-align:center;flex:none}
+.votes b{display:block;font-family:var(--display);font-size:17px}
+.votes span{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em}
+.slist .st{font-size:13px}
+.slist .sm{font-size:11.5px;color:var(--text-3)}
+.slist .acts{margin-left:auto;display:flex;gap:6px}
+
+/* ---------- Postfach ---------- */
+.mail{display:grid;grid-template-columns:220px 360px minmax(0,1fr);gap:16px;align-items:start;height:calc(100vh - 150px);min-height:560px}
+.mail > .card{height:100%;display:flex;flex-direction:column;min-height:0}
+.folders{padding:14px;display:flex;flex-direction:column;gap:4px}
+.folder{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;color:var(--text-2);font-size:13.5px;font-weight:500;text-align:left;width:100%}
+.folder:hover{background:var(--surface-2);color:var(--text)}
+.folder.on{background:var(--surface-2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
+.folder .n{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--text-3)}
+.folder .n.hot{color:var(--accent);font-weight:700}
+.mlist-h{padding:14px;border-bottom:1px solid var(--line)}
+.mlist{list-style:none;margin:0;padding:6px;overflow-y:auto;flex:1;scrollbar-width:thin}
+.mrow{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;padding:11px 10px;border-radius:12px;cursor:pointer;border:1px solid transparent}
+.mrow:hover{background:var(--surface-2)}
+.mrow.on{background:var(--surface-2);border-color:var(--line-2)}
+.mrow .ud{width:8px;height:8px;border-radius:50%;background:transparent;margin-top:6px;grid-row:span 3}
+.mrow.unread .ud{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.mrow .mf{font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mrow.unread .mf{color:var(--text)}
+.mrow .mt{font-size:11.5px;color:var(--text-3);white-space:nowrap}
+.mrow .ms{grid-column:2/4;font-size:13px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mrow .mp{grid-column:2/4;font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.mrow .mp .ic{width:13px;height:13px;flex:none}
+.mread{overflow:hidden}
+.mread-h{padding:20px 22px 14px;border-bottom:1px solid var(--line)}
+.mread-h h3{font-family:var(--display);font-weight:600;font-size:20px;margin:0 0 10px}
+.from{display:flex;align-items:center;gap:10px;font-size:13px}
+.from .avatar{width:36px;height:36px}
+.from .fm{color:var(--text-3);font-size:12px}
+.from .acts{margin-left:auto;display:flex;gap:6px}
+.mread-b{padding:20px 22px;overflow-y:auto;flex:1;font-size:14px;line-height:1.7;color:var(--text-2)}
+.mread-b p{margin:0 0 12px}
+.atts{display:flex;gap:8px;flex-wrap:wrap;padding:0 22px 18px}
+.att{display:flex;align-items:center;gap:10px;padding:8px 10px 8px 8px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2);font-size:12.5px;max-width:260px}
+.att-ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:9.5px;font-weight:800;letter-spacing:.04em;flex:none}
+.att b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+.att span{color:var(--text-3);font-size:11.5px}
+.att .dl{margin-left:6px}
+.reply{display:flex;gap:8px;padding:14px 22px;border-top:1px solid var(--line)}
+
+/* ---------- Composer ---------- */
+.composer{max-width:880px}
+.cmp-row{display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--line)}
+.cmp-row label{width:70px;font-size:12.5px;color:var(--text-3);font-weight:600;flex:none}
+.cmp-row input,.cmp-row select{flex:1;min-width:0;background:none;border:0;outline:0;font-size:14px;padding:4px 0}
+.cmp-row select{max-width:240px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:9px;padding:6px 8px}
+.toolbar{display:flex;align-items:center;gap:2px;padding:8px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:rgba(255,255,255,.015)}
+.tb{width:34px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--text-2)}
+.tb:hover{background:var(--surface-3);color:var(--text)}
+.tb.on{background:var(--accent-soft);color:var(--accent)}
+.tb .ic{width:16px;height:16px}
+.tb-sep{width:1px;height:20px;background:var(--line-2);margin:0 6px}
+.editor{min-height:230px;max-height:42vh;overflow-y:auto;padding:18px 20px;outline:0;font-size:14.5px;line-height:1.7;color:var(--text)}
+.editor:empty::before{content:attr(data-ph);color:var(--text-4)}
+.editor h3{font-family:var(--display);font-weight:600;font-size:18px;margin:6px 0}
+.editor blockquote{margin:8px 0;padding:6px 14px;border-left:3px solid var(--accent);color:var(--text-2);background:rgba(255,255,255,.02);border-radius:0 8px 8px 0}
+.editor a{color:var(--accent-2);text-decoration:underline}
+.drop{margin:0 20px 14px;border:1.5px dashed var(--line-2);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;color:var(--text-3);font-size:13px;flex-wrap:wrap;transition:border-color .15s,background .15s}
+.drop.hot{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+.drop .ic{width:20px;height:20px}
+.drop .chips-att{display:flex;gap:8px;flex-wrap:wrap;width:100%}
+.drop .chips-att:empty{display:none}
+.att-x{color:var(--text-3);width:22px;height:22px;border-radius:6px;display:grid;place-items:center}
+.att-x:hover{background:var(--surface-4);color:var(--danger)}
+.att-x .ic{width:13px;height:13px}
+.sizebar{width:100%;display:flex;align-items:center;gap:10px;font-size:11.5px}
+.sizebar .bar{flex:1}
+.sig{margin:0 20px 14px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);display:flex;gap:12px;align-items:center;font-size:12.5px;color:var(--text-2)}
+.cmp-foot{display:flex;align-items:center;gap:10px;padding:14px 20px;border-top:1px solid var(--line)}
+.sig{align-items:flex-start}
+.sig-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.sig-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sig-row select{background:var(--surface-3);border:1px solid var(--line-2);border-radius:9px;padding:6px 8px;color:var(--text);font-size:13px;max-width:100%}
+.sig.off .sig-main{opacity:.35;pointer-events:none}
+.sig-prev{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:12px;background:#0b0b0d;border:1px solid var(--line)}
+.sig-prev img{height:34px;width:auto;flex:none}
+.sig-prev .sn{font-weight:700;color:var(--text);font-size:13.5px}
+.sig-prev .sr{font-size:12px;color:var(--text-3)}
+.sig-prev .sl{font-size:11.5px;color:var(--accent-2);margin-top:2px}
+.sig-grid{display:grid;grid-template-columns:250px minmax(0,1fr);gap:18px}
+.sig-list{display:flex;flex-direction:column;gap:6px}
+.sig-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);text-align:left;width:100%}
+.sig-item:hover{border-color:var(--line-2)}
+.sig-item.on{border-color:var(--accent-line);background:rgba(255,125,26,.07)}
+.sig-item .avatar{width:30px;height:30px;font-size:11px;flex:none}
+.sig-item b{display:block;font-size:13px}
+.sig-item span{font-size:11.5px;color:var(--text-3)}
+.sig-item .def{margin-left:auto;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent-line);border-radius:999px;padding:1px 6px;flex:none}
+@media (max-width:860px){.sig-grid{grid-template-columns:1fr}}
+
+/* ---------- Live-Ops ---------- */
+.lo-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:16px;align-items:start}
+.ingame{border-radius:18px;overflow:hidden;border:1px solid rgba(255,187,0,.25);background:
+  radial-gradient(120% 100% at 0% 0%, rgba(255,187,0,.16), transparent 55%), linear-gradient(180deg,#17150f,#0f0e0b);box-shadow:0 30px 60px -30px rgba(255,170,0,.35)}
+.ingame-h{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid rgba(255,187,0,.15)}
+.ingame-h b{font-family:var(--display);letter-spacing:.06em;font-size:12px;color:#ffcf4d}
+.ingame-b{padding:18px 16px}
+.ingame-b h4{font-family:var(--display);font-weight:600;font-size:20px;margin:0 0 8px}
+.ingame-b p{color:#d8cfb8;margin:0 0 14px;font-size:13.5px;line-height:1.6}
+.reward{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:rgba(255,187,0,.08);border:1px solid rgba(255,187,0,.25)}
+.reward-ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#ffcf4d,#ff8a00);color:#2a1700}
+.reward-ic .ic{width:22px;height:22px;stroke-width:2}
+.reward b{display:block;font-family:var(--display);font-size:16px}
+.reward span{font-size:12px;color:#bfb497}
+.claim{margin-top:14px;width:100%;padding:11px;border-radius:12px;background:linear-gradient(110deg,#ffcf4d,#ff8a00);color:#2a1700;font-weight:800;letter-spacing:.04em}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-4);font-weight:600;padding:10px 18px;border-bottom:1px solid var(--line)}
+.tbl td{padding:11px 18px;border-bottom:1px dashed var(--line);color:var(--text-2)}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td b{color:var(--text)}
+.concept{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:14px;background:var(--violet-soft);border:1px solid rgba(177,151,252,.25);font-size:13px;color:var(--text-2);margin-bottom:16px}
+.concept .ic{color:var(--violet);margin-top:2px}
+
+/* ---------- Platzhalter ---------- */
+.ph{max-width:720px;margin:40px auto;text-align:center}
+.ph-ic{width:64px;height:64px;border-radius:20px;margin:0 auto 16px;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--line-2);color:var(--accent)}
+.ph-ic .ic{width:28px;height:28px}
+.ph h2{font-family:var(--display);font-weight:600;font-size:26px;margin:0}
+.ph p{color:var(--text-2)}
+.ph ul{list-style:none;padding:0;margin:20px auto 0;display:grid;gap:8px;max-width:520px;text-align:left}
+.ph li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:13px;color:var(--text-2)}
+.ph li .ic{width:16px;height:16px;color:var(--ok);margin-top:2px}
+
+/* ---------- Modals ---------- */
+.modal-back{position:fixed;inset:0;z-index:100;background:rgba(4,4,6,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow-y:auto;animation:fade .2s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{width:100%;max-width:560px;background:linear-gradient(180deg,#16161a,#111114);border:1px solid var(--line-2);border-radius:22px;
+  box-shadow:0 40px 100px -30px rgba(0,0,0,.9);animation:pop .25s var(--ease);overflow:hidden}
+.modal.xl{max-width:1180px}
+.modal.lg{max-width:880px}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.modal-h{display:flex;align-items:flex-start;gap:14px;padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.modal-h h3{margin:0;font-family:var(--display);font-weight:600;font-size:19px}
+.modal-h p{margin:3px 0 0;color:var(--text-3);font-size:13px}
+.modal-h .icon-btn{margin-left:auto;margin-top:-4px}
+.modal-b{padding:18px 20px}
+.modal-f{display:flex;align-items:center;gap:10px;padding:14px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+.modal-f .sp{flex:1}
+
+/* Slug-Dialog */
+.slug-in{display:flex;align-items:center;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2);overflow:hidden}
+.slug-in:focus-within{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
+.slug-in span{padding:10px 0 10px 12px;font-family:var(--mono);font-size:13px;color:var(--text-3);white-space:nowrap}
+.slug-in input{flex:1;min-width:0;padding:10px 12px 10px 2px;background:none;border:0;outline:0;font-family:var(--mono);font-size:13px;color:var(--text)}
+.slug-err{font-size:12px;color:var(--danger);min-height:18px;margin-top:6px}
+.mig{margin-top:14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+.mig-h{padding:10px 14px;font-size:12px;font-weight:600;color:var(--text-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.mig-h .ic{width:15px;height:15px;color:var(--ok)}
+.mig ul{list-style:none;margin:0;padding:8px 14px 12px;display:grid;gap:7px}
+.mig li{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-2)}
+.mig li b{color:var(--text);font-family:var(--mono);font-weight:600}
+.mig li .ic{width:15px;height:15px;color:var(--ok)}
+.mig .redir{margin:0 14px 12px;padding:10px 12px;border-radius:10px;background:var(--info-soft);border:1px solid rgba(110,168,255,.25);font-size:12.5px;color:var(--text-2);display:flex;gap:8px}
+.mig .redir .ic{width:16px;height:16px;color:var(--info);flex:none;margin-top:1px}
+
+/* Logo-Platzierung (WYSIWYG) */
+.placer-bar{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.placer-warn{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:10px}
+.placer-warn.ok{color:var(--ok);background:var(--ok-soft)}
+.placer-warn.bad{color:var(--warn);background:var(--warn-soft)}
+.placer-warn .ic{width:15px;height:15px}
+.placer-wrap{padding:18px 20px;display:flex;justify-content:center;background:
+  repeating-linear-gradient(45deg,rgba(255,255,255,.012) 0 10px,transparent 10px 20px)}
+.stage{position:relative;overflow:hidden;border-radius:12px;box-shadow:0 0 0 1px var(--line-2),0 30px 60px -30px #000;background:#050505}
+.frame{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden;background:#050505;font-family:"Archivo",system-ui,sans-serif}
+.hf-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hf-grid{background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:60px 60px}
+.hf-ov2{position:absolute;inset:0;background:rgba(0,0,0,.3)}
+.hf-logo{position:absolute;transform:translate(-50%,-50%);width:auto;object-fit:contain;z-index:3;cursor:grab;user-select:none;-webkit-user-drag:none;touch-action:none}
+.hf-logo.grabbing{cursor:grabbing}
+.hf-sel{position:absolute;z-index:3;border:3px dashed rgba(255,255,255,.9);border-radius:8px;pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.placer-tip{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-3);padding:12px 20px 0;line-height:1.45}
+.placer-tip .ic{width:15px;height:15px;color:var(--info);flex:none}
+.hf-content{position:absolute;left:0;right:0;bottom:0;z-index:2}
+.hf-inner{max-width:1152px;margin:0 auto;padding:0 24px 96px}
+.hf-content.m .hf-inner{padding-bottom:64px;text-align:center}
+.hf-badge{display:inline-flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;border:1px solid rgba(255,160,60,.6);background:rgba(255,140,40,.2);
+  color:#ffe6cf;font:600 10px/1.6 "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;margin-bottom:24px}
+.hf-badge i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.hf-inline{display:block;width:auto;max-width:100%;object-fit:contain;margin-bottom:24px}
+.hf-content.m .hf-inline{margin-left:auto;margin-right:auto}
+.hf-title{font-family:var(--display);font-size:96px;font-weight:700;margin:0 0 24px;line-height:1}
+.hf-tag{font-size:24px;line-height:32px;color:#e4e4e7;max-width:672px;margin:0 0 36px}
+.hf-content.m .hf-tag{font-size:20px;line-height:28px;margin-left:auto;margin-right:auto}
+.hf-btns{display:flex;gap:12px;flex-wrap:wrap}
+.hf-content.m .hf-btns{justify-content:center}
+.hf-btn1,.hf-btn2{padding:16px 32px;border-radius:999px;font-weight:600;font-size:16px;line-height:24px}
+.hf-btn1{color:#fff}
+.hf-btn2{border:1px solid rgba(255,255,255,.18);color:#fff}
+.hf-hit{outline:2px solid rgba(255,197,61,.9);outline-offset:4px;border-radius:6px;background:rgba(255,197,61,.12)}
+.guide{position:absolute;z-index:4;background:rgba(255,125,26,.9);pointer-events:none;display:none}
+.guide.v{top:0;bottom:0;width:2px;left:50%;transform:translateX(-1px)}
+.guide.h{left:0;right:0;height:2px;top:50%;transform:translateY(-1px)}
+.guide.show{display:block}
+.placer-foot{display:flex;align-items:center;gap:14px;padding:14px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+.range{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--text-2)}
+.range input{width:180px;accent-color:var(--accent)}
+.coords{font-family:var(--mono);font-size:12px;color:var(--text-3);padding:5px 9px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line)}
+.placer-note{font-size:12.5px;color:var(--text-3);display:flex;align-items:center;gap:8px}
+
+/* Command-Palette */
+.pal{max-width:640px;margin-top:8vh}
+.pal-in{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.pal-in input{flex:1;background:none;border:0;outline:0;font-size:16px}
+.pal-in .ic{width:20px;height:20px;color:var(--text-3)}
+.pal-list{list-style:none;margin:0;padding:8px;max-height:55vh;overflow-y:auto}
+.pal-sec{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-4);padding:10px 10px 4px;font-weight:600}
+.pal-item{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;cursor:pointer;font-size:13.5px}
+.pal-item .ic{width:17px;height:17px;color:var(--text-3)}
+.pal-item.on{background:var(--surface-3)}
+.pal-item.on .ic{color:var(--accent)}
+.pal-item small{margin-left:auto;color:var(--text-4);font-size:11.5px}
+.pal-foot{display:flex;gap:14px;padding:10px 16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--text-4)}
+
+/* Benachrichtigungen */
+.notif{position:fixed;top:68px;right:20px;z-index:90;width:380px;max-width:calc(100vw - 24px);animation:pop .2s var(--ease)}
+.notif-h{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.notif-h b{font-family:var(--display);font-weight:600;font-size:15px}
+.notif-h button{margin-left:auto;font-size:12px;color:var(--text-3)}
+.notif-h button:hover{color:var(--accent)}
+.notif ul{list-style:none;margin:0;padding:6px;max-height:60vh;overflow-y:auto}
+.notif li a{display:flex;gap:12px;padding:10px;border-radius:12px}
+.notif li a:hover{background:var(--surface-2)}
+.notif .ni{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;border:1px solid var(--line)}
+.notif .ni .ic{width:16px;height:16px}
+.notif .nt{font-size:13px;font-weight:600}
+.notif .nm{font-size:12px;color:var(--text-3)}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px);z-index:200;opacity:0;pointer-events:none;
+  display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:14px;background:#1d1d22;border:1px solid var(--line-2);
+  box-shadow:0 20px 50px -20px #000;font-size:13.5px;font-weight:600;transition:opacity .2s,transform .25s var(--ease);max-width:calc(100vw - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .ic{color:var(--ok)}
+
+/* Mobile Tabbar + Drawer */
+.tabbar{display:none}
+.scrim{display:none}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1280px){
+  .games-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mail{grid-template-columns:200px 320px minmax(0,1fr)}
+}
+@media (max-width:1100px){
+  .cockpit-grid,.two-col,.lo-grid{grid-template-columns:1fr}
+  .md{grid-template-columns:280px minmax(0,1fr)}
+  .mail{grid-template-columns:300px minmax(0,1fr);height:auto}
+  .mail .folders-card{display:none}
+  .top-search{min-width:0}
+  .top-search span{display:none}
+}
+@media (max-width:860px){
+  :root{--side-w:290px}
+  .side{transform:translateX(-102%);transition:transform .3s var(--ease);box-shadow:30px 0 60px rgba(0,0,0,.6)}
+  .side.open{transform:none}
+  .scrim{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.55);backdrop-filter:blur(2px)}
+  .scrim.show{display:block}
+  .main{margin-left:0}
+  .only-mobile{display:grid}
+  .topbar{padding:0 12px;height:58px;gap:8px}
+  .top-search,.hide-m{display:none!important}
+  .page{padding:18px 14px 110px}
+  .hello h1{font-size:27px}
+  .quick{margin-left:0;width:100%}
+  .quick .btn{flex:1}
+  .kpis{grid-template-columns:1fr 1fr;gap:10px}
+  .kpi{padding:13px 13px 10px}
+  .kpi-v{font-size:24px}
+  .games-strip{grid-template-columns:1fr}
+  .md{grid-template-columns:1fr}
+  .md-list{position:static;max-height:none}
+  .md.detail-open .md-list{display:none}
+  .md:not(.detail-open) .gd{display:none}
+  .back-m{display:inline-flex!important}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .grid-3.stat3{grid-template-columns:repeat(3,1fr);gap:8px}
+  .stat3 .mini{padding:12px}
+  .stat3 .mini b{font-size:19px}
+  .stat3 .mini span{font-size:11px;line-height:1.3;display:block}
+  .gd-hero h2{font-size:22px}
+  .gd-hero .acts{margin-left:0;width:100%}
+  .gd-hero .acts .btn{flex:1}
+  .mail{grid-template-columns:1fr;height:auto;min-height:0}
+  .mail.read-open .mlist-card{display:none}
+  .mail:not(.read-open) .mread{display:none}
+  .mread{min-height:70vh}
+  .palette-grid{grid-template-columns:1fr 1fr}
+  .tabbar{display:flex;position:fixed;left:10px;right:10px;bottom:10px;z-index:60;padding:6px;border-radius:20px;
+    background:rgba(18,18,22,.86);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);
+    border:1px solid var(--line-2);box-shadow:0 20px 50px -14px rgba(0,0,0,.9);padding-bottom:max(6px,env(safe-area-inset-bottom))}
+  .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;border-radius:14px;font-size:10.5px;font-weight:600;color:var(--text-3);position:relative}
+  .tab-item .ic{width:20px;height:20px}
+  .tab-item.active{color:var(--text);background:var(--surface-3)}
+  .tab-item.active .ic{color:var(--accent)}
+  .tab-item .tdot{position:absolute;top:4px;left:calc(50% + 6px);min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-size:9px;font-weight:800;display:grid;place-items:center}
+  .modal-back{padding:0;align-items:flex-end}
+  .modal{border-radius:22px 22px 0 0;max-height:94vh;overflow-y:auto}
+  .modal.xl,.modal.lg{max-width:none}
+  .placer-wrap{padding:12px}
+  .range input{width:130px}
+  .notif{top:64px;right:12px}
+  .proto-banner{font-size:11px}
+}
+.back-m{display:none}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ================= Icon-Sprite ================= -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-cockpit" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="9" rx="2"/><rect x="13.5" y="3" width="7.5" height="5.5" rx="2"/><rect x="13.5" y="11.5" width="7.5" height="9.5" rx="2"/><rect x="3" y="15" width="7.5" height="6" rx="2"/></symbol>
+    <symbol id="i-game" viewBox="0 0 24 24"><path d="M6 11h4M8 9v4"/><path d="M15 12h.01M18 10h.01"/><path d="M17.3 5H6.7a4 4 0 0 0-4 3.6l-.9 7.1A3 3 0 0 0 4.8 19c1 0 1.8-.6 2.2-1.5L8 15h8l1 2.5c.4.9 1.2 1.5 2.2 1.5a3 3 0 0 0 3-3.3l-.9-7.1A4 4 0 0 0 17.3 5z"/></symbol>
+    <symbol id="i-studio" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-6h4v6"/></symbol>
+    <symbol id="i-devlog" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-team" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14c2 .7 3 2.6 3 6"/></symbol>
+    <symbol id="i-legal" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M5 7h14"/><path d="m5 7-3 7a3.5 3.5 0 0 0 6 0zM19 7l-3 7a3.5 3.5 0 0 0 6 0z"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13h5l1.5 3h5L16 13h5"/><path d="M5.5 5h13L21 13v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5z"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="m3.5 6 1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17"/></symbol>
+    <symbol id="i-mega" viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6l-5 4H4a1 1 0 0 0-1 1z"/><path d="M15 9a3 3 0 0 1 0 6M18 6a7 7 0 0 1 0 12"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/></symbol>
+    <symbol id="i-kanban" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 7v7M12 7v4M16 7v10"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v6c0 4.5 3.2 7.8 7.5 9 4.3-1.2 7.5-4.5 7.5-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13M9 7V4h6v3"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+    <symbol id="i-vault" viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="6.5" rx="1.6"/><rect x="13" y="13.5" width="8" height="6.5" rx="1.6"/><path d="M11 7.2h2.5a2 2 0 0 1 2 2v4.3"/></symbol>
+    <symbol id="i-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8.5 15.5a5 5 0 0 1 0-7M15.5 8.5a5 5 0 0 1 0 7M5.6 18.4a9 9 0 0 1 0-12.8M18.4 5.6a9 9 0 0 1 0 12.8"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+    <symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.3" class="ic-fill"/><circle cx="15" cy="6" r="1.3" class="ic-fill"/><circle cx="9" cy="12" r="1.3" class="ic-fill"/><circle cx="15" cy="12" r="1.3" class="ic-fill"/><circle cx="9" cy="18" r="1.3" class="ic-fill"/><circle cx="15" cy="18" r="1.3" class="ic-fill"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+    <symbol id="i-bold" viewBox="0 0 24 24"><path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/></symbol>
+    <symbol id="i-italic" viewBox="0 0 24 24"><path d="M19 4h-9M14 20H5M15 4 9 20"/></symbol>
+    <symbol id="i-underline" viewBox="0 0 24 24"><path d="M7 4v7a5 5 0 0 0 10 0V4M5 21h14"/></symbol>
+    <symbol id="i-ul" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" class="ic-fill"/><circle cx="4.5" cy="12" r="1" class="ic-fill"/><circle cx="4.5" cy="18" r="1" class="ic-fill"/></symbol>
+    <symbol id="i-ol" viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10M4 4.5h1.5V9M4 9h3M4 14.5c.5-.6 1-.9 1.7-.9.8 0 1.3.5 1.3 1.2 0 1.2-3 2.2-3 3.7h3"/></symbol>
+    <symbol id="i-quote" viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3zM14 17h3l2-4V7h-6v6h3z"/></symbol>
+    <symbol id="i-heading" viewBox="0 0 24 24"><path d="M6 4v16M18 4v16M6 12h12"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h13"/></symbol>
+    <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H16"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 .5c0 1.5-2.5 2-2.5 3.5M12 17h.01"/></symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h8l-1 8 10-12h-8z"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3M17 6l3 3M15 8l2 2"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.7-.8 1.7-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H16a5 5 0 0 0 5-5c0-4-4-7.2-9-7.2z"/><circle cx="7.5" cy="11" r="1" class="ic-fill"/><circle cx="10.5" cy="7" r="1" class="ic-fill"/><circle cx="15" cy="7.5" r="1" class="ic-fill"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></symbol>
+    <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  </defs>
+</svg>
+
+<!-- ================= Sidebar ================= -->
+<aside class="side" id="side" aria-label="Hauptnavigation">
+  <div class="brand">
+    <div class="brand-mark"><i></i></div>
+    <div><div class="brand-name">PLANI<b>GAMES</b></div><div class="brand-sub">Studio-Cockpit</div></div>
+  </div>
+  <button class="side-search" data-open-palette><svg class="ic"><use href="#i-search"/></svg>Suchen & springen<kbd>⌘K</kbd></button>
+
+  <div class="nav-group">
+    <a class="nav-item" href="#cockpit" data-route="cockpit"><svg class="ic"><use href="#i-cockpit"/></svg>Cockpit</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Inhalte</div>
+    <a class="nav-item" href="#studio" data-route="studio"><svg class="ic"><use href="#i-studio"/></svg>Studio & Startseite</a>
+    <a class="nav-item" href="#spiele" data-route="spiele"><svg class="ic"><use href="#i-game"/></svg>Spiele<span class="nav-count">4</span></a>
+    <a class="nav-item" href="#devlog" data-route="devlog"><svg class="ic"><use href="#i-devlog"/></svg>Devlog & Patchnotes</a>
+    <a class="nav-item" href="#team" data-route="team"><svg class="ic"><use href="#i-team"/></svg>Team</a>
+    <a class="nav-item" href="#rechtliches" data-route="rechtliches"><svg class="ic"><use href="#i-legal"/></svg>Rechtliches</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Community</div>
+    <a class="nav-item" href="#postfach" data-route="postfach"><svg class="ic"><use href="#i-mail"/></svg>Postfach<span class="nav-count hot" id="navMail">3</span></a>
+    <a class="nav-item" href="#vorschlaege" data-route="vorschlaege"><svg class="ic"><use href="#i-bulb"/></svg>Vorschläge<span class="nav-count hot">5</span></a>
+    <a class="nav-item" href="#warteliste" data-route="warteliste"><svg class="ic"><use href="#i-list"/></svg>Warteliste</a>
+    <a class="nav-item" href="#newsletter" data-route="newsletter"><svg class="ic"><use href="#i-mega"/></svg>Newsletter</a>
+    <a class="nav-item" href="#kommentare" data-route="kommentare"><svg class="ic"><use href="#i-chat"/></svg>Kommentare<span class="nav-count">2</span></a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Spielbetrieb</div>
+    <a class="nav-item" href="#liveops" data-route="liveops"><svg class="ic"><use href="#i-radio"/></svg>Spiel-Inbox<span class="nav-tag">Neu</span></a>
+    <a class="nav-item" href="#keys" data-route="keys"><svg class="ic"><use href="#i-key"/></svg>Keys & Presse</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Planung & Werkzeuge</div>
+    <a class="nav-item" href="#board" data-route="board"><svg class="ic"><use href="#i-kanban"/></svg>Planungs-Board</a>
+    <a class="nav-item" href="#kalender" data-route="kalender"><svg class="ic"><use href="#i-cal"/></svg>Kalender</a>
+    <a class="nav-item" href="#vault" data-route="vault"><svg class="ic"><use href="#i-vault"/></svg>Blueprint Vault</a>
+    <a class="nav-item" href="#medien" data-route="medien"><svg class="ic"><use href="#i-image"/></svg>Medien</a>
+    <a class="nav-item" href="#statistik" data-route="statistik"><svg class="ic"><use href="#i-chart"/></svg>Statistik & SEO</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">System</div>
+    <a class="nav-item" href="#system" data-route="system"><svg class="ic"><use href="#i-shield"/></svg>Nutzer & Sicherheit</a>
+    <a class="nav-item" href="#backups" data-route="backups"><svg class="ic"><use href="#i-archive"/></svg>Backups & Papierkorb</a>
+  </div>
+
+  <div class="side-foot">
+    <div class="me">
+      <div class="avatar">PG</div>
+      <div><div class="me-name">Studio-Admin</div><div class="me-role"><span class="dot-ok"></span>Owner · 2FA aktiv</div></div>
+    </div>
+  </div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<!-- ================= Hauptbereich ================= -->
+<div class="main">
+  <header class="topbar">
+    <button class="icon-btn only-mobile" id="menuBtn" aria-label="Menü"><svg class="ic"><use href="#i-menu"/></svg></button>
+    <div class="crumbs"><span id="crumbParent" class="hide-m">Übersicht</span><svg class="ic hide-m"><use href="#i-chev"/></svg><b id="crumbTitle">Cockpit</b></div>
+    <div class="top-actions">
+      <button class="top-search" data-open-palette><svg class="ic"><use href="#i-search"/></svg><span>Suchen, springen, erledigen…</span><kbd>⌘K</kbd></button>
+      <button class="icon-btn only-mobile" data-open-palette aria-label="Suchen"><svg class="ic"><use href="#i-search"/></svg></button>
+      <a class="btn btn-ghost btn-sm hide-m" href="#" onclick="return false"><svg class="ic"><use href="#i-ext"/></svg>Website</a>
+      <button class="icon-btn" id="bellBtn" aria-label="Benachrichtigungen"><svg class="ic"><use href="#i-bell"/></svg><span class="badge-dot" id="bellCount">7</span></button>
+    </div>
+  </header>
+  <div class="proto-banner"><svg class="ic" style="width:14px;height:14px"><use href="#i-spark"/></svg>Redesign-Prototyp · Beispieldaten · nichts wird gespeichert</div>
+
+  <main class="page">
+
+    <!-- ===================== COCKPIT ===================== -->
+    <section class="view" data-view="cockpit">
+      <div class="hello">
+        <div>
+          <div class="eyebrow" id="today">Heute</div>
+          <h1 class="h-display" id="greet">Willkommen zurück</h1>
+          <p class="lead"><b style="color:var(--text)">7 Dinge</b> brauchen heute deine Aufmerksamkeit — alles andere läuft.</p>
+        </div>
+        <div class="quick">
+          <button class="btn" data-action="compose"><svg class="ic"><use href="#i-mail"/></svg>Mail schreiben</button>
+          <a class="btn" href="#devlog"><svg class="ic"><use href="#i-devlog"/></svg>Devlog-Beitrag</a>
+          <button class="btn btn-primary" data-action="liveops"><svg class="ic"><use href="#i-radio"/></svg>Spiel-Nachricht</button>
+        </div>
+      </div>
+
+      <div class="cockpit-grid">
+        <div class="card focus">
+          <div class="focus-h"><span class="card-t"><svg class="ic"><use href="#i-zap"/></svg>Heute wichtig</span><span class="count">7</span><span style="margin-left:auto;font-size:12px;color:var(--text-4)">nach Dringlichkeit sortiert</span></div>
+          <ul class="todo" id="todo"></ul>
+        </div>
+        <div class="kpis" id="kpis"></div>
+      </div>
+
+      <div class="section-h"><h2>Deine Spiele</h2><a class="link" href="#spiele">Alle verwalten<svg class="ic" style="width:14px;height:14px"><use href="#i-chev"/></svg></a></div>
+      <div class="games-strip" id="gamesStrip"></div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-h"><span class="card-t"><svg class="ic"><use href="#i-clock"/></svg>Letzte Aktivität</span><a class="link" href="#system">Protokoll<svg class="ic" style="width:14px;height:14px"><use href="#i-chev"/></svg></a></div>
+          <ul class="feed" id="feed"></ul>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card-h"><span class="card-t"><svg class="ic"><use href="#i-shield"/></svg>System & Sicherheit</span><span class="chip st-rel" style="margin-left:auto"><i></i>Alles im grünen Bereich</span></div>
+            <ul class="health">
+              <li><svg class="ic c-ok"><use href="#i-lock"/></svg>Interne Daten geschützt<span class="hv">Whitelist aktiv</span></li>
+              <li><svg class="ic c-ok"><use href="#i-shield"/></svg>Zwei-Faktor-Anmeldung<span class="hv">3 von 3 Admins</span></li>
+              <li><svg class="ic c-ok"><use href="#i-archive"/></svg>Letztes Backup<span class="hv">heute, 06:00</span></li>
+              <li><svg class="ic c-ok"><use href="#i-server"/></svg>Mail-Verbindung (IMAP/SMTP)<span class="hv">verbunden</span></li>
+              <li><svg class="ic c-warn"><use href="#i-image"/></svg>Große Bilder auf der Website<span class="hv"><a class="c-accent" href="#medien">1 Bild &gt; 5 MB optimieren</a></span></li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-h"><span class="card-t"><svg class="ic"><use href="#i-globe"/></svg>Übersetzungen (Englisch)</span><a class="link" href="#" onclick="return false">Fehlende zeigen<svg class="ic" style="width:14px;height:14px"><use href="#i-chev"/></svg></a></div>
+            <div class="i18n" id="i18n"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SPIELE ===================== -->
+    <section class="view" data-view="spiele" hidden>
+      <div class="md" id="md">
+        <div class="card md-list">
+          <div class="md-list-h"><h2>Spiele</h2><button class="btn btn-primary btn-sm" style="margin-left:auto" data-toast="Neues Spiel anlegen – öffnet direkt den Editor"><svg class="ic"><use href="#i-plus"/></svg>Neu</button></div>
+          <label class="inp"><svg class="ic"><use href="#i-search"/></svg><input id="gameSearch" placeholder="Spiel suchen…"></label>
+          <div class="seg" id="gameFilter"></div>
+          <ul class="grows" id="gameRows"></ul>
+          <p style="margin:0;font-size:11.5px;color:var(--text-4);display:flex;gap:6px;align-items:center"><svg class="ic" style="width:14px;height:14px"><use href="#i-grip"/></svg>Ziehen, um die Reihenfolge auf der Website zu ändern</p>
+        </div>
+        <div class="gd" id="gameDetail"></div>
+      </div>
+    </section>
+
+    <!-- ===================== POSTFACH ===================== -->
+    <section class="view" data-view="postfach" hidden>
+      <div class="mail" id="mail">
+        <div class="card folders-card">
+          <div class="folders">
+            <button class="btn btn-primary btn-block" data-action="compose" style="margin-bottom:10px"><svg class="ic"><use href="#i-plus"/></svg>Verfassen</button>
+            <div id="folders"></div>
+          </div>
+        </div>
+        <div class="card mlist-card">
+          <div class="mlist-h">
+            <label class="inp"><svg class="ic"><use href="#i-search"/></svg><input id="mailSearch" placeholder="Mails durchsuchen…"></label>
+          </div>
+          <ul class="mlist" id="mlist"></ul>
+        </div>
+        <article class="card mread" id="mread"></article>
+      </div>
+    </section>
+
+    <!-- ===================== LIVE-OPS ===================== -->
+    <section class="view" data-view="liveops" hidden>
+      <div class="hello" style="margin-bottom:16px">
+        <div><div class="eyebrow">Spielbetrieb</div><h1 class="h-display" style="font-size:30px">Spiel-Inbox</h1><p class="lead">Nachrichten mit Belohnungen direkt in die Inbox eurer Spieler schicken.</p></div>
+      </div>
+      <div class="concept"><svg class="ic"><use href="#i-spark"/></svg><div><b style="color:var(--text)">Konzept-Ansicht.</b> Hier wird euer Live-Ops-Tool (aus dem anderen Chat) eingehängt – mit Login des Admins, Server-seitigem Schlüssel für die Spiel-Schnittstelle (wie beim Blueprint Vault) und Protokoll, wer wann was verschickt hat.</div></div>
+      <div class="lo-grid">
+        <div class="card">
+          <div class="card-h"><span class="card-t"><svg class="ic"><use href="#i-send"/></svg>Neue Nachricht</span></div>
+          <div class="form">
+            <div class="grid-2">
+              <div class="field"><label>Spiel</label><select class="tselect" id="loGame"></select></div>
+              <div class="field"><label>Zielgruppe</label><select class="tselect" id="loAud"><option>Alle Spieler</option><option>Nur Beta-Tester</option><option>Neue Spieler (letzte 7 Tage)</option><option>Einzelne Spieler-ID…</option></select></div>
+            </div>
+            <div class="field"><label>Titel</label><input class="tinput" id="loTitle" value="Danke fürs Mitspielen! 🎉"></div>
+            <div class="field"><label>Nachricht</label><textarea class="tarea" id="loText">Als Dankeschön für die erste Demo-Woche bekommt ihr ein kleines Geschenk. Wir sehen uns auf dem Schlachtfeld!</textarea></div>
+            <div class="grid-3">
+              <div class="field"><label>Belohnung</label><select class="tselect" id="loRew"><option>Goldmünzen</option><option>Seltener Skin</option><option>XP-Booster</option><option>Keine</option></select></div>
+              <div class="field"><label>Menge</label><input class="tinput" id="loAmt" type="number" value="500" min="1"></div>
+              <div class="field"><label>Gültig bis</label><input class="tinput" type="date" id="loExp"></div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-primary" id="loSend"><svg class="ic"><use href="#i-send"/></svg>Jetzt senden</button>
+              <button class="btn" data-toast="Zeitgesteuert: wird automatisch zum gewählten Zeitpunkt verschickt"><svg class="ic"><use href="#i-clock"/></svg>Planen…</button>
+              <span style="font-size:12px;color:var(--text-3);align-self:center">Wird vor dem Senden noch einmal bestätigt.</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="eyebrow" style="padding-left:4px">So sieht es im Spiel aus</div>
+          <div class="ingame">
+            <div class="ingame-h"><svg class="ic" style="color:#ffcf4d"><use href="#i-inbox"/></svg><b id="loPrevGame">FRONTLINERS · INBOX</b><span style="margin-left:auto;font-size:11px;color:#bfb497">gerade eben</span></div>
+            <div class="ingame-b">
+              <h4 id="loPrevTitle"></h4><p id="loPrevText"></p>
+              <div class="reward" id="loPrevRewWrap"><div class="reward-ic"><svg class="ic"><use href="#i-gift"/></svg></div><div><b id="loPrevRew"></b><span>Einlösbar bis <span id="loPrevExp"></span></span></div></div>
+              <button class="claim">ABHOLEN</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-h"><span class="card-t"><svg class="ic"><use href="#i-archive"/></svg>Gesendet</span></div>
+        <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Nachricht</th><th>Spiel</th><th>Zielgruppe</th><th>Belohnung</th><th>Abgeholt</th><th>Wann</th></tr></thead><tbody id="loSent"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ===================== PLATZHALTER ===================== -->
+    <section class="view" data-view="placeholder" hidden>
+      <div class="ph" id="ph"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ================= Mobile Tabbar ================= -->
+<nav class="tabbar" aria-label="Schnellnavigation">
+  <a class="tab-item" href="#cockpit" data-route="cockpit"><svg class="ic"><use href="#i-cockpit"/></svg>Cockpit</a>
+  <a class="tab-item" href="#spiele" data-route="spiele"><svg class="ic"><use href="#i-game"/></svg>Spiele</a>
+  <a class="tab-item" href="#postfach" data-route="postfach"><svg class="ic"><use href="#i-mail"/></svg>Postfach<span class="tdot" id="tabMail">3</span></a>
+  <a class="tab-item" href="#liveops" data-route="liveops"><svg class="ic"><use href="#i-radio"/></svg>Spiel-Inbox</a>
+  <button class="tab-item" id="tabMore"><svg class="ic"><use href="#i-menu"/></svg>Mehr</button>
+</nav>
+
+<!-- ================= Modal: Slug / Web-Adresse ================= -->
+<div class="modal-back" id="slugModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="slugT">
+    <div class="modal-h"><div><h3 id="slugT">Web-Adresse ändern</h3><p>Alles, was am Spiel hängt, zieht automatisch mit um.</p></div><button class="icon-btn" data-close aria-label="Schließen"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="modal-b">
+      <div class="field"><label>Neue Adresse</label>
+        <div class="slug-in"><span>planigames.com/game/</span><input id="slugInput" spellcheck="false" autocomplete="off"></div>
+        <div class="slug-err" id="slugErr"></div>
+      </div>
+      <div class="mig">
+        <div class="mig-h"><svg class="ic"><use href="#i-check"/></svg>Wird automatisch mitgenommen</div>
+        <ul id="migList"></ul>
+        <div class="redir"><svg class="ic"><use href="#i-link"/></svg><div>Die alte Adresse <b class="mono" id="oldSlug"></b> leitet <b>dauerhaft weiter</b> (301). Geteilte Links, Google-Einträge und Links in bereits verschickten Mails funktionieren weiter.</div></div>
+      </div>
+    </div>
+    <div class="modal-f"><span class="sp"></span><button class="btn btn-ghost" data-close>Abbrechen</button><button class="btn btn-primary" id="slugSave">Adresse ändern</button></div>
+  </div>
+</div>
+
+<!-- ================= Modal: Logo platzieren ================= -->
+<div class="modal-back" id="placerModal" hidden>
+  <div class="modal xl" role="dialog" aria-modal="true" aria-labelledby="placerT">
+    <div class="modal-h"><div><h3 id="placerT">Logo platzieren</h3><p>Echte Proportionen, echte Texte, echte Bildschirmgrößen — was du hier siehst, steht genau so auf der Website.</p></div><button class="icon-btn" data-close aria-label="Schließen"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="placer-bar">
+      <div class="seg" id="vpSeg"></div>
+      <div class="placer-warn ok" id="placerWarn"></div>
+    </div>
+    <div class="placer-tip" id="placerTip" hidden></div>
+    <div class="placer-wrap" id="placerWrap"><div class="stage" id="stage"><div class="frame" id="frame"></div></div></div>
+    <div class="placer-foot">
+      <label class="range">Größe <input type="range" id="sizeRange" min="40" max="300" step="1"><b class="mono" id="sizeVal">100%</b></label>
+      <span class="coords" id="coords">x 50 · y 50</span>
+      <span class="placer-note" id="placerNote"><svg class="ic" style="width:15px;height:15px"><use href="#i-move"/></svg>Logo anfassen und ziehen · mittig rastet ein</span>
+      <span class="sp" style="flex:1"></span>
+      <button class="btn btn-ghost" id="posReset"><svg class="ic"><use href="#i-undo"/></svg>Standard (über dem Text)</button>
+      <button class="btn btn-primary" id="posSave"><svg class="ic"><use href="#i-check"/></svg>Übernehmen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Modal: Mail verfassen ================= -->
+<div class="modal-back" id="composeModal" hidden>
+  <div class="modal lg composer" role="dialog" aria-modal="true" aria-labelledby="cmpT">
+    <div class="modal-h"><div><h3 id="cmpT">Neue E-Mail</h3><p>Im PLANIGAMES-Design · mit Signatur · Anhänge bis 10 MB</p></div><button class="icon-btn" data-close aria-label="Schließen"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="cmp-row"><label>An</label><input id="cmpTo" placeholder="name@beispiel.de"></div>
+    <div class="cmp-row"><label>Betreff</label><input id="cmpSubj" placeholder="Worum geht's?"></div>
+    <div class="cmp-row"><label>Vorlage</label><select id="cmpTpl"><option value="">— ohne —</option><option value="press">Presse-Anfrage beantworten</option><option value="key">Key-Zusage für Creator</option><option value="thanks">Danke fürs Feedback</option></select></div>
+    <div class="toolbar" id="toolbar">
+      <button class="tb" data-cmd="bold" title="Fett (Strg+B)"><svg class="ic"><use href="#i-bold"/></svg></button>
+      <button class="tb" data-cmd="italic" title="Kursiv (Strg+I)"><svg class="ic"><use href="#i-italic"/></svg></button>
+      <button class="tb" data-cmd="underline" title="Unterstrichen (Strg+U)"><svg class="ic"><use href="#i-underline"/></svg></button>
+      <span class="tb-sep"></span>
+      <button class="tb" data-cmd="h3" title="Zwischenüberschrift"><svg class="ic"><use href="#i-heading"/></svg></button>
+      <button class="tb" data-cmd="insertUnorderedList" title="Aufzählung"><svg class="ic"><use href="#i-ul"/></svg></button>
+      <button class="tb" data-cmd="insertOrderedList" title="Nummerierte Liste"><svg class="ic"><use href="#i-ol"/></svg></button>
+      <button class="tb" data-cmd="quote" title="Zitat"><svg class="ic"><use href="#i-quote"/></svg></button>
+      <button class="tb" data-cmd="link" title="Link einfügen"><svg class="ic"><use href="#i-link"/></svg></button>
+      <span class="tb-sep"></span>
+      <button class="tb" data-cmd="attach" title="Datei anhängen"><svg class="ic"><use href="#i-clip"/></svg></button>
+    </div>
+    <div class="editor" id="editor" contenteditable="true" data-ph="Schreib deine Nachricht… Text markieren und oben formatieren."></div>
+    <div class="drop" id="drop">
+      <svg class="ic"><use href="#i-clip"/></svg><span>Dateien hierher ziehen oder <button class="c-accent" style="font-weight:600" id="pickFiles">auswählen</button></span>
+      <input type="file" id="fileIn" multiple hidden>
+      <div class="chips-att" id="attChips"></div>
+      <div class="sizebar" id="sizeBar" hidden><span id="sizeTxt">0 MB</span><div class="bar"><i id="sizeFill" style="width:0"></i></div><span>10 MB</span></div>
+    </div>
+    <div class="sig" id="sigBox"><button class="switch on" id="sigSw" aria-label="Signatur anhängen"></button>
+      <div class="sig-main">
+        <div class="sig-row"><b style="color:var(--text)">Signatur</b><select id="sigSel" aria-label="Signatur wählen"></select><button class="btn btn-sm btn-ghost" id="sigManage">Verwalten…</button></div>
+        <div class="sig-prev" id="sigPrev"></div>
+      </div></div>
+    <div class="cmp-foot"><button class="btn btn-ghost" data-toast="Entwurf gespeichert"><svg class="ic"><use href="#i-archive"/></svg>Als Entwurf</button><span style="flex:1"></span><button class="btn" data-toast="Vorschau im Mail-Design (wie heute, nur mit Formatierung)"><svg class="ic"><use href="#i-eye"/></svg>Vorschau</button><button class="btn btn-primary" id="cmpSend"><svg class="ic"><use href="#i-send"/></svg>Senden</button></div>
+  </div>
+</div>
+
+<!-- ================= Modal: Signaturen ================= -->
+<div class="modal-back" id="sigModal" hidden>
+  <div class="modal lg" role="dialog" aria-modal="true" aria-labelledby="sigT">
+    <div class="modal-h"><div><h3 id="sigT">Signaturen</h3><p>Für jede Person oder fürs ganze Studio — beim Schreiben per Klick wählbar. Jeder Admin hat seine eigene Standard-Signatur.</p></div><button class="icon-btn" data-close aria-label="Zurück zur Mail"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="modal-b sig-grid">
+      <div>
+        <div class="sig-list" id="sigList"></div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+          <button class="btn btn-sm" id="sigNew"><svg class="ic"><use href="#i-plus"/></svg>Neue Signatur</button>
+          <button class="btn btn-sm btn-ghost" id="sigFromTeam"><svg class="ic"><use href="#i-team"/></svg>Aus Team-Profilen übernehmen</button>
+        </div>
+      </div>
+      <div class="form" style="padding:0">
+        <div class="grid-2">
+          <div class="field"><label>Bezeichnung (nur intern)</label><input class="tinput" id="sfLabel"></div>
+          <div class="field"><label>Name</label><input class="tinput" id="sfName"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Rolle</label><input class="tinput" id="sfRole"></div>
+          <div class="field"><label>Telefon (optional)</label><input class="tinput" id="sfPhone" placeholder="+49 …"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px"><button class="switch" id="sfDefault" aria-label="Als meine Standard-Signatur"></button><span style="font-size:13px">Meine Standard-Signatur</span></div>
+        <div class="eyebrow" style="margin-top:6px">Vorschau in der Mail</div>
+        <div class="sig-prev" id="sfPrev"></div>
+      </div>
+    </div>
+    <div class="modal-f"><button class="btn btn-sm btn-danger" id="sigDel"><svg class="ic"><use href="#i-trash"/></svg>Löschen</button><span class="sp"></span><button class="btn btn-ghost" data-close>Zurück zur Mail</button><button class="btn btn-primary" id="sigSave"><svg class="ic"><use href="#i-check"/></svg>Speichern</button></div>
+  </div>
+</div>
+
+<!-- ================= Command-Palette ================= -->
+<div class="modal-back" id="palModal" hidden>
+  <div class="modal pal" role="dialog" aria-modal="true" aria-label="Suchen und springen">
+    <div class="pal-in"><svg class="ic"><use href="#i-search"/></svg><input id="palInput" placeholder="Seite, Spiel oder Aktion…" autocomplete="off"><kbd>Esc</kbd></div>
+    <ul class="pal-list" id="palList"></ul>
+    <div class="pal-foot"><span>↑↓ auswählen</span><span>↵ öffnen</span><span>Esc schließen</span></div>
+  </div>
+</div>
+
+<!-- ================= Benachrichtigungen ================= -->
+<div class="card notif" id="notif" hidden>
+  <div class="notif-h"><b>Benachrichtigungen</b><button id="notifRead">Alle gelesen</button></div>
+  <ul id="notifList"></ul>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><svg class="ic"><use href="#i-check"/></svg><span id="toastTxt"></span></div>
+
+<script>
+(() => {
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const MEDIA = "https://planigames.com";
+const icon = (id, cls = "") => `<svg class="ic ${cls}" aria-hidden="true"><use href="#${id}"/></svg>`;
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const fmt = (n) => n.toLocaleString("de-DE");
+
+/* ---------------- Daten (öffentliche Spieldaten + Beispielwerte) ---------------- */
+const STATUS = {
+  development: ["In Entwicklung", "st-dev"], demo: ["Demo verfügbar", "st-demo"], released: ["Veröffentlicht", "st-rel"],
+  announced: ["Angekündigt", "st-ann"], early: ["Early Access", "st-early"],
+};
+const BLOCK_META = {
+  hero: ["i-image", "Hero (Kopfbereich)", "Cover, Logo, Tagline & Buttons"],
+  richtext: ["i-devlog", "Textabschnitt", "Über das Spiel"],
+  trailer: ["i-play", "Trailer", "YouTube-Video (erst nach Cookie-Zustimmung)"],
+  features: ["i-spark", "Features", "Kacheln mit Icon & Text"],
+  stats: ["i-chart", "Zahlen", "Große Kennzahlen"],
+  gallery: ["i-image", "Galerie", "Screenshots mit Lightbox"],
+  suggestions: ["i-bulb", "Vorschlagsbox", "Community schlägt vor & stimmt ab"],
+  lore: ["i-book", "Lore-Teaser", "Verlinkt auf die Welt-Seite"],
+  roadmap: ["i-route", "Roadmap", "Meilensteine mit Status"],
+  faq: ["i-help", "FAQ", "Häufige Fragen"],
+  waitlist: ["i-list", "Beta-Warteliste", "Anmeldung mit Empfehlungs-Ranking"],
+  cta: ["i-zap", "Call-to-Action", "Großer Aufruf mit Button"],
+  download: ["i-download", "Download", "Builds & Dateien"],
+  quotes: ["i-quote", "Presse-Zitate", "Stimmen zum Spiel"],
+};
+const GAMES = [
+  { title: "FRONTLINERS", slug: "warcats", status: "demo", accent: "#ffbb00", accent2: "#ff7b00", cover: "/media/first-test-00-19-00-free-3840x2160-3.png", focus: [50, 50], logo: "/media/frontliners-logo-weiss.svg", tagline: "Dein Schlachtfeld. Deine Regeln.", logoScale: 202, pos: { x: 42, y: 58 }, featured: true, lar: 3, lbox: [0.0683, 0.36, 0.9583, 0.635],
+    blocks: ["hero", "richtext", "trailer", "waitlist", "trailer", "roadmap", "suggestions", "download"], wl: 189, sugg: 41, views: 612, en: 100, board: 2 },
+  { title: "Fall of Kings", slug: "fall-of-kings", status: "development", accent: "#ff1a1a", accent2: "#ff5a1a", cover: "/media/3e1f59ea-b160-46fb-b3eb-6531a9654e26.jpg", focus: [50, 50], logo: "/media/fok-logo-tempv01.png", tagline: "Fast Paced Arcade Medieval Shooter", logoScale: 179, pos: { x: 31, y: 57 }, featured: false, lar: 1.5175, lbox: [0.0437, 0.1006, 0.9537, 0.8994],
+    blocks: ["hero", "richtext", "features", "waitlist", "suggestions"], wl: 52, sugg: 12, views: 248, en: 58, board: 4 },
+  { title: "Wobbly Wizards", slug: "wobbly-wizards", status: "development", accent: "#ff8800", accent2: "#ffae00", cover: "/media/website-3.png", focus: [31, 48], logo: "/media/wobblywizards-logo.png", tagline: "Ein chaotisch-magisches Physik-Abenteuer für 1–6 Zauberer. Sammelt Kristalle, stolpert durch wackelige Dungeons und zaubert euch zum Sieg — oder ins Verderben.", logoScale: 141, pos: { x: 28, y: 58 }, featured: true, lar: 1.7778, lbox: [0.0994, 0.1767, 0.8806, 0.8411],
+    blocks: ["hero", "richtext", "trailer", "stats", "gallery", "features", "suggestions", "lore", "roadmap", "faq", "waitlist", "cta"], wl: 97, sugg: 23, views: 391, en: 92, board: 6 },
+  { title: "Browser-Demos", slug: "browser-demos", status: "demo", accent: "#ff7d1a", accent2: "#e6a015", cover: "", focus: [50, 50], logo: "", tagline: "Hier findest du alle Browser-Demos zum Download!", logoScale: 100, pos: null, featured: false,
+    blocks: ["hero", "download", "richtext"], wl: 0, sugg: 0, views: 83, en: 100, board: 0 },
+];
+GAMES.forEach(g => { g.off = new Set(); });
+
+const SUGG = [
+  { g: 0, text: "Clan-System mit eigenen Wappen", votes: 34, new: true },
+  { g: 0, text: "Ranked-Modus mit Saisons", votes: 27, new: true },
+  { g: 0, text: "Mehr Karten im Wüsten-Setting", votes: 19, new: true },
+  { g: 2, text: "Koop-Modus für 2 Spieler an einem Bildschirm", votes: 22, new: true },
+  { g: 2, text: "Ein Zauber, der Schwerkraft umdreht", votes: 15, new: true },
+  { g: 1, text: "Belagerungswaffen steuerbar machen", votes: 11, new: false },
+];
+
+/* ---------------- Toast ---------------- */
+let toastT;
+function toast(msg) {
+  $("#toastTxt").textContent = msg;
+  $("#toast").classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => $("#toast").classList.remove("show"), 2800);
+}
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-toast]");
+  if (t) { e.preventDefault(); toast(t.dataset.toast); }
+});
+
+/* ---------------- Router ---------------- */
+const ROUTES = {
+  cockpit: ["Übersicht", "Cockpit"], spiele: ["Inhalte", "Spiele"], postfach: ["Community", "Postfach"], liveops: ["Spielbetrieb", "Spiel-Inbox"],
+};
+const PH = {
+  studio: ["i-studio", "Studio & Startseite", "Inhalte", ["Hero, Countdown, Maskottchen & Hintergrund-Effekte", "Live-Vorschau der Startseite direkt daneben", "Abschnitte ein-/ausklappbar statt endlos scrollen"]],
+  devlog: ["i-devlog", "Devlog & Patchnotes", "Inhalte", ["Beitragsliste mit Status (Entwurf / geplant / veröffentlicht)", "Editor mit Formatierung & Bildern per Drag-and-Drop", "„Newsletter senden“ direkt beim Veröffentlichen"]],
+  team: ["i-team", "Team", "Inhalte", ["Karten statt Formular-Wand", "Foto-Zuschnitt mit Fokuspunkt", "Reihenfolge per Ziehen"]],
+  rechtliches: ["i-legal", "Rechtliches", "Inhalte", ["Impressum & Datenschutz mit Versionsverlauf", "Hinweis, wenn eine Seite lange nicht geprüft wurde"]],
+  vorschlaege: ["i-bulb", "Vorschläge", "Community", ["Freigeben/Ablehnen per Wischen oder Tastatur", "Nach Spiel gruppiert, nach Stimmen sortiert", "Bleiben bei Adress-Änderung erhalten"]],
+  warteliste: ["i-list", "Warteliste", "Community", ["Pro Spiel mit Wachstumskurve", "Ranking & Empfehlungen sichtbar", "CSV-Export & Mail an alle Wartenden"]],
+  newsletter: ["i-mega", "Newsletter", "Community", ["Abonnenten & Wachstum", "Kampagnen mit formatiertem Editor", "Öffnungen & Abmeldungen im Blick"]],
+  kommentare: ["i-chat", "Kommentare", "Community", ["Moderations-Warteschlange", "Antworten direkt aus dem Admin"]],
+  keys: ["i-key", "Keys & Presse", "Spielbetrieb", ["Key-Pakete pro Spiel & Plattform", "Vergabe an Creator mit Mail-Vorlage", "Warnung bei kompromittierten Keys"]],
+  board: ["i-kanban", "Planungs-Board", "Planung & Werkzeuge", ["Kanban mit Bildern, Checklisten & Kommentaren", "Karten mit Spielen verknüpft", "Fälligkeiten erscheinen im Cockpit"]],
+  kalender: ["i-cal", "Kalender", "Planung & Werkzeuge", ["Release-Termine, geplante Posts & Board-Fälligkeiten", "Abo-Link für Google/Apple-Kalender"]],
+  vault: ["i-vault", "Blueprint Vault", "Planung & Werkzeuge", ["Bleibt im eigenen UE-Design", "Öffnet innerhalb der neuen Navigation"]],
+  medien: ["i-image", "Medien", "Planung & Werkzeuge", ["Raster mit Vorschau, Größe & Verwendung", "Zu große Bilder auf einen Klick optimieren (WebP)", "Sehen, wo ein Bild verwendet wird, bevor man es löscht"]],
+  statistik: ["i-chart", "Statistik & SEO", "Planung & Werkzeuge", ["Besucher pro Spielseite", "SEO-Check je Seite mit Google-Vorschau"]],
+  system: ["i-shield", "Nutzer & Sicherheit", "System", ["Rollen & Bereiche pro Admin", "2FA-Status & vertraute Geräte (inkl. Abmelden)", "Aktivitäts-Protokoll"]],
+  backups: ["i-archive", "Backups & Papierkorb", "System", ["Automatische Snapshots mit Wiederherstellung", "Papierkorb mit Vorschau"]],
+};
+function go(route) {
+  if (!ROUTES[route] && !PH[route]) route = "cockpit";
+  $$(".view").forEach(v => { v.hidden = true; });
+  if (ROUTES[route]) {
+    $(`[data-view="${route}"]`).hidden = false;
+    $("#crumbParent").textContent = ROUTES[route][0];
+    $("#crumbTitle").textContent = ROUTES[route][1];
+  } else {
+    const [ic, title, parent, items] = PH[route];
+    $("#ph").innerHTML = `<div class="ph-ic">${icon(ic)}</div><h2>${esc(title)}</h2>
+      <p>Dieser Bereich bekommt die neue Oberfläche in einer späteren Ausbaustufe. Geplant:</p>
+      <ul>${items.map(i => `<li>${icon("i-check")}<span>${esc(i)}</span></li>`).join("")}</ul>
+      <p style="margin-top:22px"><a class="btn" href="#cockpit">${icon("i-back")}Zurück zum Cockpit</a></p>`;
+    $('[data-view="placeholder"]').hidden = false;
+    $("#crumbParent").textContent = parent;
+    $("#crumbTitle").textContent = title;
+  }
+  $$(".nav-item, .tab-item").forEach(a => a.classList.toggle("active", a.dataset.route === route));
+  closeDrawer();
+  window.scrollTo({ top: 0 });
+  if (route === "spiele") renderGames();
+  if (route === "postfach") renderMail();
+}
+window.addEventListener("hashchange", () => go(location.hash.slice(1)));
+
+/* Drawer (mobil) */
+function openDrawer() { $("#side").classList.add("open"); $("#scrim").classList.add("show"); }
+function closeDrawer() { $("#side").classList.remove("open"); $("#scrim").classList.remove("show"); }
+$("#menuBtn").addEventListener("click", openDrawer);
+$("#tabMore").addEventListener("click", openDrawer);
+$("#scrim").addEventListener("click", closeDrawer);
+
+/* ---------------- Cockpit ---------------- */
+function sparkSVG(data, color) {
+  const w = 160, h = 38, max = Math.max(...data), min = Math.min(...data), rng = (max - min) || 1;
+  const pts = data.map((v, i) => [i * (w / (data.length - 1)), h - 3 - ((v - min) / rng) * (h - 8)]);
+  const d = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+  const gid = "sg" + color.replace(/[^a-z0-9]/gi, "");
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".32"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs><path d="${d} L ${w} ${h} L 0 ${h} Z" fill="url(#${gid})"/><path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+}
+function renderCockpit() {
+  const now = new Date();
+  const h = now.getHours();
+  $("#greet").textContent = (h < 11 ? "Guten Morgen" : h < 18 ? "Guten Tag" : "Guten Abend") + " 👋";
+  $("#today").textContent = now.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+
+  const TODO = [
+    ["i-mail", "var(--accent)", "var(--accent-soft)", "3 ungelesene E-Mails", "u. a. Presse-Anfrage von „IndieFront Magazin“ · mit Anhang", "postfach", "Öffnen"],
+    ["i-bulb", "var(--warn)", "var(--warn-soft)", "5 Vorschläge warten auf Freigabe", "FRONTLINERS 3 · Wobbly Wizards 2", "vorschlaege", "Prüfen"],
+    ["i-chat", "var(--info)", "var(--info-soft)", "2 Devlog-Kommentare zur Moderation", "zu „Wobbly Wizards – Devlog #4“", "kommentare", "Prüfen"],
+    ["i-inbox", "var(--violet)", "var(--violet-soft)", "1 neue Kontaktanfrage", "Betreff: „Kooperation Streaming-Event“", "postfach", "Antworten"],
+    ["i-globe", "var(--info)", "var(--info-soft)", "Fall of Kings: Englisch fehlt", "14 Texte noch nicht übersetzt", "spiele", "Übersetzen"],
+    ["i-kanban", "var(--ok)", "var(--ok-soft)", "Board: „Trailer #2 schneiden“ ist morgen fällig", "FRONTLINERS · zuständig: Studio-Admin", "board", "Ansehen"],
+    ["i-key", "var(--danger)", "var(--danger-soft)", "17 Keys ersetzen", "waren öffentlich abrufbar – neue Charge anlegen", "keys", "Erledigen"],
+  ];
+  $("#todo").innerHTML = TODO.map(([ic, c, bg, t, m, r, a]) => `<li>
+      <span class="todo-ic" style="color:${c};background:${bg}">${icon(ic)}</span>
+      <div style="min-width:0"><div class="todo-t">${esc(t)}</div><div class="todo-m">${esc(m)}</div></div>
+      <a class="btn btn-sm go" href="#${r}">${esc(a)}</a></li>`).join("");
+
+  const days = (base, amp, n = 14) => Array.from({ length: n }, (_, i) => Math.round(base + Math.sin(i / 1.7) * amp + i * amp * .18 + (i % 3) * amp * .2));
+  const KPI = [
+    ["i-eye", "Besuche · 7 Tage", "1.284", "+12 %", "up", "vs. Vorwoche", days(150, 30), "#ff9a3d"],
+    ["i-list", "Warteliste", "338", "+21", "up", "diese Woche", days(300, 6), "#3ddc97"],
+    ["i-mega", "Newsletter", "64", "+4", "up", "bestätigte Abos", days(55, 3), "#6ea8ff"],
+    ["i-bulb", "Vorschläge", "76", "+9", "up", "davon 5 offen", days(60, 5), "#ffc53d"],
+  ];
+  $("#kpis").innerHTML = KPI.map(([ic, l, v, d, dir, s, data, col]) => `<div class="card kpi">
+      <div class="kpi-l">${icon(ic)}${esc(l)}</div>
+      <div class="kpi-v">${v}<span class="delta ${dir}">${d}</span></div>
+      <div class="kpi-s">${esc(s)}</div>${sparkSVG(data, col)}</div>`).join("");
+
+  $("#gamesStrip").innerHTML = GAMES.map((g, i) => {
+    const st = STATUS[g.status];
+    return `<article class="gcard" style="--acc:${g.accent}">
+      <div class="gcard-media">
+        ${g.cover ? `<img class="cv" src="${MEDIA + g.cover}" alt="" loading="lazy" style="object-position:${g.focus[0]}% ${g.focus[1]}%" onerror="this.remove()">` : ""}
+        <span class="chip ${st[1]}"><i></i>${st[0]}</span>
+        ${g.featured ? `<span class="star">★ STARTSEITE</span>` : ""}
+        ${g.logo ? `<img class="lg" src="${MEDIA + g.logo}" alt="${esc(g.title)}" onerror="this.outerHTML='<span class=ttl>${esc(g.title)}</span>'">` : `<span class="ttl">${esc(g.title)}</span>`}
+      </div>
+      <div class="gcard-stats"><div><b>${fmt(g.wl)}</b><span>Warteliste</span></div><div><b>${g.sugg}</b><span>Vorschläge</span></div><div><b>${fmt(g.views)}</b><span>Aufrufe 7T</span></div></div>
+      <div class="gcard-acts"><button class="btn btn-sm" data-edit-game="${i}">${icon("i-settings")}Bearbeiten</button><a class="btn btn-sm btn-ghost" href="#" onclick="return false">${icon("i-ext")}Ansehen</a></div>
+    </article>`;
+  }).join("");
+
+  const FEED = [
+    ["i-game", "<b>Du</b> hast den Seiten-Aufbau von <b>FRONTLINERS</b> geändert", "vor 2 Std."],
+    ["i-list", "Neue Wartelisten-Anmeldung für <b>FRONTLINERS</b> (Platz 189)", "vor 3 Std."],
+    ["i-archive", "Automatisches Backup erstellt", "heute, 06:00"],
+    ["i-bulb", "Neuer Vorschlag: „Clan-System mit eigenen Wappen“", "gestern, 22:14"],
+    ["i-send", "Newsletter „Devlog #5“ an 64 Abonnenten verschickt", "gestern, 18:02"],
+    ["i-shield", "Neues Gerät vertraut (Chrome · Windows)", "Mo., 09:41"],
+  ];
+  $("#feed").innerHTML = FEED.map(([ic, t, m]) => `<li><span class="fi">${icon(ic)}</span><div><div class="ft">${t}</div><div class="fm">${m}</div></div></li>`).join("");
+
+  const I18N = [["Studio", 100], ["Spiele", 83], ["Devlog", 60], ["Team", 100], ["Rechtliches", 100]];
+  $("#i18n").innerHTML = I18N.map(([n, p]) => `<div class="i18n-row"><span>${n}</span><div class="bar ${p === 100 ? "full" : ""}"><i style="width:${p}%"></i></div><span class="mono" style="color:${p === 100 ? "var(--ok)" : "var(--text-2)"};text-align:right">${p}%</span></div>`).join("");
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-edit-game]");
+  if (b) { currentGame = +b.dataset.editGame; location.hash = "spiele"; mdOpenDetail(true); }
+});
+
+/* ---------------- Spiele: Master-Detail ---------------- */
+let currentGame = 0, gameFilter = "alle", gameQuery = "", currentTab = "overview";
+function renderGames() {
+  const counts = { alle: GAMES.length, development: GAMES.filter(g => g.status === "development").length, demo: GAMES.filter(g => g.status === "demo").length };
+  $("#gameFilter").innerHTML = [["alle", "Alle"], ["development", "In Entwicklung"], ["demo", "Demo"]]
+    .map(([k, l]) => `<button class="${gameFilter === k ? "on" : ""}" data-gf="${k}">${l}<span class="n">${counts[k]}</span></button>`).join("");
+  const rows = GAMES.map((g, i) => ({ g, i })).filter(({ g }) =>
+    (gameFilter === "alle" || g.status === gameFilter) && (!gameQuery || (g.title + " " + g.slug).toLowerCase().includes(gameQuery)));
+  $("#gameRows").innerHTML = rows.map(({ g, i }) => `<li class="grow ${i === currentGame ? "on" : ""}" style="--acc:${g.accent}" data-game="${i}" draggable="true">
+      <div class="gthumb">${g.cover ? `<img src="${MEDIA + g.cover}" alt="" loading="lazy" style="object-position:${g.focus[0]}% ${g.focus[1]}%" onerror="this.remove()">` : ""}</div>
+      <div style="min-width:0"><div class="grow-t">${esc(g.title)}</div>
+        <div class="grow-m"><span class="chip ${STATUS[g.status][1]}" style="padding:0 7px;font-size:10.5px"><i></i>${STATUS[g.status][0]}</span><span class="mono">/${esc(g.slug)}</span></div></div>
+      <span class="grip">${icon("i-grip")}</span></li>`).join("") || `<li style="padding:16px;color:var(--text-3);font-size:13px">Kein Spiel gefunden.</li>`;
+  renderDetail();
+}
+$("#gameSearch").addEventListener("input", (e) => { gameQuery = e.target.value.trim().toLowerCase(); renderGames(); });
+$("#gameFilter").addEventListener("click", (e) => { const b = e.target.closest("[data-gf]"); if (b) { gameFilter = b.dataset.gf; renderGames(); } });
+$("#gameRows").addEventListener("click", (e) => {
+  const li = e.target.closest("[data-game]");
+  if (!li) return;
+  currentGame = +li.dataset.game; currentTab = "overview";
+  renderGames(); mdOpenDetail(true);
+});
+/* Reihenfolge per Drag & Drop */
+let dragGame = null;
+$("#gameRows").addEventListener("dragstart", (e) => { const li = e.target.closest("[data-game]"); if (li) { dragGame = +li.dataset.game; e.dataTransfer.effectAllowed = "move"; } });
+$("#gameRows").addEventListener("dragover", (e) => { if (dragGame !== null) e.preventDefault(); });
+$("#gameRows").addEventListener("drop", (e) => {
+  e.preventDefault();
+  const li = e.target.closest("[data-game]");
+  if (!li || dragGame === null) return;
+  const to = +li.dataset.game;
+  if (to !== dragGame) {
+    const cur = GAMES[currentGame];
+    const [m] = GAMES.splice(dragGame, 1); GAMES.splice(to, 0, m);
+    currentGame = GAMES.indexOf(cur);
+    toast("Reihenfolge gespeichert – so erscheint sie auch auf der Website");
+  }
+  dragGame = null; renderGames(); renderCockpit();
+});
+function mdOpenDetail(open) { $("#md").classList.toggle("detail-open", !!open); }
+
+function renderDetail() {
+  const g = GAMES[currentGame];
+  if (!g) { $("#gameDetail").innerHTML = ""; return; }
+  const st = STATUS[g.status];
+  const newSugg = SUGG.filter(s => s.g === currentGame && s.new).length;
+  const tabs = [["overview", "Übersicht"], ["page", "Seiten-Aufbau", g.blocks.length], ["look", "Darstellung"], ["community", "Community", newSugg || ""], ["settings", "Einstellungen"]];
+  $("#gameDetail").innerHTML = `
+    <button class="btn btn-ghost btn-sm back-m" id="mdBack" style="align-self:flex-start">${icon("i-back")}Alle Spiele</button>
+    <div class="gd-hero" style="--acc:${g.accent}">
+      ${g.cover ? `<img class="cv" src="${MEDIA + g.cover}" alt="" style="object-position:${g.focus[0]}% ${g.focus[1]}%" onerror="this.remove()">` : ""}
+      <div class="gd-hero-in">
+        <div>
+          ${g.logo ? `<img class="lg" src="${MEDIA + g.logo}" alt="${esc(g.title)}" onerror="this.remove()">` : ""}
+          <h2 ${g.logo ? 'style="font-size:15px;color:var(--text-2);margin-top:10px"' : ""}>${esc(g.title)}</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="slug-pill">${icon("i-link")}planigames.com/game/<b style="color:var(--text)">${esc(g.slug)}</b></span><span class="chip ${st[1]}" style="margin-top:8px"><i></i>${st[0]}</span></div>
+        </div>
+        <div class="acts">
+          <a class="btn" href="#" onclick="return false">${icon("i-eye")}Vorschau</a>
+          <button class="btn btn-primary" data-toast="Gespeichert · Website ist aktuell">${icon("i-check")}Speichern</button>
+        </div>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">${tabs.map(([k, l, n]) => `<button class="${currentTab === k ? "on" : ""}" data-tab="${k}">${l}${n ? `<span class="tn">${n}</span>` : ""}</button>`).join("")}</div>
+    <div class="tabp ${currentTab === "overview" ? "on" : ""}" data-panel="overview">${panelOverview(g)}</div>
+    <div class="tabp ${currentTab === "page" ? "on" : ""}" data-panel="page">${panelPage(g)}</div>
+    <div class="tabp ${currentTab === "look" ? "on" : ""}" data-panel="look">${panelLook(g)}</div>
+    <div class="tabp ${currentTab === "community" ? "on" : ""}" data-panel="community">${panelCommunity(g)}</div>
+    <div class="tabp ${currentTab === "settings" ? "on" : ""}" data-panel="settings">${panelSettings(g)}</div>`;
+  const back = $("#mdBack"); if (back) back.addEventListener("click", () => mdOpenDetail(false));
+  wireBlocks();
+}
+$("#gameDetail").addEventListener("click", (e) => {
+  const t = e.target.closest("[data-tab]");
+  if (t) {
+    currentTab = t.dataset.tab;
+    $$("#gameDetail .tabs button").forEach(b => b.classList.toggle("on", b === t));
+    $$("#gameDetail .tabp").forEach(p => p.classList.toggle("on", p.dataset.panel === currentTab));
+    return;
+  }
+  if (e.target.closest("[data-open-placer]")) { openPlacer(GAMES[currentGame]); return; }
+  if (e.target.closest("[data-open-slug]")) { openSlug(GAMES[currentGame]); return; }
+  const sw = e.target.closest("[data-blk-toggle]");
+  if (sw) {
+    const g = GAMES[currentGame], i = +sw.dataset.blkToggle;
+    if (g.off.has(i)) g.off.delete(i); else g.off.add(i);
+    sw.classList.toggle("on", !g.off.has(i));
+    sw.closest(".blk").classList.toggle("off", g.off.has(i));
+    toast(g.off.has(i) ? "Block ausgeblendet – bleibt gespeichert" : "Block wieder sichtbar");
+    return;
+  }
+  const add = e.target.closest("[data-add-block]");
+  if (add) {
+    const g = GAMES[currentGame];
+    g.blocks.push(add.dataset.addBlock);
+    currentTab = "page"; renderDetail();
+    toast(`„${BLOCK_META[add.dataset.addBlock][1]}“ hinzugefügt`);
+    return;
+  }
+  if (e.target.closest("#addBlockBtn")) { $("#blockPalette").hidden = !$("#blockPalette").hidden; return; }
+  const sg = e.target.closest("[data-sugg]");
+  if (sg) { const li = sg.closest("li"); li.style.opacity = ".35"; toast(sg.dataset.sugg === "ok" ? "Freigegeben – erscheint auf der Spielseite" : "Abgelehnt"); }
+});
+
+function panelOverview(g) {
+  const hasTrailer = g.blocks.includes("trailer");
+  const items = [
+    [!!g.cover, "Cover-Bild", "Für Karten, Startseite & Teilen-Vorschau"],
+    [!!g.logo, "Logo (transparent)", "Erscheint im Kopfbereich"],
+    [hasTrailer, "Trailer", "Erhöht die Verweildauer deutlich"],
+    [g.en >= 95, "Englische Fassung", g.en >= 95 ? "vollständig" : `${100 - g.en}% fehlen noch`],
+    [g.blocks.includes("waitlist"), "Beta-Warteliste", "Sammelt Interessenten"],
+  ];
+  return `<div class="grid-3 stat3" style="margin-bottom:16px">
+      <div class="card mini"><b>${fmt(g.wl)}</b><span>auf der Warteliste</span></div>
+      <div class="card mini"><b>${g.sugg}</b><span>Vorschläge</span></div>
+      <div class="card mini"><b>${fmt(g.views)}</b><span>Seitenaufrufe (7 Tage)</span></div></div>
+    <div class="grid-2">
+      <div class="card"><div class="card-h"><span class="card-t">${icon("i-check")}Seiten-Check</span></div>
+        <ul class="check">${items.map(([ok, t, m]) => `<li><span class="${ok ? "ok" : "no"}">${icon(ok ? "i-check" : "i-alert")}</span><div><div style="font-weight:600">${t}</div><div style="font-size:12px;color:var(--text-3)">${m}</div></div>${ok ? "" : `<button class="btn btn-sm fix" data-toast="Springt direkt zum passenden Feld">Ergänzen</button>`}</li>`).join("")}</ul></div>
+      <div class="card"><div class="card-h"><span class="card-t">${icon("i-bulb")}Neueste Vorschläge</span><button class="link" data-tab="community">Alle<svg class="ic" style="width:14px;height:14px"><use href="#i-chev"/></svg></button></div>
+        ${suggList(g, 3)}</div>
+    </div>`;
+}
+function suggList(g, max) {
+  const list = SUGG.filter(s => GAMES[s.g] === g).slice(0, max);
+  if (!list.length) return `<p style="padding:6px 18px 18px;color:var(--text-3);font-size:13px">Noch keine Vorschläge – die Vorschlagsbox ist ${g.blocks.includes("suggestions") ? "aktiv" : "auf dieser Seite nicht eingebaut"}.</p>`;
+  return `<ul class="slist">${list.map(s => `<li><div class="votes"><b>${s.votes}</b><span>Stimmen</span></div><div style="min-width:0"><div class="st">${esc(s.text)}</div><div class="sm">${s.new ? "wartet auf Freigabe" : "freigegeben"}</div></div>
+      ${s.new ? `<div class="acts"><button class="btn btn-sm" data-sugg="ok">${icon("i-check")}</button><button class="btn btn-sm btn-ghost" data-sugg="no">${icon("i-x")}</button></div>` : ""}</li>`).join("")}</ul>`;
+}
+function panelPage(g) {
+  return `<div class="card">
+    <div class="card-h"><span class="card-t">${icon("i-cockpit")}Aufbau der Spielseite</span><span style="margin-left:auto;font-size:12px;color:var(--text-3)">Ziehen zum Sortieren · Schalter blendet aus, ohne zu löschen</span></div>
+    <ul class="blocks" id="blocks">${g.blocks.map((b, i) => {
+      const m = BLOCK_META[b] || ["i-cockpit", b, ""];
+      const on = !g.off.has(i);
+      return `<li class="blk ${on ? "" : "off"}" draggable="true" data-blk="${i}">
+        <span class="grip">${icon("i-grip")}</span>
+        <span class="blk-ic">${icon(m[0])}</span>
+        <div style="min-width:0"><div class="blk-t">${m[1]}</div><div class="blk-m">${m[2]}</div></div>
+        <div class="tools"><button class="btn btn-sm btn-ghost" data-toast="Öffnet den Block im Seiten-Editor rechts mit Live-Vorschau">Bearbeiten</button><button class="switch ${on ? "on" : ""}" data-blk-toggle="${i}" aria-label="Sichtbar"></button></div>
+      </li>`;
+    }).join("")}</ul>
+    <button class="add-block" id="addBlockBtn">${icon("i-plus")}Block hinzufügen</button>
+    <div class="palette-grid" id="blockPalette" hidden>${Object.entries(BLOCK_META).map(([k, m]) => `<button class="pblk" data-add-block="${k}">${icon(m[0])}${m[1]}</button>`).join("")}</div>
+  </div>`;
+}
+function wireBlocks() {
+  const list = $("#blocks"); if (!list) return;
+  let from = null;
+  list.addEventListener("dragstart", (e) => { const li = e.target.closest("[data-blk]"); if (!li) return; from = +li.dataset.blk; li.classList.add("dragging"); });
+  list.addEventListener("dragend", () => $$(".blk", list).forEach(b => b.classList.remove("dragging", "over")));
+  list.addEventListener("dragover", (e) => { e.preventDefault(); const li = e.target.closest("[data-blk]"); $$(".blk", list).forEach(b => b.classList.toggle("over", b === li)); });
+  list.addEventListener("drop", (e) => {
+    e.preventDefault();
+    const li = e.target.closest("[data-blk]"); if (!li || from === null) return;
+    const to = +li.dataset.blk, g = GAMES[currentGame];
+    if (to !== from) { const [m] = g.blocks.splice(from, 1); g.blocks.splice(to, 0, m); g.off.clear(); toast("Reihenfolge der Blöcke gespeichert"); }
+    from = null; currentTab = "page"; renderDetail();
+  });
+}
+function panelLook(g) {
+  return `<div class="grid-2">
+    <div class="card"><div class="card-h"><span class="card-t">${icon("i-palette")}Farben der Spielwelt</span></div>
+      <div class="form"><div class="colors">
+        <div class="colr"><span class="sw" style="background:${g.accent}"></span><div><b>Akzent</b><span>${g.accent}</span></div></div>
+        <div class="colr"><span class="sw" style="background:${g.accent2}"></span><div><b>Zweitfarbe</b><span>${g.accent2}</span></div></div>
+        <div class="colr"><span class="sw" style="background:${g.accent}"></span><div><b>Partikel</b><span>= Akzent</span></div></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;padding:12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)">
+        <span style="padding:9px 18px;border-radius:999px;font-weight:700;color:#1a0d00;background:linear-gradient(110deg,${g.accent},${g.accent2})">Auf Steam wishlisten</span>
+        <span style="font-size:12px;color:var(--text-3)">Live-Vorschau des Buttons · Schriftfarbe passt sich automatisch an</span></div></div></div>
+    <div class="card"><div class="card-h"><span class="card-t">${icon("i-image")}Logo im Kopfbereich</span></div>
+      <div class="form">
+        <div class="logo-row">
+          <div class="logo-prev">${g.logo ? `<img src="${MEDIA + g.logo}" alt="">` : `<span style="font-size:12px;color:var(--text-3)">kein Logo</span>`}</div>
+          <div style="flex:1;min-width:180px">
+            <div style="font-weight:600">${g.pos ? `Frei platziert · x ${g.pos.x} %, y ${g.pos.y} %` : "Standard · steht über der Tagline"}</div>
+            <div style="font-size:12px;color:var(--text-3);margin:2px 0 10px">Größe ${g.logoScale} % · auf dem Handy immer über dem Text</div>
+            <button class="btn btn-primary btn-sm" data-open-placer ${g.logo ? "" : "disabled style=\"opacity:.5;cursor:not-allowed\""}>${icon("i-move")}Logo platzieren</button>
+          </div>
+        </div>
+        <div class="field"><label>Cover-Bild</label><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="chip">${g.cover ? esc(g.cover.split("/").pop()) : "kein Cover"}</span>${g.cover ? `<span class="chip" style="color:var(--text-3)">Fokus ${g.focus[0]} / ${g.focus[1]}</span>` : ""}<button class="btn btn-sm" data-toast="Medien-Auswahl öffnet sich">Ändern</button><button class="btn btn-sm btn-ghost" data-toast="Bildausschnitt wählen – wirkt jetzt auch in der Logo-Vorschau">Fokuspunkt</button></div></div>
+      </div></div>
+  </div>`;
+}
+function panelCommunity(g) {
+  return `<div class="grid-2">
+    <div class="card"><div class="card-h"><span class="card-t">${icon("i-list")}Beta-Warteliste</span><button class="link" data-toast="CSV wird heruntergeladen">${icon("i-download")}CSV</button></div>
+      <div class="card-b"><div style="font-family:var(--display);font-size:30px;font-weight:600">${fmt(g.wl)}<span class="delta up">+${Math.round(g.wl / 9)} diese Woche</span></div>
+      ${sparkSVG(Array.from({ length: 21 }, (_, i) => Math.round(g.wl * (0.55 + i * 0.022) + Math.sin(i) * 3)), "#3ddc97")}
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn btn-sm" data-action="compose">${icon("i-mail")}Mail an alle Wartenden</button><button class="btn btn-sm btn-ghost" data-toast="Top-Empfehler mit Platzierung">Ranking ansehen</button></div></div></div>
+    <div class="card"><div class="card-h"><span class="card-t">${icon("i-bulb")}Vorschläge</span></div>${suggList(g, 6)}</div>
+  </div>`;
+}
+function panelSettings(g) {
+  return `<div class="grid-2">
+    <div class="card"><div class="card-h"><span class="card-t">${icon("i-settings")}Grunddaten</span></div>
+      <div class="form">
+        <div class="field"><label>Titel</label><input class="tinput" value="${esc(g.title)}"></div>
+        <div class="field"><label>Web-Adresse</label>
+          <div class="slug-box">${icon("i-lock")}<code>planigames.com/game/<b>${esc(g.slug)}</b></code><button class="btn btn-sm" style="margin-left:auto" data-open-slug>Ändern…</button></div>
+          <span class="hint">Geschützt, damit sie nicht versehentlich geändert wird. Beim Ändern zieht alles mit um.</span></div>
+        <div class="field"><label>Status</label><select class="tselect">${Object.entries(STATUS).map(([k, v]) => `<option ${k === g.status ? "selected" : ""}>${v[0]}</option>`).join("")}</select></div>
+        <div style="display:flex;align-items:center;gap:10px"><button class="switch ${g.featured ? "on" : ""}" data-toast="Auf der Startseite ${g.featured ? "ausgeblendet" : "hervorgehoben"}"></button><span style="font-size:13px">Auf der Startseite hervorheben</span></div>
+      </div></div>
+    <div class="card"><div class="card-h"><span class="card-t">${icon("i-search")}So erscheint die Seite bei Google</span></div>
+      <div class="form"><div class="serp"><div class="u">planigames.com › game › ${esc(g.slug)}</div><div class="t">${esc(g.title)} — PLANIGAMES</div><div class="d">${esc(g.tagline.slice(0, 150))}${g.tagline.length > 150 ? " …" : ""}</div></div>
+      <span class="hint">Titel & Beschreibung kommen automatisch aus Spielname und Tagline – hier optional überschreibbar.</span></div></div>
+  </div>`;
+}
+
+/* ---------------- Slug-Dialog (mit Daten-Umzug) ---------------- */
+let slugGame = null;
+const slugify = (s) => s.toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+function openSlug(g) {
+  slugGame = g;
+  $("#slugInput").value = slugify(g.title) === g.slug ? g.slug : slugify(g.title);
+  $("#oldSlug").textContent = "/game/" + g.slug;
+  $("#migList").innerHTML = [
+    [fmt(g.wl), "Wartelisten-Einträge inkl. Platzierung & Empfehlungen"],
+    [g.sugg, "Vorschläge inkl. Stimmen"],
+    [g.board, "Karten im Planungs-Board"],
+    ["EN", "englische Fassung, Lore-Seite & Statistik"],
+  ].map(([n, t]) => `<li>${icon("i-check")}<b>${n}</b>${t}</li>`).join("");
+  validateSlug(); showModal("#slugModal"); setTimeout(() => $("#slugInput").select(), 60);
+}
+function validateSlug() {
+  const v = $("#slugInput").value;
+  let err = "";
+  if (!v) err = "Bitte eine Adresse eingeben.";
+  else if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(v)) err = "Nur Kleinbuchstaben, Zahlen und Bindestriche (z. B. frontliners).";
+  else if (GAMES.some(g => g !== slugGame && g.slug === v)) err = "Diese Adresse benutzt schon ein anderes Spiel.";
+  else if (v === slugGame.slug) err = "Das ist bereits die aktuelle Adresse.";
+  $("#slugErr").textContent = err;
+  $("#slugSave").disabled = !!err;
+  $("#slugSave").style.opacity = err ? .5 : 1;
+}
+$("#slugInput").addEventListener("input", (e) => { e.target.value = e.target.value.toLowerCase().replace(/\s+/g, "-"); validateSlug(); });
+$("#slugSave").addEventListener("click", () => {
+  if ($("#slugSave").disabled) return;
+  const old = slugGame.slug; slugGame.slug = $("#slugInput").value;
+  hideModals(); renderGames(); renderCockpit();
+  toast(`Adresse geändert: /${old} → /${slugGame.slug} · ${fmt(slugGame.wl + slugGame.sugg)} Einträge übernommen, Weiterleitung aktiv`);
+});
+
+/* ---------------- Logo-Platzierung (WYSIWYG, exakte Live-Geometrie) ---------------- */
+const VPS = { laptop: { w: 1366, h: 768, l: "Laptop" }, desktop: { w: 1920, h: 1080, l: "Full HD" }, wide: { w: 2560, h: 1440, l: "1440p" }, mobile: { w: 390, h: 844, l: "Handy" } };
+const P = { g: null, vp: "desktop", pos: null, scale: 100, s: 1, ar: 3, warn: {} };
+function hexA(hex, a) { const m = hex.replace("#", "").match(/.{2}/g) || ["ff", "7d", "1a"]; return `rgba(${m.map(x => parseInt(x, 16)).join(",")},${a})`; }
+function buildFrame(target, vpKey, measureOnly) {
+  const g = P.g, vp = VPS[vpKey], W = vp.w, H = vp.h, mobile = W < 768;
+  const heroH = Math.round(H * 0.88);                         // section min-h-[88vh]
+  const ls = clamp(P.scale / 100, 0.3, 3);                    // logoScale(g)
+  const lh = clamp(0.18 * ls * H, 64 * ls, 150 * ls);         // height: clamp(64ls px, 18ls vh, 150ls px)
+  const st = STATUS[g.status];
+  const usePos = !mobile && P.pos && g.logo;
+  target.style.width = W + "px"; target.style.height = heroH + "px";
+  target.innerHTML = `
+    ${g.cover ? `<img class="hf-bg" src="${MEDIA + g.cover}" alt="" style="object-position:${g.focus[0]}% ${g.focus[1]}%">` : `<div class="hf-bg hf-grid"></div>`}
+    <div class="hf-bg" style="background:linear-gradient(to top,#050505 4%,${hexA(g.accent, .18)} 55%,rgba(0,0,0,.35))"></div>
+    <div class="hf-ov2"></div>
+    ${usePos ? `<img class="hf-logo" data-logo src="${MEDIA + g.logo}" alt="" draggable="false" style="left:${P.pos.x}%;top:${P.pos.y}%;height:${lh}px;max-width:${0.8 * W}px"><div class="hf-sel" data-sel></div>` : ""}
+    <div class="guide v"></div><div class="guide h"></div>
+    <div class="hf-content ${mobile ? "m" : ""}"><div class="hf-inner">
+      <div class="hf-badge" data-hit="Status-Badge"><i></i>${st[0]}</div>
+      ${!usePos && g.logo ? `<img class="hf-inline" src="${MEDIA + g.logo}" alt="" style="height:${Math.round(150 * ls)}px">` : ""}
+      ${!g.logo ? `<h1 class="hf-title">${esc(g.title)}</h1>` : ""}
+      <p class="hf-tag" data-hit="Tagline">${esc(g.tagline)}</p>
+      <div class="hf-btns" data-hit="Buttons"><span class="hf-btn1" style="background:linear-gradient(110deg,${g.accent},${g.accent2});color:#1a0d00">Auf Steam wishlisten</span><span class="hf-btn2">▶ Trailer ansehen</span></div>
+    </div></div>`;
+  const meta = { W, H, heroH, mobile, lh };
+  if (usePos) placeSel(target, meta);
+  return meta;
+}
+/* Rahmen exakt um den sichtbaren Teil des Logos (object-fit: contain + transparenter Rand) */
+function placeSel(frameEl, meta) {
+  const sel = frameEl.querySelector("[data-sel]"), g = P.g;
+  if (!sel || !P.pos) return;
+  const ar = g.lar || 3, box = g.lbox || [0, 0, 1, 1];
+  const cw = Math.min(meta.lh * ar, 0.8 * meta.W), ch = cw / ar;           // sichtbare Bildfläche (contain)
+  const cx = P.pos.x / 100 * meta.W, cy = P.pos.y / 100 * meta.heroH;
+  const left = cx - cw / 2 + box[0] * cw, top = cy - ch / 2 + box[1] * ch;
+  sel.style.left = left + "px"; sel.style.top = top + "px";
+  sel.style.width = (box[2] - box[0]) * cw + "px"; sel.style.height = (box[3] - box[1]) * ch + "px";
+}
+function overlaps(frameEl) {
+  const sel = frameEl.querySelector("[data-sel]");
+  if (!sel) return [];
+  const r = sel.getBoundingClientRect();     // nur die sichtbaren Logo-Pixel zählen
+  const hits = [];
+  frameEl.querySelectorAll("[data-hit]").forEach(el => {
+    el.classList.remove("hf-hit");
+    const b = el.getBoundingClientRect();
+    if (r.left < b.right && r.right > b.left && r.top < b.bottom && r.bottom > b.top) { hits.push(el.dataset.hit); el.classList.add("hf-hit"); }
+  });
+  return hits;
+}
+/* Alle Desktop-Größen im Hintergrund prüfen → Ampel pro Bildschirmgröße */
+const probe = document.createElement("div");
+probe.style.cssText = "position:fixed;left:-99999px;top:0;visibility:hidden;pointer-events:none";
+document.body.appendChild(probe);
+function checkAll() {
+  ["laptop", "desktop", "wide"].forEach(k => {
+    const f = document.createElement("div"); f.className = "frame"; f.style.transform = "none"; probe.appendChild(f);
+    buildFrame(f, k);
+    P.warn[k] = overlaps(f);
+    f.remove();
+  });
+  renderVpSeg();
+}
+function renderVpSeg() {
+  $("#vpSeg").innerHTML = Object.entries(VPS).map(([k, v]) => {
+    const w = P.warn[k];
+    const dot = k === "mobile" ? "" : `<span class="vdot ${w && w.length ? "warn" : ""}"></span>`;
+    return `<button class="${P.vp === k ? "on" : ""}" data-vp="${k}">${dot}${v.l}<span class="n">${v.w}</span></button>`;
+  }).join("");
+}
+function fitStage(meta) {
+  const wrap = $("#placerWrap");
+  const availW = wrap.clientWidth - 40, availH = Math.min(window.innerHeight * 0.56, 620);
+  const s = Math.min(availW / meta.W, availH / meta.heroH);
+  P.s = s;
+  $("#stage").style.width = Math.round(meta.W * s) + "px";
+  $("#stage").style.height = Math.round(meta.heroH * s) + "px";
+  $("#frame").style.transform = `scale(${s})`;
+}
+function renderPlacer() {
+  const meta = buildFrame($("#frame"), P.vp);
+  fitStage(meta);
+  $("#sizeRange").value = P.scale; $("#sizeVal").textContent = P.scale + "%";
+  $("#coords").textContent = P.pos ? `x ${P.pos.x} · y ${P.pos.y}` : "Standard";
+  $("#placerNote").innerHTML = meta.mobile
+    ? `${icon("i-check")}Auf dem Handy steht das Logo automatisch zentriert über dem Text`
+    : (P.pos ? `${icon("i-move")}Logo anfassen und ziehen · mittig rastet ein` : `${icon("i-move")}Standard: Logo steht über der Tagline · zum freien Platzieren ins Bild klicken`);
+  const img = $("#frame [data-logo]");
+  const upd = () => {
+    const hits = meta.mobile ? [] : overlaps($("#frame"));
+    const w = $("#placerWarn");
+    if (meta.mobile) { w.className = "placer-warn ok"; w.innerHTML = `${icon("i-check")}Handy-Layout: automatisch`; return; }
+    w.className = "placer-warn " + (hits.length ? "bad" : "ok");
+    w.innerHTML = hits.length ? `${icon("i-alert")}Überdeckt: ${hits.join(", ")}` : `${icon("i-check")}Frei · nichts wird verdeckt`;
+  };
+  if (img) wireDrag(img, meta, upd);
+  upd();
+  // Hinweis, wenn die Logo-Datei viel transparenten Rand hat
+  const b = P.g.lbox || [0, 0, 1, 1], pad = Math.round((1 - (b[3] - b[1]) * (b[2] - b[0])) * 100);
+  $("#placerTip").hidden = pad < 35;
+  $("#placerTip").innerHTML = `${icon("i-spark")}Diese Logo-Datei besteht zu ${pad} % aus transparentem Rand. Gemessen wird nur der sichtbare Teil – und beim Hochladen schneidet das neue Admin den Rand künftig automatisch weg.`;
+}
+function wireDrag(img, meta, upd) {
+  let drag = null;
+  img.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); img.setPointerCapture(e.pointerId); img.classList.add("grabbing");
+    const r = $("#stage").getBoundingClientRect();
+    drag = { dx: e.clientX - (r.left + P.pos.x / 100 * r.width), dy: e.clientY - (r.top + P.pos.y / 100 * r.height) };
+  });
+  img.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const r = $("#stage").getBoundingClientRect();
+    let x = ((e.clientX - drag.dx) - r.left) / r.width * 100;
+    let y = ((e.clientY - drag.dy) - r.top) / r.height * 100;
+    const snapX = Math.abs(x - 50) < 1.5, snapY = Math.abs(y - 50) < 1.5;
+    if (snapX) x = 50; if (snapY) y = 50;
+    $(".guide.v", $("#frame")).classList.toggle("show", snapX);
+    $(".guide.h", $("#frame")).classList.toggle("show", snapY);
+    P.pos = { x: Math.round(clamp(x, 0, 100)), y: Math.round(clamp(y, 0, 100)) };
+    img.style.left = P.pos.x + "%"; img.style.top = P.pos.y + "%";
+    placeSel($("#frame"), meta);
+    $("#coords").textContent = `x ${P.pos.x} · y ${P.pos.y}`;
+    upd();
+  });
+  const end = () => { if (!drag) return; drag = null; img.classList.remove("grabbing"); $$(".guide", $("#frame")).forEach(gd => gd.classList.remove("show")); checkAll(); };
+  img.addEventListener("pointerup", end); img.addEventListener("pointercancel", end);
+}
+function openPlacer(g) {
+  if (!g.logo) return;
+  P.g = g; P.pos = g.pos ? { ...g.pos } : null; P.scale = g.logoScale; P.vp = "desktop";
+  showModal("#placerModal");
+  requestAnimationFrame(() => { renderPlacer(); checkAll(); });
+}
+$("#vpSeg").addEventListener("click", (e) => { const b = e.target.closest("[data-vp]"); if (b) { P.vp = b.dataset.vp; renderVpSeg(); renderPlacer(); } });
+$("#sizeRange").addEventListener("input", (e) => { P.scale = +e.target.value; renderPlacer(); });
+$("#sizeRange").addEventListener("change", checkAll);
+$("#stage").addEventListener("click", (e) => {
+  if (P.pos || VPS[P.vp].w < 768 || e.target.closest("[data-logo]")) return;
+  const r = $("#stage").getBoundingClientRect();
+  P.pos = { x: Math.round((e.clientX - r.left) / r.width * 100), y: Math.round((e.clientY - r.top) / r.height * 100) };
+  renderPlacer(); checkAll();
+});
+$("#posReset").addEventListener("click", () => { P.pos = null; renderPlacer(); checkAll(); toast("Standard: Logo steht wieder über der Tagline"); });
+$("#posSave").addEventListener("click", () => {
+  P.g.pos = P.pos ? { ...P.pos } : null; P.g.logoScale = P.scale;
+  hideModals(); currentTab = "look"; renderDetail();
+  const bad = Object.entries(P.warn).filter(([, v]) => v.length).map(([k]) => VPS[k].l);
+  toast(bad.length ? `Gespeichert · Hinweis: überlappt auf ${bad.join(", ")}` : "Gespeichert · passt auf allen Bildschirmgrößen");
+});
+window.addEventListener("resize", () => { if (!$("#placerModal").hidden) renderPlacer(); });
+
+/* ---------------- Postfach ---------------- */
+const MAILS = [
+  { folder: "inbox", from: "IndieFront Magazin", email: "redaktion@indiefront.example", subj: "Interview-Anfrage zu FRONTLINERS", snip: "Hallo PLANIGAMES-Team, wir würden FRONTLINERS gerne in unserer nächsten Ausgabe vorstellen…", time: "09:24", unread: true,
+    body: "<p>Hallo PLANIGAMES-Team,</p><p>wir würden <b>FRONTLINERS</b> gerne in unserer Dezember-Ausgabe vorstellen. Hätten Sie Zeit für ein kurzes Interview (ca. 30 Minuten, gerne per Video-Call)?</p><p>Anbei unser Fragenkatalog und das Media-Kit mit den Rahmendaten.</p><p>Viele Grüße<br>Lena Hartmann · Redaktion</p>",
+    atts: [["PDF", "#ff6b6b", "Fragenkatalog_FRONTLINERS.pdf", "184 KB"], ["PDF", "#ff6b6b", "IndieFront_Mediakit_2026.pdf", "2,1 MB"]] },
+  { folder: "inbox", from: "Steamworks", email: "noreply@steampowered.example", subj: "Deine Demo ist jetzt im Next Fest gelistet", snip: "Glückwunsch! FRONTLINERS – Demo ist für das kommende Event freigegeben…", time: "08:02", unread: true,
+    body: "<p>Glückwunsch!</p><p>Die Demo von <b>FRONTLINERS</b> ist für das kommende Event freigegeben. Bitte prüfe deine Store-Seite bis zum Stichtag.</p>", atts: [] },
+  { folder: "inbox", from: "Jonas (Streamer)", email: "jonas.plays@example", subj: "Key für meinen Stream?", snip: "Hey! Ich streame jeden Freitag Indie-Shooter und würde Fall of Kings gern zeigen…", time: "gestern", unread: true,
+    body: "<p>Hey!</p><p>Ich streame jeden Freitag Indie-Shooter (ca. 2.000 Zuschauer) und würde <b>Fall of Kings</b> gern zeigen. Habt ihr einen Key für mich?</p><p>Screenshot von meinem Setup hängt an 🙂</p>",
+    atts: [["PNG", "#6ea8ff", "stream-setup.png", "840 KB"]] },
+  { folder: "contact", from: "Kontaktformular · Miriam K.", email: "miriam@example", subj: "Kooperation Streaming-Event", snip: "Wir organisieren ein Charity-Streaming-Event und suchen noch Indie-Spiele…", time: "Mo.", unread: false,
+    body: "<p>Hallo,</p><p>wir organisieren im Januar ein <b>Charity-Streaming-Event</b> und suchen noch Indie-Spiele mit Koop-Modus. Wäre Wobbly Wizards dafür denkbar?</p>", atts: [] },
+  { folder: "sent", from: "An: Newsletter (64)", email: "", subj: "Devlog #5 – Neue Karten & ein Ausblick", snip: "Diese Woche zeigen wir euch die ersten Wüsten-Karten…", time: "gestern", unread: false,
+    body: "<p>Diese Woche zeigen wir euch die ersten <b>Wüsten-Karten</b> von FRONTLINERS – und einen kleinen Ausblick auf das nächste Update.</p>", atts: [["JPG", "#3ddc97", "wuesten-karte-preview.jpg", "1,4 MB"]] },
+  { folder: "drafts", from: "Entwurf", email: "", subj: "Antwort: Key-Anfrage", snip: "Hi Jonas, danke für deine Nachricht! Gerne schicken wir dir…", time: "heute", unread: false,
+    body: "<p>Hi Jonas, danke für deine Nachricht! Gerne schicken wir dir einen Key für <b>Fall of Kings</b>…</p>", atts: [] },
+];
+const FOLDERS = [["inbox", "i-inbox", "Posteingang"], ["contact", "i-chat", "Kontaktformular"], ["sent", "i-send", "Gesendet"], ["drafts", "i-devlog", "Entwürfe"]];
+let mailFolder = "inbox", mailSel = 0, mailQuery = "";
+function renderMail() {
+  $("#folders").innerHTML = FOLDERS.map(([k, ic, l]) => {
+    const n = MAILS.filter(m => m.folder === k && m.unread).length, all = MAILS.filter(m => m.folder === k).length;
+    return `<button class="folder ${mailFolder === k ? "on" : ""}" data-folder="${k}">${icon(ic)}${l}<span class="n ${n ? "hot" : ""}">${n || all}</span></button>`;
+  }).join("");
+  const list = MAILS.map((m, i) => ({ m, i })).filter(({ m }) => m.folder === mailFolder && (!mailQuery || (m.from + m.subj + m.snip).toLowerCase().includes(mailQuery)));
+  if (!list.some(x => x.i === mailSel) && list.length) mailSel = list[0].i;
+  $("#mlist").innerHTML = list.map(({ m, i }) => `<li class="mrow ${m.unread ? "unread" : ""} ${i === mailSel ? "on" : ""}" data-mail="${i}">
+      <span class="ud"></span><span class="mf">${esc(m.from)}</span><span class="mt">${esc(m.time)}</span>
+      <span class="ms">${esc(m.subj)}</span>
+      <span class="mp">${m.atts.length ? icon("i-clip") : ""}${esc(m.snip)}</span></li>`).join("") || `<li style="padding:20px;color:var(--text-3);font-size:13px">Keine Mails.</li>`;
+  renderRead();
+  const unread = MAILS.filter(m => m.unread).length;
+  $("#navMail").textContent = unread; $("#tabMail").textContent = unread;
+  $("#navMail").hidden = !unread; $("#tabMail").hidden = !unread;
+}
+function renderRead() {
+  const m = MAILS[mailSel];
+  if (!m || m.folder !== mailFolder) { $("#mread").innerHTML = `<div style="padding:40px;color:var(--text-3);text-align:center">Wähle eine Mail aus.</div>`; return; }
+  $("#mread").innerHTML = `
+    <div class="mread-h">
+      <button class="btn btn-ghost btn-sm back-m" id="mailBack" style="margin-bottom:10px">${icon("i-back")}Zurück</button>
+      <h3>${esc(m.subj)}</h3>
+      <div class="from"><div class="avatar">${esc(m.from.replace(/[^A-Za-zÄÖÜäöü ]/g, "").split(" ").filter(Boolean).slice(0, 2).map(s => s[0]).join("").toUpperCase() || "✉")}</div>
+        <div><div style="font-weight:600">${esc(m.from)}</div><div class="fm">${esc(m.email || "PLANIGAMES")} · ${esc(m.time)}</div></div>
+        <div class="acts"><button class="icon-btn" title="Archivieren" data-toast="Archiviert">${icon("i-archive")}</button><button class="icon-btn" title="Löschen" data-toast="In den Papierkorb verschoben">${icon("i-trash")}</button></div></div>
+    </div>
+    <div class="mread-b">${m.body}</div>
+    ${m.atts.length ? `<div class="atts">${m.atts.map(([t, c, n, s]) => `<div class="att"><span class="att-ic" style="background:${hexA(c, .14)};color:${c}">${t}</span><div style="min-width:0"><b>${esc(n)}</b><span>${s}</span></div><button class="icon-btn dl" title="Herunterladen" data-toast="${esc(n)} wird heruntergeladen">${icon("i-download")}</button></div>`).join("")}</div>` : ""}
+    <div class="reply"><button class="btn btn-primary" data-action="compose" data-reply="${mailSel}">${icon("i-mail")}Antworten</button><button class="btn" data-toast="Weiterleiten – inkl. Anhängen">Weiterleiten</button><button class="btn btn-ghost" data-toast="Schnellantwort-Vorlagen">⚡ Vorlage</button></div>`;
+  const back = $("#mailBack"); if (back) back.addEventListener("click", () => $("#mail").classList.remove("read-open"));
+}
+$("#folders").addEventListener("click", (e) => { const b = e.target.closest("[data-folder]"); if (b) { mailFolder = b.dataset.folder; renderMail(); } });
+$("#mlist").addEventListener("click", (e) => {
+  const li = e.target.closest("[data-mail]"); if (!li) return;
+  mailSel = +li.dataset.mail; MAILS[mailSel].unread = false; renderMail();
+  $("#mail").classList.add("read-open");
+});
+$("#mailSearch").addEventListener("input", (e) => { mailQuery = e.target.value.trim().toLowerCase(); renderMail(); });
+
+/* ---------------- Composer (Formatierung + Anhänge) ---------------- */
+const TPL = {
+  press: "<p>Hallo,</p><p>vielen Dank für Ihr Interesse an <b>FRONTLINERS</b>! Sehr gerne stehen wir für ein Interview zur Verfügung.</p><p>Unser Presse-Kit mit Screenshots, Logos und Factsheet finden Sie hier: <a href=\"#\">planigames.com/presse</a></p>",
+  key: "<p>Hi,</p><p>danke für deine Nachricht! Wir schicken dir sehr gern einen Key. Kurz zu den Rahmenbedingungen:</p><ul><li>Key gilt für Steam</li><li>Gerne mit Link zur Wishlist im Stream</li></ul>",
+  thanks: "<p>Hallo,</p><p>vielen Dank für dein Feedback – genau solche Rückmeldungen helfen uns enorm! 🙌</p>",
+};
+let atts = [];
+function openCompose(replyIdx) {
+  atts = []; renderAtts();
+  const m = replyIdx != null ? MAILS[replyIdx] : null;
+  $("#cmpTo").value = m && m.email ? m.email : "";
+  $("#cmpSubj").value = m ? "Re: " + m.subj : "";
+  $("#cmpTpl").value = "";
+  $("#editor").innerHTML = "";
+  $("#sigSw").classList.add("on"); $("#sigBox").classList.remove("off");
+  renderSigSelect(sigDefault);
+  showModal("#composeModal");
+  setTimeout(() => (m ? $("#editor") : $("#cmpTo")).focus(), 60);
+}
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("[data-action]");
+  if (!a) return;
+  e.preventDefault();
+  if (a.dataset.action === "compose") openCompose(a.dataset.reply != null ? +a.dataset.reply : null);
+  if (a.dataset.action === "liveops") location.hash = "liveops";
+});
+$("#cmpTpl").addEventListener("change", (e) => { if (TPL[e.target.value]) $("#editor").innerHTML = TPL[e.target.value]; });
+$("#toolbar").addEventListener("mousedown", (e) => { if (e.target.closest(".tb")) e.preventDefault(); });
+$("#toolbar").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-cmd]"); if (!b) return;
+  const c = b.dataset.cmd;
+  $("#editor").focus();
+  if (c === "attach") { $("#fileIn").click(); return; }
+  if (c === "h3") document.execCommand("formatBlock", false, "h3");
+  else if (c === "quote") document.execCommand("formatBlock", false, "blockquote");
+  else if (c === "link") { const url = prompt("Link-Adresse:", "https://"); if (url) document.execCommand("createLink", false, url); }
+  else document.execCommand(c, false, null);
+  syncTools();
+});
+function syncTools() {
+  ["bold", "italic", "underline", "insertUnorderedList", "insertOrderedList"].forEach(c => {
+    const b = $(`.tb[data-cmd="${c}"]`); if (b) { let on = false; try { on = document.queryCommandState(c); } catch (_) {} b.classList.toggle("on", on); }
+  });
+}
+document.addEventListener("selectionchange", () => { if (!$("#composeModal").hidden) syncTools(); });
+const MAXB = 10 * 1024 * 1024;
+function addFiles(list) {
+  for (const f of list) atts.push({ name: f.name, size: f.size });
+  renderAtts();
+}
+function renderAtts() {
+  const total = atts.reduce((s, a) => s + a.size, 0);
+  $("#attChips").innerHTML = atts.map((a, i) => {
+    const ext = (a.name.split(".").pop() || "").toUpperCase().slice(0, 4);
+    const col = /PDF/.test(ext) ? "#ff6b6b" : /PNG|JPG|JPEG|WEBP|GIF/.test(ext) ? "#6ea8ff" : /ZIP/.test(ext) ? "#ffc53d" : "#b197fc";
+    return `<div class="att"><span class="att-ic" style="background:${hexA(col, .14)};color:${col}">${esc(ext || "DAT")}</span><div style="min-width:0"><b>${esc(a.name)}</b><span>${(a.size / 1024 / 1024).toFixed(a.size > 1e6 ? 1 : 2)} MB</span></div><button class="att-x" data-rm="${i}" title="Entfernen">${icon("i-x")}</button></div>`;
+  }).join("");
+  $("#sizeBar").hidden = !atts.length;
+  $("#sizeTxt").textContent = (total / 1024 / 1024).toFixed(1) + " MB";
+  $("#sizeFill").style.width = Math.min(100, total / MAXB * 100) + "%";
+  $("#sizeFill").style.background = total > MAXB ? "var(--danger)" : "";
+}
+$("#attChips").addEventListener("click", (e) => { const b = e.target.closest("[data-rm]"); if (b) { atts.splice(+b.dataset.rm, 1); renderAtts(); } });
+$("#pickFiles").addEventListener("click", () => $("#fileIn").click());
+$("#fileIn").addEventListener("change", (e) => { addFiles(e.target.files); e.target.value = ""; });
+["dragenter", "dragover"].forEach(ev => $("#drop").addEventListener(ev, (e) => { e.preventDefault(); $("#drop").classList.add("hot"); }));
+["dragleave", "drop"].forEach(ev => $("#drop").addEventListener(ev, (e) => { e.preventDefault(); $("#drop").classList.remove("hot"); }));
+$("#drop").addEventListener("drop", (e) => { if (e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+/* ---------------- Signaturen (mehrere, pro Person oder Studio) ---------------- */
+const SIGS = [
+  { id: "studio", label: "PLANIGAMES (Studio)", name: "PLANIGAMES", role: "Indie Game Studio", phone: "" },
+  { id: "dominic", label: "Dominic", name: "Dominic Majewski", role: "Founder · Design & Marketing", phone: "" },
+  { id: "niklas", label: "Niklas", name: "Niklas Kalde", role: "Founder · Code & Sales", phone: "" },
+];
+const TEAM = [{ name: "Dominic Majewski", role: "Founder · Design & Marketing" }, { name: "Niklas Kalde", role: "Founder · Code & Sales" }, { name: "Vincent Nowak", role: "Founder · Code & Design" }];
+let sigDefault = "studio", sigEdit = "studio", sigN = 1;
+const initials = (n) => String(n || "").replace(/[^A-Za-zÄÖÜäöü ]/g, "").split(" ").filter(Boolean).slice(0, 2).map(x => x[0]).join("").toUpperCase() || "✉";
+const sigCard = (name, role, phone) => `<img src="${MEDIA}/media/logo-6.png" alt="" onerror="this.remove()"><div style="min-width:0"><div class="sn">${esc(name || "Name")}</div><div class="sr">${esc(role || "Rolle")}${phone ? " · " + esc(phone) : ""}</div><div class="sl">planigames.com · Discord · YouTube</div></div>`;
+function renderSigSelect(sel) {
+  $("#sigSel").innerHTML = SIGS.map(x => `<option value="${x.id}" ${x.id === sel ? "selected" : ""}>${esc(x.label)}${x.id === sigDefault ? " · Standard" : ""}</option>`).join("");
+  renderSigPrev();
+}
+function renderSigPrev() { const x = SIGS.find(y => y.id === $("#sigSel").value) || SIGS[0]; $("#sigPrev").innerHTML = sigCard(x.name, x.role, x.phone); }
+$("#sigSel").addEventListener("change", renderSigPrev);
+$("#sigSw").addEventListener("click", (e) => { e.currentTarget.classList.toggle("on"); $("#sigBox").classList.toggle("off", !e.currentTarget.classList.contains("on")); });
+function renderSigList() {
+  $("#sigList").innerHTML = SIGS.map(x => `<button class="sig-item ${x.id === sigEdit ? "on" : ""}" data-sig="${x.id}"><span class="avatar">${esc(initials(x.name))}</span><div style="min-width:0"><b>${esc(x.label)}</b><span>${esc(x.role || "—")}</span></div>${x.id === sigDefault ? '<span class="def">Standard</span>' : ""}</button>`).join("");
+  const x = SIGS.find(y => y.id === sigEdit) || SIGS[0];
+  $("#sfLabel").value = x.label; $("#sfName").value = x.name; $("#sfRole").value = x.role; $("#sfPhone").value = x.phone || "";
+  $("#sfDefault").classList.toggle("on", x.id === sigDefault);
+  $("#sigDel").hidden = x.id === "studio";
+  updSfPrev();
+}
+function updSfPrev() { $("#sfPrev").innerHTML = sigCard($("#sfName").value, $("#sfRole").value, $("#sfPhone").value); }
+["#sfName", "#sfRole", "#sfPhone"].forEach(q => $(q).addEventListener("input", updSfPrev));
+$("#sigManage").addEventListener("click", () => { sigEdit = $("#sigSel").value; showModal("#sigModal"); renderSigList(); });
+$("#sigList").addEventListener("click", (e) => { const b = e.target.closest("[data-sig]"); if (b) { sigEdit = b.dataset.sig; renderSigList(); } });
+$("#sfDefault").addEventListener("click", (e) => e.currentTarget.classList.toggle("on"));
+$("#sigNew").addEventListener("click", () => { const id = "sig" + (sigN++); SIGS.push({ id, label: "Neue Signatur", name: "", role: "", phone: "" }); sigEdit = id; renderSigList(); $("#sfLabel").select(); });
+$("#sigFromTeam").addEventListener("click", () => {
+  let added = 0;
+  TEAM.forEach(t => { if (!SIGS.some(x => x.name === t.name)) { SIGS.push({ id: "sig" + (sigN++), label: t.name.split(" ")[0], name: t.name, role: t.role, phone: "" }); added++; } });
+  renderSigList();
+  toast(added ? `${added} Signatur${added > 1 ? "en" : ""} aus dem Team übernommen` : "Alle Team-Mitglieder haben schon eine Signatur");
+});
+$("#sigSave").addEventListener("click", () => {
+  const x = SIGS.find(y => y.id === sigEdit); if (!x) return;
+  x.label = $("#sfLabel").value.trim() || x.name || "Signatur"; x.name = $("#sfName").value.trim(); x.role = $("#sfRole").value.trim(); x.phone = $("#sfPhone").value.trim();
+  if ($("#sfDefault").classList.contains("on")) sigDefault = x.id;
+  showModal("#composeModal"); renderSigSelect(x.id);
+  toast(`Signatur „${x.label}“ gespeichert`);
+});
+$("#sigDel").addEventListener("click", () => {
+  const i = SIGS.findIndex(y => y.id === sigEdit); if (i <= 0) return;
+  const [gone] = SIGS.splice(i, 1);
+  if (sigDefault === gone.id) sigDefault = "studio";
+  sigEdit = "studio"; renderSigList(); toast(`Signatur „${gone.label}“ gelöscht`);
+});
+$("#cmpSend").addEventListener("click", () => {
+  const to = $("#cmpTo").value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) { toast("Bitte eine gültige Empfänger-Adresse eingeben"); $("#cmpTo").focus(); return; }
+  if (atts.reduce((s, a) => s + a.size, 0) > MAXB) { toast("Anhänge sind größer als 10 MB"); return; }
+  hideModals();
+  toast(`Gesendet an ${to}${atts.length ? ` · ${atts.length} Anhang${atts.length > 1 ? "e" : ""}` : ""} (Simulation)`);
+});
+
+/* ---------------- Live-Ops ---------------- */
+const SENT = [["Wochenend-Bonus", "FRONTLINERS", "Alle Spieler", "200 Goldmünzen", "71 %", "Sa., 10:00"], ["Willkommen in der Beta!", "FRONTLINERS", "Nur Beta-Tester", "Seltener Skin", "88 %", "12.11."]];
+function renderLO() {
+  $("#loGame").innerHTML = GAMES.filter(g => g.logo).map(g => `<option>${esc(g.title)}</option>`).join("");
+  const exp = new Date(Date.now() + 14 * 864e5);
+  $("#loExp").value = exp.toISOString().slice(0, 10);
+  updLO(); renderSent();
+}
+function updLO() {
+  $("#loPrevGame").textContent = ($("#loGame").value || "SPIEL").toUpperCase() + " · INBOX";
+  $("#loPrevTitle").textContent = $("#loTitle").value || "Titel";
+  $("#loPrevText").textContent = $("#loText").value || "Nachricht…";
+  const rew = $("#loRew").value, amt = +$("#loAmt").value || 0;
+  $("#loPrevRewWrap").hidden = rew === "Keine";
+  $("#loPrevRew").textContent = /Skin/.test(rew) ? rew : `${fmt(amt)} ${rew}`;
+  const d = $("#loExp").value ? new Date($("#loExp").value) : null;
+  $("#loPrevExp").textContent = d ? d.toLocaleDateString("de-DE") : "–";
+}
+["#loGame", "#loAud", "#loTitle", "#loText", "#loRew", "#loAmt", "#loExp"].forEach(s => $(s).addEventListener("input", updLO));
+function renderSent() { $("#loSent").innerHTML = SENT.map(r => `<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td>${esc(r[4])}</td><td>${esc(r[5])}</td></tr>`).join(""); }
+$("#loSend").addEventListener("click", () => {
+  if (!confirm(`„${$("#loTitle").value}“ an „${$("#loAud").value}“ in ${$("#loGame").value} senden? (Simulation)`)) return;
+  SENT.unshift([$("#loTitle").value, $("#loGame").value, $("#loAud").value, $("#loPrevRewWrap").hidden ? "–" : $("#loPrevRew").textContent, "0 %", "gerade eben"]);
+  renderSent(); toast("Nachricht ist unterwegs in die Spiel-Inbox (Simulation)");
+});
+
+/* ---------------- Command-Palette ---------------- */
+const PAL = [
+  ...[["cockpit", "i-cockpit", "Cockpit"], ["spiele", "i-game", "Spiele"], ["postfach", "i-mail", "Postfach"], ["liveops", "i-radio", "Spiel-Inbox (Live-Ops)"], ["studio", "i-studio", "Studio & Startseite"], ["devlog", "i-devlog", "Devlog & Patchnotes"], ["vorschlaege", "i-bulb", "Vorschläge"], ["warteliste", "i-list", "Warteliste"], ["board", "i-kanban", "Planungs-Board"], ["vault", "i-vault", "Blueprint Vault"], ["medien", "i-image", "Medien"], ["system", "i-shield", "Nutzer & Sicherheit"], ["backups", "i-archive", "Backups & Papierkorb"]]
+    .map(([r, ic, l]) => ({ sec: "Seiten", ic, l, run: () => (location.hash = r) })),
+  ...GAMES.map((g, i) => ({ sec: "Spiele", ic: "i-game", l: g.title, hint: "/" + g.slug, run: () => { currentGame = i; location.hash = "spiele"; mdOpenDetail(true); renderGames(); } })),
+  { sec: "Aktionen", ic: "i-mail", l: "E-Mail schreiben", run: () => openCompose(null) },
+  { sec: "Aktionen", ic: "i-move", l: "Logo platzieren: FRONTLINERS", run: () => { currentGame = 0; location.hash = "spiele"; mdOpenDetail(true); renderGames(); openPlacer(GAMES[0]); } },
+  { sec: "Aktionen", ic: "i-link", l: "Web-Adresse ändern: FRONTLINERS", run: () => { currentGame = 0; location.hash = "spiele"; renderGames(); openSlug(GAMES[0]); } },
+  { sec: "Aktionen", ic: "i-radio", l: "Nachricht an Spieler senden", run: () => (location.hash = "liveops") },
+  { sec: "Aktionen", ic: "i-archive", l: "Backup jetzt erstellen", run: () => toast("Backup erstellt (Simulation)") },
+];
+let palSel = 0, palItems = [];
+function openPal() { showModal("#palModal"); $("#palInput").value = ""; renderPal(); setTimeout(() => $("#palInput").focus(), 30); }
+function renderPal() {
+  const q = $("#palInput").value.trim().toLowerCase();
+  palItems = PAL.filter(p => !q || (p.l + " " + (p.hint || "")).toLowerCase().includes(q));
+  palSel = clamp(palSel, 0, Math.max(0, palItems.length - 1));
+  let sec = "", h = "";
+  palItems.forEach((p, i) => {
+    if (p.sec !== sec) { sec = p.sec; h += `<li class="pal-sec">${sec}</li>`; }
+    h += `<li class="pal-item ${i === palSel ? "on" : ""}" data-pi="${i}">${icon(p.ic)}${esc(p.l)}${p.hint ? `<small class="mono">${esc(p.hint)}</small>` : ""}</li>`;
+  });
+  $("#palList").innerHTML = h || `<li style="padding:16px;color:var(--text-3)">Nichts gefunden.</li>`;
+}
+$("#palInput").addEventListener("input", () => { palSel = 0; renderPal(); });
+$("#palInput").addEventListener("keydown", (e) => {
+  if (e.key === "ArrowDown") { palSel++; renderPal(); e.preventDefault(); }
+  if (e.key === "ArrowUp") { palSel--; renderPal(); e.preventDefault(); }
+  if (e.key === "Enter" && palItems[palSel]) { const it = palItems[palSel]; hideModals(); it.run(); }
+});
+$("#palList").addEventListener("click", (e) => { const li = e.target.closest("[data-pi]"); if (li) { const it = palItems[+li.dataset.pi]; hideModals(); it.run(); } });
+$$("[data-open-palette]").forEach(b => b.addEventListener("click", openPal));
+document.addEventListener("keydown", (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPal(); }
+  if (e.key === "Escape") { if (!$("#sigModal").hidden) showModal("#composeModal"); else hideModals(); $("#notif").hidden = true; }
+});
+
+/* ---------------- Benachrichtigungen ---------------- */
+const NOTIF = [["i-mail", "var(--accent)", "3 neue E-Mails", "u. a. Interview-Anfrage mit 2 Anhängen", "postfach"], ["i-bulb", "var(--warn)", "5 Vorschläge zur Freigabe", "FRONTLINERS · Wobbly Wizards", "vorschlaege"], ["i-chat", "var(--info)", "2 neue Kommentare", "Devlog #4", "kommentare"], ["i-list", "var(--ok)", "21 neue Wartelisten-Anmeldungen", "diese Woche", "warteliste"]];
+$("#notifList").innerHTML = NOTIF.map(([ic, c, t, m, r]) => `<li><a href="#${r}"><span class="ni" style="color:${c};background:${hexA(c.includes("var") ? "#ff7d1a" : c, .08)}">${icon(ic)}</span><div><div class="nt">${t}</div><div class="nm">${m}</div></div></a></li>`).join("");
+$("#bellBtn").addEventListener("click", (e) => { e.stopPropagation(); $("#notif").hidden = !$("#notif").hidden; });
+$("#notif").addEventListener("click", (e) => { if (e.target.closest("a")) $("#notif").hidden = true; });
+document.addEventListener("click", (e) => { if (!e.target.closest("#notif") && !e.target.closest("#bellBtn")) $("#notif").hidden = true; });
+$("#notifRead").addEventListener("click", () => { $("#bellCount").hidden = true; $("#notif").hidden = true; toast("Alle Benachrichtigungen als gelesen markiert"); });
+
+/* ---------------- Modals ---------------- */
+function showModal(sel) { hideModals(); $(sel).hidden = false; document.body.style.overflow = "hidden"; }
+function hideModals() { $$(".modal-back").forEach(m => { m.hidden = true; }); document.body.style.overflow = ""; }
+$$(".modal-back").forEach(m => m.addEventListener("click", (e) => {
+  if (e.target === m || e.target.closest("[data-close]")) { if (m.id === "sigModal") { showModal("#composeModal"); renderSigSelect($("#sigSel").value || sigDefault); } else hideModals(); }
+}));
+
+/* ---------------- Start ---------------- */
+renderCockpit(); renderLO();
+go(location.hash.slice(1) || "cockpit");
+})();
+</script>
+</body>
+</html>
