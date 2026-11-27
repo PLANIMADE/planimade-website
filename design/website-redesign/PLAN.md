@@ -1,11 +1,11 @@
 # Website-Refresh — Befund & Probedesign
 
-Stand: 27.11.2026 · Prototyp: `prototype.html` (echte Inhalte, Bilder kommen von planigames.com,
+Stand: 27.11.2026 · Prototyp: `prototype.html` (v2, echte Inhalte, Bilder kommen von planigames.com,
 nichts wird gespeichert). Dieser Ordner liegt bewusst außerhalb von `planigames/` und wird nie hochgeladen.
-Ansehen: `prototype.html` im Browser öffnen (braucht Internet für Bilder & Schriften) – unten wechselt eine
-Leiste zwischen Startseite, Spiele, den drei Spielseiten und dem Devlog.
-Interaktive Vorschau: als private Seite in Claude veröffentlicht (Bilder verkleinert, Schrift eingebettet);
-neu bauen mit `build-vorschau.py` (Aufruf steht oben im Skript).
+Ansehen: `prototype.html` im Browser öffnen (braucht Internet für Bilder & Schrift) – unten rechts
+(am Handy oben) öffnet „Probedesign v2“ alle Ansichten.
+Interaktive Vorschau: als private Seite in Claude veröffentlicht (Bilder verkleinert);
+neu bauen mit `build-vorschau.py` (Aufruf steht oben im Skript). Der erste Entwurf liegt als `prototype-v1.html` daneben.
 
 ## Befund (aktuelle Website, v54)
 
@@ -19,7 +19,7 @@ neu bauen mit `build-vorschau.py` (Aufruf steht oben im Skript).
 | Spiele | Startseite zeigt nur kleine Karten mit Titel-Text – die Spiele-Logos kommen nicht vor. FRONTLINERS erscheint doppelt („Aktuelles Projekt“ + Raster), das Raster endet mit einem verwaisten „Browser-Demos“-Kärtchen. |
 | Rhythmus | Viel leerer Schwarzraum, jeder Abschnitt gleich aufgebaut; unterschiedliche Containerbreiten (Devlog-Liste schmaler als der Rest). |
 | Studio-Werte | Emoji-Icons wirken uneinheitlich. |
-| Spielseiten | Zwei identische Trailer-Platzhalter hintereinander, Warteliste/Vorschläge/Roadmap ohne „Bühne“, kein Steckbrief (Genre, Spieler, Plattform), keine Navigation in der langen Seite. |
+| Spielseiten | Zwei identische Trailer-Platzhalter hintereinander, Warteliste/Vorschläge/Roadmap ohne „Bühne“, kein Steckbrief (Genre, Spieler, Plattform). |
 | Devlog | Beiträge ohne Bild zeigen leere Raster-Platzhalter; auf der Startseite nur eine Textliste. |
 | Anmeldungen | Newsletter im Footer **und** als eigener Block, Community-Block separat. |
 | Schwebendes | „Unterstützen“-Button, Abzeichen und Cursor-Ring liegen über Inhalten. |
@@ -32,46 +32,58 @@ neu bauen mit `build-vorschau.py` (Aufruf steht oben im Skript).
 - Der Button „Discord beitreten“ führt auf planigames.com statt zum Discord-Server.
 - FRONTLINERS hat noch keinen Wishlist-/Steam-Link.
 
-## Konzept „Cinematic Studio“ (siehe Prototyp)
+## Konzept v2 „Ruhe & Wucht“
 
-- **Spiele als Bühne.** Startseite mit Spiele-Umschalter im Kopfbereich (Cover wechselt, Logos, Fortschrittsbalken),
-  danach jedes Spiel als großes Bühnenbild mit Logo, Status, Steckbrief und Buttons; Demos als eigener Bereich.
-- **Klare Dramaturgie.** Nummerierte Kapitel (01 Spiele · 02 Studio · 03 Team · 04 Devlog), eine Containerbreite,
-  abwechselnde Anordnung statt gleichförmiger Abschnitte.
-- **Studio.** Große Aussage, Kennzahlen (2025 gegründet · 3 Spiele · 3 Gründer), Werte mit eigenen Linien-Icons.
-- **Team.** Große Porträts mit Rolle, Zitat und Ort.
-- **Devlog.** Magazin-Look (Aufmacher + Liste); Beiträge ohne Bild bekommen Spielfarbe + Logo.
-- **Bleib dran.** Newsletter + Community in einem Block; Footer: Spiele · Studio · Rechtliches · Social.
-- **Spielseite.** Großer Kopfbereich mit Logo und Steckbrief-Leiste, Abschnitts-Navigation (bleibt oben stehen),
-  Über-Teil mit Statement, Feature-Kacheln, Videos (laden erst nach Klick), Roadmap als Zeitstrahl mit Fortschritt,
-  „Mitmachen“ (Warteliste + Vorschläge nebeneinander), Selbst spielen, FAQ, Devlog, weitere Spiele.
-- **Kopfzeile.** Wortmarke PLANI**GAMES**, Navigation, Sprache, Button „FRONTLINERS Playtest“ (immer sichtbar).
-- **Ruhiger.** Partikel, Cursor-Ring, Maskottchen und schwebender Unterstützen-Button zurückhaltend bzw. optional.
-- **Handy.** Eigene Anordnung: Umschalter wischbar, Steckbrief 2×2, Zeitstrahl senkrecht, Menü als Vollbild.
+Rückmeldung zu v1: „wirkt etwas viel und unüberlegt – muss durchdachter und cooler sein“.
+v2 ist deshalb von Grund auf neu und folgt fünf festen Regeln:
+
+1. **Eine Schrift, drei Stimmen.** Archivo (wie heute schon): schmal & riesig für Titel, normal für Text,
+   breit & klein für Beschriftungen. (v1: drei Schriften von zwei Anbietern)
+2. **Ein Akzent.** Orange nur für die wichtigste Aktion einer Seite (Playtest, Eintragen).
+3. **Ein Raster.** 12 Spalten; Beschriftungen stehen links, Inhalte beginnen immer in Spalte 4.
+   Feine Linien statt Kästen, Karten, Pillen und Abzeichen.
+4. **Bild – Ruhe – Bild.** Große Bildflächen wechseln sich mit ruhigen Textabschnitten ab.
+5. **Bewegung nur mit Bedeutung.** Bildwechsel im Spiele-Index, sanftes Einblenden, Kopfbild läuft beim
+   Scrollen leicht langsamer mit. Kein Laufband, keine Partikel, kein Cursor-Ring.
+
+**Startseite (5 statt 11 Abschnitte):** Spiele-Index (die drei Spiele als große Titel – das Bild wechselt
+beim Drüberfahren bzw. automatisch) · Studio & Team · FRONTLINERS im Fokus (Playtest) · Devlog (3 Beiträge)
+· „Bleib dran“ + Footer.
+
+**Spielseite:** Kopfbild mit Logo, Satz, Playtest-Button und Steckbrief · Über das Spiel · Einblicke
+(Videos/Galerie) · Was dich erwartet · Roadmap als „Erledigt / In Arbeit / Als Nächstes“ (ohne veraltete
+Termine) bzw. Hinweis bei pausierten Spielen · Mitmachen (Warteliste; Ideen & Abstimmung aufklappbar) ·
+FAQ · Devlog · „Nächstes Spiel“ als großer Bild-Schriftzug.
+
+**Weitere Seiten:** Spiele-Übersicht („Drei Welten.“ + große Bildflächen + Prototypen & Demos),
+Devlog („Aus der Werkstatt.“ mit Filter), Beitrag (Lesespalte mit Datum/Spiel/Lesezeit am Rand).
+
+**Bewusst weggelassen:** Laufband, Kennzahlen-Zähler, Werte-Kacheln mit Icons, Abschnitts-Navigation,
+doppelte Anmeldeblöcke, schwebende Buttons. Team-Fotos einheitlich schwarz-weiß, farbig beim Drüberfahren.
 
 ## Was im Admin dazukäme (bestehende Daten bleiben gültig)
 
-- Spiel-Steckbrief (optional): Genre, Spieler, Plattform, Release – ohne Angaben wird die Leiste ausgeblendet.
-- Status „Pausiert“.
+- Status „Pausiert“ mit kurzem Hinweistext.
+- Spiel-Steckbrief (optional): Spieler, Plattform, Genre – ohne Angaben wird die Leiste ausgeblendet.
+- „Im Fokus“ auf der Startseite: Spiel + Bild wählbar.
+- Kopfzeilen-Link „Playtest“: Text + Ziel wählbar.
 - Studio-Kennzahlen optional (sonst automatisch aus Gründungsjahr, Spielen und Team).
-- Werte-Icons aus einem Icon-Set (Emoji bleibt möglich).
 - Video-Block: mehrere Videos mit Vorschaubild und Titel.
-- Kopfzeilen-Button: Text + Ziel wählbar (z. B. „FRONTLINERS Playtest“).
 
-Alles andere nutzt die vorhandenen Blöcke und Felder.
+Roadmap, Warteliste, Vorschläge, FAQ und Devlog nutzen die vorhandenen Daten.
 
 ## Phasen (jede einzeln hochladbar, Admin funktioniert durchgehend)
 
 1. **Fundament:** Design-Tokens, eigene CSS-Datei statt Tailwind-Laufzeit (schnellerer Seitenaufbau),
-   Kopfzeile, Footer, Buttons, Karten; Bilder beim Upload zusätzlich als WebP.
-2. **Startseite:** Spiele-Umschalter, Spiele-Bühnen, Studio, Team, Devlog-Magazin, „Bleib dran“.
-3. **Spielseite:** Kopfbereich + Steckbrief, Abschnitts-Navigation, alle Blöcke im neuen Stil.
+   eine Schrift, Kopfzeile, Footer, Buttons; Bilder beim Upload zusätzlich als WebP.
+2. **Startseite:** Spiele-Index, Studio & Team, Fokus, Devlog, „Bleib dran“.
+3. **Spielseite:** Kopfbereich + Steckbrief, alle Blöcke im neuen Stil, „Nächstes Spiel“.
 4. **Unterseiten:** Spiele-Übersicht, Devlog (Liste + Beitrag), Presse-Kit, Kontakt, Lore, Rechtliches, 404.
 5. **Feinschliff:** Animationen, Barrierefreiheit, Ladezeit, englische Texte, Gesamttest.
 
 ## Offene Fragen
 
-- Passt die Richtung „Spiele als Bühne“ – oder lieber stärker Studio-zentriert?
-- Kopfzeilen-Button fest „FRONTLINERS Playtest“ oder im Admin wählbar?
-- Effekte (Partikel, Cursor, Maskottchen): behalten, reduzieren oder weg?
+- Passt die Richtung v2 „Ruhe & Wucht“?
+- Kopfzeile: „● Playtest“-Link fest oder im Admin wählbar?
+- Team-Fotos schwarz-weiß (farbig beim Drüberfahren) – okay?
 - Gibt es einen Discord-Link?
