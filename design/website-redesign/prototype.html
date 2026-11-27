@@ -7,33 +7,28 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 /* =====================================================================
-   PLANIGAMES – Probedesign v5 „Durchdacht“
-   Optik wie die Live-Seite (Schwarz + Orange/Gold, Clash Display, Archivo, JetBrains Mono).
-   Aufbau nach Konzept: jeder Abschnitt beantwortet genau eine Besucherfrage, ein Hauptbutton pro
-   Abschnitt, der Status eines Spiels bestimmt den nächsten Schritt, keine Sackgassen.
-   Die blauen Konzept-Notizen (an/aus unten rechts) erklären jede Entscheidung.
+   PLANIGAMES – Probedesign v6
+   Neues, ruhig-hochwertiges Design: eine Schrift (Montserrat), moderate Überschriften,
+   dunkel mit Studio-Orange, klare Abschnitte, Karten mit Spiel-Logos, sorgfältige Abstände.
    ===================================================================== */
 :root{
   color-scheme:dark;
-  --bg:#050505; --card:rgba(255,255,255,.025); --card2:rgba(255,255,255,.045);
-  --line:rgba(255,255,255,.1); --line2:rgba(255,255,255,.18);
-  --ink:#f4f4f5; --ink2:#d4d4d8; --ink3:#a1a1aa; --ink4:#71717a;
-  --acc:#ff7d1a; --acc2:#e6a015; --acc3:#ffa53d; --on-acc:#fff;
-  --g:24px; --max:1152px; --sec:clamp(64px,7.4vw,104px); --r:16px; --r2:24px;
-  --f:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --fd:"Clash Display","Archivo",system-ui,sans-serif;
-  --fm:"JetBrains Mono",ui-monospace,monospace;
-  --ease:cubic-bezier(.16,1,.3,1);
+  --bg:#0b0b10; --bg2:#101017; --card:#15151d; --card2:#1b1b25;
+  --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.14);
+  --ink:#ffffff; --ink2:#cfcfd8; --ink3:#9c9cab; --ink4:#707080;
+  --acc:#ff7d1a; --acc2:#ffa24c; --acc-soft:rgba(255,125,26,.12);
+  --max:1200px; --g:24px; --sec:clamp(72px,8vw,112px); --r:18px; --rs:12px;
+  --f:"Montserrat",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --shadow:0 24px 50px -28px rgba(0,0,0,.85);
+  --ease:cubic-bezier(.2,.8,.2,1);
 }
-@media (max-width:560px){:root{--g:16px;--r2:20px}}
+@media (max-width:560px){:root{--g:18px;--r:16px}}
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{margin:0;color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;
-  background-color:var(--bg);background-image:radial-gradient(120% 70% at 50% -10%,rgba(255,125,26,.08),transparent 55%),radial-gradient(100% 60% at 50% 115%,rgba(230,160,21,.05),transparent 60%);background-attachment:fixed}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:80px}
+body{margin:0;background:var(--bg);color:var(--ink2);font-family:var(--f);font-size:16px;line-height:1.7;font-weight:400;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 body.lock{overflow:hidden}
 img{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
@@ -42,446 +37,429 @@ h1,h2,h3,p,ol,ul,dl,dd,figure{margin:0}
 ol,ul{list-style:none;padding:0}
 [hidden]{display:none !important}
 ::selection{background:var(--acc);color:#fff}
-:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:6px}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:8px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
-.ic{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ic{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .wrap{width:100%;max-width:calc(var(--max) + 2 * var(--g));margin:0 auto;padding-left:max(var(--g),env(safe-area-inset-left,0px));padding-right:max(var(--g),env(safe-area-inset-right,0px))}
-.sec{padding-top:var(--sec);padding-bottom:var(--sec)}
-.sec + .sec{padding-top:0}
+.sec{padding:var(--sec) 0}
+.band{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 
-/* ---------- Schrift (wie live) ---------- */
-.h1{font-family:var(--fd);font-weight:700;font-size:clamp(46px,6.8vw,88px);line-height:.95;letter-spacing:-.025em;color:#fff}
-.h1.sm{font-size:clamp(40px,5.4vw,72px)}
-.h2{font-family:var(--fd);font-weight:700;font-size:clamp(30px,3.6vw,44px);line-height:1.05;letter-spacing:-.015em;color:#fff}
-.h3{font-family:var(--fd);font-weight:700;font-size:21px;line-height:1.2;letter-spacing:-.005em;color:#fff}
-.h1,.h2,.h3{overflow-wrap:break-word}
-.grad{background:linear-gradient(110deg,var(--acc2),var(--acc) 75%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.kicker,.badge,.more,.lang,.lbl{font-family:var(--fm);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase}
-.kicker{display:block;color:var(--acc);margin-bottom:12px}
-.lead{font-size:clamp(17px,1.5vw,19px);line-height:1.6;color:var(--ink2)}
-.lbl{color:var(--ink4)}
+/* ---------- Schrift ---------- */
+.h1,.h2,.h3{color:var(--ink);font-weight:800;letter-spacing:-.02em;overflow-wrap:break-word}
+.h1{font-size:clamp(34px,4.4vw,56px);line-height:1.1}
+.h2{font-size:clamp(27px,2.9vw,38px);line-height:1.18}
+.h3{font-size:19px;font-weight:700;letter-spacing:-.01em;line-height:1.3}
+.grad{background:linear-gradient(120deg,var(--acc2),var(--acc));-webkit-background-clip:text;background-clip:text;color:transparent}
+.eyebrow{display:inline-block;margin-bottom:14px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.lead{font-size:17.5px;line-height:1.7;color:var(--ink2)}
 p{color:var(--ink3)}
 .txt p + p{margin-top:1em}
 .txt b{color:var(--ink);font-weight:600}
-.c{text-align:center}
+.sh{max-width:680px;margin:0 0 40px}
+.sh .lead{margin-top:12px}
+.sh-row{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 24px;margin-bottom:40px}
+.sh-row .lead{margin-top:10px;max-width:620px}
 
-/* Abschnittskopf: immer gleich aufgebaut – Kicker · Titel · ein Satz (· Link) */
-.sh{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 24px;margin-bottom:32px}
-.sh > div{max-width:680px}
-.sh .lead{margin-top:10px}
-.sh .more{white-space:nowrap}
-
-/* ---------- Bedienelemente (wie live) ---------- */
+/* ---------- Bedienelemente ---------- */
 .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 26px;border:0;border-radius:999px;cursor:pointer;font-weight:600;font-size:16px;line-height:1.25;white-space:nowrap;transition:transform .3s var(--ease),box-shadow .3s,background .3s}
-.btn .ic{width:17px;height:17px;transition:transform .35s var(--ease)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border:0;border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:15px;line-height:1.2;white-space:nowrap;transition:transform .25s var(--ease),filter .25s,background .25s,box-shadow .25s}
+.btn .ic{width:18px;height:18px;transition:transform .3s var(--ease)}
 .btn:hover .ic{transform:translateX(3px)}
-.btn-p{background:linear-gradient(110deg,var(--acc),var(--acc2));color:var(--on-acc);box-shadow:0 10px 40px -10px color-mix(in srgb,var(--acc) 70%,transparent)}
-.btn-p:hover{transform:translateY(-1px);box-shadow:0 14px 44px -10px color-mix(in srgb,var(--acc) 85%,transparent)}
-.btn-g{box-shadow:inset 0 0 0 1px var(--line2);background:transparent;color:var(--ink)}
-.btn-g:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.5);background:rgba(255,255,255,.04)}
-.btn-g:hover .ic{transform:none}
-.btn-s{padding:10px 20px;font-size:14px}
-.more{display:inline-flex;align-items:center;gap:8px;color:var(--acc);transition:gap .3s var(--ease)}
-.more:hover{gap:12px}
-.more.dim{color:var(--ink4)} .more.dim:hover{color:#fff}
-.badge{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);background:rgba(5,5,5,.55);color:var(--ink2);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-.badge i{width:6px;height:6px;border-radius:50%;background:var(--dot,var(--acc))}
-.badge.paused i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink3)}
-.pulse{animation:pulse 2s ease-in-out infinite}
-@keyframes pulse{50%{opacity:.35}}
-.card{border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card)}
-
-/* ---------- Konzept-Notizen (blau = Erklärung, nicht Teil des Designs) ---------- */
-.cn{display:none;gap:12px;align-items:flex-start;margin:0 0 24px;padding:12px 14px;border-radius:12px;background:rgba(56,189,248,.08);box-shadow:inset 0 0 0 1px rgba(56,189,248,.45);color:#bae6fd;font-size:13.5px;line-height:1.5;text-align:left}
-body.cn-on .cn{display:flex}
-.cn .n{display:grid;place-items:center;flex:none;width:24px;height:24px;border-radius:50%;background:#38bdf8;color:#04111a;font-weight:700;font-size:12px}
-.cn b{color:#e0f2fe;font-weight:600}
-.hero .cn{max-width:640px}
+.btn-p{background:linear-gradient(135deg,#ff8f33,#ff6a00);color:#fff;box-shadow:0 12px 28px -12px rgba(255,110,0,.8)}
+.btn-p:hover{filter:brightness(1.07);transform:translateY(-1px)}
+.btn-s{background:rgba(255,255,255,.06);color:#fff;box-shadow:inset 0 0 0 1px var(--line2)}
+.btn-s:hover{background:rgba(255,255,255,.1)}
+.btn-s:hover .ic{transform:none}
+.btn-sm{min-height:42px;padding:0 18px;font-size:14px}
+.link{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14.5px;color:var(--acc)}
+.link .ic{width:17px;height:17px;transition:transform .3s var(--ease)}
+a:hover .link .ic,.link:hover .ic{transform:translateX(3px)}
+.chip{display:inline-flex;align-items:center;gap:7px;height:28px;max-width:100%;padding:0 12px;white-space:nowrap;border-radius:999px;font-size:12px;font-weight:600;color:#fff;background:rgba(10,10,15,.66);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--dot,var(--acc))}
+.chip.paused i{background:transparent;box-shadow:inset 0 0 0 1.5px #c9c9d4}
+.chip.hl{background:var(--acc);color:#fff;box-shadow:none}
+.card{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line)}
+.lg{display:block;position:relative;overflow:hidden;width:calc(var(--w) * var(--k,1));max-width:100%}
+.lg img{position:absolute;max-width:none;height:auto}
 
 /* ---------- Kopfzeile ---------- */
-.hd{position:fixed;top:0;left:0;right:0;z-index:60;padding-top:env(safe-area-inset-top,0px);transition:background .35s,box-shadow .35s}
-.hd.solid{background:rgba(5,5,5,.78);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 1px 0 var(--line)}
-.hd-in{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:76px}
-.brand{display:flex;align-items:center;gap:10px;justify-self:start}
-.wm{font-family:var(--fd);font-weight:700;font-size:18px;letter-spacing:-.01em;color:#fff}
-.wm span{background:linear-gradient(110deg,#e6a015,#ff7d1a 75%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.nav{display:flex;gap:30px}
-.nav a{font-size:14px;font-weight:500;color:var(--ink3);transition:color .2s}
+.hd{position:fixed;top:0;left:0;right:0;z-index:60;padding-top:env(safe-area-inset-top,0px);transition:background .3s,box-shadow .3s}
+.hd.solid{background:rgba(11,11,16,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 1px 0 var(--line)}
+.hd-in{display:flex;align-items:center;gap:32px;height:74px}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.wm{font-weight:800;font-size:17px;letter-spacing:.03em;color:#fff}
+.wm span{color:var(--acc)}
+.nav{display:flex;gap:28px}
+.nav a{font-weight:600;font-size:14.5px;color:var(--ink2);transition:color .2s}
 .nav a:hover,.nav a.on{color:#fff}
-.hd-r{display:flex;align-items:center;gap:12px;justify-self:end}
-.tip{font-size:14px;font-weight:500;color:var(--ink3);padding:8px 4px;transition:color .2s}
-.tip:hover{color:#fff}
-.lang{padding:7px 12px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink4)}
-.lang b{color:var(--ink);font-weight:500}
-.burger{display:none;position:relative;width:42px;height:42px;border:0;background:none;cursor:pointer}
-.burger i{position:absolute;left:10px;right:10px;height:2px;border-radius:2px;background:#fff;transition:transform .35s var(--ease),top .35s var(--ease),opacity .2s}
+.nav a.on{box-shadow:inset 0 -2px 0 var(--acc);padding-bottom:4px}
+.hd-r{display:flex;align-items:center;gap:10px}
+.lang{font-size:13px;font-weight:600;color:var(--ink4)} .lang b{color:#fff}
+.burger{display:none;position:relative;width:42px;height:42px;margin-right:-8px;border:0;background:none;cursor:pointer}
+.burger i{position:absolute;left:10px;right:10px;height:2px;border-radius:2px;background:#fff;transition:transform .3s var(--ease),top .3s var(--ease),opacity .2s}
 .burger i:nth-child(1){top:14px} .burger i:nth-child(2){top:20px} .burger i:nth-child(3){top:26px}
 .burger[aria-expanded="true"] i:nth-child(1){top:20px;transform:rotate(45deg)}
 .burger[aria-expanded="true"] i:nth-child(2){opacity:0}
 .burger[aria-expanded="true"] i:nth-child(3){top:20px;transform:rotate(-45deg)}
-.mn{position:fixed;inset:0;z-index:55;display:flex;flex-direction:column;gap:28px;padding:104px var(--g) calc(28px + env(safe-area-inset-bottom,0px));background:rgba(5,5,5,.97);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;visibility:hidden;transition:opacity .3s,visibility 0s .3s}
-.mn.open{opacity:1;visibility:visible;transition:opacity .3s}
+.mn{position:fixed;inset:0;z-index:55;display:flex;flex-direction:column;gap:24px;padding:96px var(--g) calc(28px + env(safe-area-inset-bottom,0px));background:rgba(11,11,16,.98);opacity:0;visibility:hidden;transition:opacity .25s,visibility 0s .25s}
+.mn.open{opacity:1;visibility:visible;transition:opacity .25s}
 .mn nav{display:grid}
-.mn nav a{padding:14px 0;border-bottom:1px solid var(--line);font-family:var(--fd);font-weight:700;font-size:30px;letter-spacing:-.01em}
+.mn nav a{padding:16px 0;border-bottom:1px solid var(--line);font-weight:700;font-size:22px;color:#fff}
 .mn .row{margin-top:auto}
+.mn .row .btn{flex:1 1 auto}
 
-/* ---------- ① Kopfbereich: Wer seid ihr – und was kann ich jetzt tun? ---------- */
-.hero{position:relative;min-height:max(640px,90vh);display:flex;align-items:center;padding:120px 0 64px;overflow:hidden;isolation:isolate}
-.hero-bg{position:absolute;inset:0;z-index:-3}
-.hero-bg img{width:100%;height:100%;object-fit:cover;object-position:62% 50%}
-.hero::before{content:"";position:absolute;inset:0;z-index:-2;background:
-  linear-gradient(90deg,rgba(5,5,5,.94) 0%,rgba(5,5,5,.78) 38%,rgba(5,5,5,.35) 70%,rgba(5,5,5,.25) 100%),
-  linear-gradient(0deg,var(--bg) 0%,rgba(5,5,5,0) 32%),linear-gradient(180deg,rgba(5,5,5,.6),rgba(5,5,5,0) 22%)}
-.grid-lines{position:absolute;inset:0;z-index:-1;opacity:.5;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:linear-gradient(90deg,#000,transparent 70%);mask-image:linear-gradient(90deg,#000,transparent 70%)}
-.fx{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
-.fx i{position:absolute;bottom:-24px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;opacity:0;background:radial-gradient(circle,#ffd1a6 0%,rgba(255,125,26,.45) 45%,transparent 70%);animation:rise var(--t) linear var(--d) infinite}
-@keyframes rise{0%{transform:translate3d(0,0,0);opacity:0}15%{opacity:.9}80%{opacity:.5}100%{transform:translate3d(var(--dx),-92vh,0);opacity:0}}
-.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,340px);gap:48px;align-items:end}
-.hero .badge{margin-bottom:26px}
-.hero .lead{max-width:600px;margin-top:24px}
-.hero .row{margin-top:32px}
-.now{padding:20px;border-radius:var(--r2);background:rgba(10,10,12,.62);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px var(--line2),0 30px 60px -30px rgba(0,0,0,.8)}
-.now .badge{margin:0 0 16px;background:none}
-.now .lg{margin-bottom:12px}
-.now p{font-size:14.5px;line-height:1.5;color:var(--ink2);margin-bottom:14px}
-.now .prog-top{margin-bottom:6px}
-.now .bar{margin-bottom:18px}
-.now .btn{width:100%}
+/* ---------- Startseite: Kopfbereich ---------- */
+.hero{position:relative;display:flex;align-items:center;min-height:clamp(560px,86vh,780px);padding:120px 0 80px;overflow:hidden;isolation:isolate}
+.hero > img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:65% 50%;animation:kb 14s ease-out both}
+@keyframes kb{from{transform:scale(1.06)}to{transform:none}}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(11,11,16,.95) 0%,rgba(11,11,16,.78) 40%,rgba(11,11,16,.3) 75%,rgba(11,11,16,.2) 100%),linear-gradient(0deg,var(--bg) 0%,rgba(11,11,16,0) 35%),linear-gradient(180deg,rgba(11,11,16,.65),rgba(11,11,16,0) 25%)}
+.hero-in{max-width:640px}
+.hero .chip{margin-bottom:24px}
+.hero .lead{margin:20px 0 34px;max-width:560px}
 
-/* Laufband (wie live) */
-.tick{overflow:hidden;white-space:nowrap;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.tick-in{display:inline-flex;align-items:center;gap:28px;padding-left:28px;animation:tick 45s linear infinite;font-family:var(--fd);font-weight:700;font-size:22px;letter-spacing:-.01em}
-.tick-in span{color:rgba(255,255,255,.55)}
-.tick-in span:nth-child(4n+3){color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.35)}
-.tick-in i{font-style:normal;color:var(--acc);font-size:15px}
+/* Laufband (dezent) */
+.tick{overflow:hidden;white-space:nowrap;border-bottom:1px solid var(--line);padding:16px 0}
+.tick-in{display:inline-flex;align-items:center;gap:30px;padding-left:30px;animation:tick 55s linear infinite;font-weight:700;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink4)}
+.tick-in i{width:6px;height:6px;border-radius:50%;background:var(--acc)}
 @keyframes tick{to{transform:translateX(-50%)}}
 
-/* ---------- ② Spiele: Was macht ihr? ---------- */
-.cards3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
-.gcard{display:flex;flex-direction:column;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card);overflow:hidden;transition:box-shadow .3s,transform .4s var(--ease)}
-.gcard:hover{box-shadow:inset 0 0 0 1px var(--line2);transform:translateY(-3px)}
-.gcard figure{position:relative;aspect-ratio:16/10;overflow:hidden;background:#111}
-.gcard figure > img{width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
-.gcard:hover figure > img{transform:scale(1.05)}
-.gcard figure .badge{position:absolute;left:14px;top:14px}
-.gcard figure .tag{position:absolute;right:14px;top:14px;padding:5px 10px;border-radius:999px;background:var(--acc);color:#1a0d00;font-family:var(--fm);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
-.gcard-b{display:flex;flex-direction:column;gap:8px;padding:20px 22px 22px;flex:1}
-.gcard-b p{font-size:14.5px;line-height:1.5}
-.next{margin-top:auto;padding-top:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid var(--line);font-weight:600;font-size:14.5px;color:#fff}
-.next .ic{width:18px;height:18px;color:var(--gacc,var(--acc));transition:transform .3s var(--ease)}
-.gcard:hover .next .ic{transform:translateX(3px)}
-.next small{display:block;font-family:var(--fm);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink4);font-weight:400;margin-bottom:2px}
-.demos-line{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:16px;padding:16px 22px;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card);transition:box-shadow .3s}
-.demos-line:hover{box-shadow:inset 0 0 0 1px var(--line2)}
-.demos-line span:first-child{display:flex;align-items:center;gap:14px;color:var(--ink2)}
-.demos-line b{color:#fff;font-weight:600}
-.demos-line .emo{font-size:22px}
-.lg{display:block;position:relative;overflow:hidden;width:calc(var(--w) * var(--k,1));max-width:100%}
-.lg img{position:absolute;max-width:none;height:auto}
+/* ---------- Spielkarten ---------- */
+.games{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.gcard{display:flex;flex-direction:column;overflow:hidden;border-radius:var(--r);background:var(--card);box-shadow:inset 0 0 0 1px var(--line);transition:transform .35s var(--ease),box-shadow .35s}
+.gcard:hover{transform:translateY(-4px);box-shadow:inset 0 0 0 1px var(--line2),var(--shadow)}
+.gimg{position:relative;aspect-ratio:16/11;overflow:hidden;background:#111}
+.games.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.games.two .gimg{aspect-ratio:16/9}
+.gimg > img{width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.gcard:hover .gimg > img{transform:scale(1.05)}
+.gimg::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(11,11,16,.92) 0%,rgba(11,11,16,.35) 42%,rgba(11,11,16,0) 70%)}
+.gimg .chips{position:absolute;z-index:1;left:14px;right:14px;top:14px;display:flex;flex-wrap:wrap;gap:8px}
+.gimg .lg{position:absolute !important;z-index:1;left:20px;bottom:18px;max-width:calc(100% - 40px)}
+.gbody{display:flex;flex-direction:column;gap:10px;flex:1;padding:20px 22px 22px}
+.gmeta{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4)}
+.gbody p{font-size:15px;line-height:1.6}
+.gbody .link{margin-top:auto;padding-top:6px}
+.demos{display:flex;align-items:center;gap:20px;margin-top:24px;padding:20px 24px;border-radius:var(--r);background:var(--card);box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .3s}
+.demos:hover{box-shadow:inset 0 0 0 1px var(--line2)}
+.icn{display:grid;place-items:center;flex:none;width:48px;height:48px;border-radius:14px;background:var(--acc-soft);color:var(--acc);font-size:22px}
+.icn .ic{width:22px;height:22px}
+.icn.emo{background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px var(--line)}
+.demos > span:nth-child(2){flex:1}
+.demos b{display:block;color:#fff;font-weight:700}
+.demos small{font-size:14px;color:var(--ink3)}
 
-/* ---------- ③ Devlog-Liste: Tut sich da was? ---------- */
-.plist{border-top:1px solid var(--line)}
-.prow{display:grid;grid-template-columns:104px 130px minmax(0,1fr) auto;gap:22px;align-items:center;padding:16px 4px;border-bottom:1px solid var(--line);transition:background .25s}
-.prow:hover{background:rgba(255,255,255,.025)}
-.prow figure{position:relative;aspect-ratio:16/10;border-radius:10px;overflow:hidden;background:#111}
-.prow figure img{width:100%;height:100%;object-fit:cover}
-.ph-img{filter:brightness(.55) saturate(.85)}
-.prow-d{font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--ink4);line-height:1.5}
-.prow-t .badge{padding:0;box-shadow:none;background:none;color:var(--ink4);margin-bottom:4px}
-.prow-h{display:block;font-weight:600;font-size:17px;color:#fff;transition:color .2s}
-.prow-e{display:block;font-size:14px;color:var(--ink3);margin-top:2px}
-.prow:hover .prow-h{color:var(--acc3)}
-.prow > .ic{width:18px;height:18px;color:var(--ink4);transition:transform .3s var(--ease),color .2s}
-.prow:hover > .ic{transform:translateX(3px);color:#fff}
+/* ---------- Studio ---------- */
+.about{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(32px,5vw,72px);align-items:center}
+.about .txt{margin-top:20px;font-size:16.5px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:32px}
+.stats div{padding:18px 16px;border-radius:var(--rs);background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+.stats b{display:block;font-size:28px;font-weight:800;line-height:1.1;color:#fff}
+.stats span{font-size:13px;color:var(--ink3)}
+.collage{display:grid;grid-template-columns:1.25fr 1fr;grid-template-rows:1fr 1fr;gap:14px;aspect-ratio:1.1}
+.collage figure{overflow:hidden;border-radius:var(--r);background:#111}
+.collage figure:first-child{grid-row:1/3}
+.collage img{width:100%;height:100%;object-fit:cover}
+.vals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.val{padding:26px;border-radius:var(--r);background:var(--card);box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .3s,transform .35s var(--ease)}
+.val:hover{box-shadow:inset 0 0 0 1px var(--line2);transform:translateY(-3px)}
+.val .icn{margin-bottom:18px}
+.val .h3{margin-bottom:8px}
+.val p{font-size:15px;line-height:1.6}
+.team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.tm{overflow:hidden;border-radius:var(--r);background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+.tm figure{aspect-ratio:6/5;overflow:hidden;background:#111}
+.tm img{width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.tm:hover img{transform:scale(1.04)}
+.tm-b{padding:20px 22px 22px}
+.tm .role{display:block;margin:4px 0 12px;font-size:13px;font-weight:600;color:var(--acc)}
+.tm .q{font-style:italic;color:var(--ink2);font-size:15px}
+.tm .loc{margin-top:8px;font-size:13px;color:var(--ink4)}
 
-/* ---------- ④ Studio: Wer steckt dahinter? ---------- */
-.about{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,5vw,72px);align-items:start;margin-bottom:48px}
-.about .txt{font-size:17px}
-.about .more{margin-top:18px}
-.sub{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin:0 0 16px}
-.vals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:56px}
-.val{display:grid;grid-template-columns:34px minmax(0,1fr);gap:4px 12px;padding:18px 20px;border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);background:var(--card)}
-.val .emo{font-size:22px;line-height:1.2;grid-row:1/3}
-.val .h3{font-size:17px}
-.val p{font-size:14px;line-height:1.5}
-.team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
-.tm{display:grid;grid-template-columns:88px minmax(0,1fr);gap:4px 18px;align-items:center;padding:16px;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card)}
-.tm figure{grid-row:1/5;width:88px;height:88px;border-radius:20px;overflow:hidden;background:#111}
-.tm img{width:100%;height:100%;object-fit:cover}
-.tm .h3{font-size:18px}
-.tm .badge{padding:0;box-shadow:none;background:none;color:var(--acc)}
-.tm .q{font-size:14px;color:var(--ink2);line-height:1.45}
-.tm .loc{font-size:12.5px;color:var(--ink4)}
+/* ---------- Devlog-Karten ---------- */
+.posts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.pcard{display:flex;flex-direction:column;overflow:hidden;border-radius:var(--r);background:var(--card);box-shadow:inset 0 0 0 1px var(--line);transition:transform .35s var(--ease),box-shadow .35s}
+.pcard:hover{transform:translateY(-4px);box-shadow:inset 0 0 0 1px var(--line2),var(--shadow)}
+.pcard figure{position:relative;aspect-ratio:16/10;overflow:hidden;background:#111}
+.pcard figure > img{width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.pcard:hover figure > img{transform:scale(1.05)}
+.pcard .ph-img{filter:brightness(.5) saturate(.85)}
+.pcard .card-logo{position:absolute !important;left:50%;top:50%;transform:translate(-50%,-50%)}
+.pcard figure .chip{position:absolute;left:14px;top:14px}
+.pbody{display:flex;flex-direction:column;gap:8px;flex:1;padding:20px 22px 22px}
+.pbody time{font-size:13px;color:var(--ink4);font-weight:600}
+.pbody .h3{font-size:18px}
+.pbody p{font-size:15px;line-height:1.6}
+.pbody .link{margin-top:auto;padding-top:6px}
+.pcard.feat{grid-column:1/-1;flex-direction:row}
+.pcard.feat figure{flex:0 0 58%;aspect-ratio:16/9}
+.pcard.feat .pbody{justify-content:center;gap:10px;padding:32px 36px}
+.pcard.feat .h3{font-size:24px}
+.pcard.feat .link{margin-top:6px}
+.more{display:flex;flex-direction:column;justify-content:center;gap:10px;padding:28px;border-radius:var(--r);background:radial-gradient(120% 90% at 0% 0%,rgba(255,125,26,.1),transparent 60%),var(--card);box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .3s,transform .35s var(--ease)}
+.more:hover{box-shadow:inset 0 0 0 1px var(--line2);transform:translateY(-4px)}
+.more .icn{margin-bottom:6px}
+.more p{font-size:15px}
 
-/* ---------- ⑤ Bleib dran ---------- */
-.join{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);overflow:hidden;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);
-  background:radial-gradient(80% 120% at 0% 0%,rgba(255,125,26,.18),transparent 60%),radial-gradient(60% 100% at 100% 100%,rgba(230,160,21,.1),transparent 60%),var(--card)}
-.join > div{padding:clamp(28px,4.5vw,52px)}
-.join-co{box-shadow:inset 1px 0 0 var(--line)}
-.join .h2{margin-bottom:12px}
-.join-co .emo{font-size:28px;display:block;margin-bottom:12px}
-.join-co .h3{font-size:23px;margin-bottom:8px}
-.join-co .row{margin-top:20px}
-.nl{display:flex;gap:10px;margin-top:24px;max-width:520px}
-.nl input,.idea input{flex:1;min-width:0;height:52px;padding:0 20px;border:0;border-radius:999px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px var(--line2);outline:0;font-size:16px;transition:box-shadow .2s}
-.nl input:focus,.idea input:focus{box-shadow:inset 0 0 0 1px var(--acc)}
+/* ---------- Anmelde-Band ---------- */
+.cta{position:relative;overflow:hidden;isolation:isolate;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:32px;align-items:center;padding:clamp(28px,5vw,64px);border-radius:24px}
+.cta > img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:50% 40%}
+.cta::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(11,11,16,.94) 0%,rgba(11,11,16,.82) 55%,rgba(11,11,16,.55) 100%)}
+.cta .h2{margin-bottom:12px}
+.cta .lead{max-width:520px}
+.nl{display:flex;gap:10px;margin-top:26px;max-width:520px}
+.nl input,.idea input{flex:1;min-width:0;height:52px;padding:0 18px;border:0;border-radius:var(--rs);background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px var(--line2);outline:0;font-size:15.5px;transition:box-shadow .2s,background .2s}
+.nl input:focus,.idea input:focus{box-shadow:inset 0 0 0 1.5px var(--acc);background:rgba(255,255,255,.09)}
 .nl input::placeholder,.idea input::placeholder{color:var(--ink4)}
-.nl .btn,.idea .btn{padding:0 24px;height:52px}
-.ok{margin-top:14px;color:var(--ink);font-weight:500}
+.ok{margin-top:12px;color:#fff;font-weight:600}
+.socials{justify-self:end;display:grid;gap:12px;min-width:240px}
+.socials p{font-size:14px;color:var(--ink2);margin-bottom:2px}
+.socials .btn{justify-content:flex-start}
 
-/* ---------- Footer (wie live) ---------- */
-.ft{border-top:1px solid var(--line);padding-top:56px}
-.ft-top{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:40px;padding-bottom:44px}
-.ft-brand p{max-width:330px;margin-top:16px;font-size:15px}
-.ft-col .lbl{display:block;margin-bottom:16px}
+/* ---------- Footer ---------- */
+.ft{background:#08080c;border-top:1px solid var(--line);padding-top:64px}
+.ft-top{display:grid;grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr));gap:40px;padding-bottom:48px}
+.ft-brand p{max-width:320px;margin-top:16px;font-size:14.5px}
+.ft-col b{display:block;margin-bottom:16px;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#fff}
 .ft-col ul{display:grid;gap:10px}
-.ft-col a{font-size:15px;color:var(--ink2);transition:color .2s}
+.ft-col a{font-size:14.5px;color:var(--ink3);transition:color .2s}
 .ft-col a:hover{color:#fff}
-.ft-bot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 24px;padding:22px 0 calc(28px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);font-size:13px;color:var(--ink4)}
+.ft-bot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;padding:22px 0 calc(28px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);font-size:13px;color:var(--ink4)}
 .ft-bot span{display:flex;flex-wrap:wrap;gap:8px 22px}
 .ft-bot a:hover{color:#fff}
 
-/* ---------- Seitenköpfe & Unterseiten ---------- */
-.ph{padding-top:clamp(124px,15vh,168px);padding-bottom:clamp(36px,4vw,56px)}
-.ph .lead{max-width:620px;margin-top:18px}
+/* ---------- Unterseiten ---------- */
+.pg{padding:clamp(120px,15vh,156px) 0 clamp(40px,5vw,64px);background:radial-gradient(70% 120% at 15% 0%,rgba(255,125,26,.1),transparent 60%)}
+.pg .lead{max-width:620px;margin-top:16px}
+.crumb{display:flex;align-items:center;gap:8px;margin-bottom:18px;font-size:13.5px;font-weight:600;color:var(--ink3)}
+.gh .crumb{color:var(--ink2);text-shadow:0 1px 8px rgba(0,0,0,.6)}
+.crumb a:hover{color:#fff}
 .filters{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
-.filters button{padding:7px 14px;border:0;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line2);background:none;cursor:pointer;font-family:var(--fm);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);transition:color .2s,background .2s,box-shadow .2s}
-.filters button:hover{color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
-.filters button.on{background:#fff;color:#050505;box-shadow:none}
-.build{display:flex;align-items:center;gap:16px;padding:14px 16px;border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);background:rgba(255,255,255,.02)}
-.build + .build{margin-top:10px}
-.build .emo{font-size:22px}
-.build b{display:block;font-weight:600;color:#fff}
-.build small{display:block;font-family:var(--fm);font-size:11px;letter-spacing:.06em;color:var(--ink4)}
-.build button{margin-left:auto;display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line2);background:none;cursor:pointer;color:var(--ink2)}
-.build button:hover{background:var(--acc);color:#fff;box-shadow:none}
-.build button .ic{width:17px;height:17px}
+.filters button{height:38px;padding:0 16px;border:0;border-radius:999px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px var(--line2);cursor:pointer;font-weight:600;font-size:13.5px;color:var(--ink2);transition:background .2s,color .2s}
+.filters button:hover{background:rgba(255,255,255,.09);color:#fff}
+.filters button.on{background:var(--acc);color:#fff;box-shadow:none}
+.empty{padding:32px;text-align:center;color:var(--ink4)}
+.builds{display:grid;gap:10px}
+.build{display:flex;align-items:center;gap:16px;padding:14px 16px;border-radius:var(--rs);background:rgba(255,255,255,.03);box-shadow:inset 0 0 0 1px var(--line)}
+.build .icn{width:42px;height:42px;font-size:18px}
+.build b{display:block;color:#fff;font-weight:700;font-size:15px}
+.build small{font-size:13px;color:var(--ink4)}
+.build button{margin-left:auto;display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:10px;background:rgba(255,255,255,.06);cursor:pointer;color:#fff;transition:background .2s}
+.build button:hover{background:var(--acc)}
+.build button .ic{width:18px;height:18px}
 
-/* ---------- Spielseite (feste Reihenfolge der Fragen) ---------- */
-.gh{position:relative;min-height:max(600px,82vh);display:flex;align-items:flex-end;padding:120px 0 56px;overflow:hidden;isolation:isolate}
-.gh-media{position:absolute;inset:0;z-index:-2}
-.gh-media img{width:100%;height:100%;object-fit:cover}
-.gh::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,var(--bg) 0%,rgba(5,5,5,.72) 32%,rgba(5,5,5,.15) 70%,rgba(5,5,5,.5) 100%),linear-gradient(90deg,rgba(5,5,5,.6),rgba(5,5,5,0) 65%)}
-.gh .lg{margin:20px 0 16px}
-.gh-tag{font-size:clamp(18px,1.7vw,22px);color:var(--ink2);max-width:640px}
-.gh .row{margin-top:26px}
-.rt{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(28px,5vw,72px)}
-.rt .txt{font-size:17px}
-.sb{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 20px;margin-top:26px;padding-top:20px;border-top:1px solid var(--line)}
-.sb dt{font-family:var(--fm);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink4);padding-top:3px}
-.sb dd{color:#fff;font-weight:500}
-.vids{display:grid;gap:20px}
-.vids.two{grid-template-columns:1fr 1fr}
-.vid{position:relative;display:block;aspect-ratio:16/9;border-radius:var(--r2);overflow:hidden;background:#111}
-.vid img{width:100%;height:100%;object-fit:cover;filter:brightness(.7);transition:transform .8s var(--ease),filter .4s}
+/* ---------- Spielseite ---------- */
+.gh{position:relative;display:flex;align-items:flex-end;min-height:clamp(520px,72vh,640px);padding:120px 0 56px;overflow:hidden;isolation:isolate}
+.gh > img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;animation:kb 14s ease-out both}
+.gh::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,var(--bg) 0%,rgba(11,11,16,.7) 38%,rgba(11,11,16,.2) 75%,rgba(11,11,16,.55) 100%),linear-gradient(90deg,rgba(11,11,16,.7),rgba(11,11,16,0) 70%)}
+.gh .lg{margin:18px 0 16px}
+.gh .tag{font-size:clamp(17px,1.6vw,20px);color:var(--ink2);max-width:600px}
+.gh .row{margin-top:28px}
+.ov{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:clamp(28px,4vw,56px);align-items:start}
+.ov .txt{margin-top:20px;font-size:16.5px}
+.facts{padding:24px}
+.facts h3{margin-bottom:14px}
+.facts dl{display:grid}
+.facts dl div{display:flex;align-items:center;gap:14px;padding:12px 0;border-top:1px solid var(--line)}
+.facts dl div:first-child{border-top:0}
+.facts dt{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:10px;background:var(--acc-soft);color:var(--acc)}
+.facts dt .ic{width:18px;height:18px}
+.facts dd small{display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink4)}
+.facts dd span{color:#fff;font-weight:600;font-size:15px}
+.facts .build{margin-top:16px}
+.vids{display:grid;gap:24px}
+.vids.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.bento{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:16px;aspect-ratio:32/9}
+.bento .vid{grid-row:1/3;aspect-ratio:auto;height:100%}
+.bento figure{position:relative;overflow:hidden;min-height:0;border-radius:var(--rs);background:#111}
+.bento figure:last-child{grid-column:2/4}
+.bento figure img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.bento figure:hover img{transform:scale(1.05)}
+.vid{position:relative;display:block;aspect-ratio:16/9;overflow:hidden;border-radius:var(--r);background:#111;box-shadow:inset 0 0 0 1px var(--line)}
+.vid img{width:100%;height:100%;object-fit:cover;filter:brightness(.72);transition:transform .8s var(--ease),filter .4s}
 .vid:hover img{transform:scale(1.04);filter:brightness(.85)}
-.vid-c{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:12px;padding:20px;text-align:center}
-.vid-c .btn{pointer-events:none}
-.vid-c small{font-size:12.5px;color:var(--ink2);text-shadow:0 1px 10px rgba(0,0,0,.7)}
+.play{position:absolute;left:50%;top:50%;display:grid;place-items:center;width:72px;height:72px;border-radius:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#ff8f33,#ff6a00);color:#fff;box-shadow:0 12px 30px -10px rgba(255,110,0,.8);transition:transform .3s var(--ease)}
+.play .ic{width:26px;height:26px;fill:currentColor;stroke:none;margin-left:4px}
+.vid:hover .play{transform:translate(-50%,-50%) scale(1.08)}
+.vcap{position:absolute;left:18px;right:18px;bottom:14px;display:flex;justify-content:space-between;gap:12px;font-weight:700;color:#fff;font-size:15px;text-shadow:0 1px 10px rgba(0,0,0,.6)}
+.vcap small{font-weight:600;font-size:12.5px;color:var(--ink2)}
 .gal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
-.gal figure{border-radius:var(--r);overflow:hidden;background:#111}
+.gal figure{overflow:hidden;border-radius:var(--rs);background:#111}
 .gal img{width:100%;aspect-ratio:16/10;object-fit:cover;transition:transform .8s var(--ease)}
-.gal figure:hover img{transform:scale(1.04)}
-.feats{display:grid;grid-template-columns:repeat(var(--fc,4),minmax(0,1fr));gap:14px}
-.feats .val{grid-template-columns:1fr;gap:6px}
-.feats .val .emo{grid-row:auto;margin-bottom:6px}
-.lore{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-top:14px;min-height:200px;padding:clamp(22px,3.5vw,36px);border-radius:var(--r2);overflow:hidden;position:relative;isolation:isolate}
-.lore img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
-.lore::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(5,5,5,.9),rgba(5,5,5,.3))}
-.lore p{color:var(--ink2);margin-top:6px}
-.prog-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
-.prog-top b{font-family:var(--fd);font-weight:700;font-size:24px}
-.bar{height:6px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
-.bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--acc),var(--acc2))}
-.progress{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(24px,4vw,56px);align-items:start}
-.progress .prog{padding:22px;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card)}
-.progress .prog p{font-size:14px;margin-top:14px}
-.paused-note{display:flex;gap:12px;padding:16px 18px;margin-bottom:14px;border-radius:var(--r);background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px var(--line2);color:var(--ink2);font-size:14.5px}
-.paused-note .more{margin-top:6px}
-.rm{display:grid;gap:10px}
-.rm li{display:grid;grid-template-columns:20px minmax(0,1fr);gap:12px;padding:14px 16px;border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);background:var(--card)}
-.rm li.active{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 55%,transparent);background:color-mix(in srgb,var(--acc) 6%,transparent)}
-.rm .dotc{width:14px;height:14px;margin-top:4px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.22)}
-.rm .done .dotc{background:var(--acc);box-shadow:none}
-.rm .active .dotc{box-shadow:inset 0 0 0 2px var(--acc)}
-.rm .lbl{display:block}
-.rm .active .lbl{color:var(--acc)}
-.rm b{display:block;font-weight:600;color:#fff;line-height:1.35;margin-top:2px}
-.rm p{font-size:14px;margin-top:2px}
-.rm.muted li{opacity:.55}
-.mit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
-.mit > .card{padding:clamp(24px,3.5vw,36px)}
-.mit .h3{font-size:24px;margin-bottom:8px}
-.mit .wl{background:radial-gradient(90% 120% at 0% 0%,color-mix(in srgb,var(--acc) 16%,transparent),transparent 65%),var(--card)}
-.idea form{display:flex;gap:10px;margin-top:20px}
-.votes{display:grid;gap:8px;margin-top:14px}
-.votes li{display:flex;align-items:center;gap:12px;padding:10px 14px 10px 10px;border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);font-size:15px;color:var(--ink2)}
-.vote{display:grid;justify-items:center;min-width:44px;padding:5px 0;border:0;border-radius:12px;box-shadow:inset 0 0 0 1px var(--line2);background:none;cursor:pointer;font-weight:700;font-size:13px;color:#fff;transition:box-shadow .2s,color .2s,background .2s}
-.vote .ic{width:13px;height:13px}
-.vote:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.45)}
-.vote.on{background:color-mix(in srgb,var(--acc) 16%,transparent);box-shadow:inset 0 0 0 1px var(--acc);color:var(--acc3)}
-.try{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:20px;padding:16px 20px;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card)}
-.try p{color:var(--ink2)}
-.try p b{color:#fff}
-.faq{max-width:820px}
-.faq details{border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);background:var(--card)}
-.faq details + details{margin-top:10px}
-.faq summary{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 20px;cursor:pointer;list-style:none;font-weight:600;color:#fff}
+.gal figure:hover img{transform:scale(1.05)}
+.feats{--fc:4;display:grid;grid-template-columns:repeat(var(--fc),minmax(0,1fr));gap:20px}
+.feats[data-n="3"]{--fc:3}
+.roadmap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:clamp(28px,4vw,56px);align-items:start}
+.roadmap .lead{margin-top:14px}
+.note{display:flex;gap:14px;margin-top:24px;padding:18px 20px;border-radius:var(--rs);background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px var(--line2);font-size:15px;color:var(--ink2)}
+.note .link{margin-top:8px}
+.tl{position:relative;display:grid;gap:4px}
+.tl::before{content:"";position:absolute;left:15px;top:18px;bottom:18px;width:2px;background:var(--line2)}
+.tl li{position:relative;display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px;padding:10px 0}
+.tl .dotc{position:relative;z-index:1;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--bg);box-shadow:inset 0 0 0 2px var(--line2);color:transparent}
+.tl .dotc .ic{width:16px;height:16px}
+.tl .done .dotc{background:var(--acc);box-shadow:none;color:#fff}
+.tl .active .dotc{box-shadow:inset 0 0 0 2px var(--acc);background:var(--bg)}
+.tl .active .dotc::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--acc)}
+.tl small{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink4)}
+.tl .active small{color:var(--acc)}
+.tl b{display:block;color:#fff;font-weight:700;line-height:1.4}
+.tl p{font-size:14.5px;margin-top:2px}
+.tl.muted li{opacity:.6}
+.mit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:stretch}
+.mit > .card{padding:clamp(24px,3.5vw,34px)}
+.mit .h3{font-size:22px;margin-bottom:8px}
+.mit .wl{background:radial-gradient(100% 120% at 0% 0%,rgba(255,125,26,.14),transparent 60%),var(--card)}
+.ticks{display:grid;gap:8px;margin-top:22px;font-size:14px;color:var(--ink3)}
+.ticks li{display:flex;align-items:center;gap:10px}
+.ticks .ic{width:16px;height:16px;color:var(--acc)}
+.idea form{display:flex;gap:10px;margin-top:22px}
+.votes{display:grid;gap:10px;margin-top:16px}
+.votes li{display:flex;align-items:center;gap:14px;padding:10px 14px 10px 10px;border-radius:var(--rs);background:rgba(255,255,255,.03);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink2);font-size:15px}
+.vote{display:grid;justify-items:center;min-width:48px;padding:5px 0;border:0;border-radius:10px;background:rgba(255,255,255,.06);cursor:pointer;font-weight:800;font-size:13px;color:#fff;transition:background .2s,color .2s}
+.vote .ic{width:14px;height:14px}
+.vote:hover{background:rgba(255,255,255,.12)}
+.vote.on{background:var(--acc);color:#fff}
+.faq{max-width:840px;margin:0 auto;display:grid;gap:12px}
+.faq details{border-radius:var(--rs);background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+.faq summary{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 22px;cursor:pointer;list-style:none;font-weight:700;color:#fff}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary .ic{width:18px;height:18px;color:var(--ink3);transition:transform .3s var(--ease)}
+.faq summary .ic{width:20px;height:20px;color:var(--acc);transition:transform .3s var(--ease)}
 .faq details[open] summary .ic{transform:rotate(45deg)}
-.faq .a{padding:0 20px 18px}
-.more2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.faq .a{padding:0 22px 20px}
+.lore{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:24px;padding:28px 32px;border-radius:var(--r);overflow:hidden;position:relative;isolation:isolate}
+.lore > img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover}
+.lore::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(11,11,16,.92),rgba(11,11,16,.45))}
+.lore p{color:var(--ink2);margin-top:4px}
 
-/* ---------- Devlog & Beitrag ---------- */
-.posts{display:grid;gap:14px;padding-bottom:var(--sec)}
-.pcard{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:24px;align-items:center;padding:12px;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card);transition:box-shadow .3s}
-.pcard:hover{box-shadow:inset 0 0 0 1px var(--line2)}
-.pcard figure{position:relative;aspect-ratio:16/10;border-radius:var(--r);overflow:hidden;background:#111}
-.pcard figure > img{width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
-.pcard:hover figure > img{transform:scale(1.04)}
-.card-logo{position:absolute !important;left:50%;top:50%;transform:translate(-50%,-50%)}
-.pcard-b{padding:6px 12px 6px 0}
-.meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--ink4)}
-.meta .badge{padding:3px 10px}
-.pcard .h3{font-size:24px;margin:10px 0 6px;transition:color .2s}
-.pcard:hover .h3{color:var(--acc3)}
-.pcard p{font-size:15px;margin-bottom:12px}
-.empty{padding:28px;text-align:center;color:var(--ink4)}
-.post{max-width:780px;margin:0 auto}
-.post .more.dim{margin-bottom:26px}
-.post .h1{font-size:clamp(28px,4.6vw,56px);margin:18px 0 26px}
-.post-img{border-radius:var(--r2);overflow:hidden;margin-bottom:36px}
+/* ---------- Beitrag ---------- */
+.post{max-width:760px;margin:0 auto}
+.post .h1{font-size:clamp(30px,3.6vw,44px);margin:12px 0 18px}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;font-size:14px;font-weight:600;color:var(--ink4)}
+.post-img{overflow:hidden;border-radius:var(--r);margin:30px 0 34px}
 .post-img img{width:100%;aspect-ratio:16/9;object-fit:cover}
-.prose{color:#c7c7d1;font-size:17px;line-height:1.78;overflow-wrap:break-word}
-.prose p{color:#c7c7d1;margin:0 0 1.1em}
-.prose h2{font-family:var(--fd);font-weight:700;font-size:26px;line-height:1.2;color:#fff;margin:1.8em 0 .55em;overflow-wrap:break-word}
+.prose{color:var(--ink2);font-size:17px;line-height:1.8;overflow-wrap:break-word}
+.prose p{color:var(--ink2);margin:0 0 1.1em}
+.prose h2{font-size:24px;font-weight:800;letter-spacing:-.015em;line-height:1.25;color:#fff;margin:1.8em 0 .6em;overflow-wrap:break-word}
 .prose h2 .emo{margin-right:10px}
 .prose ul{margin:0 0 1.2em;padding-left:1.25em;list-style:disc}
 .prose li{margin:.35em 0}
 .prose li::marker{color:var(--acc)}
-.prose b{color:#fff;font-weight:600}
+.prose b{color:#fff;font-weight:700}
 .prose hr{border:0;border-top:1px solid var(--line);margin:2.4em 0}
-.post-end{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px;margin-top:48px}
-.post-end > a{display:flex;flex-direction:column;justify-content:space-between;gap:14px;padding:20px 22px;border-radius:var(--r2);box-shadow:inset 0 0 0 1px var(--line);background:var(--card);transition:box-shadow .2s}
-.post-end > a:hover{box-shadow:inset 0 0 0 1px var(--line2)}
-.post-end b{display:block;font-family:var(--fd);font-weight:700;font-size:20px;color:#fff;margin-top:4px}
-.post-end .game{background:radial-gradient(90% 140% at 0% 0%,color-mix(in srgb,var(--acc) 18%,transparent),transparent 65%),var(--card)}
+.post-end{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:48px}
+.post-end > a{display:flex;flex-direction:column;justify-content:space-between;gap:14px;padding:22px;border-radius:var(--r);background:var(--card);box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .2s,transform .3s var(--ease)}
+.post-end > a:hover{box-shadow:inset 0 0 0 1px var(--line2);transform:translateY(-2px)}
+.post-end small{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4)}
+.post-end b{display:block;color:#fff;font-weight:800;font-size:18px;margin-top:4px}
 
-/* ---------- Konzept-Übersicht ---------- */
-.kz{display:grid;gap:18px;padding-bottom:var(--sec)}
-.kz .card{padding:clamp(22px,3.5vw,36px)}
-.kz .h2{font-size:clamp(26px,3vw,34px);margin-bottom:16px}
-.kz ol.q{counter-reset:q;display:grid;gap:10px}
-.kz ol.q li{counter-increment:q;display:grid;grid-template-columns:30px minmax(0,1fr);gap:12px;align-items:baseline;color:var(--ink2)}
-.kz ol.q li::before{content:counter(q);display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#38bdf8;color:#04111a;font-weight:700;font-size:12px}
-.kz ol.q b,.kz li b{color:#fff;font-weight:600}
-.kz .three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.kz .three > div{padding:18px;border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);background:rgba(255,255,255,.02)}
-.kz .three b{display:block;color:#fff;margin:6px 0 4px}
-.kz .three p{font-size:14.5px}
-.kz ul.rules{display:grid;gap:10px}
-.kz ul.rules li{padding-left:22px;position:relative;color:var(--ink2)}
-.kz ul.rules li::before{content:"→";position:absolute;left:0;color:var(--acc)}
-.kz table{width:100%;border-collapse:collapse;font-size:14.5px}
-.kz th{text-align:left;font-family:var(--fm);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink4);font-weight:400;padding:0 12px 10px 0}
-.kz td{padding:12px 12px 12px 0;border-top:1px solid var(--line);color:var(--ink2);vertical-align:top}
-.kz td:first-child{color:#fff;font-weight:600;white-space:nowrap}
-.kz .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-
-/* ---------- Probedesign-Menü + Notizen-Schalter ---------- */
-.dock{position:fixed;z-index:90;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:flex-end}
-.pill{display:flex;align-items:center;gap:8px;height:38px;padding:0 14px;border:0;cursor:pointer;border-radius:999px;background:rgba(20,20,22,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px var(--line2);font-family:var(--fm);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);list-style:none}
-.pill::-webkit-details-marker{display:none}
-.pill i{width:6px;height:6px;border-radius:50%;background:var(--acc)}
-.cn-btn[aria-pressed="true"]{background:#38bdf8;color:#04111a;box-shadow:none}
-.pv{position:relative}
-.pv-list{position:absolute;right:0;bottom:46px;display:grid;min-width:230px;padding:8px;border-radius:16px;background:rgba(20,20,22,.97);box-shadow:inset 0 0 0 1px var(--line2),0 20px 60px rgba(0,0,0,.5)}
-.pv-list a{padding:9px 10px;border-radius:9px;font-size:14px;color:var(--ink3)}
+/* ---------- Probedesign-Menü ---------- */
+.pv{position:fixed;z-index:90;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.pv summary{display:flex;align-items:center;gap:8px;height:40px;padding:0 16px;list-style:none;cursor:pointer;border-radius:999px;background:rgba(21,21,29,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px var(--line2),0 10px 30px rgba(0,0,0,.4);font-size:12.5px;font-weight:700;color:#fff}
+.pv summary::-webkit-details-marker{display:none}
+.pv summary i{width:7px;height:7px;border-radius:50%;background:var(--acc)}
+.pv-list{position:absolute;right:0;bottom:48px;display:grid;min-width:220px;padding:8px;border-radius:14px;background:rgba(21,21,29,.98);box-shadow:inset 0 0 0 1px var(--line2),0 20px 60px rgba(0,0,0,.55)}
+.pv-list a{padding:10px 12px;border-radius:9px;font-size:14px;font-weight:600;color:var(--ink2)}
 .pv-list a:hover,.pv-list a.on{color:#fff;background:rgba(255,255,255,.06)}
-.pv-list .sep{height:1px;background:var(--line);margin:6px 4px}
-.pv-cn{padding:9px 10px;border:0;border-radius:9px;background:rgba(56,189,248,.1);color:#bae6fd;font-size:14px;text-align:left;cursor:pointer;margin-bottom:4px}
-.pv-cn:hover{background:rgba(56,189,248,.2)}
 
 /* Einblenden: nur Bewegung, Inhalte sind immer sichtbar */
-.rv{transform:translateY(20px);transition:transform .9s var(--ease)}
+.rv{transform:translateY(18px);transition:transform .8s var(--ease)}
 .rv.in{transform:none}
-@media (prefers-reduced-motion:reduce){.rv{transform:none;transition:none}.fx,.pulse{display:none}.tick-in{animation:none}}
+@media (prefers-reduced-motion:reduce){.rv{transform:none;transition:none}.hero > img,.gh > img{animation:none}.tick-in{animation:none}}
 
 /* ---------- Tablet ---------- */
 @media (max-width:1024px){
-  .tip{display:none}
-  .feats{--fc:2}
-  .team{grid-template-columns:minmax(0,1fr)}
-  .tm{grid-template-columns:72px minmax(0,1fr)}
-  .tm figure{width:72px;height:72px}
+  .nav{gap:20px} .hd-in{gap:20px}
+  .feats,.feats[data-n]{--fc:2}
+  .bento{gap:12px}
+  .ft-top{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .ft-brand{grid-column:1/-1}
 }
 @media (max-width:900px){
-  .nav,.lang,.hd-r > .btn{display:none}
+  .nav,.hd-r .lang,.hd-r .btn{display:none}
   .burger{display:block}
-  .hd-in{grid-template-columns:minmax(0,1fr) auto;height:64px}
-  .hero-grid,.about,.rt,.progress,.mit,.join,.post-end,.kz .two{grid-template-columns:minmax(0,1fr)}
-  .hero-grid{gap:28px}
-  .now{max-width:420px}
-  .cards3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hd-in{height:66px}
+  .about,.ov,.roadmap,.mit,.cta,.post-end{grid-template-columns:minmax(0,1fr)}
+  .collage{aspect-ratio:1.4}
   .vals{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .join-co{box-shadow:inset 0 1px 0 var(--line)}
-  .ft-top{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .ft-brand{grid-column:1/-1}
-  .prow{grid-template-columns:84px minmax(0,1fr) auto}
-  .prow-d{display:none}
+  .games,.posts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .socials{justify-self:start}
   .vids.two{grid-template-columns:minmax(0,1fr)}
-  .kz .three{grid-template-columns:minmax(0,1fr)}
+  .pcard.feat figure{flex-basis:50%}
+  .pcard.feat .pbody{padding:24px 26px}
+  .pcard.feat .h3{font-size:20px}
+}
+/* einzelne Karte in der letzten Reihe: quer über die volle Breite */
+@media (min-width:641px) and (max-width:900px){
+  .lone{grid-column:1/-1}
+  .gcard.lone,.pcard.lone{flex-direction:row}
+  .gcard.lone .gimg,.pcard.lone figure{flex:0 0 50%;aspect-ratio:auto;min-height:250px}
+  .gcard.lone .gbody,.pcard.lone .pbody{justify-content:center;padding:26px 28px}
+  .gcard.lone .link,.pcard.lone .link{margin-top:6px}
 }
 /* ---------- Handy ---------- */
 @media (max-width:640px){
-  .hero{min-height:auto;padding:104px 0 48px}
-  .hero::before{background:linear-gradient(0deg,var(--bg) 0%,rgba(5,5,5,.72) 40%,rgba(5,5,5,.45) 100%)}
-  .gh .lg,.now .lg{--k:.7}
-  .btn{padding:13px 22px;font-size:15px;white-space:normal;text-align:center}
+  .hero{min-height:auto;padding:110px 0 56px}
+  .hero::before{background:linear-gradient(0deg,var(--bg) 0%,rgba(11,11,16,.75) 45%,rgba(11,11,16,.55) 100%)}
+  .gh .lg{--k:.72}
+  .gh::before{background:linear-gradient(0deg,var(--bg) 0%,rgba(11,11,16,.78) 42%,rgba(11,11,16,.5) 100%)}
+  .btn{white-space:normal;text-align:center;padding:12px 20px}
   .row .btn{flex:1 1 auto}
-  .cards3,.vals,.feats,.more2,.gal{grid-template-columns:minmax(0,1fr)}
+  .games,.games.two,.posts,.vals,.team,.feats,.gal,.stats{grid-template-columns:minmax(0,1fr)}
+  .pcard.feat{flex-direction:column}
+  .pcard.feat figure{flex:none;aspect-ratio:16/10}
+  .pcard.feat .pbody{padding:20px 22px 22px}
+  .pcard.feat .h3{font-size:18px}
+  .vals{gap:12px}
+  .val{display:grid;grid-template-columns:44px minmax(0,1fr);gap:2px 16px;padding:18px}
+  .val .icn{grid-row:1/3;width:44px;height:44px;margin:0}
+  .val .h3{margin:0;font-size:17px}
+  .team{gap:14px}
+  .tm{display:grid;grid-template-columns:112px minmax(0,1fr)}
+  .tm figure{aspect-ratio:auto;height:100%;min-height:150px}
+  .tm-b{padding:16px 18px}
+  .tm .role{margin:2px 0 8px;font-size:12.5px}
+  .tm .q{font-size:14px}
+  .tm .loc{margin-top:6px;font-size:12.5px}
+  .bento{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto;aspect-ratio:auto;gap:8px}
+  .bento .vid{grid-row:auto;grid-column:1/-1;aspect-ratio:16/9}
+  .bento figure,.bento figure:last-child{grid-column:auto;aspect-ratio:1/1}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .stats div{padding:14px 12px}
+  .stats b{font-size:22px}
+  .stats span{font-size:12px}
+  .gal{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
   .nl,.idea form{flex-direction:column}
-  .nl input,.idea input{flex:none;height:50px}
-  .nl .btn,.idea .btn{height:50px}
-  .pcard{grid-template-columns:minmax(0,1fr);gap:12px}
-  .pcard-b{padding:4px 8px 8px}
-  .ft-top{grid-template-columns:minmax(0,1fr)}
+  .nl input,.idea input{flex:none}
+  .demos,.lore{flex-direction:column;align-items:flex-start}
+  .ft-top{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .ft-bot{flex-direction:column}
-  .tick-in{font-size:18px}
   .prose h2{font-size:21px}
   .prose,.prose h2,.post .h1{hyphens:auto}
-  .try,.demos-line{flex-direction:column;align-items:flex-start}
-  .dock{top:calc(env(safe-area-inset-top,0px) + 13px);bottom:auto;right:62px;align-items:flex-start}
-  .pill{height:36px;padding:0 12px}
-  .cn-btn{display:none}
+  .pv{top:calc(env(safe-area-inset-top,0px) + 13px);bottom:auto;right:62px}
+  .pv summary{height:38px;padding:0 13px}
   .pv-t{display:none}
-  .pv-list{top:44px;bottom:auto}
-  .kz table,.kz tbody,.kz tr,.kz td{display:block;width:100%}
-  .kz thead{display:none}
-  .kz tr{padding:12px 0;border-top:1px solid var(--line)}
-  .kz td{border:0;padding:2px 0}
-  .kz td:first-child{white-space:normal;margin-bottom:4px}
-  .kz td:nth-child(2)::before{content:"Vorher: ";color:var(--ink4)}
-  .kz td:nth-child(3)::before{content:"Jetzt: ";color:var(--acc)}
+  .pv-list{top:46px;bottom:auto}
+}
+@media (max-width:380px){
+  .h1{font-size:30px}
+  .xs-hide{display:none}
 }
 </style>
 </head>
 <body>
 <header class="hd" id="hd">
   <div class="wrap hd-in">
-    <a class="brand" href="#start" aria-label="PLANIGAMES – Startseite"><span data-mark="26"></span><span class="wm">PLANI<span>GAMES</span></span></a>
+    <a class="brand" href="#start" aria-label="PLANIGAMES – Startseite"><span data-mark="28"></span><span class="wm">PLANI<span>GAMES</span></span></a>
     <nav class="nav" aria-label="Hauptmenü">
+      <a href="#spiele" data-nav="games">Spiele</a>
       <a href="#start" data-sec="studio" data-nav="studio">Studio</a>
-      <a href="#spiele" data-nav="games">Games</a>
       <a href="#devlog" data-nav="devlog">Devlog</a>
       <a href="#start" data-sec="kontakt">Kontakt</a>
     </nav>
     <div class="hd-r">
-      <a class="tip" href="https://ko-fi.com/planigames" target="_blank" rel="noopener">☕ Unterstützen</a>
       <span class="lang"><b>DE</b> / <a href="#" onclick="return false">EN</a></span>
-      <a class="btn btn-p btn-s" href="#frontliners" data-sec="mitmachen">Playtest</a>
+      <a class="btn btn-s btn-sm" href="https://ko-fi.com/planigames" target="_blank" rel="noopener">Unterstützen</a>
+      <a class="btn btn-p btn-sm" href="#frontliners" data-sec="mitmachen">Zum Playtest</a>
       <button class="burger" type="button" aria-label="Menü" aria-expanded="false" aria-controls="mn" data-burger><i></i><i></i><i></i></button>
     </div>
   </div>
@@ -489,34 +467,28 @@ body.cn-on .cn{display:flex}
 
 <div class="mn" id="mn" aria-hidden="true">
   <nav aria-label="Menü">
+    <a href="#spiele">Spiele</a>
     <a href="#start" data-sec="studio">Studio</a>
-    <a href="#spiele">Games</a>
     <a href="#devlog">Devlog</a>
     <a href="#start" data-sec="kontakt">Kontakt</a>
   </nav>
-  <div class="row"><a class="btn btn-p" href="#frontliners" data-sec="mitmachen">Für den Playtest eintragen</a><a class="btn btn-g" href="https://ko-fi.com/planigames" target="_blank" rel="noopener">☕ Unterstützen</a></div>
+  <div class="row"><a class="btn btn-p" href="#frontliners" data-sec="mitmachen">Zum Playtest</a><a class="btn btn-s" href="https://ko-fi.com/planigames" target="_blank" rel="noopener">Unterstützen</a></div>
 </div>
 
 <main id="app"></main>
 
-<div class="dock">
-  <button class="pill cn-btn" type="button" aria-pressed="false" data-cn>📐 <span class="pv-t">Konzept-</span>Notizen</button>
-  <details class="pv" id="pv">
-    <summary class="pill"><i></i><span class="pv-t">Probedesign </span>v5</summary>
-    <div class="pv-list">
-      <button class="pv-cn" type="button" data-cn2>📐 Konzept-Notizen an/aus</button>
-      <a href="#konzept" data-pv="konzept">📐 Konzept-Übersicht</a>
-      <div class="sep"></div>
-      <a href="#start" data-pv="home">Startseite</a>
-      <a href="#spiele" data-pv="games">Spiele</a>
-      <a href="#frontliners" data-pv="frontliners">FRONTLINERS</a>
-      <a href="#fall-of-kings" data-pv="fall-of-kings">Fall of Kings</a>
-      <a href="#wobbly-wizards" data-pv="wobbly-wizards">Wobbly Wizards</a>
-      <a href="#devlog" data-pv="devlog">Devlog</a>
-      <a href="#frontliners-devlog-2" data-pv="post">Devlog-Beitrag</a>
-    </div>
-  </details>
-</div>
+<details class="pv" id="pv">
+  <summary><i></i><span class="pv-t">Probedesign </span>v6</summary>
+  <div class="pv-list">
+    <a href="#start" data-pv="home">Startseite</a>
+    <a href="#spiele" data-pv="games">Spiele</a>
+    <a href="#frontliners" data-pv="frontliners">FRONTLINERS</a>
+    <a href="#fall-of-kings" data-pv="fall-of-kings">Fall of Kings</a>
+    <a href="#wobbly-wizards" data-pv="wobbly-wizards">Wobbly Wizards</a>
+    <a href="#devlog" data-pv="devlog">Devlog</a>
+    <a href="#frontliners-devlog-2" data-pv="post">Devlog-Beitrag</a>
+  </div>
+</details>
 
 <script>
 "use strict";
@@ -542,30 +514,38 @@ function logo(src, alt, area, cls = "", maxH = 1e9) {
   return `<span class="lg ${cls}" ${alt ? `role="img" aria-label="${esc(alt)}"` : 'aria-hidden="true"'} style="--w:${w.toFixed(1)}px;aspect-ratio:${va.toFixed(4)}">`
     + `<img src="${M(src)}" alt="" style="width:${(100 / fw).toFixed(3)}%;left:${(-100 * x0 / fw).toFixed(3)}%;top:${(-100 * y0 / fh).toFixed(3)}%"></span>`;
 }
-const I = { arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>', ext: '<path d="M8 16 16 8M9.5 8H16v6.5"/>', up: '<path d="M6 15l6-6 6 6"/>', dl: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>', plus: '<path d="M12 5v14M5 12h14"/>', back: '<path d="M19 12H5M11 6l-6 6 6 6"/>', play: '<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>' };
+/* Linien-Icons (einheitlich) */
+const I = {
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>', ext: '<path d="M7 17 17 7M8 7h9v9"/>', up: '<path d="M6 15l6-6 6 6"/>', dl: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', back: '<path d="M19 12H5M11 6l-6 6 6 6"/>', play: '<path d="M8 5.5v13l11-6.5z"/>', check: '<path d="M5 12.5 10 17l9-10"/>',
+  pad: '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7 10.5v4M5 12.5h4M15.5 11.5h.01M18 13.5h.01"/>', users: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.8-3.2 3-5 5.5-5s4.7 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.6 14.2c2.2.3 3.8 1.8 4.6 4.8"/>',
+  screen: '<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/>', flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>', tag: '<path d="M3 12V4.5A1.5 1.5 0 0 1 4.5 3H12l9 9-9 9z"/><circle cx="8" cy="8" r="1.4"/>',
+  wand: '<path d="M4 20 15 9M14 4v3M18.5 5.5l-2 2M20 10h-3M9.5 5.5l2 2"/>', spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>', heart: '<path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7.5 3c0 5.4-7.5 10-7.5 10z"/>',
+  palette: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.8 0-1.2-1-1.6-1-2.7 0-1 .9-1.7 2-1.7H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/>',
+  news: '<path d="M4 5h12v14H6a2 2 0 0 1-2-2zM16 9h4v8a2 2 0 0 1-2 2h-2M7.5 9h5M7.5 12.5h5M7.5 16h3"/>',
+  bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>', yt: '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="m10 9 5 3-5 3z"/>', tiktok: '<path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5M14 3c.5 2.6 2.4 4.5 5 4.8"/>',
+};
 const ic = (n) => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${I[n] || ""}</svg>`;
-/* Konzept-Notiz: Nummer · Besucherfrage · Entscheidung */
-const cn = (n, q, why) => `<aside class="cn" aria-label="Konzept-Notiz"><span class="n">${n}</span><span><b>${q}</b> ${why}</span></aside>`;
 
 /* ---------- Inhalte: echte Texte der Live-Seite ---------- */
 const STUDIO = {
   founded: 2025, h1a: "Unsere Ideen.", h1b: "Eure Abenteuer.",
   intro: "Von modernen Schlachtfeldern in FRONTLINERS über mittelalterliche Kämpfe in Fall of Kings bis zum magischen Chaos von Wobbly Wizards.",
   hero: "/media/first-test-02-53-24-free-3840x2160.png",
-  marquee: ["Original Worlds", "Handcrafted", "Indie & Proud", "Wobbly Wizards", "Unreal Engine <3", "FRONTLINERS", "FALL OF KINGS"],
+  marquee: ["Original Worlds", "Handcrafted", "Indie & Proud", "Unreal Engine <3", "FRONTLINERS", "Fall of Kings", "Wobbly Wizards"],
   aboutTitle: "Klein. Unabhängig. Besessen von guten Ideen.",
   about: "Wir sind ein junges Indie-Studio mit einer simplen Mission: Spiele machen, die wir selbst spielen wollen würden. Keine Komitees, keine Trends von der Stange — nur eigensinnige Welten mit Charakter, handgemachter Liebe zum Detail und einem Humor, der hängen bleibt.\n\nVon der ersten Skizze bis zum letzten Partikeleffekt entsteht alles in-house. Das hält uns ehrlich — und unsere Spiele eigen.",
-  pillars: [["🪄", "Handgemachte Magie", "Jede Mechanik, jeder Sound, jeder Pixel ist bewusst gesetzt. Keine Asset-Flips, keine Abkürzungen."],
-            ["🌀", "Spielgefühl zuerst", "Bevor eine Idee ins Spiel kommt, muss sie sich gut anfühlen. Punkt. Wir prototypen, bis es klickt."],
-            ["🤝", "Community an Bord", "Wir entwickeln offen. Devlogs, Demos und euer Feedback formen das Spiel mit."],
-            ["🎨", "Eigener Look", "Jedes Spiel bekommt seine eigene visuelle Welt — wiedererkennbar und mit Haltung."],
-            ["⚡", "Klein & schnell", "Als kleines Team treffen wir Entscheidungen heute und sehen sie morgen im Spiel."],
-            ["💜", "Für die Ewigkeit gebaut", "Wir machen Spiele, an die man sich erinnert — nicht solche, die man wegklickt."]],
-  newsletter: { h: "Sei dabei, bevor die Magie startet.", t: "Trag dich ein und erfahre als Erste*r von Release-Terminen, Demos und großen Updates.", b: "Auf die Warteliste", ok: "Danke! Du bist dabei. 🧡" },
-  community: { h: "Komm in unsere Community", t: "Sei beim Chaos dabei: Devlogs aus erster Hand, Playtests, Abstimmungen und ein Haufen wackeliger Magier warten auf dich." },
+  collage: ["/media/3e1f59ea-b160-46fb-b3eb-6531a9654e26.jpg", "/media/20260525182444-1.jpg", "/media/chatgpt-bild-4-okt-2026-04-38-41.png"],
+  pillars: [["wand", "Handgemachte Magie", "Jede Mechanik, jeder Sound, jeder Pixel ist bewusst gesetzt. Keine Asset-Flips, keine Abkürzungen."],
+            ["pad", "Spielgefühl zuerst", "Bevor eine Idee ins Spiel kommt, muss sie sich gut anfühlen. Punkt. Wir prototypen, bis es klickt."],
+            ["users", "Community an Bord", "Wir entwickeln offen. Devlogs, Demos und euer Feedback formen das Spiel mit."],
+            ["palette", "Eigener Look", "Jedes Spiel bekommt seine eigene visuelle Welt — wiedererkennbar und mit Haltung."],
+            ["bolt", "Klein & schnell", "Als kleines Team treffen wir Entscheidungen heute und sehen sie morgen im Spiel."],
+            ["heart", "Für die Ewigkeit gebaut", "Wir machen Spiele, an die man sich erinnert — nicht solche, die man wegklickt."]],
+  newsletter: { h: "Sei dabei, bevor die Magie startet.", t: "Trag dich ein und erfahre als Erste*r von Release-Terminen, Demos und großen Updates.", b: "Eintragen", ok: "Danke! Du bist dabei. 🧡" },
   note: "Ein unabhängiges Indie-Spielestudio. Wir bauen Welten, die wackeln, zaubern und im Kopf bleiben.",
   email: "hello@planigames.com",
-  socials: [["YouTube", "https://www.youtube.com/@WobblyWizardsGame"], ["TikTok", "https://www.tiktok.com/@wobblywizardsgame"]],
+  socials: [["yt", "YouTube", "https://www.youtube.com/@WobblyWizardsGame"], ["tiktok", "TikTok", "https://www.tiktok.com/@wobblywizardsgame"]],
   tip: "https://ko-fi.com/planigames",
 };
 const TEAM = [
@@ -575,68 +555,62 @@ const TEAM = [
 ];
 const ST = { announced: "Angekündigt", development: "In Entwicklung", paused: "Pausiert" };
 const DEMOS = [["WARCATS – Browser Prototyp", "v1.4 · 37 MB · Windows"], ["Schwarzes Wasser – Horror Browser Game", "v 0.1.0 · 11 MB · Windows"], ["Project Sunset – Browser Game (GTA ähnlich)", "v 0.1.0 · 179 MB · Windows"]];
-/* Jedes Spiel in derselben Ordnung: Was ist das → Worum geht's → Wie sieht's aus → Was erwartet mich → Wie weit → Mitmachen → FAQ → Neu */
 const GAMES = [
-  { slug: "frontliners", title: "FRONTLINERS", status: "announced", acc: "#ffbb00", acc2: "#ff7b00", onAcc: "#1a1000",
+  { slug: "frontliners", title: "FRONTLINERS", status: "announced", acc: "#ffbb00", current: true,
     cover: "/media/first-test-00-19-00-free-3840x2160-3.png", logo: "/media/frontliners-logo-weiss.svg",
-    tagline: "Dein Schlachtfeld. Deine Regeln.", cardText: "Multiplayer-Shooter mit bis zu 60 Spielern, drei Teams und einer zerstörbaren Welt.",
-    next: { btn: "Für den Playtest eintragen", hint: "Playtest-Anmeldung offen", why: "Angekündigt → der Playtest ist der wichtigste nächste Schritt" },
-    trailer: "h_UT2tzJ-3c", current: true,
-    pitch: { kicker: "Dein Schlachtfeld. Deine Regeln.", h: "Was ist FRONTLINERS?", body: "FRONTLINERS ist ein actiongeladener Multiplayer-First-Person-Shooter mit bis zu 60 Spielern in drei Teams, einer nahezu vollständig zerstörbaren Spielwelt und intensiven Fahrzeugkämpfen.\n\nDynamisches Wetter, zahlreiche Spielmodi und taktische Gefechte sorgen dafür, dass keine Schlacht der anderen gleicht. Stelle individuelle Loadouts zusammen, schalte Tarnungen und Ausrüstung frei und kämpfe dich durch ein umfangreiches Fortschrittssystem.\n\n**Große Schlachten. Maximale Zerstörung. Pures Chaos.**" },
-    facts: [["Genre", "Multiplayer-First-Person-Shooter"], ["Spieler", "bis zu 60 · 3 Teams"], ["Plattform", "PC"], ["Status", "Angekündigt"]],
-    media: { videos: [["h_UT2tzJ-3c", "Trailer", "/media/triumph-im-wuestenaussenposten.png"], ["zLGANdNcEbE", "Gameplay", "/media/chatgpt-bild-4-okt-2026-04-38-41.png"]], gallery: [] },
+    tagline: "Dein Schlachtfeld. Deine Regeln.", meta: "Multiplayer-Shooter · PC",
+    card: "Bis zu 60 Spieler in drei Teams, eine fast komplett zerstörbare Welt und intensive Fahrzeugkämpfe.",
+    cta: "Für den Playtest eintragen", trailer: "h_UT2tzJ-3c",
+    pitch: { h: "Was ist FRONTLINERS?", body: "FRONTLINERS ist ein actiongeladener Multiplayer-First-Person-Shooter mit bis zu 60 Spielern in drei Teams, einer nahezu vollständig zerstörbaren Spielwelt und intensiven Fahrzeugkämpfen.\n\nDynamisches Wetter, zahlreiche Spielmodi und taktische Gefechte sorgen dafür, dass keine Schlacht der anderen gleicht. Stelle individuelle Loadouts zusammen, schalte Tarnungen und Ausrüstung frei und kämpfe dich durch ein umfangreiches Fortschrittssystem.\n\n**Große Schlachten. Maximale Zerstörung. Pures Chaos.**" },
+    facts: [["tag", "Genre", "First-Person-Shooter"], ["users", "Spieler", "bis zu 60 · 3 Teams"], ["screen", "Plattform", "PC"], ["flag", "Status", "Angekündigt"]],
+    videos: [["h_UT2tzJ-3c", "Trailer", "/media/triumph-im-wuestenaussenposten.png"], ["zLGANdNcEbE", "Gameplay", "/media/chatgpt-bild-4-okt-2026-04-38-41.png"]], gallery: [],
     features: null, lore: null,
     roadmap: [["done", "", "Das Grundgerüst steht", ""], ["active", "", "Ausbau und Optimierung einiger Spielmechaniken & Features", ""], ["active", "", "FRONTLINERS auf Steam bringen (Wishlists)", ""], ["planned", "", "Closed Playtests", ""], ["planned", "", "Open Playtests", ""], ["planned", "", "Early Access Release", ""]],
     paused: null,
-    join: { h: "Sei beim ersten Playtest dabei", t: "Trag dich ein – wir melden uns, sobald die ersten Playtests starten.", b: "Eintragen", ok: "Du bist dabei! 🎉 Teile deinen Link, um aufzusteigen." },
+    join: { h: "Sei beim ersten Playtest dabei", t: "Trag dich ein – wir melden uns, sobald die ersten Playtests starten.", b: "Eintragen", ok: "Du bist dabei! 🎉 Wir melden uns." },
     ideas: { h: "Was soll in dem Game rein?", t: "Du hast die Demo angespielt und hast Feedback oder Vorschläge? Nice, schreib sie uns gerne auf :)", items: [["Ranked-Modus mit Saisons", 36], ["Mehr Karten im Wüsten-Setting", 30]] },
     demo: ["Browser-Demo", "Version 1.4 · 38 MB · Windows"], faq: null },
-  { slug: "fall-of-kings", title: "Fall of Kings", status: "development", acc: "#ff3b2f", acc2: "#e01010", onAcc: "#fff",
+  { slug: "fall-of-kings", title: "Fall of Kings", status: "development", acc: "#ff3b2f",
     cover: "/media/3e1f59ea-b160-46fb-b3eb-6531a9654e26.jpg", logo: "/media/fok-logo-tempv01.png",
-    tagline: "Arcade Shooter meets Medieval Battlefields", cardText: "Schnelles 6-gegen-6 mit Schwertern, Äxten und Bögen – Shooter-Action trifft Mittelalter.",
-    next: { btn: "Für den Playtest eintragen", hint: "Playtest-Warteliste", why: "In Entwicklung, noch ohne Steam-Seite → Warteliste statt eines Wishlist-Buttons ins Leere" },
-    trailer: "",
-    pitch: { kicker: "Die Idee", h: "Was ist Fall of Kings?", body: "Fall of Kings ist ein schnelles 6-gegen-6-Multiplayer-Spiel, das moderne Shooter-Action mit brutalem mittelalterlichem Nahkampf verbindet.\n\nKämpfe mit Schwertern, Äxten, Schilden und Bögen auf Burgen, in zerstörten Dörfern und auf blutigen Schlachtfeldern. Wähle deine Klasse, meistere dein Kampfsystem und entscheide mit deinem Team über Sieg oder Niederlage.\n\nPerfekte Paraden, schwere Treffer, Guard Breaks und gut getimte Ausweichmanöver machen jeden Kampf unberechenbar." },
-    facts: [["Genre", "Arcade-Medieval-Shooter"], ["Modi", "6 vs 6 · 1 vs 1 · Zombies · Burgbelagerung"], ["Plattform", "PC"], ["Status", "In Entwicklung"]],
-    media: null,
-    features: { h: "Modis", items: [["🛡️", "6 vs 6 (TDM)", "Spiele schnelle 6-gegen-6-Multiplayer Matches"], ["⚔️", "1 vs 1", "Kämpfe gegen deinen Freund oder einen Fremden und beweise dein Können mit dem Schwert!"], ["🧟", "Zombie-Modus", "Jap, die Untoten warten auch hier auf dich."], ["🏰", "Burgbelagerung", "Erobere oder verteidige rundenbasiert eine Burg."]] },
+    tagline: "Arcade Shooter meets Medieval Battlefields", meta: "Medieval-Shooter · PC",
+    card: "Schnelle 6-gegen-6-Gefechte mit Schwertern, Äxten, Schilden und Bögen – Shooter-Action trifft Mittelalter.",
+    cta: "Für den Playtest eintragen", trailer: "",
+    pitch: { h: "Was ist Fall of Kings?", body: "Fall of Kings ist ein schnelles 6-gegen-6-Multiplayer-Spiel, das moderne Shooter-Action mit brutalem mittelalterlichem Nahkampf verbindet.\n\nKämpfe mit Schwertern, Äxten, Schilden und Bögen auf Burgen, in zerstörten Dörfern und auf blutigen Schlachtfeldern. Wähle deine Klasse, meistere dein Kampfsystem und entscheide mit deinem Team über Sieg oder Niederlage.\n\nPerfekte Paraden, schwere Treffer, Guard Breaks und gut getimte Ausweichmanöver machen jeden Kampf unberechenbar." },
+    facts: [["tag", "Genre", "Arcade-Medieval-Shooter"], ["users", "Spieler", "6 gegen 6"], ["screen", "Plattform", "PC"], ["flag", "Status", "In Entwicklung"]],
+    videos: [], gallery: [],
+    features: { h: "Spielmodi", items: [["🛡️", "6 vs 6 (TDM)", "Spiele schnelle 6-gegen-6-Multiplayer Matches."], ["⚔️", "1 vs 1", "Kämpfe gegen deinen Freund oder einen Fremden und beweise dein Können mit dem Schwert!"], ["🧟", "Zombie-Modus", "Jap, die Untoten warten auch hier auf dich."], ["🏰", "Burgbelagerung", "Erobere oder verteidige rundenbasiert eine Burg."]] },
     lore: null, roadmap: null, paused: null,
-    join: { h: "Sei beim Playtest dabei!", t: "Trag dich ein – wir sagen dir Bescheid, sobald du Fall of Kings selbst spielen kannst.", b: "Eintragen", ok: "Du bist dabei! 🎉 Teile deinen Link, um aufzusteigen." },
+    join: { h: "Sei beim Playtest dabei", t: "Trag dich ein – wir sagen dir Bescheid, sobald du Fall of Kings selbst spielen kannst.", b: "Eintragen", ok: "Du bist dabei! 🎉 Wir melden uns." },
     ideas: { h: "Was sollen wir als Nächstes bauen?", t: "Sei ein Teil der Entwicklung von Fall of Kings und teile uns deine Gedanken mit.", items: [["Belagerungswaffen steuerbar", 31], ["Fotomodus", 22]] },
     demo: null, faq: null },
-  { slug: "wobbly-wizards", title: "Wobbly Wizards", status: "paused", acc: "#ff8800", acc2: "#ffae00", onAcc: "#1a0d00",
+  { slug: "wobbly-wizards", title: "Wobbly Wizards", status: "paused", acc: "#ff8800",
     cover: "/media/website-3.png#focus=31,48", logo: "/media/wobblywizards-logo.png",
-    tagline: "Ein chaotisch-magisches Physik-Abenteuer für 1–6 Zauberer!", cardText: "Koop-Chaos für 1–6 tollpatschige Zauberer in wackeligen, physikbasierten Dungeons.",
-    next: { btn: "Benachrichtigt werden", hint: "Pausiert · Benachrichtigen", why: "Pausiert → ehrlich sagen und „Bescheid geben, wenn es weitergeht“ anbieten" },
-    trailer: "ch_LsJLu-EQ",
-    pitch: { kicker: "Die Idee", h: "Magie, die wackelt.", body: "**Wobbly Wizards** ist ein Online-Koop-Abenteuer, in dem ihr als tollpatschige Zauberer durch physikbasierte Dungeons stolpert. Jeder Kristall hat Wucht — und Konsequenzen. Ein Feuerball verfehlt das Monster und trifft den besten Freund. Ein Teleport landet mitten im Lavabecken. Genau das ist der Plan.\n\nWir verbinden **magische Kristalle** mit einer Welt, die auf jede Aktion reagiert. Kein Run gleicht dem anderen, kein Chaos dem vorherigen." },
-    facts: [["Genre", "Koop-Physik-Abenteuer"], ["Spieler", "1–6 · Online-Koop"], ["Kristalle", "10+"], ["Wege zu scheitern", "∞"], ["Status", "Pausiert"]],
-    media: { videos: [["ch_LsJLu-EQ", "Erster Blick", "/media/20260525175316-1.jpg"]], gallery: ["/media/20260525182444-1.jpg", "/media/20260525180256-1.jpg", "/media/20260525174744-1.jpg"] },
-    features: { h: "Was euch erwartet", items: [["🤹", "Wackelige Physik", "Jeder Zauber, jeder Schritt, jeder Sturz ist physiksimuliert. Komik garantiert."], ["🧙‍♂️", "1–6 Spieler Koop", "Allein meisterbar, zu sechst ein herrliches Durcheinander!"], ["💎", "Mehr als 10+ Kristalle", "Jeder Kristall hat seine eigene Kraft, aber seid vorsichtig – sie sind instabil!"], ["🏰", "Verwinkelte Dungeons", "Handgebaute Level mit Geheimnissen, Fallen und absurden Bosskämpfen."]] },
+    tagline: "Ein chaotisch-magisches Physik-Abenteuer für 1–6 Zauberer!", meta: "Koop-Abenteuer · PC",
+    card: "Tollpatschige Zauberer, wackelige Physik und magische Kristalle – Koop-Chaos für bis zu sechs Spieler.",
+    cta: "Benachrichtigt werden", trailer: "ch_LsJLu-EQ",
+    pitch: { h: "Magie, die wackelt.", body: "**Wobbly Wizards** ist ein Online-Koop-Abenteuer, in dem ihr als tollpatschige Zauberer durch physikbasierte Dungeons stolpert. Jeder Kristall hat Wucht — und Konsequenzen. Ein Feuerball verfehlt das Monster und trifft den besten Freund. Ein Teleport landet mitten im Lavabecken. Genau das ist der Plan.\n\nWir verbinden **magische Kristalle** mit einer Welt, die auf jede Aktion reagiert. Kein Run gleicht dem anderen, kein Chaos dem vorherigen." },
+    facts: [["tag", "Genre", "Koop-Physik-Abenteuer"], ["users", "Spieler", "1–6 · Online-Koop"], ["spark", "Kristalle", "10+"], ["flag", "Status", "Pausiert"]],
+    videos: [["ch_LsJLu-EQ", "Erster Blick", "/media/20260525175316-1.jpg"]], gallery: ["/media/20260525182444-1.jpg", "/media/20260525180256-1.jpg", "/media/20260525174744-1.jpg"],
+    features: { h: "Was euch erwartet", items: [["🤹", "Wackelige Physik", "Jeder Zauber, jeder Schritt, jeder Sturz ist physiksimuliert. Komik garantiert."], ["🧙‍♂️", "1–6 Spieler Koop", "Allein meisterbar, zu sechst ein herrliches Durcheinander!"], ["💎", "Mehr als 10 Kristalle", "Jeder Kristall hat seine eigene Kraft – aber seid vorsichtig, sie sind instabil!"], ["🏰", "Verwinkelte Dungeons", "Handgebaute Level mit Geheimnissen, Fallen und absurden Bosskämpfen."]] },
     lore: { h: "Die Welt von Wobbly Wizards", t: "Erfahre mehr über die Welt von Wobbly Wizards.", b: "Welt erkunden" },
     roadmap: [["done", "2025 Q1", "Prototyp & Core-Loop", "Das Grundgerüst steht. Kristalle funktionieren, Multiplayer läuft und die Wobbly Physics wobbeln!"], ["done", "2025 Q2", "Erstes Dungeon", "Erster polierter Dungeon mit Boss und allen Kern-Features."], ["planned", "", "Closed Playtest", "Ausgewählte Wizards testen den Koop auf Herz und Nieren."], ["planned", "", "Steam Demo", "Eine spielbare Demo für alle."], ["planned", "", "Early Access", "Release in den Early Access mit der Community an Bord."]],
     paused: { t: "Wobbly Wizards ist gerade pausiert – unser Team arbeitet an anderen Projekten. Die nächsten Schritte bekommen wieder Termine, sobald es weitergeht.", post: "wobbly-wizards-ist-erstmal-pausiert" },
     join: { h: "Erfahre zuerst, wenn es weitergeht", t: "Trag dich ein – wir schreiben dir, sobald Wobbly Wizards wieder Fahrt aufnimmt. Beta-Plätze inklusive.", b: "Benachrichtigen", ok: "Du bist dabei! 🎉 Wir melden uns." },
     ideas: { h: "Was sollen wir ins Spiel bringen?", t: "Ihr entscheidet mit! Unser Spiel lebt von euch, also bringt gerne eure Ideen ein.", items: [["Koop-Modus für 2 Spieler", 8], ["Ein Zauber, der Schwerkraft umdreht", 7]] },
-    demo: null, faq: [["Wird das Spiel zuerst im Early-Access erscheinen?", "**Ja.** Weil wir natürlich eure Ideen mit ins Spiel bringen und laufend an dem Spiel weiterarbeiten wollen, um euch das bestmögliche Erlebnis zu bieten!"]] },
+    demo: null, faq: [["Wird das Spiel zuerst im Early Access erscheinen?", "**Ja.** Wir wollen eure Ideen mit ins Spiel bringen und laufend daran weiterarbeiten, um euch das bestmögliche Erlebnis zu bieten!"]] },
 ];
 const BODIES = {"willkommen-im-devlog": "Hallo und herzlich willkommen! 👋\r\n\r\nAb heute gibt es bei **PLANIGAMES** ein offenes Entwicklungstagebuch. Hier erfährst du als Erste*r, woran wir gerade basteln — vom kleinsten Bugfix bis zum großen Feature.\r\n\r\n## Was dich erwartet\r\n\r\n- Regelmäßige **Devlog-Einträge** zu Wobbly Wizards\r\n- Detaillierte **Patch Notes** zu jedem Build\r\n- Blicke hinter die Kulissen: Konzepte, Prototypen, Fehlschläge\r\n\r\nBleib dran — die Magie fängt gerade erst an. 🪄", "wobbly-wizards-ist-erstmal-pausiert": "Aufgrund der Entwicklung an Fall of Kings und WARCATS haben wir unsere Ressourcen und unser Team fürs erste von Wobbly Wizards abgezogen. Aber Wobbly Wizards wird nicht komplett vergessen, freut euch auf zukünftige Updates zum Game!", "frontliners-devlog-1": "Zerstörbare Gebäude, dynamisches Wetter, neue Fahrzeuge und vieles mehr!\r\n\r\nIn den vergangenen Wochen hat sich bei FRONTLINERS einiges getan! Wir haben zahlreiche neue Features integriert, bestehende Systeme überarbeitet und intensiv an der Performance sowie am Gameplay gearbeitet.\r\n\r\nVon einer weitgehend zerstörbaren Spielwelt über neun unterschiedliche Fahrzeuge bis hin zu neuen Spielmodi und umfangreichen Anpassungsmöglichkeiten – hier erfahrt ihr, was sich verändert hat!\r\n\r\n💥 Zerstörbare Spielwelt\r\n\r\nEines unserer bisher größten Features ist die Zerstörung kompletter Gebäude!\r\n\r\nGroße Teile der Spielwelt sind mittlerweile zerstörbar. Dadurch kann sich das Schlachtfeld während einer laufenden Runde erheblich verändern. Gebäude, die zunächst als Deckung dienen, können vollständig zerstört werden und neue taktische Möglichkeiten eröffnen.\r\n\r\n🌪️ Dynamisches Wetter\r\n\r\nMit unserem neuen Wettersystem kann sich das Wetter jetzt auch während eines Matches verändern.\r\n\r\nSo können beispielsweise plötzlich Sandstürme aufziehen, die die Sichtverhältnisse beeinflussen und für völlig neue Kampfsituationen sorgen.\r\n\r\n🚁 Neun Fahrzeuge und Fahrzeug-Customizing\r\n\r\nMittlerweile haben wir neun unterschiedliche Fahrzeuge integriert, die jeweils eigene Stärken und Einsatzmöglichkeiten besitzen.\r\n\r\nZusätzlich verfügen Fahrzeuge jetzt über passende Sounds und freischaltbare Tarnungen.\r\n\r\nFür zukünftige Updates planen wir außerdem ein umfangreicheres Fahrzeug-Customizing, mit dem sich beispielsweise auch unterschiedliche Bordwaffen ausrüsten lassen.\r\n\r\n🎮 Zahlreiche neue Spielmodi\r\n\r\nAuch bei den Spielmodi haben wir ordentlich nachgelegt. Aktuell sind folgende Modi integriert:\r\n\r\n- Hot Zone\r\n- Eroberung\r\n- Team Deathmatch (TDM)\r\n- Deathmatch (FFA)\r\n- 1v1, 2v2, 3v3 und 4v4\r\n- Waffenspiel\r\n- Search and Destroy\r\n\r\nWeitere Spielmodi sind bereits geplant!\r\n\r\n🔫 Loadouts, Inventar und Customizing\r\n\r\nUnser Loadout-Editor wurde vollständig überarbeitet und optisch an das restliche Spiel angepasst.\r\n\r\nAußerdem haben wir ein funktionierendes Inventarsystem integriert und zahlreiche neue Anpassungsmöglichkeiten hinzugefügt.\r\n\r\nDazu gehören unter anderem Waffen-, Soldaten- und Fahrzeugtarnungen, die freigeschaltet und ausgerüstet werden können.\r\n\r\n🏆 Karriere, Challenges und Ingame-Shop\r\n\r\nMit dem neuen Karrieresystem und zahlreichen Challenges gibt es jetzt zusätzliche Fortschrittsmöglichkeiten.\r\n\r\nVerdientes Ingame-Geld lässt sich außerdem im neuen Shop ausgeben, um kosmetische Inhalte und Loot-Kisten freizuschalten.\r\n\r\nDie Kisten können verschiedene Belohnungen enthalten, darunter XP, Ingame-Geld, Tarnungen, Calling Cards und Spielertitel.\r\n\r\n🤖 Verbesserte Bots und Gameplay-Balancing\r\n\r\nWir haben intensiv an unserer Bot-KI gearbeitet, damit sich computergesteuerte Soldaten intelligenter verhalten.\r\n\r\nZusätzlich wurden zahlreiche Balancing-Anpassungen vorgenommen, um Waffen, Fahrzeuge und das allgemeine Gameplay besser aufeinander abzustimmen.\r\n\r\n⚡ Performance, DLSS und FSR\r\n\r\nAuch technisch hat sich einiges getan!\r\n\r\nMit der Integration von NVIDIA DLSS und AMD FSR stehen neue Möglichkeiten zur Performance-Optimierung zur Verfügung.\r\n\r\nDarüber hinaus haben wir zahlreiche weitere Optimierungen vorgenommen. Unser Ziel bleibt, FRONTLINERS auch auf weniger leistungsstarken PCs möglichst flüssig spielbar zu machen.\r\n\r\n🖥️ Neues HUD, Deploy-Karte und Audio\r\n\r\nZum Abschluss haben wir auch die Benutzeroberfläche umfangreich überarbeitet.\r\n\r\nDas HUD wurde modernisiert und eine interaktive Deploy-Karte integriert, die eine bessere Übersicht über das Schlachtfeld bietet.\r\n\r\nAußerdem haben wir große Teile des Spiels mit passenden Sounds ausgestattet, darunter die unterschiedlichen Fahrzeuge.\r\n\r\n---\r\n\r\n🚀 Wie geht es weiter?\r\n\r\nFRONTLINERS hat in den vergangenen Wochen einen großen Entwicklungsschritt gemacht. Doch wir sind noch lange nicht fertig!\r\n\r\nIn den kommenden Updates wollen wir unter anderem das Fahrzeug-Customizing erweitern, zusätzliche Spielmodi integrieren und weiter an Performance, Balancing und der Zerstörung der Spielwelt arbeiten.\r\n\r\nUnser Ziel bleibt ein dynamischer Multiplayer-Shooter, bei dem sich jedes Match anders anfühlt.\r\n\r\nWir freuen uns darauf, euch schon bald weitere Einblicke in die Entwicklung von FRONTLINERS zu geben!", "frontliners-devlog-2": "Die Entwicklung von FRONTLINERS geht weiter! In den vergangenen Tagen haben wir uns besonders intensiv mit der technischen Grundlage unseres Shooters beschäftigt.\r\n\r\nVor allem unser Zerstörungssystem hat uns vor einige Herausforderungen gestellt. Gleichzeitig wurde an neuen Maps, der Fahrzeugsteuerung und zahlreichen Gameplay-Verbesserungen gearbeitet.\r\n\r\nHier gibt es einen Einblick in unseren aktuellen Entwicklungsstand!\r\n\r\n💥 Zerstörung 2.0 – Mehr als nur explodierende Gebäude\r\n\r\nUnser bisher größter Schwerpunkt ist weiterhin die Zerstörung der Spielwelt.\r\n\r\nDabei orientieren wir uns an Spielen wie THE FINALS, in denen Gebäude nicht einfach nur auseinanderfliegen, sondern physikalisch nachvollziehbar auf Beschädigungen reagieren.\r\n\r\nIn unseren bisherigen Tests konnten wir bereits deutliche Performance-Verbesserungen erzielen. Gleichzeitig haben wir festgestellt, dass unser bisheriger technischer Ansatz langfristig nicht unseren Qualitätsansprüchen entspricht.\r\n\r\nDeshalb haben wir uns entschieden, das System grundlegend neu aufzubauen.\r\n\r\nUnser Ziel für das neue Zerstörungssystem:\r\n\r\n- Präzise Beschädigungen, beispielsweise einzelne Löcher durch Raketeneinschläge\r\n- Gebäude, deren tragende Strukturen tatsächlich eine Rolle spielen\r\n- Realistisch einstürzende Gebäudeteile statt zufälliger Explosionen\r\n- Trümmer, die als Deckung dienen und das Schlachtfeld verändern\r\n- Deutlich bessere Performance auch bei umfangreicher Zerstörung\r\n- Einheitliche, synchronisierte Zerstörung im Multiplayer\r\n\r\nDabei arbeiten wir an einer Kombination aus eigener Gebäudestatik, vorbereiteten Bruchstrukturen und optimierter Physiksimulation.\r\n\r\nDas Ganze ist technisch anspruchsvoll, aber für uns eines der wichtigsten Systeme von FRONTLINERS.\r\n\r\n🗺️ Neue Maps und verbessertes Leveldesign\r\n\r\nAuch bei unseren Schlachtfeldern geht es voran!\r\n\r\nMit einer weiteren Map, die intern unter anderem als Apocalypse geführt wird, testen wir neue Umgebungen und unterschiedliche Geländeaufbauten.\r\n\r\nDabei beschäftigen wir uns besonders mit der Spielbarkeit der Karten: Laufwege, Deckungsmöglichkeiten, Fahrzeugbewegungen und die Verteilung wichtiger Kampfbereiche.\r\n\r\nZusätzlich arbeiten wir an Verbesserungen der Geländekollisionen und der Performance größerer Umgebungen.\r\n\r\nLangfristig möchten wir unterschiedliche Schauplätze bieten, damit sich FRONTLINERS nicht ausschließlich auf Wüstenlandschaften beschränkt.\r\n\r\n🚁 Helikopter und Bewegungsmechaniken\r\n\r\nAuch die Fahrzeugsteuerung bekommt weitere Aufmerksamkeit.\r\n\r\nInsbesondere unsere Helikopter sollen sich deutlich natürlicher steuern lassen. Statt einer stark automatisierten Flugbewegung möchten wir ein Fluggefühl erreichen, bei dem Neigung, Geschwindigkeit und Steuerbewegungen besser zusammenspielen.\r\n\r\nParallel dazu überarbeiten wir verschiedene Bewegungsmechaniken unserer Soldaten.\r\n\r\nDazu gehört unter anderem das Vaulting-System, mit dem Hindernisse zuverlässig überwunden werden sollen, ohne dass normale Treppen oder kleinere Höhenunterschiede zu ungewollten Animationen führen.\r\n\r\n🌐 Multiplayer und Server-Performance\r\n\r\nEin weiteres großes Thema ist die Multiplayer-Architektur.\r\n\r\nGerade bei großflächiger Zerstörung, zahlreichen Bots und Fahrzeugen muss sichergestellt werden, dass alle Spieler einen konsistenten Spielzustand erleben.\r\n\r\nDafür arbeiten wir an einer effizienteren Aufteilung zwischen Server und Clients.\r\n\r\nUnser Ziel ist es, dass der Server wichtige Gameplay-Ereignisse und physikalisch relevante Zustände kontrolliert, während die Clients weniger wichtige Effekte lokal darstellen können.\r\n\r\nDadurch möchten wir sowohl die Netzwerkbelastung als auch die benötigte Rechenleistung reduzieren.\r\n\r\n🔧 Bugfixes, Tests und Optimierungen\r\n\r\nNeben den großen Systemen beschäftigen uns natürlich auch zahlreiche kleinere Baustellen.\r\n\r\nDazu zählen unter anderem Fahrzeugkollisionen, Sitzpositionen, Schatten, die Darstellung der Deploy-Karte und verschiedene Probleme bei der Navigation durch unsere Spielwelt.\r\n\r\nBesonders intensiv testen wir aktuell, wie sich Zerstörung, Bots und Fahrzeuge gegenseitig beeinflussen.\r\n\r\nDabei geht es uns nicht einfach darum, möglichst viele Features einzubauen, sondern die vorhandenen Systeme zuverlässig und performant miteinander funktionieren zu lassen.\r\n\r\n---\r\n\r\n🚀 Wie geht es weiter?\r\n\r\nUnser größtes Ziel für die nächsten Entwicklungsschritte ist ein stabiles, überzeugendes und multiplayerfähiges Zerstörungssystem.\r\n\r\nGleichzeitig werden wir weiter an unseren Maps, der Fahrzeugsteuerung, den Bewegungsmechaniken und der allgemeinen Performance arbeiten.\r\n\r\nFRONTLINERS befindet sich weiterhin mitten in der Entwicklung. Nicht jeder Ansatz funktioniert direkt beim ersten Versuch – und manchmal bedeutet Fortschritt auch, ein bestehendes System noch einmal grundlegend zu überdenken.\r\n\r\nGenau das gehört für uns zur Spieleentwicklung dazu.\r\n\r\nWir freuen uns darauf, euch schon bald weitere Ergebnisse zeigen zu können!\r\n\r\n– Das PLANIGAMES Entwicklerteam"};
 const POSTS = [
-  { slug: "frontliners-devlog-2", d: "2026-10-26", g: "frontliners", t: "FRONTLINERS – DEVLOG #2", e: "Neue Zerstörungsphysik, Map-Entwicklung und große technische Fortschritte!", i: "/media/triumph-im-wuestenaussenposten.png#focus=32,20", tags: ["#frontliners", "#devlog"] },
-  { slug: "frontliners-devlog-1", d: "2026-10-19", g: "frontliners", t: "FRONTLINERS – DEVLOG #1", e: "Zerstörbare Gebäude, dynamisches Wetter, neue Fahrzeuge und vieles mehr!", i: "/media/chatgpt-bild-4-okt-2026-04-38-41.png", tags: ["#frontliners", "#devlog"] },
-  { slug: "wobbly-wizards-ist-erstmal-pausiert", d: "2026-10-15", g: "wobbly-wizards", t: "Wobbly Wizards ist erstmal pausiert", e: "Wie es mit Wobbly Wizards weitergeht …", i: "", tags: [] },
-  { slug: "willkommen-im-devlog", d: "2026-06-01", g: "wobbly-wizards", t: "Willkommen im Devlog!", e: "Wir öffnen die Türen zur Werkstatt: ab jetzt teilen wir hier regelmäßig Fortschritt, Patchnotes und Blicke hinter die Kulissen.", i: "", tags: [] },
+  { slug: "frontliners-devlog-2", d: "2026-10-26", g: "frontliners", t: "FRONTLINERS – Devlog #2", e: "Neue Zerstörungsphysik, Map-Entwicklung und große technische Fortschritte.", i: "/media/triumph-im-wuestenaussenposten.png#focus=32,20" },
+  { slug: "frontliners-devlog-1", d: "2026-10-19", g: "frontliners", t: "FRONTLINERS – Devlog #1", e: "Zerstörbare Gebäude, dynamisches Wetter, neue Fahrzeuge und vieles mehr.", i: "/media/chatgpt-bild-4-okt-2026-04-38-41.png" },
+  { slug: "wobbly-wizards-ist-erstmal-pausiert", d: "2026-10-15", g: "wobbly-wizards", t: "Wobbly Wizards ist erstmal pausiert", e: "Wie es mit Wobbly Wizards weitergeht – und woran wir gerade arbeiten.", i: "" },
+  { slug: "willkommen-im-devlog", d: "2026-06-01", g: "wobbly-wizards", t: "Willkommen im Devlog!", e: "Ab jetzt teilen wir hier regelmäßig Fortschritt, Patch Notes und Blicke hinter die Kulissen.", i: "" },
 ];
 const G = (s) => GAMES.find((g) => g.slug === s);
 const P = (s) => POSTS.find((p) => p.slug === s);
 const MON = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 const dLong = (d) => { const [y, m, t] = d.split("-").map(Number); return `${t}. ${MON[m - 1]} ${y}`; };
-const dShort = (d) => { const [y, m, t] = d.split("-").map(Number); return `${t}. ${MON[m - 1].slice(0, 3)}. ${y}`; };
-const badge = (g) => `<span class="badge${g.status === "paused" ? " paused" : ""}" style="--dot:${g.acc}"><i></i>${ST[g.status]}</span>`;
-const accStyle = (g) => `--acc:${g.acc};--acc2:${g.acc2};--acc3:${g.acc};--on-acc:${g.onAcc};--gacc:${g.acc}`;
-const pct = (items) => Math.round((items.filter((x) => x[0] === "done").length + items.filter((x) => x[0] === "active").length * 0.5) / items.length * 100);
-const rnd = (i, n) => { const v = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453; return v - Math.floor(v); };
-const FX = Array.from({ length: 16 }, (_, i) => `<i style="--x:${(rnd(i, 1) * 100).toFixed(1)}%;--s:${(5 + rnd(i, 2) * 10).toFixed(1)}px;--t:${(12 + rnd(i, 3) * 10).toFixed(1)}s;--d:${(-rnd(i, 4) * 22).toFixed(1)}s;--dx:${((rnd(i, 5) - .5) * 140).toFixed(0)}px"></i>`).join("");
+const chip = (g) => `<span class="chip${g.status === "paused" ? " paused" : ""}" style="--dot:${g.acc}"><i></i>${ST[g.status]}</span>`;
 
 /* Devlog-Text: Absätze, Listen, **fett**, Emoji-Zeilen werden zu Zwischenüberschriften */
 function prose(src) {
@@ -658,196 +632,165 @@ function prose(src) {
 }
 
 /* =================== Bausteine =================== */
-const sh = (kicker, h, lead, right = "") => `<div class="sh"><div><span class="kicker">${kicker}</span><h2 class="h2">${h}</h2>${lead ? `<p class="lead">${lead}</p>` : ""}</div>${right}</div>`;
+const sh = (eyebrow, h, lead) => `<div class="sh rv"><span class="eyebrow">${eyebrow}</span><h2 class="h2">${h}</h2>${lead ? `<p class="lead">${lead}</p>` : ""}</div>`;
+const shRow = (eyebrow, h, lead, right) => `<div class="sh-row rv"><div><span class="eyebrow">${eyebrow}</span><h2 class="h2">${h}</h2>${lead ? `<p class="lead">${lead}</p>` : ""}</div>${right || ""}</div>`;
 function gcard(g) {
-  return `<a class="gcard rv" href="#${g.slug}" style="--gacc:${g.acc}"><figure><img src="${M(g.cover)}" alt="" loading="lazy" style="object-position:${focus(g.cover)}">${badge(g)}${g.current ? '<span class="tag">Aktuelles Projekt</span>' : ""}</figure>
-    <div class="gcard-b"><h3 class="h3">${esc(g.title)}</h3><p>${esc(g.cardText)}</p><span class="next"><span><small>Nächster Schritt</small>${esc(g.next.hint)}</span>${ic("arrow")}</span></div></a>`;
+  return `<a class="gcard rv" href="#${g.slug}">
+    <div class="gimg"><img src="${M(g.cover)}" alt="" loading="lazy" style="object-position:${focus(g.cover)}"><div class="chips">${chip(g)}${g.current ? '<span class="chip hl">Aktuelles Projekt</span>' : ""}</div>${logo(g.logo, g.title, 13000, "", 92)}</div>
+    <div class="gbody"><span class="gmeta">${esc(g.meta)}</span><p>${esc(g.card)}</p><span class="link">Zum Spiel ${ic("arrow")}</span></div></a>`;
 }
-function prow(p, withExcerpt) {
+function pcard(p, cls = "") {
   const g = G(p.g);
-  const fig = p.i ? `<img src="${M(p.i)}" alt="" loading="lazy" style="object-position:${focus(p.i)}">` : `<img class="ph-img" src="${M(g.cover)}" alt="" loading="lazy" style="object-position:${focus(g.cover)}">`;
-  return `<a class="prow" href="#${p.slug}" data-g="${p.g}"><figure>${fig}</figure><span class="prow-d">${dShort(p.d)}</span><span class="prow-t"><span class="badge">${esc(g.title)}</span><span class="prow-h">${esc(p.t)}</span>${withExcerpt ? `<span class="prow-e">${esc(p.e)}</span>` : ""}</span>${ic("arrow")}</a>`;
+  const fig = p.i ? `<img src="${M(p.i)}" alt="" loading="lazy" style="object-position:${focus(p.i)}">` : `<img class="ph-img" src="${M(g.cover)}" alt="" loading="lazy" style="object-position:${focus(g.cover)}">${logo(g.logo, "", 9000, "card-logo")}`;
+  return `<a class="pcard rv ${cls}" href="#${p.slug}" data-g="${p.g}"><figure>${fig}<span class="chip" style="--dot:${g.acc}"><i></i>${esc(g.title)}</span></figure><div class="pbody"><time>${dLong(p.d)}</time><h3 class="h3">${esc(p.t)}</h3><p>${esc(p.e)}</p><span class="link">Weiterlesen ${ic("arrow")}</span></div></a>`;
 }
 function nlForm(id, label, ok) {
   return `<form class="nl" data-fake><label class="sr" for="${id}">E-Mail-Adresse</label><input id="${id}" type="email" placeholder="${esc(STUDIO.email)}" autocomplete="email" required><button class="btn btn-p" type="submit">${esc(label)}</button></form><p class="ok" hidden>${esc(ok)}</p>`;
 }
+function cta() {
+  return `<section class="sec" style="padding-top:0"><div class="wrap"><div class="cta rv">
+    <img src="${M("/media/triumph-im-wuestenaussenposten.png")}" alt="" loading="lazy">
+    <div><span class="eyebrow">Newsletter</span><h2 class="h2">${esc(STUDIO.newsletter.h)}</h2><p class="lead">${esc(STUDIO.newsletter.t)}</p>${nlForm("nl-mail", STUDIO.newsletter.b, STUDIO.newsletter.ok)}</div>
+    <div class="socials"><p>Oder folge uns für Clips, Devlogs und Abstimmungen:</p>${STUDIO.socials.map(([icn, n, u]) => `<a class="btn btn-s" href="${u}" target="_blank" rel="noopener">${ic(icn)} ${n}</a>`).join("")}</div>
+  </div></div></section>`;
+}
 function footer() {
   return `<footer class="ft" id="s-kontakt"><div class="wrap">
-  ${cn("✓", "Wo finde ich Kontakt & Infos?", "Footer wie live – ohne zweites Newsletter-Feld, dafür „Unterstützen“ und Presse an festen Plätzen.")}
   <div class="ft-top">
-    <div class="ft-brand"><span data-mark="34"></span><p>${esc(STUDIO.note)}</p></div>
-    <div class="ft-col"><span class="lbl">Entdecken</span><ul><li><a href="#spiele">Alle Spiele</a></li><li><a href="#devlog">Devlog &amp; Patch Notes</a></li><li><a href="#start" data-sec="studio">Über das Studio</a></li><li><a href="#" onclick="return false">Press Kit</a></li></ul></div>
-    <div class="ft-col"><span class="lbl">Kontakt &amp; Presse</span><ul><li><a href="mailto:${STUDIO.email}">${STUDIO.email}</a></li>${STUDIO.socials.map(([n, u]) => `<li><a href="${u}" target="_blank" rel="noopener">${n}</a></li>`).join("")}<li><a href="${STUDIO.tip}" target="_blank" rel="noopener">☕ Unterstützen</a></li></ul></div>
+    <div class="ft-brand"><a class="brand" href="#start"><span data-mark="30"></span><span class="wm">PLANI<span>GAMES</span></span></a><p>${esc(STUDIO.note)}</p></div>
+    <div class="ft-col"><b>Spiele</b><ul>${GAMES.map((g) => `<li><a href="#${g.slug}">${esc(g.title)}</a></li>`).join("")}<li><a href="#spiele" data-sec="demos">Browser-Demos</a></li></ul></div>
+    <div class="ft-col"><b>Studio</b><ul><li><a href="#start" data-sec="studio">Über uns</a></li><li><a href="#devlog">Devlog</a></li><li><a href="#" onclick="return false">Presse-Kit</a></li><li><a href="${STUDIO.tip}" target="_blank" rel="noopener">Unterstützen</a></li></ul></div>
+    <div class="ft-col"><b>Kontakt</b><ul><li><a href="mailto:${STUDIO.email}">${STUDIO.email}</a></li>${STUDIO.socials.map(([, n, u]) => `<li><a href="${u}" target="_blank" rel="noopener">${n}</a></li>`).join("")}</ul></div>
   </div>
-  <div class="ft-bot"><span>© 2026 PLANIGAMES — Alle Rechte vorbehalten</span><span><a href="#" onclick="return false">Impressum</a><a href="#" onclick="return false">Datenschutz</a><a href="#" onclick="return false">Cookie-Einstellungen</a></span><span class="lbl">Made with 🧡 in Germany</span></div>
+  <div class="ft-bot"><span>© 2026 PLANIGAMES · Made with 🧡 in Germany</span><span><a href="#" onclick="return false">Impressum</a><a href="#" onclick="return false">Datenschutz</a><a href="#" onclick="return false">Cookie-Einstellungen</a></span></div>
 </div></footer>`;
 }
 
-/* =================== Startseite: fünf Fragen in logischer Reihenfolge =================== */
+/* =================== Ansichten =================== */
 function viewHome() {
-  const fl = G("frontliners"), p = pct(fl.roadmap);
   return `
 <section class="hero">
-  <div class="hero-bg" data-par><img src="${M(STUDIO.hero)}" alt=""></div>
-  <div class="grid-lines"></div>
-  <div class="fx" aria-hidden="true">${FX}</div>
-  <div class="wrap">
-    ${cn(1, "Wer seid ihr – und was kann ich jetzt tun?", "Links der Studio-Claim wie bisher. Rechts die eine wichtigste Aktion: der FRONTLINERS-Playtest. Nur dieser Button ist orange, damit klar ist, worauf es gerade ankommt.")}
-    <div class="hero-grid">
-      <div>
-        <span class="badge"><i class="pulse"></i>Indie Game Studio · seit ${STUDIO.founded}</span>
-        <h1 class="h1">${STUDIO.h1a}<br><span class="grad">${STUDIO.h1b}</span></h1>
-        <p class="lead">${esc(STUDIO.intro)}</p>
-        <div class="row"><a class="btn btn-g" href="#start" data-sec="spiele">Spiele entdecken ${ic("arrow")}</a></div>
-      </div>
-      <div class="now rv" style="${accStyle(fl)}">
-        <span class="badge"><i class="pulse"></i>Jetzt aktuell</span>
-        ${logo(fl.logo, fl.title, 24000)}
-        <p>Bis zu 60 Spieler, drei Teams, eine zerstörbare Welt – der erste Playtest kommt.</p>
-        <div class="prog-top"><span class="lbl">Entwicklung</span><b class="grad">${p}%</b></div><div class="bar"><i style="width:${p}%"></i></div>
-        <a class="btn btn-p" href="#frontliners" data-sec="mitmachen">${esc(fl.next.btn)} ${ic("arrow")}</a>
-      </div>
-    </div>
-  </div>
+  <img src="${M(STUDIO.hero)}" alt="">
+  <div class="wrap"><div class="hero-in">
+    <span class="chip"><i></i>Indie-Spielestudio aus Deutschland<span class="xs-hide">&nbsp;· seit ${STUDIO.founded}</span></span>
+    <h1 class="h1">${STUDIO.h1a}<br><span class="grad">${STUDIO.h1b}</span></h1>
+    <p class="lead">${esc(STUDIO.intro)}</p>
+    <div class="row"><a class="btn btn-p" href="#start" data-sec="spiele">Unsere Spiele ${ic("arrow")}</a><a class="btn btn-s" href="#devlog">Devlog lesen</a></div>
+  </div></div>
 </section>
-<div class="tick" aria-hidden="true"><div class="tick-in">${[0, 1].map(() => STUDIO.marquee.map((t) => `<span>${esc(t)}</span><i>✦</i>`).join("")).join("")}</div></div>
+<div class="tick" aria-hidden="true"><div class="tick-in">${[0, 1].map(() => STUDIO.marquee.map((t) => `<span>${esc(t)}</span><i></i>`).join("")).join("")}</div></div>
 
-<section class="sec" id="s-spiele">
-  <div class="wrap">
-    ${cn(2, "Was macht ihr?", "Alle drei Spiele gleichwertig nebeneinander. Jede Karte zeigt den Status und den passenden nächsten Schritt. FRONTLINERS steht nicht mehr doppelt da. Die Browser-Demos sind keine Spiele, deshalb stehen sie als eigene Zeile darunter.")}
-    ${sh("Was wir machen", "Unsere Spiele", "Drei Welten, drei Stände – und bei jedem Spiel siehst du sofort, wie du mitmachen kannst.", `<a class="more dim" href="#spiele">Alle Spiele ${ic("arrow")}</a>`)}
-    <div class="cards3">${GAMES.map(gcard).join("")}</div>
-    <a class="demos-line rv" href="#spiele" data-sec="demos"><span><span class="emo">🕹️</span><span><b>Außerdem: Browser-Demos</b> – kleine Prototypen zum Herunterladen und Ausprobieren.</span></span><span class="more">Zu den Demos ${ic("arrow")}</span></a>
-  </div>
-</section>
+<section class="sec" id="s-spiele"><div class="wrap">
+  ${sh("Unsere Spiele", "Drei Welten, ein Studio", "Vom modernen Schlachtfeld über mittelalterliche Kämpfe bis ins magische Chaos – jedes Spiel mit eigenem Look und eigener Haltung.")}
+  <div class="games">${GAMES.map(gcard).join("")}</div>
+  <a class="demos rv" href="#spiele" data-sec="demos"><span class="icn">${ic("pad")}</span><span><b>Browser-Demos</b><small>Kleine Prototypen aus unseren Videos – zum Herunterladen und Ausprobieren.</small></span><span class="link">Zu den Demos ${ic("arrow")}</span></a>
+</div></section>
 
-<section class="sec" id="s-devlog">
-  <div class="wrap">
-    ${cn(3, "Tut sich da was?", "Direkt nach den Spielen, weil sichtbarer Fortschritt Vertrauen schafft. Jede Zeile mit Bild – Beiträge ohne eigenes Bild bekommen das Spiel-Cover.")}
-    ${sh("Woran wir gerade arbeiten", "Frisch aus dem Devlog", "Ehrliche Updates aus der Entwicklung – was klappt, was nicht und was als Nächstes kommt.", `<a class="more dim" href="#devlog">Alle Beiträge ${ic("arrow")}</a>`)}
-    <div class="plist">${POSTS.slice(0, 3).map((p) => prow(p, true)).join("")}</div>
-  </div>
-</section>
+<section class="sec band" id="s-studio"><div class="wrap about">
+  <div class="rv"><span class="eyebrow">Über uns</span><h2 class="h2">${esc(STUDIO.aboutTitle)}</h2><div class="txt">${paras(STUDIO.about)}</div>
+    <div class="stats"><div><b>${STUDIO.founded}</b><span>gegründet</span></div><div><b>3</b><span>Gründer</span></div><div><b>3</b><span>eigene Spiele</span></div></div></div>
+  <div class="collage rv">${STUDIO.collage.map((s) => `<figure><img src="${M(s)}" alt="" loading="lazy" style="object-position:${focus(s)}"></figure>`).join("")}</div>
+</div></section>
 
-<section class="sec" id="s-studio">
-  <div class="wrap">
-    ${cn(4, "Wer steckt dahinter?", "Haltung, Werte und Team als eine Geschichte in einem Abschnitt statt drei getrennter Blöcke. Die Werte sind kompakter, damit sie gelesen statt überflogen werden.")}
-    <div class="about rv"><div><span class="kicker">Wer wir sind</span><h2 class="h2">${esc(STUDIO.aboutTitle)}</h2></div><div class="txt">${paras(STUDIO.about)}<a class="more" href="#" onclick="return false">Presse? Fakten &amp; Logos im Press Kit ${ic("arrow")}</a></div></div>
-    <div class="sub"><h3 class="h3">Woran wir glauben</h3></div>
-    <div class="vals">${STUDIO.pillars.map(([e, t, d]) => `<div class="val rv"><span class="emo">${e}</span><h3 class="h3">${esc(t)}</h3><p>${esc(d)}</p></div>`).join("")}</div>
-    <div class="sub"><h3 class="h3">Die Köpfe dahinter</h3></div>
-    <div class="team">${TEAM.map((m) => `<div class="tm rv"><figure><img src="${M(m.p)}" alt="${esc(m.n)}" loading="lazy" style="object-position:${focus(m.p)}"></figure><h3 class="h3">${esc(m.n)}</h3><span class="badge">${esc(m.r)}</span><p class="q">„${esc(m.q)}“</p>${m.l ? `<p class="loc">📍 ${esc(m.l)}</p>` : '<p class="loc"></p>'}</div>`).join("")}</div>
-  </div>
-</section>
+<section class="sec"><div class="wrap">
+  ${sh("Unsere Werte", "Was uns antreibt", "")}
+  <div class="vals">${STUDIO.pillars.map(([icn, t, d]) => `<div class="val rv"><span class="icn">${ic(icn)}</span><h3 class="h3">${esc(t)}</h3><p>${esc(d)}</p></div>`).join("")}</div>
+</div></section>
 
-<section class="sec">
-  <div class="wrap">
-    ${cn(5, "Wie bleibe ich dran?", "Eine Anmeldung statt drei (vorher: Newsletter-Block, Community-Block und ein Feld im Footer). Discord erscheint, sobald es einen echten Link gibt.")}
-    <div class="join rv">
-      <div class="join-nl"><span class="kicker">Bleib dran</span><h2 class="h2">${esc(STUDIO.newsletter.h)}</h2><p class="lead">${esc(STUDIO.newsletter.t)}</p>${nlForm("nl-mail", STUDIO.newsletter.b, STUDIO.newsletter.ok)}</div>
-      <div class="join-co"><span class="emo">💬</span><h3 class="h3">${esc(STUDIO.community.h)}</h3><p>${esc(STUDIO.community.t)}</p><div class="row">${STUDIO.socials.map(([n, u]) => `<a class="btn btn-g btn-s" href="${u}" target="_blank" rel="noopener">${n} ${ic("ext")}</a>`).join("")}</div></div>
-    </div>
-  </div>
-</section>
+<section class="sec band"><div class="wrap">
+  ${sh("Das Team", "Die Köpfe dahinter", "Drei Gründer, ein Ziel: Spiele, die wir selbst spielen wollen.")}
+  <div class="team">${TEAM.map((m) => `<div class="tm rv"><figure><img src="${M(m.p)}" alt="${esc(m.n)}" loading="lazy" style="object-position:${focus(m.p)}"></figure><div class="tm-b"><h3 class="h3">${esc(m.n)}</h3><span class="role">${esc(m.r)}</span><p class="q">„${esc(m.q)}“</p>${m.l ? `<p class="loc">📍 ${esc(m.l)}</p>` : ""}</div></div>`).join("")}</div>
+</div></section>
+
+<section class="sec" id="s-devlog"><div class="wrap">
+  ${shRow("Devlog", "Neues aus der Entwicklung", "", `<a class="btn btn-s btn-sm" href="#devlog">Alle Beiträge ${ic("arrow")}</a>`)}
+  <div class="posts">${POSTS.slice(0, 3).map(pcard).join("")}</div>
+</div></section>
+${cta()}
 ${footer()}`;
 }
 
 function viewGames() {
   return `
-<section class="wrap ph">
-  ${cn("S", "Welche Spiele gibt es?", "Gleiche Karten wie auf der Startseite (gleiches Element, gleiche Bedeutung). Die Browser-Demos stehen getrennt, mit ihren Downloads direkt hier.")}
-  <span class="kicker">Alle Spiele</span><h1 class="h1 sm">Unsere Spiele</h1><p class="lead">Jede Welt mit eigenem Charakter, eigener Farbe, eigener Magie. Klick dich rein.</p></section>
-<section class="wrap" style="padding-bottom:var(--sec)">
-  <div class="cards3">${GAMES.map(gcard).join("")}</div>
-  <div class="card rv" id="s-demos" style="margin-top:20px;padding:clamp(22px,3vw,32px)">
-    ${sh("Demo verfügbar", "Browser-Demos", "Alle unsere Browser-Prototypen aus den Videos von NULLPLAN an einem Ort!")}
-    ${DEMOS.map(([n, m]) => `<div class="build"><span class="emo">🪟</span><span><b>${esc(n)}</b><small>${esc(m)}</small></span><button type="button" aria-label="${esc(n)} herunterladen" data-fakedl>${ic("dl")}</button></div>`).join("")}
+<section class="pg"><div class="wrap"><span class="eyebrow">Spiele</span><h1 class="h1">Unsere Spiele</h1><p class="lead">Jede Welt mit eigenem Charakter, eigener Farbe, eigener Magie. Klick dich rein.</p></div></section>
+<section class="sec" style="padding-top:8px"><div class="wrap">
+  <div class="games">${GAMES.map(gcard).join("")}</div>
+  <div class="card rv" id="s-demos" style="margin-top:24px;padding:clamp(24px,3.5vw,36px)">
+    <div class="sh-row" style="margin-bottom:22px"><div><span class="eyebrow">Zum Ausprobieren</span><h2 class="h2">Browser-Demos</h2><p class="lead">Alle unsere Browser-Prototypen aus den Videos von NULLPLAN an einem Ort.</p></div></div>
+    <div class="builds">${DEMOS.map(([n, m]) => `<div class="build"><span class="icn">${ic("pad")}</span><span><b>${esc(n)}</b><small>${esc(m)}</small></span><button type="button" aria-label="${esc(n)} herunterladen" data-fakedl>${ic("dl")}</button></div>`).join("")}</div>
   </div>
-</section>
+</div></section>
+${cta()}
 ${footer()}`;
 }
 
-/* =================== Spielseite: immer dieselbe Reihenfolge =================== */
 function viewGame(slug) {
   const g = G(slug), others = GAMES.filter((x) => x.slug !== slug), posts = POSTS.filter((p) => p.g === slug);
-  const v = g.media?.videos || [], gal = g.media?.gallery || [];
-  let n = 1;
-  const out = [];
-  out.push(`<section class="gh">
-  <div class="gh-media" data-par><img src="${M(g.cover)}" alt="" style="object-position:${focus(g.cover)}"></div>
-  <div class="wrap">
-    ${cn(n++, "Was ist das – und was kann ich tun?", `Logo, ein Satz und der Hauptbutton. Der Status bestimmt den Button: ${g.next.why}.`)}
-    ${badge(g)}
-    <h1>${logo(g.logo, g.title, 76000, "", 180)}</h1>
-    <p class="gh-tag">${esc(g.tagline)}</p>
-    <div class="row"><a class="btn btn-p" href="#${g.slug}" data-sec="mitmachen">${esc(g.next.btn)} ${ic("arrow")}</a>${g.trailer ? `<a class="btn btn-g" href="${yt(g.trailer)}" target="_blank" rel="noopener">${ic("play")} Trailer ansehen</a>` : ""}</div>
-  </div>
-</section>`);
-  out.push(`<section class="sec"><div class="wrap">
-  ${cn(n++, "Worum geht's?", "Beschreibung und Steckbrief an einer Stelle – die harten Fakten (Genre, Spieler, Plattform, Status) muss niemand mehr im Text suchen.")}
-  <div class="rt rv"><div><span class="kicker">${esc(g.pitch.kicker || "Das Spiel")}</span><h2 class="h2">${esc(g.pitch.h)}</h2><dl class="sb">${g.facts.map(([k, val]) => `<dt>${esc(k)}</dt><dd>${esc(val)}</dd>`).join("")}</dl></div><div class="txt">${paras(g.pitch.body)}</div></div>
-</div></section>`);
-  if (v.length || gal.length) out.push(`<section class="sec" id="s-videos"><div class="wrap">
-  ${cn(n++, "Wie sieht's aus?", "Videos und Bilder zusammen in einem Abschnitt (vorher zwei einzelne Riesen-Videos mit Leuchtschein). Videos laden erst nach Klick bei YouTube.")}
-  ${sh("Einblicke", v.length > 1 ? "Trailer &amp; Gameplay" : "So sieht's aus", "")}
-  <div class="vids${v.length > 1 ? " two" : ""}">${v.map(([id, t, poster]) => `<a class="vid rv" href="${yt(id)}" target="_blank" rel="noopener" aria-label="${esc(t)} auf YouTube ansehen"><img src="${M(poster)}" alt="" loading="lazy" style="object-position:${focus(poster)}"><span class="vid-c"><span class="btn btn-p btn-s">${ic("play")} ${esc(t)} ansehen</span><small>Öffnet YouTube in einem neuen Tab</small></span></a>`).join("")}</div>
-  ${gal.length ? `<div class="gal">${gal.map((s) => `<figure class="rv"><img src="${M(s)}" alt="" loading="lazy"></figure>`).join("")}</div>` : ""}
-</div></section>`);
-  if (g.features) out.push(`<section class="sec"><div class="wrap">
-  ${cn(n++, "Was erwartet mich?", "Die Features als gleich große Kacheln – auf einen Blick vergleichbar, keine einsame Kachel in der letzten Reihe.")}
-  ${sh("Was dich erwartet", esc(g.features.h), "")}
-  <div class="feats" style="--fc:${Math.min(4, g.features.items.length)}">${g.features.items.map(([e, t, d]) => `<div class="val rv"><span class="emo">${e}</span><h3 class="h3">${esc(t)}</h3><p>${esc(d)}</p></div>`).join("")}</div>
-  ${g.lore ? `<a class="lore rv" href="#" onclick="return false"><img src="${M(g.cover)}" alt="" loading="lazy" style="object-position:${focus(g.cover)}"><span><h3 class="h3">${esc(g.lore.h)}</h3><p>${esc(g.lore.t)}</p></span><span class="btn btn-g btn-s">${esc(g.lore.b)} ${ic("arrow")}</span></a>` : ""}
-</div></section>`);
-  if (g.roadmap) { const p = pct(g.roadmap), lab = { done: "Erledigt", active: "In Arbeit", planned: "Geplant" };
-    out.push(`<section class="sec"><div class="wrap">
-  ${cn(n++, "Wie weit seid ihr?", g.paused ? "Ehrlich statt veraltet: Das Spiel ist pausiert, also steht das oben. Termine, die in der Vergangenheit liegen, sind entfernt." : "Fortschritt als Zahl und als Liste. Was gerade „In Arbeit“ ist, ist hervorgehoben.")}
-  ${sh("Stand der Entwicklung", "Roadmap", "")}
-  <div class="progress"><div class="prog rv"><div class="prog-top"><span class="lbl">Entwicklungs-Fortschritt</span><b class="grad">${p}%</b></div><div class="bar"><i style="width:${p}%"></i></div><p>${g.paused ? "Pausiert – der Fortschritt bleibt erhalten." : `${g.roadmap.filter((x) => x[0] === "done").length} erledigt · ${g.roadmap.filter((x) => x[0] === "active").length} in Arbeit · ${g.roadmap.filter((x) => x[0] === "planned").length} geplant`}</p></div>
-  <div>${g.paused ? `<div class="paused-note rv"><span>⏸️</span><span>${esc(g.paused.t)}<br><a class="more" href="#${g.paused.post}">Zum Devlog-Beitrag ${ic("arrow")}</a></span></div>` : ""}
-  <ol class="rm${g.paused ? " muted" : ""}">${g.roadmap.map(([s, d, t, x]) => `<li class="${s} rv"><span class="dotc"></span><span><span class="lbl">${d ? esc(d) + " · " : ""}${lab[s]}</span><b>${esc(t)}</b>${x ? `<p>${esc(x)}</p>` : ""}</span></li>`).join("")}</ol></div></div>
-</div></section>`); }
-  out.push(`<section class="sec" id="s-mitmachen"><div class="wrap">
-  ${cn(n++, "Wie kann ich mitmachen?", "Ein Ort zum Mitmachen: Anmeldung und Ideen nebeneinander (vorher über die Seite verteilt). Gibt es eine Demo, steht sie direkt darunter.")}
-  ${sh("Mach mit", "Mitmachen", "")}
-  <div class="mit">
-    <div class="card wl rv"><h3 class="h3">${esc(g.join.h)}</h3><p>${esc(g.join.t)}</p>${nlForm("wl-" + g.slug, g.join.b, g.join.ok)}</div>
-    <div class="card idea rv"><h3 class="h3">${esc(g.ideas.h)}</h3><p>${esc(g.ideas.t)}</p>
-      <form data-fake><label class="sr" for="idee-${g.slug}">Deine Idee</label><input id="idee-${g.slug}" type="text" placeholder="Deine Idee …" required><button class="btn btn-g" type="submit">Einreichen</button></form><p class="ok" hidden>Danke! Deine Idee ist bei uns gelandet.</p>
-      <ul class="votes">${g.ideas.items.map(([t, c]) => `<li><button type="button" class="vote" data-vote="${c}" aria-pressed="false" aria-label="${esc(t)} – Stimme geben">${ic("up")}<span>${c}</span></button><span>${esc(t)}</span></li>`).join("")}</ul></div>
-  </div>
-  ${g.demo ? `<div class="try rv"><p><b>Lieber gleich selbst spielen?</b> Lade dir die Demo des Prototyps herunter.</p><div class="build" style="min-width:min(100%,320px)"><span class="emo">🪟</span><span><b>${esc(g.demo[0])}</b><small>${esc(g.demo[1])}</small></span><button type="button" aria-label="Demo herunterladen" data-fakedl>${ic("dl")}</button></div></div>` : ""}
-</div></section>`);
-  if (g.faq) out.push(`<section class="sec"><div class="wrap">
-  ${cn(n++, "Noch Fragen?", "FAQ erst nach dem Mitmachen – wer bis hier liest, hat meist genau diese Fragen.")}
-  ${sh("Gut zu wissen", "FAQ", "")}
-  <div class="faq">${g.faq.map(([q, a]) => `<details><summary>${esc(q)}${ic("plus")}</summary><div class="a"><p>${inl(a)}</p></div></details>`).join("")}</div>
-</div></section>`);
-  if (posts.length) out.push(`<section class="sec"><div class="wrap">
-  ${cn(n++, "Was ist neu?", "Patch Notes nur zu diesem Spiel, mit Bild – der Beweis, dass es vorangeht.")}
-  ${sh("Aus dem Devlog", "Patch Notes", "", `<a class="more dim" href="#devlog">Alle Beiträge ${ic("arrow")}</a>`)}
-  <div class="plist">${posts.map((p) => prow(p, true)).join("")}</div>
-</div></section>`);
-  out.push(`<section class="sec"><div class="wrap">
-  ${cn(n++, "Was gibt's noch?", "Kein Sackgassen-Ende: Am Schluss geht es zu den anderen Spielen weiter.")}
-  ${sh("Weiter entdecken", "Unsere anderen Spiele", "")}
-  <div class="more2">${others.map(gcard).join("")}</div>
-</div></section>`);
-  return `<div style="${accStyle(g)}">${out.join("")}</div>${footer()}`;
+  const lab = { done: "Erledigt", active: "In Arbeit", planned: "Geplant" };
+  const vid = ([id, t, poster]) => `<a class="vid rv" href="${yt(id)}" target="_blank" rel="noopener" aria-label="${esc(t)} auf YouTube ansehen"><img src="${M(poster)}" alt="" loading="lazy" style="object-position:${focus(poster)}"><span class="play">${ic("play")}</span><span class="vcap"><span>${esc(t)}</span><small>YouTube ↗</small></span></a>`;
+  const fig = (src) => `<figure class="rv"><img src="${M(src)}" alt="" loading="lazy" style="object-position:${focus(src)}"></figure>`;
+  const hero = `<section class="gh"><img src="${M(g.cover)}" alt="" style="object-position:${focus(g.cover)}"><div class="wrap">
+    <div class="crumb"><a href="#spiele">Spiele</a> / <span>${esc(g.title)}</span></div>
+    ${chip(g)}
+    <h1>${logo(g.logo, g.title, 40000, "", 140)}</h1>
+    <p class="tag">${esc(g.tagline)}</p>
+    <div class="row"><a class="btn btn-p" href="#${g.slug}" data-sec="mitmachen">${esc(g.cta)} ${ic("arrow")}</a>${g.trailer ? `<a class="btn btn-s" href="${yt(g.trailer)}" target="_blank" rel="noopener">${ic("play")} Trailer ansehen</a>` : ""}</div>
+  </div></section>`;
+  const secs = [];   // [Anker, Inhalt] – die Hintergründe wechseln automatisch ab, fehlende Blöcke entfallen einfach
+  secs.push(["ueber", `<div class="wrap ov">
+    <div class="rv"><span class="eyebrow">Über das Spiel</span><h2 class="h2">${esc(g.pitch.h)}</h2><div class="txt">${paras(g.pitch.body)}</div></div>
+    <aside class="card facts rv"><h3 class="h3">Steckbrief</h3><dl>${g.facts.map(([icn, k, v]) => `<div><dt>${ic(icn)}</dt><dd><small>${esc(k)}</small><span>${esc(v)}</span></dd></div>`).join("")}</dl>
+      ${g.demo ? `<div class="build"><span class="icn">${ic("pad")}</span><span><b>${esc(g.demo[0])}</b><small>${esc(g.demo[1])}</small></span><button type="button" aria-label="Demo herunterladen" data-fakedl>${ic("dl")}</button></div>` : ""}</aside>
+  </div>`]);
+  if (g.videos.length || g.gallery.length) secs.push(["videos", `<div class="wrap">
+    ${shRow("Einblicke", g.videos.length > 1 ? "Trailer &amp; Gameplay" : "So sieht es aus", "")}
+    ${g.videos.length === 1 && g.gallery.length >= 3
+      ? `<div class="bento">${vid(g.videos[0])}${g.gallery.slice(0, 3).map(fig).join("")}</div>`
+      : `<div class="vids${g.videos.length > 1 ? " two" : ""}">${g.videos.map(vid).join("")}</div>${g.gallery.length ? `<div class="gal">${g.gallery.map(fig).join("")}</div>` : ""}`}
+  </div>`]);
+  if (g.features) secs.push(["features", `<div class="wrap">
+    ${sh("Features", esc(g.features.h), "")}
+    <div class="feats" data-n="${Math.min(4, g.features.items.length)}">${g.features.items.map(([e, t, d]) => `<div class="val rv"><span class="icn emo">${e}</span><h3 class="h3">${esc(t)}</h3><p>${esc(d)}</p></div>`).join("")}</div>
+    ${g.lore ? `<a class="lore rv" href="#" onclick="return false"><img src="${M(g.cover)}" alt="" loading="lazy" style="object-position:${focus(g.cover)}"><span><h3 class="h3">${esc(g.lore.h)}</h3><p>${esc(g.lore.t)}</p></span><span class="btn btn-s btn-sm">${esc(g.lore.b)} ${ic("arrow")}</span></a>` : ""}
+  </div>`]);
+  if (g.roadmap) secs.push(["roadmap", `<div class="wrap roadmap">
+    <div class="rv"><span class="eyebrow">Roadmap</span><h2 class="h2">Stand der Entwicklung</h2>
+      <p class="lead">${g.paused ? "Was bisher geschafft ist – und was nach der Pause kommt." : "Was schon steht, woran wir gerade arbeiten und was als Nächstes kommt."}</p>
+      ${g.paused ? `<div class="note"><span>⏸️</span><span>${esc(g.paused.t)}<br><a class="link" href="#${g.paused.post}">Zum Devlog-Beitrag ${ic("arrow")}</a></span></div>` : ""}</div>
+    <ol class="tl rv${g.paused ? " muted" : ""}">${g.roadmap.map(([st, d, t, x]) => `<li class="${st}"><span class="dotc">${st === "done" ? ic("check") : ""}</span><span><small>${d ? esc(d) + " · " : ""}${lab[st]}</small><b>${esc(t)}</b>${x ? `<p>${esc(x)}</p>` : ""}</span></li>`).join("")}</ol>
+  </div>`]);
+  secs.push(["mitmachen", `<div class="wrap">
+    ${sh("Mitmachen", "Werde Teil der Entwicklung", "Trag dich ein oder bring deine Ideen ein – wir lesen alles.")}
+    <div class="mit">
+      <div class="card wl rv"><h3 class="h3">${esc(g.join.h)}</h3><p>${esc(g.join.t)}</p>${nlForm("wl-" + g.slug, g.join.b, g.join.ok)}
+        <ul class="ticks"><li>${ic("check")}Nur wichtige Neuigkeiten – kein Spam</li><li>${ic("check")}Abmelden jederzeit mit einem Klick</li></ul></div>
+      <div class="card idea rv"><h3 class="h3">${esc(g.ideas.h)}</h3><p>${esc(g.ideas.t)}</p>
+        <form data-fake><label class="sr" for="idee-${g.slug}">Deine Idee</label><input id="idee-${g.slug}" type="text" placeholder="Deine Idee …" required><button class="btn btn-s" type="submit">Einreichen</button></form><p class="ok" hidden>Danke! Deine Idee ist bei uns gelandet.</p>
+        <ul class="votes">${g.ideas.items.map(([t, c]) => `<li><button type="button" class="vote" data-vote="${c}" aria-pressed="false" aria-label="${esc(t)} – Stimme geben">${ic("up")}<span>${c}</span></button><span>${esc(t)}</span></li>`).join("")}</ul></div>
+    </div>
+  </div>`]);
+  if (g.faq) secs.push(["faq", `<div class="wrap">
+    ${sh("FAQ", "Häufige Fragen", "")}
+    <div class="faq">${g.faq.map(([q, a]) => `<details><summary>${esc(q)}${ic("plus")}</summary><div class="a"><p>${inl(a)}</p></div></details>`).join("")}</div>
+  </div>`]);
+  if (posts.length) secs.push(["devlog", `<div class="wrap">
+    ${shRow("Devlog", "Neues zu " + esc(g.title), "", posts.length > 2 ? `<a class="btn btn-s btn-sm" href="#devlog">Alle Beiträge ${ic("arrow")}</a>` : "")}
+    <div class="posts">${posts.slice(0, 3).map((p) => pcard(p)).join("")}${posts.length < 3 ? `<a class="more rv" href="#devlog"><span class="icn">${ic("news")}</span><h3 class="h3">Alle Beiträge im Devlog</h3><p>Updates, Patch Notes und Blicke hinter die Kulissen – zu allen unseren Spielen.</p><span class="link">Zum Devlog ${ic("arrow")}</span></a>` : ""}</div>
+  </div>`]);
+  secs.push(["", `<div class="wrap">
+    ${shRow("Weitere Spiele", "Entdecke auch", "")}
+    <div class="games two">${others.map(gcard).join("")}</div>
+  </div>`]);
+  return hero + secs.map(([id, html], i) => `<section class="sec${i % 2 ? " band" : ""}"${id ? ` id="s-${id}"` : ""}>${html}</section>`).join("") + footer();
 }
 
 function viewDevlog() {
   const tabs = [["", "Alle"], ...GAMES.map((g) => [g.slug, g.title])];
   return `
-<section class="wrap ph">
-  ${cn("D", "Was ist neu?", "Filter nach Spiel, neueste zuerst. Jede Karte mit Bild, Datum und Spiel – Beiträge ohne Bild bekommen das Cover. Der Test-Beitrag ist nicht mehr öffentlich.")}
-  <span class="kicker">Entwicklungstagebuch</span><h1 class="h1 sm">Devlog &amp; Patch Notes</h1><p class="lead">Updates, Patchnotes und Blicke hinter die Kulissen. Frisch aus der Werkstatt.</p>
-  <div class="filters" data-filters>${tabs.map(([k, t], i) => `<button type="button" data-f="${k}" class="${i ? "" : "on"}" aria-pressed="${i ? "false" : "true"}">${esc(t)}</button>`).join("")}</div></section>
-<section class="wrap"><div class="posts" data-posts>${POSTS.map((p) => {
-    const g = G(p.g);
-    const fig = p.i ? `<img src="${M(p.i)}" alt="" loading="lazy" style="object-position:${focus(p.i)}">` : `<img class="ph-img" src="${M(g.cover)}" alt="" loading="lazy" style="object-position:${focus(g.cover)}">${logo(g.logo, "", 9000, "card-logo")}`;
-    return `<a class="pcard rv" href="#${p.slug}" data-g="${p.g}"><figure>${fig}</figure><div class="pcard-b"><div class="meta"><span>${dLong(p.d)}</span><span class="badge">${esc(g.title)}</span></div><h3 class="h3">${esc(p.t)}</h3><p>${esc(p.e)}</p><span class="more">Weiterlesen ${ic("arrow")}</span></div></a>`;
-  }).join("")}<p class="empty card" hidden>Zu diesem Spiel gibt es noch keine Beiträge.</p></div></section>
+<section class="pg"><div class="wrap"><span class="eyebrow">Devlog</span><h1 class="h1">Devlog &amp; Patch Notes</h1><p class="lead">Updates, Patch Notes und Blicke hinter die Kulissen – frisch aus der Werkstatt.</p>
+  <div class="filters" data-filters>${tabs.map(([k, t], i) => `<button type="button" data-f="${k}" class="${i ? "" : "on"}" aria-pressed="${i ? "false" : "true"}">${esc(t)}</button>`).join("")}</div></div></section>
+<section class="sec" style="padding-top:8px"><div class="wrap"><div class="posts" data-posts>${POSTS.map((p, i) => pcard(p, i ? "" : "feat")).join("")}</div><p class="empty card" hidden>Zu diesem Spiel gibt es noch keine Beiträge.</p></div></section>
+${cta()}
 ${footer()}`;
 }
 
@@ -855,61 +798,29 @@ function viewPost(slug) {
   const p = P(slug), g = G(p.g), i = POSTS.indexOf(p), nx = POSTS[(i + 1) % POSTS.length];
   const body = BODIES[slug] || p.e, min = Math.max(1, Math.round(body.split(/\s+/).length / 200));
   return `
-<article class="wrap ph"><div class="post">
-  ${cn("B", "Lesen – und dann?", "Zwischenüberschriften aus den Emoji-Zeilen machen lange Beiträge überfliegbar. Am Ende kein Sackgassen-Ende: weiter zum Spiel (mit seinem nächsten Schritt) oder zum nächsten Beitrag.")}
-  <a class="more dim" href="#devlog">${ic("back")} Alle Beiträge</a>
-  <div class="meta"><span>${dLong(p.d)} · ${min} Min. Lesezeit</span><span class="badge">${esc(g.title)}</span>${p.tags.map((t) => `<span>${esc(t)}</span>`).join("")}</div>
+<section class="pg"><div class="wrap"><div class="post">
+  <div class="crumb"><a href="#devlog">Devlog</a> / <span>${esc(g.title)}</span></div>
   <h1 class="h1">${esc(p.t)}</h1>
+  <div class="meta"><span class="chip" style="--dot:${g.acc}"><i></i>${esc(g.title)}</span><span>${dLong(p.d)}</span><span>·</span><span>${min} Min. Lesezeit</span></div>
+</div></div></section>
+<section class="sec" style="padding-top:0"><div class="wrap"><div class="post">
   ${p.i ? `<figure class="post-img"><img src="${M(p.i)}" alt="" style="object-position:${focus(p.i)}"></figure>` : ""}
   <div class="prose">${prose(body)}</div>
-  <div class="post-end" style="${accStyle(g)}">
-    <a class="game" href="#${g.slug}">${logo(g.logo, g.title, 9000)}<span><span class="lbl">Mehr zu ${esc(g.title)}</span><b>${esc(g.next.hint)}</b></span><span class="more">Zum Spiel ${ic("arrow")}</span></a>
-    <a href="#${nx.slug}"><span><span class="lbl">Nächster Beitrag</span><b>${esc(nx.t)}</b></span><span class="more dim">Weiterlesen ${ic("arrow")}</span></a>
+  <div class="post-end">
+    <a href="#${g.slug}"><span><small>Mehr zum Spiel</small><b>${esc(g.title)}</b></span><span class="link">Zum Spiel ${ic("arrow")}</span></a>
+    <a href="#${nx.slug}"><span><small>Nächster Beitrag</small><b>${esc(nx.t)}</b></span><span class="link">Weiterlesen ${ic("arrow")}</span></a>
   </div>
-</div></article>
-<div style="height:var(--sec)"></div>
-${footer()}`;
-}
-
-/* =================== Konzept-Übersicht =================== */
-function viewKonzept() {
-  return `
-<section class="wrap ph"><span class="kicker">Probedesign v5</span><h1 class="h1 sm">So ist die Seite gedacht</h1><p class="lead">Aussehen wie eure Live-Seite – der Aufbau folgt einem Plan: Jeder Abschnitt beantwortet genau eine Frage, die sich Besucher an dieser Stelle stellen.</p></section>
-<section class="wrap kz">
-  <div class="card"><h2 class="h2">Was die Seite erreichen soll</h2>
-    <ol class="q"><li><span><b>FRONTLINERS-Playtest-Anmeldungen</b> (später Wishlists) – euer wichtigstes Ziel gerade.</span></li><li><span><b>Vertrauen ins Studio:</b> zeigen, dass ihr liefert – echtes Team, sichtbarer Fortschritt.</span></li><li><span><b>Community aufbauen:</b> Newsletter, YouTube, TikTok – damit Leute wiederkommen.</span></li></ol></div>
-  <div class="card"><h2 class="h2">Für wen</h2>
-    <div class="three"><div><span>🎮</span><b>Spieler:innen</b><p>Wollen sehen, worum es geht, und einfach mitmachen können.</p></div><div><span>🔁</span><b>Community</b><p>Kommt wieder für Neuigkeiten, Devlogs und Abstimmungen.</p></div><div><span>📰</span><b>Presse &amp; Partner</b><p>Brauchen schnell Fakten, Logos und einen Kontakt.</p></div></div></div>
-  <div class="two">
-    <div class="card"><h2 class="h2">Startseite: 5 Fragen</h2><ol class="q"><li><span><b>Wer seid ihr – und was kann ich jetzt tun?</b> Kopfbereich + „Jetzt aktuell“</span></li><li><span><b>Was macht ihr?</b> Drei Spiele, jedes mit nächstem Schritt</span></li><li><span><b>Tut sich da was?</b> Devlog</span></li><li><span><b>Wer steckt dahinter?</b> Studio, Werte, Team</span></li><li><span><b>Wie bleibe ich dran?</b> Eine Anmeldung + Kanäle</span></li></ol></div>
-    <div class="card"><h2 class="h2">Spielseite: immer gleich</h2><ol class="q"><li><span><b>Was ist das?</b> Logo, Satz, Hauptbutton</span></li><li><span><b>Worum geht's?</b> Beschreibung + Steckbrief</span></li><li><span><b>Wie sieht's aus?</b> Videos + Bilder</span></li><li><span><b>Was erwartet mich?</b> Features</span></li><li><span><b>Wie weit seid ihr?</b> Roadmap + Fortschritt</span></li><li><span><b>Wie kann ich mitmachen?</b> Anmeldung + Ideen (+ Demo)</span></li><li><span><b>Noch Fragen?</b> FAQ</span></li><li><span><b>Was ist neu?</b> Patch Notes</span></li><li><span><b>Was gibt's noch?</b> Andere Spiele</span></li></ol></div>
-  </div>
-  <div class="card"><h2 class="h2">Regeln, die überall gelten</h2>
-    <ul class="rules"><li><b>Ein Hauptbutton pro Abschnitt</b>, immer mit konkretem Verb („Für den Playtest eintragen“ statt „Mehr“).</li><li><b>Der Status bestimmt den nächsten Schritt:</b> Angekündigt → Playtest · In Entwicklung ohne Steam-Seite → Warteliste · Pausiert → „Benachrichtigen“.</li><li><b>Keine Sackgassen:</b> Jede Seite endet mit einem Weiter (Beitrag → Spiel, Spiel → andere Spiele).</li><li><b>Inhalte widersprechen sich nicht:</b> Status, Roadmap und Devlog sagen dasselbe.</li><li><b>Gleiche Dinge sehen gleich aus:</b> eine Spielkarte überall, Abschnittskopf immer „Kicker · Titel · ein Satz“, eine Inhaltsbreite, feste Abstände.</li></ul></div>
-  <div class="card"><h2 class="h2">Was sich gegenüber der Live-Seite ändert – und warum</h2>
-    <table><thead><tr><th>Stelle</th><th>Vorher</th><th>Jetzt – weil …</th></tr></thead><tbody>
-      <tr><td>Kopfbereich</td><td>Zwei Buttons, kein Bezug zum aktuellen Projekt</td><td>„Jetzt aktuell“-Karte mit Playtest – das wichtigste Ziel ist sofort sichtbar</td></tr>
-      <tr><td>Spiele</td><td>FRONTLINERS doppelt, verwaistes Demo-Kärtchen</td><td>Drei gleichwertige Karten mit nächstem Schritt, Demos als eigene Zeile</td></tr>
-      <tr><td>Reihenfolge</td><td>Studio vor Devlog</td><td>Devlog direkt nach den Spielen – Fortschritt gehört zu den Spielen</td></tr>
-      <tr><td>Anmeldung</td><td>Dreimal (Block, Community, Footer)</td><td>Einmal, zusammen mit den Kanälen</td></tr>
-      <tr><td>Spielseite</td><td>Blöcke in wechselnder Reihenfolge, zwei Riesen-Videos</td><td>Feste Reihenfolge nach Fragen, Videos + Bilder zusammen, Mitmachen an einem Ort</td></tr>
-      <tr><td>Wobbly Wizards</td><td>„In Entwicklung“, Termine in der Vergangenheit</td><td>„Pausiert“ wie im Devlog, Hinweis statt veralteter Termine, Button „Benachrichtigen“</td></tr>
-      <tr><td>Schwebendes</td><td>Unterstützen-Button, Abzeichen, Cursor über dem Inhalt</td><td>„Unterstützen“ fest in Kopfzeile und Footer, nichts verdeckt Inhalte</td></tr>
-    </tbody></table></div>
-  <div class="card"><h2 class="h2">Inhalte, die ihr im Admin angleichen solltet</h2>
-    <ul class="rules"><li>Wobbly Wizards: Status auf „Pausiert“, Roadmap-Termine aus der Vergangenheit entfernen, Presse-Kit „Aktuelles Spiel“ → FRONTLINERS.</li><li>„Discord beitreten“ führt auf planigames.com – echten Link eintragen oder Button ausblenden.</li><li>Fall of Kings: „Auf Steam wishlisten“ erst zeigen, wenn es eine Steam-Seite gibt.</li><li>Devlog-Beitrag „Wobbly Test Log“ (Text „TEST“) nicht öffentlich lassen.</li></ul></div>
-</section>
+</div></div></section>
 ${footer()}`;
 }
 
 /* =================== Verhalten =================== */
 const app = document.getElementById("app"), hd = document.getElementById("hd"), pv = document.getElementById("pv");
-const mn = document.getElementById("mn"), burger = document.querySelector("[data-burger]"), cnBtn = document.querySelector("[data-cn]");
+const mn = document.getElementById("mn"), burger = document.querySelector("[data-burger]");
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-let io = null, pendingSec = null, parEl = null;
+let io = null, pendingSec = null;
 
 function setMenu(open) { mn.classList.toggle("open", open); mn.setAttribute("aria-hidden", String(!open)); burger.setAttribute("aria-expanded", String(open)); document.body.classList.toggle("lock", open); }
-function setNotes(on) { document.body.classList.toggle("cn-on", on); cnBtn.setAttribute("aria-pressed", String(on)); try { sessionStorage.setItem("pg_cn", on ? "1" : ""); } catch (e) { /* ohne Speicher: nur für diesen Besuch */ } }
 function marks() { document.querySelectorAll("[data-mark]").forEach((el) => { if (!el.firstChild) { const s = +el.dataset.mark; el.innerHTML = logo("/media/logo-6.png", "", s * s); } }); }
 function reveals() {
   if (io) io.disconnect();
@@ -918,8 +829,13 @@ function reveals() {
   io = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } }), { rootMargin: "0px 0px -6% 0px" });
   els.forEach((e) => io.observe(e));
 }
-function par() { parEl = reduced ? null : app.querySelector("[data-par]"); parTick(); }
-function parTick() { if (parEl && scrollY < innerHeight * 1.2) parEl.style.transform = `translate3d(0,${(scrollY * 0.2).toFixed(1)}px,0)`; }
+function lone() {
+  app.querySelectorAll(".games,.posts").forEach((gr) => {
+    const cs = [...gr.children].filter((c) => !c.hidden && !c.classList.contains("feat"));
+    cs.forEach((c) => c.classList.remove("lone"));
+    if (!gr.classList.contains("two") && cs.length % 2) cs[cs.length - 1].classList.add("lone");
+  });
+}
 function wire() {
   app.querySelectorAll("form[data-fake]").forEach((f) => f.addEventListener("submit", (e) => { e.preventDefault(); const ok = f.nextElementSibling; if (ok && ok.classList.contains("ok")) ok.hidden = false; f.reset(); }));
   app.querySelectorAll("[data-vote]").forEach((b) => b.addEventListener("click", () => { const on = b.classList.toggle("on"); b.setAttribute("aria-pressed", String(on)); b.querySelector("span").textContent = +b.dataset.vote + (on ? 1 : 0); }));
@@ -929,11 +845,13 @@ function wire() {
     fl.querySelectorAll("button").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b)); });
     let c = 0;
     app.querySelectorAll("[data-posts] .pcard").forEach((r) => { const show = !b.dataset.f || r.dataset.g === b.dataset.f; r.hidden = !show; c += show ? 1 : 0; });
-    app.querySelector("[data-posts] .empty").hidden = c > 0;
+    app.querySelector(".empty").hidden = c > 0;
+    lone();
   });
   app.querySelectorAll("[data-fakedl]").forEach((b) => b.addEventListener("click", () => { b.title = "Im Probedesign ohne Funktion"; b.animate([{ transform: "translateY(0)" }, { transform: "translateY(3px)" }, { transform: "translateY(0)" }], { duration: 300 }); }));
 }
-const scrollToSec = (sec) => { const t = document.getElementById("s-" + sec); if (t) window.scrollTo({ top: t.getBoundingClientRect().top + scrollY - (sec === "kontakt" ? 0 : 60), behavior: reduced ? "auto" : "smooth" }); };
+const absTop = (el) => { let y = 0; for (; el; el = el.offsetParent) y += el.offsetTop; return y; };   // ohne Einblend-Verschiebung
+const scrollToSec = (sec) => { const t = document.getElementById("s-" + sec); if (t) window.scrollTo({ top: absTop(t) - (sec === "kontakt" ? 0 : 40), behavior: reduced ? "auto" : "smooth" }); };
 
 function route() {
   const k = (location.hash || "").replace(/^#/, "") || "start";
@@ -942,14 +860,13 @@ function route() {
   else if (G(k)) { view = k; html = viewGame(k); }
   else if (k === "devlog") { view = "devlog"; html = viewDevlog(); }
   else if (P(k)) { view = "post"; html = viewPost(k); }
-  else if (k === "konzept") { view = "konzept"; html = viewKonzept(); }
   else html = viewHome();
   app.innerHTML = html;
-  const navKey = view === "games" || G(view) ? "games" : view === "devlog" || view === "post" ? "devlog" : view === "home" ? "studio" : "";
+  const navKey = view === "games" || G(view) ? "games" : view === "devlog" || view === "post" ? "devlog" : "";
   document.querySelectorAll("[data-nav]").forEach((x) => x.classList.toggle("on", x.dataset.nav === navKey));
   document.querySelectorAll("[data-pv]").forEach((x) => x.classList.toggle("on", x.dataset.pv === view));
   pv.open = false; setMenu(false);
-  marks(); wire(); reveals(); par();
+  marks(); wire(); lone(); reveals();
   const sec = pendingSec; pendingSec = null;
   if (sec) setTimeout(() => scrollToSec(sec), 60); else window.scrollTo(0, 0);
   hd.classList.toggle("solid", scrollY > 20);
@@ -961,16 +878,12 @@ document.addEventListener("click", (e) => {
   setMenu(false);
   if (target !== cur) { pendingSec = a.dataset.sec; location.hash = target; } else scrollToSec(a.dataset.sec);
 });
-cnBtn.addEventListener("click", () => setNotes(!document.body.classList.contains("cn-on")));
-document.querySelector("[data-cn2]").addEventListener("click", () => { setNotes(!document.body.classList.contains("cn-on")); pv.open = false; });
 burger.addEventListener("click", () => setMenu(!mn.classList.contains("open")));
 mn.addEventListener("click", (e) => { if (e.target.closest("a")) setMenu(false); });
 pv.addEventListener("click", (e) => { if (e.target.closest("a")) pv.open = false; });
 addEventListener("keydown", (e) => { if (e.key === "Escape") { setMenu(false); pv.open = false; } });
-let rafP = 0;
-addEventListener("scroll", () => { hd.classList.toggle("solid", scrollY > 20); if (!rafP) rafP = requestAnimationFrame(() => { rafP = 0; parTick(); }); }, { passive: true });
+addEventListener("scroll", () => hd.classList.toggle("solid", scrollY > 20), { passive: true });
 addEventListener("hashchange", route);
-try { if (sessionStorage.getItem("pg_cn") === "1") setNotes(true); } catch (e) { /* ohne Speicher */ }
 route();
 </script>
 </body>

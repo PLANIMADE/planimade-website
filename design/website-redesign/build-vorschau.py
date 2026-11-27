@@ -2,12 +2,12 @@
 """Baut die interaktive Vorschau (eine Seite + media/) aus prototype.html.
 
   python3 build-vorschau.py --media <Ordner mit den Original-Medien von planigames.com/media>
-                            --fonts <Ordner mit clash-500.woff2 / clash-600.woff2 (Clash Display, fontshare.com)>
+                            [--fonts <Ordner mit clash-*.woff2> – nur nötig, falls ein Entwurf Clash Display nutzt]
                             --out   <Zielordner>
 
 Ergebnis: <out>/planigames-probedesign.html ohne äußeres HTML-Gerüst (das liefert die Vorschau),
-Clash Display eingebettet (die Vorschau lädt extern nur Google Fonts), Bilder verkleinert als WebP in
-<out>/media/. Braucht Pillow.
+Bilder verkleinert als WebP in <out>/media/. Schriften: Google Fonts (v6: Montserrat) bleiben verlinkt,
+Clash Display (fontshare) würde eingebettet, weil die Vorschau extern nur Google Fonts lädt. Braucht Pillow.
 Der Prototyp selbst bleibt unverändert (lädt Bilder weiter von planigames.com).
 """
 import argparse, base64, json, os, re
