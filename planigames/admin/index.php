@@ -1054,14 +1054,14 @@ if (($_GET['view'] ?? '') === 'account' || isset($_POST['start_2fa']) || isset($
   $backupShow = $_SESSION['pg_backup_show'] ?? null; unset($_SESSION['pg_backup_show']);
   pg_view_head('Konto');
   pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor">';
+  echo '<div class="editor sys">';
   if (isset($_GET['enabled']))  echo '<div class="flash ok">✓ Zwei-Faktor-Authentifizierung aktiviert.</div>';
   if (isset($_GET['disabled'])) echo '<div class="flash ok">✓ Zwei-Faktor-Authentifizierung deaktiviert.</div>';
   echo $flash;
-  echo '<div class="editor-head"><div><h1>🔒 Konto &amp; Sicherheit</h1>'
+  echo '<div class="editor-head"><div><h1>Konto &amp; Sicherheit</h1>'
      . '<p class="muted">' . pg_h($me['email'] ?? '') . ' · ' . pg_h(ucfirst($me['role'] ?? '')) . '</p></div></div>';
-  echo '<div class="fields"><div id="twofa" class="objectfield" style="padding:1.3rem 1.4rem">';
-  echo '<h2 class="sub-h" style="margin-top:0">Zwei-Faktor-Authentifizierung (2FA)</h2>';
+  echo '<div class="fields"><section id="twofa" class="ck-card acc-card"><div class="ck-card-h"><span class="ck-card-t">' . pg_icon('shield') . 'Zwei-Faktor-Anmeldung (2FA)</span>'
+     . (pg_user_has_2fa($me) ? '<span class="chip st-rel" style="margin-left:auto"><i></i>aktiv</span>' : '<span class="chip st-dev" style="margin-left:auto"><i></i>aus</span>') . '</div><div class="acc-b">';
   $csrf = pg_h(pg_csrf());
 
   // Frisch erzeugte Backup-Codes (nur einmal anzeigen)
@@ -1122,7 +1122,7 @@ if (($_GET['view'] ?? '') === 'account' || isset($_POST['start_2fa']) || isset($
     echo '<form method="post"><input type="hidden" name="csrf" value="' . $csrf . '">'
        . '<button class="btn-primary" name="start_2fa" value="1">2FA einrichten</button></form>';
   }
-  echo '</div></div></div>';
+  echo '</div></section></div></div>';
   pg_view_foot();
   exit;
 }
@@ -1133,8 +1133,8 @@ if (($_GET['view'] ?? '') === 'search') {
   $q = trim((string) ($_GET['q'] ?? ''));
   pg_view_head('Suche');
   pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor wide">';
-  echo '<div class="editor-head"><div><h1>🔎 Suche</h1>'
+  echo '<div class="editor wide sys">';
+  echo '<div class="editor-head"><div><h1>Suche</h1>'
      . '<p class="muted">Durchsucht alle Inhalte, Kontakt-Anfragen, Vorlagen &amp; Medien.</p></div></div>';
   echo '<form method="get" class="searchbar"><input type="hidden" name="view" value="search">'
      . '<input type="search" name="q" value="' . pg_h($q) . '" placeholder="Suchbegriff … (mind. 2 Zeichen)" autofocus>'
@@ -1327,9 +1327,9 @@ if (($_GET['view'] ?? '') === 'media') {
 
   pg_view_head('Medien');
   pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor wide">';
+  echo '<div class="editor wide sys">';
   if (isset($_GET['deleted'])) echo '<div class="flash ok">✓ Datei gelöscht.</div>';
-  echo '<div class="editor-head"><div><h1>🖼️ Medien-Bibliothek</h1>'
+  echo '<div class="editor-head"><div><h1>Medien</h1>'
      . '<p class="muted">' . count($files) . ' Datei' . (count($files) === 1 ? '' : 'en') . ' im Ordner <code>/media</code>. Pfad kopieren und in beliebige Bild-/Datei-Felder einsetzen.</p></div></div>';
   echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
   echo '<div class="media-upload"><label class="btn-up">📤 Datei hochladen<input type="file" id="lib-upload" accept="image/*,video/*" hidden></label>'
@@ -1371,12 +1371,12 @@ if (($_GET['view'] ?? '') === 'backup') {
   $files = pg_backup_filenames();
   pg_view_head('Backup');
   pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor">';
+  echo '<div class="editor sys">';
   if (!empty($_SESSION['pg_backup_msg'])) {
     [$type, $text] = $_SESSION['pg_backup_msg']; unset($_SESSION['pg_backup_msg']);
     echo '<div class="flash ' . ($type === 'ok' ? 'ok' : 'err') . '">' . pg_h($text) . '</div>';
   }
-  echo '<div class="editor-head"><div><h1>💾 Backup &amp; Wiederherstellung</h1>'
+  echo '<div class="editor-head"><div><h1>Backup &amp; Wiederherstellung</h1>'
      . '<p class="muted">Sichere alle deine Inhalte &amp; Einstellungen als eine Datei – und spiele sie bei Bedarf wieder ein.</p></div>'
      . '<a class="btn-primary" href="index.php?action=backup_export">📥 Backup exportieren</a></div>';
   echo '<div class="mailnote">Die Backup-Datei enthält <b>' . count($files) . ' Datei' . (count($files) === 1 ? '' : 'en') . '</b>: '
@@ -1400,7 +1400,7 @@ if (($_GET['view'] ?? '') === 'backup') {
     foreach ($snaps as $b) {
       $csrf = pg_h(pg_csrf());
       echo '<tr><td><code>' . pg_h($b['name']) . '</code></td>'
-         . '<td>' . (($b['kind'] ?? '') === 'safety' ? 'Vor Adress-Umzug' : ($b['auto'] ? 'Automatisch' : 'Manuell')) . '</td>'
+         . '<td>' . (($b['kind'] ?? '') === 'safety' ? 'Sicherheitskopie' : ($b['auto'] ? 'Automatisch' : 'Manuell')) . '</td>'
          . '<td>' . number_format($b['size'] / 1024, 0, ',', '.') . ' KB</td>'
          . '<td>' . pg_h(date('d.m.Y H:i', $b['time'])) . '</td>'
          . '<td style="white-space:nowrap"><a class="btn-add" href="index.php?action=backup_download&file=' . urlencode($b['name']) . '">↓</a> '
@@ -1419,7 +1419,7 @@ if (($_GET['view'] ?? '') === 'backup') {
      . '<input type="file" name="backup" accept="application/json,.json" required '
      . 'onchange="this.closest(\'form\').querySelector(\'[data-impname]\').textContent=(this.files[0]||{}).name||\'Keine Datei gewählt\'"></label>'
      . '<span class="muted" data-impname>Keine Datei gewählt</span></div>';
-  echo '<div class="editor-foot"><button class="btn-danger" type="submit">📤 Backup einspielen</button></div>';
+  echo '<div class="editor-foot"><button class="btn-danger" type="submit">Backup einspielen</button></div>';
   echo '</form>';
   echo '</div>';
   pg_view_foot();
@@ -1435,9 +1435,9 @@ if (($_GET['view'] ?? '') === 'activity') {
   $log = array_reverse(pg_load_json(PG_ACTIVITY_FILE));
   pg_view_head('Protokoll');
   pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor wide">';
+  echo '<div class="editor wide sys">';
   if (isset($_GET['cleared'])) echo '<div class="flash ok">✓ Protokoll geleert.</div>';
-  echo '<div class="editor-head"><div><h1>📋 Aktivitätsprotokoll</h1>'
+  echo '<div class="editor-head"><div><h1>Protokoll</h1>'
      . '<p class="muted">Die letzten Aktionen im Dashboard (max. 300). IP-Adressen werden anonymisiert gespeichert.</p></div></div>';
   if (!$log) {
     echo '<div class="mailnote">Noch keine Aktivitäten aufgezeichnet.</div>';
@@ -1504,11 +1504,11 @@ if (($_GET['view'] ?? '') === 'trash') {
   $indexed = array_reverse($indexed);
   pg_view_head('Papierkorb');
   pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor wide">';
+  echo '<div class="editor wide sys">';
   if (isset($_GET['restored'])) echo '<div class="flash ok">✓ Eintrag wiederhergestellt.</div>';
   if (isset($_GET['deleted'])) echo '<div class="flash ok">✓ Endgültig gelöscht.</div>';
   if (isset($_GET['emptied'])) echo '<div class="flash ok">✓ Papierkorb geleert.</div>';
-  echo '<div class="editor-head"><div><h1>🗑️ Papierkorb</h1>'
+  echo '<div class="editor-head"><div><h1>Papierkorb</h1>'
      . '<p class="muted">Gelöschte Spiele &amp; Devlog-Beiträge der letzten Zeit – wiederherstellbar. Wiederherstellung fügt den Eintrag (deutsche Fassung) wieder hinzu.</p></div></div>';
   if (!$indexed) {
     echo '<div class="mailnote">Der Papierkorb ist leer. Hier landen gelöschte Spiele und Devlog-Beiträge automatisch.</div>';
@@ -1601,8 +1601,8 @@ if (($_GET['view'] ?? '') === 'seo') {
 
   pg_view_head('SEO-Assistent');
   pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor wide">';
-  echo '<div class="editor-head"><div><h1>🔍 SEO-Assistent</h1>'
+  echo '<div class="editor wide sys">';
+  echo '<div class="editor-head"><div><h1>SEO-Assistent</h1>'
      . '<p class="muted">Prüft deine ganze Seite auf Suchmaschinen- &amp; Social-Optimierung.</p></div></div>';
   $scoreColor = $score >= 80 ? '#5fd07f' : ($score >= 50 ? '#e6c07b' : '#e06c75');
   echo '<div class="seo-score"><div class="seo-ring" style="--p:' . $score . ';--c:' . $scoreColor . '"><span>' . $score . '</span></div>'
@@ -1692,8 +1692,8 @@ if (($_GET['view'] ?? '') === 'users') {
   }
   pg_view_head('Zugänge');
   pg_view_topbar($SCHEMA, null);
-  echo '<div class="editor">';
-  echo '<div class="editor-head"><div><h1>🔑 Zugänge &amp; Rollen</h1>'
+  echo '<div class="editor sys">';
+  echo '<div class="editor-head"><div><h1>Zugänge &amp; Rollen</h1>'
      . '<p class="muted">Wer darf das Dashboard bearbeiten? Lade Leute per E-Mail ein.</p></div></div>';
   echo $flash;
   if ($inviteLink) echo '<div class="field"><label class="flabel">Einladungslink (kopieren &amp; senden)</label>'
