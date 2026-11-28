@@ -176,6 +176,20 @@
             worlds_h: ["Eine Welt. Eine Handschrift.", "Zwei Welten. Eine Handschrift.", "Drei Welten. Eine Handschrift.", "Vier Welten. Eine Handschrift.", "Fünf Welten. Eine Handschrift.", "Sechs Welten. Eine Handschrift."],
             worlds_n: "Welten. Eine Handschrift.", stat_founded: "gegründet", stat_team: "Köpfe im Team", stat_games: "eigene Spiele",
             team_label: "Das Team", devlog_fresh2: "Frisch aus der Werkstatt.", read_more2: "Weiterlesen", profile_view: "Profil ansehen",
+            sec_about: "Über das Spiel", sn_about: "Über das Spiel", h_about_q: "Was ist {title}?", sec_play: "Selbst spielen", sn_play: "Spielen",
+            h_play: "Jetzt spielen", sec_tech: "Technik", sec_media: "Einblicke", sn_media: "Einblicke", h_media_multi: "Trailer & Gameplay",
+            h_media_one: "So sieht es aus", sec_features: "Features", sn_features: "Features", h_features: "Was dich erwartet",
+            sec_quotes: "Stimmen", h_quotes: "Was andere sagen", sec_countdown: "Countdown", sec_roadmap: "Roadmap", sn_roadmap: "Roadmap",
+            h_roadmap: "Stand der Entwicklung", lead_roadmap: "Was schon steht, woran wir gerade arbeiten und was als Nächstes kommt.",
+            lead_roadmap_paused: "Was bisher geschafft ist – und was nach der Pause kommt.",
+            paused_default: "{title} ist gerade pausiert – die nächsten Schritte bekommen wieder Termine, sobald es weitergeht.",
+            to_post: "Zum Devlog-Beitrag", sec_join: "Mitmachen", sn_join: "Mitmachen", h_join: "Werde Teil der Entwicklung",
+            lead_join: "Trag dich ein oder bring deine Ideen ein – wir lesen alles.", sn_faq: "FAQ", h_faq: "Häufige Fragen", sn_devlog: "Devlog",
+            h_devlog_game: "Neues zu {title}", allposts_h: "Alle Beiträge im Devlog", allposts_p: "Updates, Patch Notes und Blicke hinter die Kulissen – zu allen unseren Spielen.",
+            to_devlog: "Zum Devlog", sec_more: "Weitere Spiele", h_more: "Entdecke auch", facts_label: "Steckbrief", to_top: "nach oben",
+            cta_notify: "Benachrichtigt werden", cta_wl_beta: "Zur Beta anmelden", cta_wl_playtest: "Für den Playtest eintragen", cta_wl: "Auf die Warteliste",
+            cta_demo: "Demo spielen", wl_intro: "Trag dich ein – wir sagen dir Bescheid, sobald du spielen kannst.",
+            wl_tick1: "Deinen Platz in der Warteliste siehst du sofort", wl_tick2: "Mit deinem Link Freunde einladen und aufsteigen",
         },
         en: {
             nav_studio: "Studio", nav_games: "Games", nav_devlog: "Devlog", nav_contact: "Contact",
@@ -222,6 +236,20 @@
             worlds_h: ["One world. One signature.", "Two worlds. One signature.", "Three worlds. One signature.", "Four worlds. One signature.", "Five worlds. One signature.", "Six worlds. One signature."],
             worlds_n: "worlds. One signature.", stat_founded: "founded", stat_team: "people on the team", stat_games: "original games",
             team_label: "The team", devlog_fresh2: "Fresh from the workshop.", read_more2: "Read more", profile_view: "View profile",
+            sec_about: "About the game", sn_about: "About", h_about_q: "What is {title}?", sec_play: "Play it yourself", sn_play: "Play",
+            h_play: "Play now", sec_tech: "Tech", sec_media: "Insights", sn_media: "Media", h_media_multi: "Trailer & gameplay",
+            h_media_one: "A first look", sec_features: "Features", sn_features: "Features", h_features: "What to expect",
+            sec_quotes: "Voices", h_quotes: "What others say", sec_countdown: "Countdown", sec_roadmap: "Roadmap", sn_roadmap: "Roadmap",
+            h_roadmap: "Development status", lead_roadmap: "What's done, what we're working on and what comes next.",
+            lead_roadmap_paused: "What's done so far – and what comes after the break.",
+            paused_default: "{title} is currently paused – the next steps will get dates again once development resumes.",
+            to_post: "Read the devlog post", sec_join: "Get involved", sn_join: "Get involved", h_join: "Be part of the development",
+            lead_join: "Sign up or share your ideas – we read everything.", sn_faq: "FAQ", h_faq: "Frequently asked questions", sn_devlog: "Devlog",
+            h_devlog_game: "News about {title}", allposts_h: "All devlog posts", allposts_p: "Updates, patch notes and behind-the-scenes looks – for all our games.",
+            to_devlog: "Go to the devlog", sec_more: "More games", h_more: "Discover more", facts_label: "Fact sheet", to_top: "back to top",
+            cta_notify: "Get notified", cta_wl_beta: "Join the beta", cta_wl_playtest: "Sign up for the playtest", cta_wl: "Join the waitlist",
+            cta_demo: "Play the demo", wl_intro: "Sign up – we'll let you know as soon as you can play.",
+            wl_tick1: "See your spot on the waitlist right away", wl_tick2: "Invite friends with your link and move up",
         },
     };
     function detectLang() {
@@ -1080,60 +1108,57 @@
         return () => { clearTimeout(timer); document.removeEventListener("visibilitychange", vis); if (ob) ob.disconnect(); };
     }
 
-    // Vorschlagsbox (Community-Ideen mit Upvotes) – nur als Spiel-Seiten-Block.
-    // Innenleben der Vorschlagsbox (scope = Spiel-Slug).
-    function suggBoxInner(cfg, scope) {
-        const en = LANG === "en";
-        return `
-            <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3 text-center">${esc(cfg.heading || (en ? "What should we build next?" : "Was sollen wir als Nächstes bauen?"))}</h2>
-            ${cfg.intro ? `<p class="text-zinc-400 text-center max-w-xl mx-auto mb-9">${esc(cfg.intro)}</p>` : ""}
-            <form data-sugg-form data-scope="${esc(scope || "")}" class="flex flex-col sm:flex-row gap-3 mb-8">
-                <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
-                <input name="text" required maxlength="200" placeholder="${en ? "Your idea…" : "Deine Idee…"}" class="flex-1 bg-black/30 border border-white/15 rounded-full px-6 py-4 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none">
-                <button class="btn-accent magnetic px-8 py-4 rounded-full font-semibold whitespace-nowrap">${en ? "Submit" : "Einreichen"}</button>
+    // ---------- Mitmachen: Vorschlagsbox & Warteliste (Spiel-Blöcke, eigene Liste je Spiel) ----------
+    // Logik wie bisher (Abstimmen, Freigabe, Platz in der Warteliste, Empfehlungslink) – nur im Design v7.
+    const pgMsg = (el, kind, text) => { if (!el) return; el.className = "pg-msg is-" + kind; el.hidden = false; el.textContent = text; };
+    function suggCard(b, g, i = 0) {
+        const en = LANG === "en", id = `pg-idea-${slugify(g.slug || "x")}-${i}`;
+        return `<div class="pg-card pg-idea pg-rv" data-sugg-box>
+            <h3>${esc(b.heading || (en ? "What should we build next?" : "Was sollen wir als Nächstes bauen?"))}</h3>
+            ${b.intro ? `<p>${esc(b.intro)}</p>` : ""}
+            <form data-sugg-form data-scope="${esc(g.slug || "")}" class="pg-form">
+                <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="pg-hp">
+                <label class="pg-sr" for="${id}">${en ? "Your idea" : "Deine Idee"}</label>
+                <input id="${id}" name="text" required maxlength="200" autocomplete="off" placeholder="${en ? "Your idea…" : "Deine Idee…"}">
+                <button class="pg-btn pg-btn-s">${en ? "Submit" : "Einreichen"}</button>
             </form>
-            <p data-sugg-msg class="text-sm text-center mb-6 hidden"></p>
-            <div data-sugg-list class="flex flex-col gap-3"></div>`;
+            <p data-sugg-msg class="pg-msg" hidden></p>
+            <div data-sugg-list class="pg-votes" aria-live="polite"></div>
+        </div>`;
     }
 
-    // Vorschlagsbox als Game-Block (bezieht sich auf dieses Spiel)
-    function blockSuggestions(b, g) {
-        return `<section class="relative px-6 py-12 md:py-20"><div class="max-w-3xl mx-auto reveal">${suggBoxInner(b, g.slug || "")}</div></section>`;
-    }
-
-    async function initSuggestions(sec) {
+    async function initSuggestions(box) {
         const en = LANG === "en";
-        const list = sec.querySelector("[data-sugg-list]");
-        const form = sec.querySelector("[data-sugg-form]");
-        const msg = sec.querySelector("[data-sugg-msg]");
+        const list = box.querySelector("[data-sugg-list]");
+        const form = box.querySelector("[data-sugg-form]");
+        const msg = box.querySelector("[data-sugg-msg]");
         const scope = form.dataset.scope || "";
         const q = scope ? "?scope=" + encodeURIComponent(scope) : "";
         let voted = {};
         try { voted = JSON.parse(localStorage.getItem("pg_sugg_voted") || "{}"); } catch {}
         const stLabel = { planned: en ? "Planned" : "Geplant", done: en ? "Done" : "Umgesetzt" };
-        // Lange Listen: erst 7 Vorschläge, dann per „Mehr anzeigen“ jeweils 7 weitere
+        // Lange Listen: erst 7 Vorschläge, dann per „Mehr anzeigen" jeweils 7 weitere
         const STEP = 7;
         let all = [], shown = STEP;
         const render = (items) => {
             all = items;
             const vis = items.slice(0, shown), rest = items.length - vis.length;
             list.innerHTML = (items.length ? vis.map(s => `
-                <div class="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.02] p-3 pl-4">
-                    <button type="button" class="sugg-vote ${voted[s.id] ? "voted" : ""}" data-vote="${s.id}" ${voted[s.id] ? "disabled" : ""} aria-label="Upvote">
-                        <span class="sv-arrow">▲</span><span class="sv-count">${s.votes}</span>
-                    </button>
-                    <span class="flex-1 text-zinc-200">${esc(s.text)}</span>
-                    ${s.status && s.status !== "open" ? `<span class="badge px-2 py-0.5 rounded-full border ${s.status === "done" ? "border-emerald-400/40 text-emerald-300" : "border-[color:var(--accent)]/40 text-[color:var(--accent)]"}">${stLabel[s.status] || ""}</span>` : ""}
-                </div>`).join("") : `<p class="text-zinc-500 text-sm text-center">${en ? "No suggestions yet — add the first!" : "Noch keine Vorschläge — mach den Anfang!"}</p>`)
+                <div class="pg-vote-row">
+                    <button type="button" class="pg-vote${voted[s.id] ? " voted" : ""}" data-vote="${esc(String(s.id))}" ${voted[s.id] ? "disabled" : ""} aria-label="${en ? "Upvote" : "Stimme geben"}">
+                        ${pgIc("up")}<span class="sv-count">${+s.votes || 0}</span></button>
+                    <span class="pg-vote-tx">${esc(s.text)}</span>
+                    ${s.status && s.status !== "open" ? `<span class="pg-tag${s.status === "done" ? " is-done" : ""}">${esc(stLabel[s.status] || s.status)}</span>` : ""}
+                </div>`).join("") : `<p class="pg-empty-s">${en ? "No suggestions yet — add the first!" : "Noch keine Vorschläge — mach den Anfang!"}</p>`)
                 + (rest > 0
-                    ? `<div class="text-center pt-2"><button type="button" data-sugg-more class="btn-ghost px-6 py-2.5 rounded-full text-sm font-semibold">${en ? "Show more" : "Mehr anzeigen"} <span class="text-zinc-500">(${rest} ${en ? "more" : "weitere"})</span></button></div>`
-                    : (items.length > STEP ? `<div class="text-center pt-2"><button type="button" data-sugg-less class="btn-ghost px-6 py-2.5 rounded-full text-sm font-semibold">${en ? "Show less" : "Weniger anzeigen"}</button></div>` : ""));
+                    ? `<button type="button" data-sugg-more class="pg-more-btn">${en ? "Show more" : "Mehr anzeigen"} <span>(${rest} ${en ? "more" : "weitere"})</span></button>`
+                    : (items.length > STEP ? `<button type="button" data-sugg-less class="pg-more-btn">${en ? "Show less" : "Weniger anzeigen"}</button>` : ""));
         };
         async function load() { try { const r = await fetch("suggestions.php" + q); render((await r.json()).suggestions || []); } catch {} }
         await load();
         list.addEventListener("click", async (e) => {
             if (e.target.closest("[data-sugg-more]")) { shown += STEP; render(all); return; }
-            if (e.target.closest("[data-sugg-less]")) { shown = STEP; render(all); sec.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+            if (e.target.closest("[data-sugg-less]")) { shown = STEP; render(all); box.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
             const btn = e.target.closest("[data-vote]"); if (!btn) return;
             const id = btn.dataset.vote; if (voted[id]) return;
             voted[id] = 1; try { localStorage.setItem("pg_sugg_voted", JSON.stringify(voted)); } catch {}
@@ -1148,42 +1173,39 @@
             e.preventDefault();
             const fd = new FormData(form);
             if (scope) fd.append("scope", scope);
-            msg.className = "text-sm text-center mb-6 text-zinc-400"; msg.textContent = en ? "Sending…" : "Wird gesendet…";
+            pgMsg(msg, "info", en ? "Sending…" : "Wird gesendet…");
             try {
                 const r = await fetch("suggestions.php", { method: "POST", body: fd });
                 const j = await r.json();
-                if (j.error) { msg.className = "text-sm text-center mb-6 text-red-400"; msg.textContent = j.error; return; }
+                if (j.error) { pgMsg(msg, "err", j.error); return; }
                 form.reset();
-                msg.className = "text-sm text-center mb-6 text-emerald-400";
-                msg.textContent = en ? "Thanks! Your idea will appear after review." : "Danke! Deine Idee erscheint nach der Prüfung.";
+                pgMsg(msg, "ok", en ? "Thanks! Your idea will appear after review." : "Danke! Deine Idee erscheint nach der Prüfung.");
                 confetti({ count: 60, y: innerHeight * 0.6 });
                 pgBadge("ideator");
-            } catch { msg.className = "text-sm text-center mb-6 text-red-400"; msg.textContent = en ? "Something went wrong." : "Etwas ist schiefgelaufen."; }
+            } catch { pgMsg(msg, "err", en ? "Something went wrong." : "Etwas ist schiefgelaufen."); }
         });
     }
 
-    // Innenleben der Warteliste – nur als Spiel-Seiten-Block (scope = Spiel-Slug).
-    function wlBoxInner(cfg, scope) {
-        const en = LANG === "en";
-        return `
-            <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3 text-center">${esc(cfg.heading || (en ? "Join the beta" : "Sei bei der Beta dabei"))}</h2>
-            ${cfg.intro ? `<p class="text-zinc-400 text-center max-w-xl mx-auto mb-8">${esc(cfg.intro)}</p>` : ""}
-            <form data-wl-form data-scope="${esc(scope || "")}" data-success="${esc(cfg.successText || "")}" class="flex flex-col sm:flex-row gap-3">
-                <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
-                <input name="email" type="email" required placeholder="${en ? "your@email.com" : "deine@email.de"}" class="flex-1 bg-black/30 border border-white/15 rounded-full px-6 py-4 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none">
-                <button class="btn-accent magnetic px-8 py-4 rounded-full font-semibold whitespace-nowrap">${en ? "Join waitlist" : "Eintragen"}</button>
+    // Warteliste – eigene Liste & eigenes Empfehlungs-Ranking je Spiel (scope = Spiel-Slug)
+    function wlCard(b, g, i = 0) {
+        const en = LANG === "en", id = `pg-wl-${slugify(g.slug || "x")}-${i}`;
+        return `<div class="pg-card pg-hot pg-wl pg-rv"${i ? "" : ' id="warteliste"'}>
+            <h3>${esc(b.heading || (en ? "Join the beta" : "Sei bei der Beta dabei"))}</h3>
+            <p>${esc(b.intro || t("wl_intro"))}</p>
+            <form data-wl-form data-scope="${esc(g.slug || "")}" data-success="${esc(b.successText || "")}" class="pg-form">
+                <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="pg-hp">
+                <label class="pg-sr" for="${id}">${t("nl_email_label")}</label>
+                <input id="${id}" name="email" type="email" required autocomplete="email" placeholder="${en ? "your@email.com" : "deine@email.de"}">
+                <button class="pg-btn pg-btn-p">${en ? "Join waitlist" : "Eintragen"}</button>
             </form>
-            <p data-wl-msg class="text-sm text-center mt-4 hidden"></p>
-            <div data-wl-status class="hidden mt-7 rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-center"></div>`;
-    }
-
-    // Warteliste als Game-Block (eigene Liste & eigenes Ranking pro Spiel)
-    function blockWaitlist(b, g) {
-        return `<section class="relative px-6 py-12 md:py-20"><div class="max-w-2xl mx-auto reveal">${wlBoxInner(b, g.slug || "")}</div></section>`;
+            <ul class="pg-ticks" data-wl-ticks><li>${pgIc("check")}${t("wl_tick1")}</li><li>${pgIc("check")}${t("wl_tick2")}</li></ul>
+            <p data-wl-msg class="pg-msg" hidden></p>
+            <div data-wl-status class="pg-wl-status" hidden></div>
+        </div>`;
     }
 
     // „Welt erkunden"-Teaser: verlinkt auf die spielspezifische Lore-Seite (lore.html?slug=…)
-    function blockLore(b, g) {
+    function loreTeaser(b, g) {
         const lore = g.lore || {};
         if (!lore.enabled) return "";                       // ohne aktive Lore nichts anzeigen
         const en = LANG === "en";
@@ -1191,21 +1213,18 @@
         const text = b.text || lore.intro || "";
         const label = b.label || (en ? "Explore the world" : "Welt erkunden");
         const bg = b.image || lore.hero || g.cover || "";
-        const href = "lore.html?slug=" + encodeURIComponent(g.slug || "");
-        return `<section class="relative px-6 py-12 md:py-20"><a href="${href}" class="lore-teaser reveal" style="${bg ? `--lore-bg:url('${esc(bg)}')` : ""}">
-            <div class="lore-teaser-inner">
-                <span class="lore-teaser-kicker">${en ? "World & Story" : "Welt & Story"}</span>
-                <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white">${esc(heading)}</h2>
-                ${text ? `<p class="mt-3 text-zinc-300 max-w-xl mx-auto">${esc(text)}</p>` : ""}
-                <span class="btn-accent magnetic mt-7 px-8 py-4 rounded-full font-semibold inline-block">${esc(label)} →</span>
-            </div></a></section>`;
+        return `<a class="pg-lore pg-rv" href="lore.html?slug=${encodeURIComponent(g.slug || "")}">
+            ${bg ? `<img src="${esc(bg)}" alt="" loading="lazy" style="object-position:${focusPos(bg)}">` : ""}
+            <span class="pg-lore-tx"><small>${en ? "World & Story" : "Welt & Story"}</small><b>${esc(heading)}</b>${text ? `<span>${esc(text)}</span>` : ""}</span>
+            <span class="pg-btn pg-btn-s pg-btn-sm">${esc(label)} ${pgIc("arrow")}</span></a>`;
     }
 
-    function initWaitlist(sec) {
+    function initWaitlist(box) {
         const en = LANG === "en";
-        const form = sec.querySelector("[data-wl-form]");
-        const msg = sec.querySelector("[data-wl-msg]");
-        const statusBox = sec.querySelector("[data-wl-status]");
+        const form = box.querySelector("[data-wl-form]");
+        const msg = box.querySelector("[data-wl-msg]");
+        const statusBox = box.querySelector("[data-wl-status]");
+        const ticks = box.querySelector("[data-wl-ticks]");
         const scope = form.dataset.scope || "";
         const successText = form.dataset.success || "";
         const sfx = scope ? "_" + scope : "";                       // eigene Speicher-Keys je Bereich
@@ -1220,17 +1239,16 @@
         // Empfehlungslink = aktuelle Seite (inkl. Spiel-Slug) + ?ref=CODE
         const refLink = (code) => { try { const u = new URL(location.href); u.searchParams.set("ref", code); u.hash = ""; return u.toString(); } catch { return location.href; } };
         function showStatus(d) {
-            form.classList.add("hidden");
-            statusBox.classList.remove("hidden");
+            form.hidden = true; if (ticks) ticks.hidden = true;
+            statusBox.hidden = false;
             const link = refLink(d.code);
             statusBox.innerHTML = `
-                <p class="text-lg font-semibold text-white mb-1">${esc(successText || (en ? "You're in! 🎉" : "Du bist dabei! 🎉"))}</p>
-                <p class="text-zinc-300 mb-4">${en ? "Your spot:" : "Dein Platz:"} <span class="text-[color:var(--accent)] font-extrabold text-2xl">#${d.position}</span>
-                    ${d.referrals ? ` · ${d.referrals} ${en ? "referred" : "geworben"}` : ""}</p>
-                <p class="text-sm text-zinc-400 mb-2">${en ? "Move up by inviting friends with your link:" : "Steig auf, indem du Freunde mit deinem Link einlädst:"}</p>
-                <div class="flex gap-2 max-w-md mx-auto">
-                    <input readonly value="${esc(link)}" class="flex-1 bg-black/40 border border-white/15 rounded-full px-4 py-2.5 text-sm text-zinc-200" data-wl-link>
-                    <button type="button" class="btn-accent px-5 py-2.5 rounded-full font-semibold text-sm" data-wl-copy>${en ? "Copy" : "Kopieren"}</button>
+                <p class="pg-wl-ok">${esc(successText || (en ? "You're in! 🎉" : "Du bist dabei! 🎉"))}</p>
+                <p class="pg-wl-pos">${en ? "Your spot:" : "Dein Platz:"} <b>#${esc(String(d.position))}</b>${d.referrals ? ` · ${esc(String(d.referrals))} ${en ? "referred" : "geworben"}` : ""}</p>
+                <p class="pg-wl-hint">${en ? "Move up by inviting friends with your link:" : "Steig auf, indem du Freunde mit deinem Link einlädst:"}</p>
+                <div class="pg-form">
+                    <input readonly value="${esc(link)}" data-wl-link aria-label="${en ? "Your invite link" : "Dein Einladungslink"}">
+                    <button type="button" class="pg-btn pg-btn-p" data-wl-copy>${en ? "Copy" : "Kopieren"}</button>
                 </div>`;
             statusBox.querySelector("[data-wl-copy]").addEventListener("click", () => {
                 const inp = statusBox.querySelector("[data-wl-link]");
@@ -1250,24 +1268,22 @@
             e.preventDefault();
             const fd = new FormData(form);
             // Empfehlungscode: bevorzugt direkt aus der aktuellen URL (?ref=…), sonst aus dem Speicher.
-            // So wird die Empfehlung auch erkannt, wenn localStorage zuvor nicht geschrieben werden konnte.
             let ref = "";
             const urlRef = (qs.get("ref") || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
             if (urlRef) ref = urlRef;
             else { try { ref = localStorage.getItem("pg_wl_ref" + sfx) || ""; } catch {} }
             if (ref) fd.append("ref", ref);
             if (scope) fd.append("scope", scope);
-            msg.className = "text-sm text-center mt-4 text-zinc-400"; msg.classList.remove("hidden");
-            msg.textContent = en ? "Joining…" : "Wird eingetragen…";
+            pgMsg(msg, "info", en ? "Joining…" : "Wird eingetragen…");
             try {
                 const r = await fetch("waitlist.php", { method: "POST", body: fd });
                 const j = await r.json();
-                if (j.error) { msg.className = "text-sm text-center mt-4 text-red-400"; msg.textContent = j.error; return; }
-                msg.classList.add("hidden");
+                if (j.error) { pgMsg(msg, "err", j.error); return; }
+                msg.hidden = true;
                 if (j.token) { try { localStorage.setItem("pg_wl_token" + sfx, j.token); } catch {} }
                 showStatus(j);
                 if (!j.already) { confetti({ count: 80, y: innerHeight * 0.55 }); pgBadge("subscriber"); }
-            } catch { msg.className = "text-sm text-center mt-4 text-red-400"; msg.textContent = en ? "Something went wrong." : "Etwas ist schiefgelaufen."; }
+            } catch { pgMsg(msg, "err", en ? "Something went wrong." : "Etwas ist schiefgelaufen."); }
         });
     }
 
@@ -1343,7 +1359,7 @@
        ========================================================= */
     async function renderGame() {
         await loadData("games", "patchnotes");
-        const games = (DATA.games && DATA.games.games) || [];
+        const games = ((DATA.games && DATA.games.games) || []).filter(x => x && typeof x === "object");
         const slug = String(qs.get("slug") || "").toLowerCase();
         const g = games.find(x => String(x.slug || "").toLowerCase() === slug);
         const root = $("[data-game-root]");
@@ -1351,104 +1367,385 @@
         if (!g) {
             if (slug && await followRedirect("games", slug)) return;   // umbenannt → neue Adresse
             root.innerHTML = notFound(t("nf_text"));
-            $("[data-game-patchnotes-section]")?.remove();
             return;
         }
 
-        applyAccent(g.accent || "#8b5cf6", g.accent2 || "#22d3ee");
+        applyAccent(g.accent || "#ff7d1a", g.accent2 || g.accent || "#e6a015");
         setParticleColor(g.particleColor || g.accent);   // Partikel an die Spielwelt anpassen
         document.title = `${g.title} — PLANIGAMES`;
 
-        await ensureLogoBox(g, 1500);   // Logo ohne durchsichtigen Rand → bündig, ohne Lücken
+        // Logos ohne durchsichtigen Rand (dieses Spiel + „Weitere Spiele")
+        await Promise.all(games.filter(x => logoPath(x)).map(x => ensureLogoBox(x, x === g ? 1500 : 800)));
         // ausgeblendete Blöcke bleiben gespeichert, werden aber nicht gezeigt
         const blocks = (Array.isArray(g.blocks) ? g.blocks : []).filter(b => b && !b.hidden);
-        root.innerHTML = blocks.map((b, i) => renderBlock(b, g, i)).join("");
+        const of = (type) => blocks.filter(b => (b.type || b._type) === type);
+        const hb = of("hero")[0] || {};
+        const secs = gameSections(g, of, gamePosts(g), games.filter(x => x !== g));
+        root.innerHTML = blockHero(hb, g) + gameSubnav(g, secs, heroCtas(g, hb, of))
+            + secs.map((s, i) => `<section class="pg-sec${i % 2 ? " pg-band" : ""}" id="${s.id}">${s.html(i + 1)}</section>`).join("");
 
-        // Patch Notes dieses Spiels anhängen (falls Platzhalter vorhanden)
-        const pnMount = $("[data-game-patchnotes]");
-        if (pnMount) {
-            // Tolerant zuordnen: Slug ODER Titel (case-insensitive), auch via Tags
-            const gslug = (g.slug || "").toLowerCase(), gtitle = (g.title || "").toLowerCase();
-            const belongs = (p) => {
-                const v = (p.game || "").trim().toLowerCase();
-                if (v && (v === gslug || v === gtitle)) return true;
-                return (p.tags || []).some(tg => { const x = String(tg).toLowerCase(); return x === gslug || x === gtitle; });
-            };
-            const posts = ((DATA.patchnotes && DATA.patchnotes.posts) || [])
-                .filter(p => isPublished(p) && belongs(p))
-                .sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 3);
-            if (posts.length) {
-                pnMount.innerHTML = posts.map(p => `
-                    <a href="devlog.php?slug=${esc(p.slug)}" class="reveal group flex items-center gap-4 py-4 border-b border-white/8 hover:border-white/20">
-                        <span class="font-mono text-xs text-zinc-500 w-28 shrink-0">${esc(fmtDate(p.date))}</span>
-                        ${p.version ? `<span class="badge text-[color:var(--accent)]">v${esc(p.version)}</span>` : ""}
-                        <span class="flex-1 text-white font-medium group-hover:text-gradient">${esc(p.title)}</span>
-                        <span class="text-zinc-600 group-hover:translate-x-1 transition-transform">→</span>
-                    </a>`).join("");
-                // Diese Liste liegt außerhalb von [data-game-root] → eigene Reveal-Beobachtung,
-                // sonst bleiben die Einträge auf opacity:0 (unsichtbar).
-                observeReveals(pnMount);
-            } else { $("[data-game-patchnotes-section]")?.remove(); }
-        }
-
-        initTilt(root); initMagnetic(); observeReveals(root);
-        initLightbox(); initFaq(root); initCountdowns(root); initCounters(root); initRoadmapBars(root);
+        initMagnetic(); observeReveals(root);
+        initLightbox(); initCountdowns(root);
         // Interaktive Community-Blöcke dieses Spiels starten (Vorschläge / Warteliste)
-        $$("[data-sugg-form]", root).forEach(f => initSuggestions(f.closest("section")));
-        $$("[data-wl-form]", root).forEach(f => initWaitlist(f.closest("section")));
-        // Erste Warteliste als Sprungziel (Kopfzeilen-Button „Zum Playtest" → #warteliste)
-        const wlSec = $("[data-wl-form]", root)?.closest("section");
-        if (wlSec && !document.getElementById("warteliste")) wlSec.id = "warteliste";
+        $$("[data-sugg-form]", root).forEach(f => initSuggestions(f.closest("[data-sugg-box]") || f.parentElement));
+        $$("[data-wl-form]", root).forEach(f => initWaitlist(f.closest(".pg-wl") || f.parentElement));
+        initGameSubnav(root);
         scrollToHash();
     }
 
-    // Roadmap-Fortschrittsbalken auf die Zielbreite animieren, sobald sichtbar
-    function initRoadmapBars(root = document) {
-        const bars = $$(".roadmap-bar", root);
-        if (!bars.length) return;
-        if (!("IntersectionObserver" in window)) { bars.forEach(b => b.style.width = b.style.getPropertyValue("--target")); return; }
-        const io = new IntersectionObserver((entries) => {
-            entries.forEach(en => {
-                if (!en.isIntersecting) return;
-                io.unobserve(en.target);
-                requestAnimationFrame(() => en.target.style.width = en.target.style.getPropertyValue("--target") || "0%");
-            });
-        }, { threshold: 0.4 });
-        bars.forEach(b => io.observe(b));
+    // Beiträge dieses Spiels (Zuordnung tolerant: Slug ODER Titel, auch über Tags)
+    function gamePosts(g) {
+        const gslug = String(g.slug || "").toLowerCase(), gtitle = String(g.title || "").toLowerCase();
+        const belongs = (p) => {
+            const v = String(p.game || "").trim().toLowerCase();
+            if (v && (v === gslug || v === gtitle)) return true;
+            return (p.tags || []).some(tg => { const x = String(tg).toLowerCase(); return x === gslug || x === gtitle; });
+        };
+        return ((DATA.patchnotes && DATA.patchnotes.posts) || [])
+            .filter(p => isPublished(p) && belongs(p))
+            .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
     }
 
-    // Mapped jeden Block-Typ auf HTML. Neue Typen hier + in admin/schema.php ergänzen.
-    function renderBlock(b, g, i) {
-        const type = b.type || b._type;
-        switch (type) {
-            case "hero": return blockHero(b, g);
-            case "richtext": return blockRichtext(b);
-            case "features": return blockFeatures(b);
-            case "gallery": return blockGallery(b, i);
-            case "trailer": return blockTrailer(b);
-            case "quotes": return blockQuotes(b);
-            case "stats": return blockStats(b);
-            case "roadmap": return blockRoadmap(b);
-            case "faq": return blockFaq(b);
-            case "countdown": return blockCountdown(b);
-            case "cta": return blockCTA(b, g);
-            case "download": return blockDownload(b, g);
-            case "requirements": return blockRequirements(b);
-            case "storewidget": return blockStoreWidget(b);
-            case "suggestions": return blockSuggestions(b, g);
-            case "waitlist": return blockWaitlist(b, g);
-            case "lore": return blockLore(b, g);
-            case "spacer": return `<div style="height:${Math.max(0, +b.size || 48)}px"></div>`;
-            default: return "";
-        }
-    }
-
-    const sec = (inner, extra = "") =>
-        `<section class="relative px-6 ${extra}"><div class="max-w-6xl mx-auto">${inner}</div></section>`;
-
+    const fmtT = (key, title) => t(key).replace("{title}", title || "");
+    const isRealLink = (u) => { u = String(u || "").trim(); return !!u && u !== "#" && !/^javascript:/i.test(u); };
     function logoScale(g) { return Math.min(3, Math.max(0.3, (+g.logoScale || 100) / 100)); }
-    // Abstand zwischen Status-Badge, Logo und Text (px, einstellbar unter „Kopfbereich gestalten“)
+    // Abstand zwischen Status-Zeile, Logo und Text (px, einstellbar unter „Kopfbereich gestalten“)
     function logoGap(g) { const n = Number(g.logoGap); return Number.isFinite(n) && String(g.logoGap ?? "").trim() !== "" ? Math.min(160, Math.max(0, Math.round(n))) : 20; }
+
+    // Nächster Schritt im Kopfbereich: Wishlist → Warteliste (Playtest/Beta/Benachrichtigen) → Demo; dazu Trailer
+    function heroCtas(g, hb, of) {
+        const out = [];
+        const wish = String(g.wishlistUrl || "").trim();
+        if (/^https?:\/\//i.test(wish)) out.push({ href: wish, ext: true, label: hb.ctaLabel || t("wishlist") });
+        const wl = of("waitlist")[0];
+        if (wl) {
+            const h = String(wl.heading || "");
+            out.push({ href: "#warteliste", label: g.status === "paused" ? t("cta_notify") : /beta/i.test(h) ? t("cta_wl_beta") : /playtest/i.test(h) ? t("cta_wl_playtest") : t("cta_wl") });
+        } else if (of("download").some(d => d.embedUrl || (d.builds || []).some(x => x && (x.url || x.file)))) {
+            out.push({ href: "#spielen", label: t("cta_demo") });
+        }
+        const trUrl = String(hb.trailerUrl || "").trim();
+        if (/^https?:\/\//i.test(trUrl)) out.push({ href: trUrl, ext: true, play: true, label: t("trailer_watch") });
+        else if (of("trailer").some(tb => tb.youtube || tb.url || tb.file)) out.push({ href: "#einblicke", play: true, label: t("trailer_watch") });
+        return out.slice(0, 2);
+    }
+    const ctaLink = (c, cls) => `<a class="pg-btn ${cls}" href="${esc(c.href)}"${c.ext ? ' target="_blank" rel="noopener"' : ""}>${c.play ? pgIc("play") + " " : ""}${esc(c.label)}${c.play ? "" : " " + pgIc("arrow")}</a>`;
+
+    // Steckbrief-Leiste: eigene Angaben (Admin) – sonst die Kennzahlen des Spiels
+    function factIcon(label) {
+        const l = String(label || "").toLowerCase();
+        if (/genre|art|typ/.test(l)) return "tag";
+        if (/spieler|player|koop|co-?op|team/.test(l)) return "users";
+        if (/plattform|platform|pc|konsole|console|steam/.test(l)) return "screen";
+        if (/release|erschein|datum|date|jahr|year|start/.test(l)) return "cal";
+        if (/status|phase/.test(l)) return "flag";
+        return "spark";
+    }
+    function gameFacts(g, of) {
+        const clean = (x, k1, k2) => x && String(x[k1] || "").trim() && String(x[k2] || "").trim();
+        const own = (Array.isArray(g.facts) ? g.facts : []).filter(f => clean(f, "label", "value"));
+        if (own.length) return { list: own.slice(0, 4).map(f => [f.label, f.value]), fromStats: false };
+        const st = of("stats").flatMap(b => b.items || []).filter(x => clean(x, "label", "value"));
+        if (st.length >= 2) return { list: st.slice(0, 4).map(x => [x.label, x.value]), fromStats: true };
+        return { list: [], fromStats: false };
+    }
+
+    // Kopfbereich der Spielseite. Das Logo steht IMMER im Textblock (links · mittig · rechts neben dem Text),
+    // damit es auf jedem Bildschirm gleich zum Text steht. Wird auch von der Logo-Platzierung im Admin genutzt.
+    function heroLayout(g) { return ["left", "center", "split"].includes(g.logoLayout) ? g.logoLayout : "left"; }
+    function blockHero(b, g) {
+        const blocks = (Array.isArray(g.blocks) ? g.blocks : []).filter(x => x && !x.hidden);
+        const of = (type) => blocks.filter(x => (x.type || x._type) === type);
+        const bg = b.background || g.cover || "";
+        const bgMobile = b.backgroundMobile || "";
+        let media = "";
+        if (b.video) media = `<video autoplay muted loop playsinline ${b.poster ? `poster="${esc(b.poster)}"` : ""}><source src="${esc(b.video)}"></video>`;
+        else if (bg) media = bgMobile
+            ? `<picture><source media="(max-width: 900px)" srcset="${esc(bgMobile)}"><img src="${esc(bg)}" alt="" style="object-position:${focusPos(bg)}"></picture>`
+            : `<img src="${esc(bg)}" alt="" style="object-position:${focusPos(bg)}">`;
+        const ls = logoScale(g);
+        const layout = heroLayout(g) === "split" && !logoPath(g) ? "left" : heroLayout(g);
+        // Logo-Höhe wächst mit der Bildschirmbreite – in festen Grenzen (gleiche Wirkung auf Laptop, Full HD, 4K)
+        const h = layout === "split"
+            ? `clamp(${Math.round(72 * ls)}px, ${(11 * ls).toFixed(2)}vw, ${Math.round(220 * ls)}px)`
+            : `clamp(${Math.round(56 * ls)}px, ${(8.5 * ls).toFixed(2)}vw, ${Math.round(150 * ls)}px)`;
+        const logo = logoPath(g)
+            ? `<h1 class="pg-gh-logo">${logoMarkup(g, { h, cls: "pg-gh-logo-el", attrs: 'data-hero-logo="inline"' })}</h1>`
+            : `<h1 data-hero-logo="title" class="pg-gh-title">${esc(g.title || "")}</h1>`;
+        const genre = plainText(g.genre);
+        const crumb = `<nav class="pg-crumb" aria-label="Breadcrumb"><a href="games.html">${t("nav_games")}</a><span aria-hidden="true">/</span><span>${esc(g.title || "")}</span></nav>`;
+        const badge = `<div data-hero-badge class="pg-meta">${pgChip(g.status)}${genre ? `<span class="pg-genre">${esc(genre)}</span>` : ""}</div>`;
+        const tagline = plainText(b.tagline || g.tagline || "");
+        const tag = tagline ? `<p data-hero-tagline class="pg-gh-tag">${esc(tagline)}</p>` : `<p data-hero-tagline class="pg-gh-tag pg-gh-tag-empty"></p>`;
+        const ctas = heroCtas(g, b, of);
+        const btns = `<div data-hero-btns class="pg-row">${ctas.map((c, i) => ctaLink(c, i ? "pg-btn-s" : "pg-btn-p")).join("")}</div>`;
+        const inner = layout === "split"
+            ? `<div class="pg-gh-text">${crumb}${badge}${tag}${btns}</div><div class="pg-gh-side">${logo}</div>`
+            : `${crumb}${badge}${logo}${tag}${btns}`;
+        const facts = gameFacts(g, of).list;
+        const bar = facts.length >= 2 ? `<ul class="pg-factbar" style="--n:${facts.length}" aria-label="${t("facts_label")}">${facts.map(([k, v]) =>
+            `<li><span class="pg-fi">${pgIc(factIcon(k))}</span><span><small>${esc(k)}</small> <b>${esc(v)}</b></span></li>`).join("")}</ul>` : "";
+        return `<section data-hero class="pg-gh${media ? "" : " is-plain"}${bgMobile ? " has-mobile-img" : ""}" style="--a:${esc(g.accent || "#ff7d1a")}">
+            ${media ? `<div class="pg-gh-media" aria-hidden="true">${media}</div>` : ""}
+            <div class="pg-wrap pg-gh-in">
+                <div data-hero-inner class="pg-gh-copy pg-gh--${layout}" style="--logo-gap:${logoGap(g)}px">${inner}</div>
+                ${bar}
+            </div>
+        </section>`;
+    }
+
+    // Abschnitts-Menü (bleibt beim Scrollen oben stehen und zeigt, wo man gerade ist)
+    function gameSubnav(g, secs, ctas) {
+        const links = secs.filter(s => s.nav);
+        if (links.length < 2) return "";
+        return `<nav class="pg-subnav" aria-label="${esc(g.title || "")}"><div class="pg-wrap">
+            ${logoPath(g) ? `<a class="pg-sn-logo" href="#top" data-sn-top aria-label="${esc(g.title || "")} – ${t("to_top")}">${logoFit(g, 1500, 28, "", false)}</a>` : ""}
+            <div class="pg-sn-links">${links.map(s => `<a href="#${s.id}" data-spy="${s.id}">${s.nav}</a>`).join("")}</div>
+            ${ctas[0] ? ctaLink(ctas[0], "pg-btn-p pg-btn-sm pg-sn-cta") : ""}
+        </div></nav>`;
+    }
+    function initGameSubnav(root) {
+        const nav = $(".pg-subnav", root);
+        if (!nav) return;
+        const links = $$("[data-spy]", nav), secs = links.map(a => document.getElementById(a.dataset.spy));
+        let raf = 0;
+        const upd = () => {
+            raf = 0;
+            const y = nav.getBoundingClientRect().bottom + 24;
+            let k = -1; secs.forEach((s, i) => { if (s && s.getBoundingClientRect().top <= y) k = i; });
+            links.forEach((a, i) => { a.classList.toggle("on", i === k); if (i === k) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
+            const on = links[k];
+            if (on) { const box = on.parentElement; if (on.offsetLeft < box.scrollLeft || on.offsetLeft + on.offsetWidth > box.scrollLeft + box.clientWidth) box.scrollTo({ left: on.offsetLeft - 16, behavior: "smooth" }); }
+            nav.classList.toggle("stuck", nav.getBoundingClientRect().top <= (document.body.classList.contains("pg-hd-up") ? 1 : 80));
+        };
+        addEventListener("scroll", () => { if (!raf) raf = requestAnimationFrame(upd); }, { passive: true });
+        upd();
+        $("[data-sn-top]", nav)?.addEventListener("click", (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: "smooth" }); });
+    }
+
+    // ---------- Abschnitte der Spielseite (feste Reihenfolge, fehlende Blöcke entfallen) ----------
+    function gameSections(g, of, posts, others) {
+        const en = LANG === "en";
+        const secs = [];
+        const tagline = slideTagline(g);
+        const facts = gameFacts(g, of);
+
+        // 1) Über das Spiel – Textabschnitte (+ Kennzahlen, falls nicht schon im Steckbrief)
+        const rts = of("richtext").filter(b => String(b.body || "").trim() || b.heading);
+        const stats = facts.fromStats ? [] : of("stats").flatMap(b => b.items || []).filter(x => x && String(x.value || "").trim());
+        if (rts.length || stats.length) secs.push({ id: "ueber", nav: t("sn_about"), html: (n) => {
+            const [first, ...more] = rts;
+            const kick = first ? plainText(first.kicker) : "";
+            const kickAsLabel = kick && kick.length <= 26 && kick !== tagline;
+            const stmt = kick && !kickAsLabel && kick !== tagline ? kick : "";
+            return `${first ? `<div class="pg-wrap pg-ov">
+                    <div class="pg-rv">${pgKick(n, kickAsLabel ? esc(kick) : t("sec_about"))}<h2 class="pg-h2">${esc(first.heading || fmtT("h_about_q", g.title))}</h2>${stmt ? `<p class="pg-stmt">${esc(stmt)}</p>` : ""}</div>
+                    <div class="pg-prose pg-rv">${md(first.body || "")}</div>
+                </div>` : `<div class="pg-wrap">${pgSh(n, t("sec_about"), esc(fmtT("h_about_q", g.title)))}</div>`}
+                ${more.map(rt => `<div class="pg-wrap pg-ov pg-ov-more">
+                    <div class="pg-rv">${rt.kicker ? `<span class="pg-kicker">${esc(plainText(rt.kicker))}</span>` : ""}${rt.heading ? `<h3 class="pg-h3">${esc(rt.heading)}</h3>` : ""}</div>
+                    <div class="pg-prose pg-rv">${md(rt.body || "")}</div></div>`).join("")}
+                ${stats.length ? `<div class="pg-wrap"><div class="pg-gstats pg-rv" style="--n:${Math.min(4, stats.length)}">${stats.map(x => `<div><b>${esc(x.value)}</b><span>${esc(x.label || "")}</span></div>`).join("")}</div></div>` : ""}`;
+        } });
+
+        // 2) Selbst spielen – Demo & Downloads (+ spielbare Web-Demo nach Zustimmung)
+        const dls = of("download").filter(d => d.embedUrl || (d.builds || []).some(x => x && (x.url || x.file)));
+        if (dls.length) secs.push({ id: "spielen", nav: t("sn_play"), html: (n) => `<div class="pg-wrap">
+                ${pgSh(n, t("sec_play"), esc(dls[0].heading || t("h_play")), dls[0].text ? esc(dls[0].text) : "")}
+                ${dls.map((d, i) => `${i && d.heading ? `<h3 class="pg-h3 pg-sub">${esc(d.heading)}</h3>` : ""}${i && d.text ? `<p class="pg-lead pg-sub-lead">${esc(d.text)}</p>` : ""}${pgEmbed(d)}${pgBuilds(d)}`).join("")}
+            </div>` });
+
+        // 3) Systemanforderungen
+        const reqs = of("requirements").filter(r => ["min", "rec"].some(k => r[k] && ["os", "cpu", "ram", "gpu", "storage"].some(f => String(r[k][f] || "").trim())));
+        if (reqs.length) secs.push({ id: "technik", nav: "", html: (n) => `<div class="pg-wrap">
+                ${pgSh(n, t("sec_tech"), esc(reqs[0].heading || (en ? "System requirements" : "Systemanforderungen")), reqs[0].note ? esc(reqs[0].note) : "")}
+                ${reqs.map(r => `<div class="pg-reqs">${pgReqCol(r.min, en ? "Minimum" : "Minimal")}${pgReqCol(r.rec, en ? "Recommended" : "Empfohlen")}</div>`).join("")}
+            </div>` });
+
+        // 4) Einblicke – Trailer, Videos & Bilder
+        const vids = of("trailer").filter(tb => tb.youtube || tb.url || tb.file);
+        const imgs = of("gallery").flatMap(b => (b.images || []).map(im => (typeof im === "string" ? { src: im, alt: "" } : { src: im && im.image, alt: (im && im.alt) || "" }))).filter(x => x.src);
+        if (vids.length || imgs.length) secs.push({ id: "einblicke", nav: t("sn_media"), html: (n) => {
+            const gh = of("gallery").find(b => b.heading);
+            const h = vids.length > 1 ? t("h_media_multi") : ((vids[0] && vids[0].heading) || (gh && gh.heading) || t("h_media_one"));
+            const shot = (im, i) => `<button type="button" class="pg-shot pg-rv" data-lb data-lb-group="g-media" data-lb-index="${i}" aria-label="${esc(im.alt || (en ? "Enlarge image" : "Bild vergrößern"))}"><img src="${esc(im.src)}" alt="${esc(im.alt)}" loading="lazy" style="object-position:${focusPos(im.src)}"></button>`;
+            let body;
+            if (vids.length === 1 && imgs.length >= 3) {
+                body = `<div class="pg-bento">${pgVideo(vids[0], false)}${imgs.slice(0, 3).map(shot).join("")}</div>`
+                    + (imgs.length > 3 ? `<div class="pg-gal">${imgs.slice(3).map((im, i) => shot(im, i + 3)).join("")}</div>` : "");
+            } else {
+                body = (vids.length ? `<div class="pg-vids${vids.length > 1 ? " two" : ""}">${vids.map(v => pgVideo(v, vids.length > 1)).join("")}</div>` : "")
+                    + (imgs.length ? `<div class="pg-gal${vids.length ? "" : " solo"}">${imgs.map(shot).join("")}</div>` : "");
+            }
+            return `<div class="pg-wrap">${pgSh(n, t("sec_media"), esc(h))}${body}</div>`;
+        } });
+
+        // 5) Features – Kacheln (+ Welt-Teaser)
+        const fb = of("features").filter(b => (b.items || []).some(x => x && (x.title || x.text)));
+        const lore = of("lore").map(b => loreTeaser(b, g)).filter(Boolean);
+        if (fb.length || lore.length) secs.push({ id: "features", nav: t("sn_features"), html: (n) => `<div class="pg-wrap">
+                ${pgSh(n, t("sec_features"), esc((fb[0] && fb[0].heading) || t("h_features")))}
+                ${fb.map((b, bi) => {
+                    const items = (b.items || []).filter(x => x && (x.title || x.text));
+                    return `${bi && b.heading ? `<h3 class="pg-h3 pg-sub">${esc(b.heading)}</h3>` : ""}<div class="pg-feats" data-n="${items.length >= 4 && items.length % 3 !== 0 ? 4 : Math.min(3, items.length)}">${items.map(f =>
+                        `<div class="pg-feat pg-rv"><span class="pg-icn pg-emo">${esc(f.icon || "✦")}</span><h3>${esc(f.title || "")}</h3>${f.text ? `<p>${esc(f.text)}</p>` : ""}</div>`).join("")}</div>`;
+                }).join("")}
+                ${lore.join("")}
+            </div>` });
+
+        // 6) Stimmen – Zitate & Reviews
+        const qs2 = of("quotes").filter(b => (b.items || []).some(x => x && x.text));
+        if (qs2.length) secs.push({ id: "stimmen", nav: "", html: (n) => `<div class="pg-wrap">
+                ${pgSh(n, t("sec_quotes"), esc(qs2[0].heading || t("h_quotes")))}
+                <div class="pg-quotes">${qs2.flatMap(b => b.items || []).filter(x => x && x.text).map(q => `<figure class="pg-quote pg-rv"><blockquote>${esc(q.text)}</blockquote>${q.author || q.source ? `<figcaption>${esc(q.author || "")}${q.source ? `<span>${esc(q.source)}</span>` : ""}</figcaption>` : ""}</figure>`).join("")}</div>
+            </div>` });
+
+        // 7) Countdown
+        const cds = of("countdown").filter(c => c.date && !isNaN(Date.parse(String(c.date).includes("T") ? c.date : String(c.date).replace(" ", "T"))));
+        if (cds.length) secs.push({ id: "countdown", nav: "", html: (n) => `<div class="pg-wrap">${cds.map(c => {
+                const raw = String(c.date).includes("T") ? c.date : String(c.date).replace(" ", "T");
+                const units = [["d", en ? "days" : "Tage"], ["h", en ? "hrs" : "Std"], ["m", "Min"], ["s", en ? "sec" : "Sek"]];
+                return `<div class="pg-cd pg-rv">${pgKick(n, t("sec_countdown"))}<h2 class="pg-h2">${esc(c.heading || (en ? "Release in" : "Release in"))}</h2>${c.label ? `<p class="pg-lead">${esc(c.label)}</p>` : ""}
+                    <div class="pg-cd-grid" data-countdown="${Date.parse(raw)}">${units.map(([k, l]) => `<div><b data-cd="${k}">--</b><span>${l}</span></div>`).join("")}</div>
+                    <div class="cd-done pg-cd-done hidden"></div></div>`;
+            }).join("")}</div>` });
+
+        // 8) Roadmap – Zeitleiste (ohne Prozent); bei „Pausiert" Hinweis statt Termine
+        const rms = of("roadmap").filter(b => (b.items || []).some(x => x && x.title));
+        if (rms.length) secs.push({ id: "roadmap", nav: t("sn_roadmap"), html: (n) => {
+            const paused = g.status === "paused";
+            const rh = String(rms[0].heading || "").trim();
+            const lab = { done: en ? "Done" : "Erledigt", active: en ? "In progress" : "In Arbeit", planned: en ? "Planned" : "Geplant" };
+            const ic = { done: "check", active: "bolt", planned: "flag" };
+            const note = paused ? `<div class="pg-note"><span aria-hidden="true">⏸️</span><span>${esc(plainText(g.pauseNote) || fmtT("paused_default", g.title))}${posts[0] ? `<br><a class="pg-link" href="devlog.php?slug=${encodeURIComponent(posts[0].slug || "")}">${t("to_post")} ${pgIc("arrow")}</a>` : ""}</span></div>` : "";
+            return `<div class="pg-wrap pg-roadmap">
+                <div class="pg-rv">${pgKick(n, t("sec_roadmap"))}<h2 class="pg-h2">${esc(rh && !/^roadmap$/i.test(rh) ? rh : t("h_roadmap"))}</h2>
+                    <p class="pg-lead">${t(paused ? "lead_roadmap_paused" : "lead_roadmap")}</p>${note}</div>
+                <div>${rms.map((b, bi) => `${bi && b.heading ? `<h3 class="pg-h3 pg-sub">${esc(b.heading)}</h3>` : ""}<ol class="pg-tl pg-rv${paused ? " muted" : ""}">${(b.items || []).filter(x => x && x.title).map(m => {
+                    const st = ["done", "active", "planned"].includes(m.status) ? m.status : "planned";
+                    const date = paused && st === "planned" ? "" : plainText(m.date);
+                    return `<li class="${st}"><span class="pg-dot">${pgIc(ic[st])}</span><span><small>${date ? esc(date) + " · " : ""}${lab[st]}</small><b>${esc(m.title)}</b>${m.text ? `<p>${esc(m.text)}</p>` : ""}</span></li>`;
+                }).join("")}</ol>`).join("")}</div>
+            </div>`;
+        } });
+
+        // 9) Mitmachen – Warteliste, Vorschläge, Store-Widget, Aufruf
+        const wls = of("waitlist"), sgs = of("suggestions");
+        const sws = of("storewidget").map(pgStoreWidget).filter(Boolean);
+        const ctas = of("cta").filter(c => isRealLink(c.url) || /^https?:\/\//i.test(String(g.wishlistUrl || "")));
+        if (wls.length || sgs.length || sws.length || ctas.length) secs.push({ id: "mitmachen", nav: t("sn_join"), html: (n) => {
+            const cards = wls.map((b, i) => wlCard(b, g, i)).concat(sgs.map((b, i) => suggCard(b, g, i)));
+            return `<div class="pg-wrap">
+                ${pgSh(n, t("sec_join"), esc(t("h_join")), esc(t("lead_join")))}
+                ${cards.length ? `<div class="pg-mit${cards.length === 1 ? " solo" : ""}">${cards.join("")}</div>` : ""}
+                ${sws.join("")}
+                ${ctas.map(c => { const href = isRealLink(c.url) ? c.url : g.wishlistUrl; return `<div class="pg-ctaband pg-rv"><div><h3>${esc(c.heading || (en ? "Ready for the adventure?" : "Bereit für das Abenteuer?"))}</h3>${c.text ? `<p>${esc(c.text)}</p>` : ""}</div>
+                    <a class="pg-btn pg-btn-p" href="${esc(href)}"${/^https?:/i.test(href) ? ' target="_blank" rel="noopener"' : ""}>${esc(c.label || t("wishlist"))} ${pgIc("arrow")}</a></div>`; }).join("")}
+            </div>`;
+        } });
+
+        // 10) FAQ
+        const fq = of("faq").flatMap(b => (b.items || []).filter(x => x && x.question));
+        if (fq.length) secs.push({ id: "faq", nav: t("sn_faq"), html: (n) => {
+            const fh = String((of("faq")[0] || {}).heading || "").trim();
+            return `<div class="pg-wrap">${pgSh(n, "FAQ", esc(fh && !/^faq$/i.test(fh) ? fh : t("h_faq")))}
+                <div class="pg-faq">${fq.map(q => `<details class="pg-rv"><summary>${esc(q.question)}</summary><div class="pg-prose">${md(q.answer || "")}</div></details>`).join("")}</div></div>`;
+        } });
+
+        // 11) Devlog zu diesem Spiel
+        if (posts.length) secs.push({ id: "devlog", nav: t("sn_devlog"), html: (n) => `<div class="pg-wrap">
+                ${pgSh(n, "Devlog", esc(fmtT("h_devlog_game", g.title)), "", posts.length > 3 ? `<a class="pg-btn pg-btn-s pg-btn-sm" href="devlog.php?game=${encodeURIComponent(g.slug || "")}">${t("all_posts")} ${pgIc("arrow")}</a>` : "")}
+                <div class="pg-posts">${posts.slice(0, 3).map(p => homePost(p, g, "")).join("")}${posts.length < 3 ? `<a class="pg-morecard pg-rv" href="devlog.php"><span class="pg-icn">${pgIc("news")}</span><h3>${t("allposts_h")}</h3><p>${t("allposts_p")}</p><span class="pg-link">${t("to_devlog")} ${pgIc("arrow")}</span></a>` : ""}</div>
+            </div>` });
+
+        // 12) Weitere Spiele
+        if (others.length) secs.push({ id: "mehr", nav: "", html: (n) => `<div class="pg-wrap">
+                ${pgSh(n, t("sec_more"), esc(t("h_more")))}
+                <div class="pg-mgs" data-n="${Math.min(3, others.length)}">${others.map(o => `<a class="pg-mg pg-rv" href="${gameHref(o)}" style="${accentStyle(o)}">
+                    ${o.cover ? `<img src="${esc(o.cover)}" alt="" loading="lazy" style="object-position:${focusPos(o.cover)}">` : ""}${pgChip(o.status)}
+                    ${logoPath(o) ? logoFit(o, 16000, 96, "", true) : `<b class="pg-mg-title">${esc(o.title || "")}</b>`}
+                    <span class="pg-link">${t("to_game2")} ${pgIc("arrow")}</span></a>`).join("")}</div>
+            </div>` });
+        return secs;
+    }
+
+    // Video: YouTube erst nach Zustimmung (Klick-Platzhalter), sonst eigene Datei
+    function pgVideo(b, caption) {
+        let embed = "";
+        const url = String(b.youtube || b.url || "");
+        const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
+        if (yt) {
+            const needConsent = (DATA.studio && DATA.studio.cookie && DATA.studio.cookie.enabled !== false) && !pgConsentExternal();
+            if (needConsent) {
+                const poster = b.poster ? esc(b.poster) : `https://i.ytimg.com/vi/${yt[1]}/hqdefault.jpg`;
+                embed = `<div class="yt-consent absolute inset-0" data-yt-embed="${yt[1]}" style="background-image:url('${poster}')">
+                    <div class="yt-consent-inner">
+                        <span class="pg-play" aria-hidden="true">${pgIc("play")}</span>
+                        <p>${esc(t("yt_consent"))}</p>
+                        <div class="yt-consent-btns">
+                            <button class="pg-btn pg-btn-p pg-btn-sm" data-yt-load>${esc(t("yt_load"))}</button>
+                            <button class="pg-btn pg-btn-s pg-btn-sm" data-consent="all">${esc(t("yt_load_always"))}</button>
+                        </div>
+                    </div></div>`;
+            } else {
+                embed = `<iframe class="absolute inset-0 w-full h-full" src="https://www.youtube-nocookie.com/embed/${yt[1]}" title="${esc(b.heading || "Trailer")}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            }
+        } else if (b.file) {
+            embed = `<video class="absolute inset-0 w-full h-full object-cover" controls preload="metadata" ${b.poster ? `poster="${esc(b.poster)}"` : ""}><source src="${esc(b.file)}"></video>`;
+        }
+        if (!embed) return "";
+        return `<figure class="pg-vidbox pg-rv"><div class="pg-vid">${embed}</div>${caption && b.heading ? `<figcaption>${esc(b.heading)}</figcaption>` : ""}</figure>`;
+    }
+
+    // Download-Pakete & spielbare Web-Demo (erst nach Zustimmung)
+    function pgBuilds(b) {
+        const PLAT = { windows: ["🪟", "Windows"], mac: ["🍎", "macOS"], linux: ["🐧", "Linux"], android: ["🤖", "Android"], web: ["🌐", "Web"], other: ["📦", "Download"] };
+        const list = (b.builds || []).filter(x => x && (x.url || x.file));
+        if (!list.length) return "";
+        return `<div class="pg-builds">${list.map(d => {
+            const p = PLAT[d.platform] || PLAT.other, ext = !!d.url;
+            const meta = [d.version, d.size, p[1]].filter(Boolean).map(plainText).join(" · ");
+            return `<a class="pg-build pg-rv" href="${esc(d.url || d.file)}"${ext ? ' target="_blank" rel="noopener"' : " download"}>
+                <span class="pg-icn pg-emo">${p[0]}</span><span class="pg-build-tx"><b>${esc(d.label || p[1])}</b>${meta ? `<small>${esc(meta)}</small>` : ""}</span>
+                <span class="pg-build-dl" aria-hidden="true">${pgIc(ext ? "ext" : "dl")}</span><span class="pg-sr">${ext ? "" : t("download")}</span></a>`;
+        }).join("")}</div>`;
+    }
+    function pgEmbed(b) {
+        if (!b.embedUrl) return "";
+        const h = Math.min(900, Math.max(200, +b.embedHeight || 540));
+        const needConsent = (DATA.studio && DATA.studio.cookie && DATA.studio.cookie.enabled !== false) && !pgConsentExternal();
+        const inner = !needConsent
+            ? `<iframe class="absolute inset-0 w-full h-full" src="${esc(b.embedUrl)}" title="Web-Demo" allow="autoplay; fullscreen; gamepad; clipboard-write" allowfullscreen></iframe>`
+            : `<div class="yt-consent absolute inset-0" data-embed-holder data-embed-src="${esc(b.embedUrl)}">
+                   <div class="yt-consent-inner"><p>${esc(t("yt_consent"))}</p>
+                       <div class="yt-consent-btns">
+                           <button class="pg-btn pg-btn-p pg-btn-sm" data-embed-load>${pgIc("play")} ${LANG === "en" ? "Play demo" : "Demo starten"}</button>
+                           <button class="pg-btn pg-btn-s pg-btn-sm" data-consent="all">${esc(t("yt_load_always"))}</button>
+                       </div></div></div>`;
+        return `<div class="pg-embed pg-rv" style="height:${h}px">${inner}</div>`;
+    }
+    function pgStoreWidget(b) {
+        let src = "", h = 190, maxW = 646;
+        if (b.platform === "itch" && b.itchEmbed) { src = b.itchEmbed; h = Math.min(900, Math.max(150, +b.height || 167)); maxW = 560; }
+        else if (b.steamAppId) { const id = String(b.steamAppId).replace(/\D/g, ""); if (id) src = `https://store.steampowered.com/widget/${id}/`; }
+        if (!src) return "";
+        const needConsent = (DATA.studio && DATA.studio.cookie && DATA.studio.cookie.enabled !== false) && !pgConsentExternal();
+        const inner = !needConsent
+            ? `<iframe class="absolute inset-0 w-full h-full" src="${esc(src)}" frameborder="0" title="Store-Widget"></iframe>`
+            : `<div class="yt-consent absolute inset-0" data-embed-holder data-embed-src="${esc(src)}">
+                   <div class="yt-consent-inner"><p>${esc(t("yt_consent"))}</p>
+                       <div class="yt-consent-btns">
+                           <button class="pg-btn pg-btn-p pg-btn-sm" data-embed-load>${LANG === "en" ? "Load widget" : "Widget laden"}</button>
+                           <button class="pg-btn pg-btn-s pg-btn-sm" data-consent="all">${esc(t("yt_load_always"))}</button>
+                       </div></div></div>`;
+        return `<div class="pg-widget pg-rv">${b.heading ? `<h3 class="pg-h3">${esc(b.heading)}</h3>` : ""}<div class="pg-embed" style="max-width:${maxW}px;height:${h}px">${inner}</div></div>`;
+    }
+    function pgReqCol(spec, title) {
+        const en = LANG === "en";
+        const ROWS = [["os", en ? "OS" : "Betriebssystem"], ["cpu", en ? "Processor" : "Prozessor"], ["ram", en ? "Memory" : "Arbeitsspeicher"], ["gpu", en ? "Graphics" : "Grafikkarte"], ["storage", en ? "Storage" : "Speicherplatz"]];
+        if (!spec || !ROWS.some(([k]) => String(spec[k] || "").trim())) return "";
+        return `<div class="pg-card pg-req pg-rv"><h3>${esc(title)}</h3><dl>${ROWS.filter(([k]) => String(spec[k] || "").trim()).map(([k, l]) => `<div><dt>${l}</dt><dd>${esc(spec[k])}</dd></div>`).join("")}</dl></div>`;
+    }
 
     /* ---------- Logo ohne durchsichtigen Rand ----------
        Viele Logo-Dateien haben rundum durchsichtigen Rand. Gezeigt wird nur der sichtbare Teil (Ausschnitt,
@@ -1544,319 +1841,6 @@
             + `<img src="${esc(src)}" alt="" style="width:${(100 / fw).toFixed(4)}%;left:${(-100 * box.x0 / fw).toFixed(4)}%;top:${(-100 * box.y0 / fh).toFixed(4)}%"></span>`;
     }
 
-    // Kopfbereich: Das Logo sitzt IMMER im Textblock (nie frei über dem Bild). Dadurch steht es auf jedem
-    // Bildschirm gleich zum Text und kann nichts überdecken. Anordnung: links (Standard) · mittig · rechts neben dem Text.
-    function heroLayout(g) { return ["left", "center", "split"].includes(g.logoLayout) ? g.logoLayout : "left"; }
-    function blockHero(b, g) {
-        const bg = b.background || g.cover;
-        const bgMobile = b.backgroundMobile || "";
-        const ls = logoScale(g);
-        let media;
-        if (b.video) {
-            media = `<video class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline ${b.poster ? `poster="${esc(b.poster)}"` : ""}><source src="${esc(b.video)}"></video>`;
-        } else if (bg) {
-            // Eigenes Mobil-Bild (Hochformat) via <picture>, sonst das normale Bild für alle.
-            media = bgMobile
-                ? `<picture class="absolute inset-0 w-full h-full block">
-                       <source media="(max-width: 767px)" srcset="${esc(bgMobile)}">
-                       <img src="${esc(bg)}" alt="" style="object-position:${focusPos(bg)}" class="w-full h-full object-cover">
-                   </picture>`
-                : `<img src="${esc(bg)}" alt="" style="object-position:${focusPos(bg)}" class="absolute inset-0 w-full h-full object-cover">`;
-        } else {
-            media = `<div class="absolute inset-0 grid-lines"></div>`;
-        }
-        const layout = heroLayout(g) === "split" && !g.logo ? "left" : heroLayout(g);
-        // Logo-Höhe wächst mit der Bildschirmbreite – in festen Grenzen (gleiche Wirkung auf Laptop, Full HD, 4K)
-        const h = layout === "split"
-            ? `clamp(${Math.round(72 * ls)}px, ${(11 * ls).toFixed(2)}vw, ${Math.round(220 * ls)}px)`
-            : `clamp(${Math.round(56 * ls)}px, ${(8.5 * ls).toFixed(2)}vw, ${Math.round(150 * ls)}px)`;
-        const logo = logoPath(g)
-            ? logoMarkup(g, { h, cls: "pg-hero-logo reveal", attrs: 'data-hero-logo="inline"' })
-            : `<h1 data-hero-logo="title" class="pg-hero-title font-display text-6xl md:text-8xl font-extrabold text-white reveal-on"><span class="line-mask"><span class="line-inner">${esc(g.title)}</span></span></h1>`;
-        const badge = `<div data-hero-badge class="pg-hero-badge reveal-on">${statusBadge(g.status)}</div>`;
-        const tag = `<p data-hero-tagline class="pg-hero-tag text-xl md:text-2xl text-zinc-200 reveal">${esc(b.tagline || g.tagline || "")}</p>`;
-        const btns = `<div data-hero-btns class="pg-hero-btns reveal">
-                    ${g.wishlistUrl ? `<a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold">${esc(b.ctaLabel || t("wishlist"))}</a>` : ""}
-                    ${b.trailerUrl ? `<a href="${esc(b.trailerUrl)}" target="_blank" rel="noopener" class="btn-ghost magnetic px-8 py-4 rounded-full font-semibold inline-flex items-center gap-2">▶ ${LANG === "en" ? "Watch trailer" : "Trailer ansehen"}</a>` : ""}
-                </div>`;
-        const inner = layout === "split"
-            ? `<div class="pg-hero-text">${badge}${tag}${btns}</div><div class="pg-hero-side">${logo}</div>`
-            : `${badge}${logo}${tag}${btns}`;
-        return `
-        <section data-hero class="relative min-h-[88vh] flex items-end overflow-hidden">
-            ${media}
-            <div class="absolute inset-0" style="background:linear-gradient(to top, var(--bg) 4%, color-mix(in srgb, var(--accent) 18%, transparent) 55%, rgba(0,0,0,.35))"></div>
-            <div class="absolute inset-0 bg-black/30"></div>
-            <div data-hero-inner class="pg-hero-inner pg-hero--${layout} relative max-w-6xl mx-auto w-full px-6 pb-16 md:pb-24" style="--logo-gap:${logoGap(g)}px">${inner}</div>
-        </section>`;
-    }
-
-    function blockRichtext(b) {
-        return sec(`
-            <div class="grid md:grid-cols-12 gap-8 items-start">
-                ${b.heading ? `<div class="md:col-span-4"><h2 class="font-display text-3xl md:text-4xl font-extrabold text-white reveal">${esc(b.heading)}</h2>
-                    ${b.kicker ? `<div class="font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] mt-3 reveal">${esc(b.kicker)}</div>` : ""}</div>` : ""}
-                <div class="${b.heading ? "md:col-span-8" : "md:col-span-12 max-w-3xl"} prose-pg reveal">${md(b.body || "")}</div>
-            </div>`, "py-20 md:py-28");
-    }
-
-    function blockFeatures(b) {
-        const items = (b.items || []).map((f, i) => `
-            <div class="reveal tilt-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-7" style="transition-delay:${i * 70}ms">
-                <div class="card-glow"></div>
-                <div class="text-4xl mb-4">${esc(f.icon || "✦")}</div>
-                <h3 class="text-lg font-bold text-white mb-2">${esc(f.title || "")}</h3>
-                <p class="text-sm text-zinc-400 leading-relaxed">${esc(f.text || "")}</p>
-            </div>`).join("");
-        return sec(`
-            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white text-center mb-14 reveal">${esc(b.heading)}</h2>` : ""}
-            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">${items}</div>`, "py-20 md:py-28");
-    }
-
-    function blockGallery(b, gi = 0) {
-        const list = (b.images || []).map(im => (typeof im === "string" ? { src: im, alt: "" } : { src: im.image, alt: im.alt || "" })).filter(x => x.src);
-        const grp = "g" + gi;
-        const imgs = list.map((im, i) => `
-            <button type="button" data-lb data-lb-group="${grp}" data-lb-index="${i}" class="reveal group relative block overflow-hidden rounded-xl border border-white/10 ${i % 5 === 0 ? "sm:col-span-2 sm:row-span-2" : ""}" style="transition-delay:${i * 50}ms">
-                <img src="${esc(im.src)}" alt="${esc(im.alt)}" loading="lazy" class="w-full h-full object-cover aspect-video transition-transform duration-700 group-hover:scale-105">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="absolute bottom-2 right-2 text-white/0 group-hover:text-white/90 text-lg transition-colors">⤢</div>
-            </button>`).join("");
-        if (!list.length) return "";
-        return sec(`
-            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-12 reveal">${esc(b.heading)}</h2>` : ""}
-            <div class="grid sm:grid-cols-3 gap-3 auto-rows-[1fr]">${imgs}</div>`, "py-20 md:py-28");
-    }
-
-    function blockTrailer(b) {
-        let embed = "";
-        const url = b.youtube || b.url || "";
-        const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/);
-        if (yt) {
-            const cookieOff = (DATA.studio && DATA.studio.cookie && DATA.studio.cookie.enabled !== false);
-            if (cookieOff && !pgConsentExternal()) {
-                // DSGVO: YouTube erst nach Zustimmung laden – solange ein Klick-Platzhalter
-                const poster = b.poster ? esc(b.poster) : `https://i.ytimg.com/vi/${yt[1]}/hqdefault.jpg`;
-                embed = `<div class="yt-consent absolute inset-0" data-yt-embed="${yt[1]}" style="background-image:url('${poster}')">
-                    <div class="yt-consent-inner">
-                        <p>${esc(t("yt_consent"))}</p>
-                        <div class="yt-consent-btns">
-                            <button class="btn-accent px-6 py-3 rounded-full font-semibold text-sm" data-yt-load>▶ ${esc(t("yt_load"))}</button>
-                            <button class="btn-ghost px-6 py-3 rounded-full font-semibold text-sm" data-consent="all">${esc(t("yt_load_always"))}</button>
-                        </div>
-                    </div></div>`;
-            } else {
-                embed = `<iframe class="absolute inset-0 w-full h-full" src="https://www.youtube-nocookie.com/embed/${yt[1]}" title="Trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-            }
-        } else if (b.file) {
-            embed = `<video class="absolute inset-0 w-full h-full object-cover" controls ${b.poster ? `poster="${esc(b.poster)}"` : ""}><source src="${esc(b.file)}"></video>`;
-        }
-        if (!embed) return "";
-        return sec(`
-            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white text-center mb-12 reveal">${esc(b.heading)}</h2>` : ""}
-            <div class="reveal relative aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style="box-shadow:0 30px 90px -30px color-mix(in srgb,var(--accent) 60%,transparent)">${embed}</div>`,
-            "py-20 md:py-28");
-    }
-
-    function blockQuotes(b) {
-        const items = (b.items || []).map((q, i) => `
-            <figure class="reveal rounded-2xl border border-white/10 bg-white/[0.02] p-8" style="transition-delay:${i * 80}ms">
-                <div class="text-[color:var(--accent)] text-2xl mb-3">★★★★★</div>
-                <blockquote class="text-lg md:text-xl text-zinc-100 font-medium leading-relaxed">„${esc(q.text || "")}"</blockquote>
-                <figcaption class="mt-5 font-mono text-xs uppercase tracking-widest text-zinc-500">${esc(q.author || "")}${q.source ? ` · <span class="text-zinc-400">${esc(q.source)}</span>` : ""}</figcaption>
-            </figure>`).join("");
-        return sec(`
-            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white text-center mb-12 reveal">${esc(b.heading)}</h2>` : ""}
-            <div class="grid md:grid-cols-2 gap-5">${items}</div>`, "py-20 md:py-28");
-    }
-
-    function blockStats(b) {
-        const items = (b.items || []).map((st, i) => `
-            <div class="reveal text-center" style="transition-delay:${i * 70}ms">
-                <div class="font-display text-4xl md:text-6xl font-extrabold text-gradient" data-count>${esc(st.value || "")}</div>
-                <div class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 mt-2">${esc(st.label || "")}</div>
-            </div>`).join("");
-        return sec(`<div class="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 border-y border-white/10">${items}</div>`, "py-16");
-    }
-
-    function blockRoadmap(b) {
-        const all = b.items || [];
-        const items = all.map((m, i) => {
-            const done = m.status === "done", active = m.status === "active";
-            return `<div class="reveal relative pl-10 pb-10 last:pb-0" style="transition-delay:${i * 80}ms">
-                <div class="absolute left-0 top-1 w-5 h-5 rounded-full border-2 ${done ? "bg-[color:var(--accent)] border-[color:var(--accent)]" : active ? "border-[color:var(--accent)] bg-transparent animate-pulse" : "border-white/25 bg-transparent"}"></div>
-                <div class="absolute left-[9px] top-6 bottom-0 w-px bg-white/12"></div>
-                <div class="font-mono text-[11px] uppercase tracking-widest ${done ? "text-[color:var(--accent)]" : "text-zinc-500"} mb-1">${esc(m.date || (done ? "Erledigt" : active ? "In Arbeit" : "Geplant"))}</div>
-                <h3 class="text-lg font-bold text-white">${esc(m.title || "")}</h3>
-                ${m.text ? `<p class="text-sm text-zinc-400 mt-1 max-w-xl">${esc(m.text)}</p>` : ""}
-            </div>`;
-        }).join("");
-        // Live-Fortschritt: erledigte zählen voll, "in Arbeit" zur Hälfte
-        let progress = 0;
-        if (all.length) {
-            const score = all.reduce((s, m) => s + (m.status === "done" ? 1 : m.status === "active" ? 0.5 : 0), 0);
-            progress = Math.round((score / all.length) * 100);
-        }
-        const bar = all.length ? `
-            <div class="reveal max-w-2xl mb-10">
-                <div class="flex items-end justify-between mb-2">
-                    <span class="font-mono text-[11px] uppercase tracking-widest text-zinc-500">${LANG === "en" ? "Development progress" : "Entwicklungs-Fortschritt"}</span>
-                    <span class="font-display text-2xl font-extrabold text-gradient tabular-nums" data-count>${progress}%</span>
-                </div>
-                <div class="h-2.5 rounded-full bg-white/8 overflow-hidden">
-                    <div class="roadmap-bar h-full rounded-full" style="width:0%;--target:${progress}%;background:linear-gradient(90deg,var(--accent-2),var(--accent))"></div>
-                </div>
-            </div>` : "";
-        return sec(`
-            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-8 reveal">${esc(b.heading)}</h2>` : ""}
-            ${bar}
-            <div class="max-w-2xl">${items}</div>`, "py-20 md:py-28");
-    }
-
-    function blockFaq(b) {
-        const items = (b.items || []).map((q, i) => `
-            <div class="reveal faq-item border-b border-white/10" style="transition-delay:${i * 50}ms">
-                <button type="button" class="faq-q w-full flex items-center justify-between gap-4 text-left py-5 group" aria-expanded="false">
-                    <span class="text-lg md:text-xl font-semibold text-white group-hover:text-gradient">${esc(q.question || "")}</span>
-                    <span class="faq-ico shrink-0 w-8 h-8 rounded-full border border-white/15 grid place-items-center text-[color:var(--accent)] text-lg transition-transform">+</span>
-                </button>
-                <div class="faq-a overflow-hidden" style="max-height:0;transition:max-height .4s cubic-bezier(0.16,1,0.3,1)">
-                    <div class="prose-pg pb-6 pr-12">${md(q.answer || "")}</div>
-                </div>
-            </div>`).join("");
-        if (!items) return "";
-        return sec(`
-            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-10 reveal">${esc(b.heading)}</h2>` : ""}
-            <div class="max-w-3xl">${items}</div>`, "py-20 md:py-28");
-    }
-
-    function blockCountdown(b) {
-        const ts = b.date ? Date.parse(b.date) : NaN;
-        const valid = !isNaN(ts);
-        const units = [["d", "Tage", "days"], ["h", "Std", "hrs"], ["m", "Min", "min"], ["s", "Sek", "sec"]];
-        const cells = units.map(([k, de, en]) => `
-            <div class="text-center">
-                <div class="cd-num font-display text-4xl md:text-6xl font-extrabold text-gradient tabular-nums" data-cd="${k}">--</div>
-                <div class="font-mono text-[10px] uppercase tracking-widest text-zinc-500 mt-1">${LANG === "en" ? en : de}</div>
-            </div>`).join("");
-        return sec(`
-            <div class="reveal relative overflow-hidden rounded-3xl border border-white/10 p-10 md:p-14 text-center" style="background:radial-gradient(120% 120% at 50% 0%, color-mix(in srgb,var(--accent) 22%, transparent), transparent 60%)">
-                ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3">${esc(b.heading)}</h2>` : ""}
-                ${b.label ? `<p class="text-zinc-300 mb-8">${esc(b.label)}</p>` : ""}
-                <div class="cd-grid grid grid-cols-4 gap-4 md:gap-8 max-w-xl mx-auto" data-countdown="${valid ? ts : ""}">${cells}</div>
-                <div class="cd-done hidden mt-2 text-2xl font-bold text-[color:var(--accent)]"></div>
-            </div>`, "py-20 md:py-28");
-    }
-
-    function blockCTA(b, g) {
-        const href = b.url || g.wishlistUrl || "#";
-        return sec(`
-            <div class="reveal relative overflow-hidden rounded-3xl border border-white/10 p-10 md:p-16 text-center" style="background:radial-gradient(120% 120% at 50% 0%, color-mix(in srgb,var(--accent) 28%, transparent), transparent 60%)">
-                <h2 class="font-display text-3xl md:text-6xl font-extrabold text-white mb-5">${esc(b.heading || "Bereit für das Abenteuer?")}</h2>
-                ${b.text ? `<p class="text-zinc-300 text-lg max-w-2xl mx-auto mb-9">${esc(b.text)}</p>` : ""}
-                <a href="${esc(href)}" target="_blank" rel="noopener" class="btn-accent magnetic inline-block px-10 py-4 rounded-full font-semibold text-lg">${esc(b.label || "Jetzt wishlisten")}</a>
-            </div>`, "py-20 md:py-28");
-    }
-
-    function blockDownload(b, g) {
-        const PLAT = {
-            windows: { ic: "🪟", label: "Windows" }, mac: { ic: "🍎", label: "macOS" },
-            linux: { ic: "🐧", label: "Linux" }, android: { ic: "🤖", label: "Android" },
-            web: { ic: "🌐", label: "Web" }, other: { ic: "📦", label: "Download" },
-        };
-        const builds = (b.builds || []).filter(x => (x.url || x.file));
-        const cards = builds.map((d, i) => {
-            const href = d.url || d.file || "#";
-            const p = PLAT[d.platform] || PLAT.other;
-            const ext = !d.url; // eigene Datei -> Download-Attribut
-            const meta = [d.version, d.size].filter(Boolean).join(" · ");
-            return `<a href="${esc(href)}" ${d.url ? 'target="_blank" rel="noopener"' : "download"}
-                class="reveal group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.025] hover:border-[color:var(--accent)] px-5 py-4 transition" style="transition-delay:${i * 60}ms">
-                <span class="text-3xl">${p.ic}</span>
-                <span class="flex-1 min-w-0">
-                    <span class="block font-semibold text-white truncate">${esc(d.label || p.label)}</span>
-                    ${meta ? `<span class="block font-mono text-[11px] uppercase tracking-widest text-zinc-500 mt-0.5">${esc(meta)}</span>` : ""}
-                </span>
-                <span class="shrink-0 text-zinc-400 group-hover:text-[color:var(--accent)] text-xl">↓</span>
-            </a>`;
-        }).join("");
-
-        // Optional: spielbare Web-Demo (eingebettet, erst nach Zustimmung)
-        let demo = "";
-        if (b.embedUrl) {
-            const h = Math.min(900, Math.max(200, +b.embedHeight || 540));
-            const cookieOff = (DATA.studio && DATA.studio.cookie && DATA.studio.cookie.enabled !== false);
-            const inner = (!cookieOff || pgConsentExternal())
-                ? `<iframe class="absolute inset-0 w-full h-full" src="${esc(b.embedUrl)}" title="Web-Demo" allow="autoplay; fullscreen; gamepad; clipboard-write" allowfullscreen></iframe>`
-                : `<div class="yt-consent absolute inset-0" data-embed-holder data-embed-src="${esc(b.embedUrl)}">
-                       <div class="yt-consent-inner">
-                           <p>${esc(t("yt_consent"))}</p>
-                           <div class="yt-consent-btns">
-                               <button class="btn-accent px-6 py-3 rounded-full font-semibold text-sm" data-embed-load>▶ ${LANG === "en" ? "Play demo" : "Demo starten"}</button>
-                               <button class="btn-ghost px-6 py-3 rounded-full font-semibold text-sm" data-consent="all">${esc(t("yt_load_always"))}</button>
-                           </div>
-                       </div>
-                   </div>`;
-            demo = `<div class="reveal relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl mb-10" style="height:${h}px;box-shadow:0 30px 90px -30px color-mix(in srgb,var(--accent) 60%,transparent)">${inner}</div>`;
-        }
-        if (!demo && !cards) return "";
-        return sec(`
-            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-4 reveal">${esc(b.heading)}</h2>` : ""}
-            ${b.text ? `<p class="text-zinc-300 text-lg max-w-2xl mb-10 reveal">${esc(b.text)}</p>` : ""}
-            ${demo}
-            ${cards ? `<div class="grid sm:grid-cols-2 gap-4">${cards}</div>` : ""}`, "py-20 md:py-28");
-    }
-
-    function blockStoreWidget(b) {
-        let src = "", h = 190, maxW = 646;
-        if (b.platform === "itch" && b.itchEmbed) {
-            src = b.itchEmbed; h = Math.min(900, Math.max(150, +b.height || 167)); maxW = 560;
-        } else if (b.steamAppId) {
-            const id = String(b.steamAppId).replace(/\D/g, "");
-            if (id) { src = `https://store.steampowered.com/widget/${id}/`; h = 190; maxW = 646; }
-        }
-        if (!src) return "";
-        const cookieOff = (DATA.studio && DATA.studio.cookie && DATA.studio.cookie.enabled !== false);
-        const inner = (!cookieOff || pgConsentExternal())
-            ? `<iframe class="absolute inset-0 w-full h-full" src="${esc(src)}" frameborder="0" title="Store-Widget"></iframe>`
-            : `<div class="yt-consent absolute inset-0" data-embed-holder data-embed-src="${esc(src)}">
-                   <div class="yt-consent-inner">
-                       <p>${esc(t("yt_consent"))}</p>
-                       <div class="yt-consent-btns">
-                           <button class="btn-accent px-6 py-3 rounded-full font-semibold text-sm" data-embed-load>▶ ${LANG === "en" ? "Load widget" : "Widget laden"}</button>
-                           <button class="btn-ghost px-6 py-3 rounded-full font-semibold text-sm" data-consent="all">${esc(t("yt_load_always"))}</button>
-                       </div>
-                   </div>
-               </div>`;
-        return sec(`
-            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white text-center mb-8 reveal">${esc(b.heading)}</h2>` : ""}
-            <div class="reveal relative rounded-2xl overflow-hidden border border-white/10 mx-auto" style="max-width:${maxW}px;height:${h}px;box-shadow:0 24px 70px -30px color-mix(in srgb,var(--accent) 60%,transparent)">${inner}</div>`,
-            "py-16 md:py-24");
-    }
-
-    function blockRequirements(b) {
-        const en = LANG === "en";
-        const ROWS = [["os", en ? "OS" : "Betriebssystem"], ["cpu", en ? "Processor" : "Prozessor"],
-            ["ram", en ? "Memory" : "Arbeitsspeicher"], ["gpu", en ? "Graphics" : "Grafikkarte"],
-            ["storage", en ? "Storage" : "Speicherplatz"]];
-        const col = (spec, title) => {
-            if (!spec || !ROWS.some(([k]) => spec[k])) return "";
-            const rows = ROWS.filter(([k]) => spec[k]).map(([k, lbl]) => `
-                <div class="flex gap-3 py-2.5 border-b border-white/8">
-                    <span class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 w-32 shrink-0 pt-0.5">${lbl}</span>
-                    <span class="text-zinc-200">${esc(spec[k])}</span>
-                </div>`).join("");
-            return `<div class="reveal flex-1 rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-                <h3 class="font-display text-lg font-bold text-white mb-3">${esc(title)}</h3>${rows}</div>`;
-        };
-        const cols = col(b.min, en ? "Minimum" : "Minimal") + col(b.rec, en ? "Recommended" : "Empfohlen");
-        if (!cols) return "";
-        return sec(`
-            ${b.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3 reveal">${esc(b.heading)}</h2>` : ""}
-            ${b.note ? `<p class="text-zinc-400 mb-8 reveal">${esc(b.note)}</p>` : `<div class="mb-8"></div>`}
-            <div class="flex flex-col md:flex-row gap-5">${cols}</div>`, "py-20 md:py-28");
-    }
-
     /* ---------- Interaktive Block-Helfer ---------- */
     let _lbBound = false, _lbList = [], _lbIdx = 0;
     function initLightbox() {
@@ -1892,16 +1876,6 @@
             if (lb.classList.contains("hidden")) return;
             if (e.key === "Escape") close(); else if (e.key === "ArrowRight") step(1); else if (e.key === "ArrowLeft") step(-1);
         });
-    }
-
-    function initFaq(root = document) {
-        $$(".faq-q", root).forEach(btn => btn.addEventListener("click", () => {
-            const item = btn.closest(".faq-item"), ans = $(".faq-a", item), ico = $(".faq-ico", btn);
-            const open = item.classList.toggle("open");
-            ans.style.maxHeight = open ? ans.scrollHeight + "px" : "0";
-            btn.setAttribute("aria-expanded", String(open));
-            if (ico) ico.textContent = open ? "–" : "+";
-        }));
     }
 
     function initCountdowns(root = document) {
@@ -2437,6 +2411,14 @@
         link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
         play: '<path class="pg-fill" d="M8 5.5v13l11-6.5z"/>', pause: '<path d="M9 5v14M15 5v14"/>',
         pad: '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7 10.5v4M5 12.5h4M15.5 11.5h.01M18 13.5h.01"/>',
+        up: '<path d="M6 15l6-6 6 6"/>', check: '<path d="M5 12.5 10 17l9-10"/>', bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+        flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>', dl: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
+        news: '<path d="M4 5h12v14H6a2 2 0 0 1-2-2zM16 9h4v8a2 2 0 0 1-2 2h-2M7.5 9h5M7.5 12.5h5M7.5 16h3"/>',
+        tag: '<path d="M3 12V4.5A1.5 1.5 0 0 1 4.5 3H12l9 9-9 9z"/><circle cx="8" cy="8" r="1.4"/>',
+        users: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.8-3.2 3-5 5.5-5s4.7 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.6 14.2c2.2.3 3.8 1.8 4.6 4.8"/>',
+        screen: '<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/>',
+        cal: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+        spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
     };
     const pgIc = (n) => `<svg class="pg-ic" viewBox="0 0 24 24" aria-hidden="true">${PG_IC[n] || PG_IC.link}</svg>`;
 

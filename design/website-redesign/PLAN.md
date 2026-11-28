@@ -113,8 +113,17 @@ Man kann jede Phase einzeln hochladen oder mehrere zusammen.
    Wobbly Wizards“).
    Geändert: `index.html`, `assets/app.js`, `assets/site.css`, `admin/schema.php`, `admin/view-games.php`,
    `admin/index.php`, `admin/lib.php` (nur Versionsnummer), `admin/assets/admin.css` (Schild „Pausiert“).
-3. **Spielseite:** feste Reihenfolge, Steckbrief-Leiste, Abschnitts-Menü, Medien-Raster, Roadmap-Zeitleiste,
-   Mitmachen an einem Ort, „Pausiert“-Logik.
+3. **Spielseite – erledigt (28.11.2026):** Kopfbereich wie im Probedesign (Brotkrumen, Status + Genre, Logo,
+   Satz, nächster Schritt: Wishlist → Warteliste „Für den Playtest eintragen“/„Zur Beta anmelden“/„Benachrichtigt
+   werden“ → „Demo spielen“; dazu „Trailer ansehen“), Steckbrief-Leiste, mitlaufendes Abschnitts-Menü und feste
+   Reihenfolge: Über das Spiel → Selbst spielen → Technik → Einblicke (Video + Bilder-Raster, Großansicht) →
+   Features (+ Welt-Teaser) → Stimmen → Countdown → Roadmap (Zeitleiste, bei „Pausiert“ Hinweis statt alter
+   Termine) → Mitmachen (Warteliste mit Platz & Empfehlungslink, Vorschläge mit Abstimmung, Store-Widget,
+   Aufruf-Banner nur mit echtem Link) → FAQ → Devlog → Weitere Spiele. Alle bisherigen Blocktypen bleiben nutzbar;
+   „Abstand“-Blöcke entfallen (Abstände macht das Design). YouTube & Web-Demos laden weiter erst nach Zustimmung.
+   **Neu im Admin:** *Darstellung → Steckbrief (Spielseite)* (bis zu 4 Zeilen, sonst die Kennzahlen),
+   *Einstellungen → Hinweis bei „Pausiert“*; Hinweistexte (Reihenfolge, Handy-Ansicht) angepasst.
+   „Kopfbereich gestalten“ (Logo-Platzierung) arbeitet unverändert mit der neuen Seite.
 4. **Unterseiten:** Spiele-Übersicht, Devlog (Liste + Beitrag), Presse-Kit, Kontakt, Lore, Rechtliches, 404.
 5. **Feinschliff:** Tailwind-Laufzeit entfernen (schnellerer Seitenaufbau), Bilder beim Upload zusätzlich als WebP,
    Handy-Ansichten, Ladezeit, englische Texte, Gesamttest.

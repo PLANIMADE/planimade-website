@@ -55,19 +55,9 @@
 
     <div data-shell="header"></div>
 
-    <!-- Hier rendert app.js die frei konfigurierten Blöcke des Spiels -->
-    <main data-game-root></main>
+    <!-- Hier baut app.js die Spielseite (Design v7) aus den Blöcken des Spiels – feste Reihenfolge, fehlende Blöcke entfallen -->
+    <main data-game-root id="top"></main>
 
-    <!-- Patch Notes des Spiels (wird ausgeblendet, falls keine vorhanden) -->
-    <section data-game-patchnotes-section class="relative px-6 py-20 md:py-28">
-        <div class="max-w-3xl mx-auto">
-            <div class="flex items-end justify-between mb-8 reveal">
-                <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white" data-i18n="patchnotes">Patch Notes</h2>
-                <a href="devlog.php" class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 hover:text-white" data-i18n="all_games_arrow">Alle →</a>
-            </div>
-            <div data-game-patchnotes></div>
-        </div>
-    </section>
 
     <div data-shell="footer"></div>
 </body>

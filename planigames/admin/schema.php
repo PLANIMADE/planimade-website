@@ -206,6 +206,7 @@ return [
         ['name'=>'status','label'=>'Status','widget'=>'select','default'=>'development','options'=>[
           'development'=>'In Entwicklung','announced'=>'Angekündigt','demo'=>'Demo verfügbar','early'=>'Early Access','released'=>'Veröffentlicht','paused'=>'Pausiert',
         ]],
+        ['name'=>'pauseNote','label'=>'Hinweis bei „Pausiert“','widget'=>'text','hint'=>'Erscheint auf der Spielseite bei der Roadmap, solange der Status „Pausiert“ ist. Leer = Standardtext.'],
         ['name'=>'featured','label'=>'Aktuelles Projekt (Startseite)','widget'=>'boolean','hint'=>'Das erste so markierte Spiel startet den Durchlauf auf der Startseite und trägt das Schild „Aktuelles Projekt“.'],
         ['name'=>'wishlistUrl','label'=>'Wishlist / Store-Link','widget'=>'string','hint'=>'z. B. Steam-Seite. Erscheint als Haupt-Button im Kopfbereich.'],
         ['widget'=>'heading','label'=>'Farben der Spielwelt','tab'=>'look','hint'=>'Buttons, Verläufe & Partikel der Spielseite.'],
@@ -219,13 +220,18 @@ return [
         ['name'=>'logoScale','label'=>'Logo-Größe (%)','widget'=>'number','default'=>100,'hint'=>'100 = Standard. Wirkt auf Kopfbereich & Startseiten-Karte. Am einfachsten über „Kopfbereich gestalten“.'],
         ['name'=>'logoLayout','label'=>'Anordnung im Kopfbereich','widget'=>'select','default'=>'left','options'=>[
           'left'=>'Links über dem Text (Standard)','center'=>'Mittig – alles zentriert','split'=>'Logo rechts neben dem Text',
-        ],'hint'=>'Das Logo steht immer im Textblock – auf jedem Bildschirm gleich zum Text, ohne etwas zu überdecken. Auf dem Handy ist alles mittig.'],
+        ],'hint'=>'Das Logo steht immer im Textblock – auf jedem Bildschirm gleich zum Text, ohne etwas zu überdecken. Am Handy steht das Bild oben, Logo und Text darunter.'],
         ['name'=>'logoGap','label'=>'Abstand ums Logo (px)','widget'=>'number','default'=>20,'hint'=>'Abstand zwischen Status-Badge, Logo und Text darunter (bei „Links“ und „Mittig“). Am Handy automatisch etwas kleiner. Am einfachsten über „Kopfbereich gestalten“.'],
         ['widget'=>'heading','label'=>'Startseite & Spielkarten','tab'=>'look','hint'=>'Wie das Spiel im Durchlauf oben auf der Startseite und auf den Spielkarten erscheint. Alles freiwillig – leere Felder werden sinnvoll ergänzt.'],
         ['name'=>'genre','label'=>'Genre-Zeile','widget'=>'string','hint'=>'Kurz, z. B. „Multiplayer-Shooter · PC“. Steht klein neben dem Status.'],
         ['name'=>'summary','label'=>'Kurzbeschreibung (Startseite & Karten)','widget'=>'text','hint'=>'1–2 Sätze. Leer = der erste Satz aus dem Textabschnitt „Über das Spiel“.'],
         ['name'=>'homeImage','label'=>'Bild im Startseiten-Durchlauf','widget'=>'image','hint'=>'Querformat, ca. 1920×1080 px. Leer = Cover-Bild (beim aktuellen Projekt: das Hero-Hintergrundbild aus „Studio & Startseite“).'],
-        ['widget'=>'heading','label'=>'Seiten-Blöcke','tab'=>'page','hint'=>'Der Aufbau der Spielseite – Blöcke hinzufügen, sortieren, ausblenden.'],
+        ['widget'=>'heading','label'=>'Steckbrief (Spielseite)','tab'=>'look','hint'=>'Leiste unten im Kopfbereich der Spielseite – bis zu 4 Zeilen, z. B. Genre · Spieler · Plattform · Release. Leer = die Kennzahlen aus dem Block „Kennzahlen“.'],
+        ['name'=>'facts','label'=>'Steckbrief-Zeilen','widget'=>'list','summary'=>'label','label_singular'=>'Zeile','fields'=>[
+          ['name'=>'label','label'=>'Bezeichnung','widget'=>'string','hint'=>'z. B. Genre, Spieler, Plattform, Release'],
+          ['name'=>'value','label'=>'Wert','widget'=>'string','hint'=>'z. B. Multiplayer-Shooter, bis zu 60, PC, 2027'],
+        ]],
+        ['widget'=>'heading','label'=>'Seiten-Blöcke','tab'=>'page','hint'=>'Inhalte der Spielseite. Die Website zeigt sie in einer festen, durchdachten Reihenfolge (Über das Spiel → Spielen → Einblicke → Features → Roadmap → Mitmachen → FAQ → Devlog) – die Reihenfolge hier ist nur für die Übersicht.'],
         ['name'=>'blocks','label'=>'Seiten-Blöcke (Website-Builder)','widget'=>'blocks','types'=>[
           'hero'=>['label'=>'Hero (Kopfbereich)','fields'=>[
             ['name'=>'tagline','label'=>'Tagline (überschreibt Standard)','widget'=>'text'],
