@@ -61,7 +61,7 @@ if ($action === 'medialist') {
   $out = [];
   if (is_dir(PG_MEDIA_DIR)) {
     foreach (scandir(PG_MEDIA_DIR) as $f) {
-      if ($f === '.' || $f === '..' || $f[0] === '.' || is_dir(PG_MEDIA_DIR . '/' . $f)) continue;
+      if ($f === '.' || $f === '..' || $f[0] === '.' || is_dir(PG_MEDIA_DIR . '/' . $f) || pg_media_is_webp_copy($f)) continue;
       $ext = strtolower(pathinfo($f, PATHINFO_EXTENSION));
       $out[] = ['path' => '/media/' . $f, 'name' => $f,
         'img' => in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'avif'], true),
@@ -1195,7 +1195,7 @@ if (($_GET['view'] ?? '') === 'search') {
     // 4) Medien-Dateinamen
     if (is_dir(PG_MEDIA_DIR)) {
       foreach (scandir(PG_MEDIA_DIR) as $f) {
-        if ($f[0] === '.' || is_dir(PG_MEDIA_DIR . '/' . $f)) continue;
+        if ($f[0] === '.' || is_dir(PG_MEDIA_DIR . '/' . $f) || pg_media_is_webp_copy($f)) continue;
         if (mb_stripos($f, $q) !== false) {
           $groups['Medien'][] = ['icon' => '🖼️', 'href' => 'index.php?view=media', 'label' => $f, 'snip' => '/media/' . $f];
         }
@@ -1315,8 +1315,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_media'])) {
   $path = PG_MEDIA_DIR . '/' . $name;
   // Geschützte Dateien (z. B. das OG-Bild) nicht löschbar
   $protected = ['og.jpg'];
-  if ($name !== '' && !in_array($name, $protected, true) && is_file($path)) @unlink($path);
+  if ($name !== '' && !in_array($name, $protected, true) && is_file($path)) {
+    @unlink($path);
+    if (preg_match('/\.(jpe?g|png)$/i', $name)) @unlink($path . '.webp');   // zugehörige WebP-Kopie
+  }
   header('Location: index.php?view=media&deleted=1'); exit;
+}
+
+/* ---- Medien: fehlende WebP-Kopien erstellen (schnellere Bilder) ---- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_webp'])) {
+  pg_csrf_check();
+  @set_time_limit(90);
+  $t0 = microtime(true); $made = 0;
+  foreach (pg_webp_todo() as $f) {
+    if (microtime(true) - $t0 > 20) break;   // in Etappen, damit der Server nicht abbricht
+    if (pg_make_webp(PG_MEDIA_DIR . '/' . $f)) $made++;
+  }
+  header('Location: index.php?view=media&webp=' . $made . '&webpleft=' . count(pg_webp_todo())); exit;
 }
 
 /* ---- Medien-Bibliothek (alle eingeloggten) ---- */
@@ -1327,7 +1342,7 @@ if (($_GET['view'] ?? '') === 'media') {
     foreach (scandir(PG_MEDIA_DIR) as $f) {
       if ($f === '.' || $f === '..' || $f[0] === '.') continue;
       $p = PG_MEDIA_DIR . '/' . $f;
-      if (!is_file($p)) continue;
+      if (!is_file($p) || pg_media_is_webp_copy($f)) continue;
       $ext = strtolower(pathinfo($f, PATHINFO_EXTENSION));
       if (!in_array($ext, PG_UPLOAD_EXT, true)) continue;
       $files[] = ['name' => $f, 'ext' => $ext, 'size' => filesize($p), 'time' => filemtime($p)];
@@ -1342,11 +1357,29 @@ if (($_GET['view'] ?? '') === 'media') {
   pg_view_topbar($SCHEMA, null);
   echo '<div class="editor wide sys">';
   if (isset($_GET['deleted'])) echo '<div class="flash ok">✓ Datei gelöscht.</div>';
+  if (isset($_GET['webp'])) {
+    $wl = (int) ($_GET['webpleft'] ?? 0);
+    echo '<div class="flash ok">✓ ' . (int) $_GET['webp'] . ' schnellere Bildversion' . ((int) $_GET['webp'] === 1 ? '' : 'en') . ' erstellt.'
+       . ($wl ? ' Noch ' . $wl . ' übrig – bitte noch einmal auf „Jetzt erstellen“ klicken.' : ' Alles erledigt.') . '</div>';
+  }
   echo '<div class="editor-head"><div><h1>Medien</h1>'
      . '<p class="muted">' . count($files) . ' Datei' . (count($files) === 1 ? '' : 'en') . ' im Ordner <code>/media</code>. Pfad kopieren und in beliebige Bild-/Datei-Felder einsetzen.</p></div></div>';
   echo '<input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">';
   echo '<div class="media-upload"><label class="btn-up">📤 Datei hochladen<input type="file" id="lib-upload" accept="image/*,video/*" hidden></label>'
      . '<span class="muted" id="lib-upload-status">JPG, PNG, WebP, SVG, GIF, MP4, WebM … bis ca. 30 MB.</span></div>';
+  // Schnellere Bilder: zu JPG/PNG legt der Upload automatisch eine kleinere WebP-Version an
+  if (pg_webp_supported()) {
+    $webTodo = pg_webp_todo();
+    echo '<div class="mailnote" data-webp-note>⚡ <b>Schnellere Bilder:</b> Zu jedem hochgeladenen JPG/PNG legt das System automatisch eine kleinere WebP-Version an. '
+       . 'Die Website liefert sie Browsern aus, die das können – Adresse und Aussehen bleiben gleich.';
+    if ($webTodo) {
+      echo '<form method="post" style="margin-top:.6rem"><input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '">'
+         . '<button class="btn-add" name="make_webp" value="1">⚡ Jetzt für ' . count($webTodo) . ' ältere' . (count($webTodo) === 1 ? 's Bild' : ' Bilder') . ' erstellen</button></form>';
+    } else {
+      echo ' <b>Alle Bilder sind bereit.</b>';
+    }
+    echo '</div>';
+  }
   if (!$files) {
     echo '<p class="muted">Noch keine Dateien hochgeladen.</p>';
   } else {

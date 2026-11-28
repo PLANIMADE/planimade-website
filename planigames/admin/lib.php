@@ -1982,7 +1982,7 @@ function pg_view_foot(){
     }
     echo '</div>';
   }
-  echo '<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>';
+  echo '<script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>';   // feste Version (wie bisher geladen)
   echo '<script src="assets/admin.js?v=' . PG_ADMIN_V . '"></script></body></html>';
 }
 
@@ -2073,6 +2073,7 @@ function pg_store_upload($key, $imagesOnly = true){
   while (is_file(PG_MEDIA_DIR . '/' . $name)) { $name = $base . '-' . (++$i) . '.' . $ext; }
   if (!move_uploaded_file($f['tmp_name'], PG_MEDIA_DIR . '/' . $name)) return '';
   pg_optimize_image(PG_MEDIA_DIR . '/' . $name, $ext);
+  pg_make_webp(PG_MEDIA_DIR . '/' . $name);
   return '/media/' . $name;
 }
 function pg_handle_upload(){
@@ -2094,6 +2095,7 @@ function pg_handle_upload(){
   $resp = ['path' => '/media/' . $name];
   $opt = pg_optimize_image(PG_MEDIA_DIR . '/' . $name, $ext);
   if ($opt) $resp['optimized'] = $opt;
+  if (pg_make_webp(PG_MEDIA_DIR . '/' . $name)) $resp['webp'] = true;
   echo json_encode($resp);
 }
 
@@ -2151,6 +2153,86 @@ function pg_optimize_image($path, $ext){
     @unlink($tmp);
   }
   return null;
+}
+
+/* ---------------- Schnellere Bilder: WebP-Kopien ----------------
+   Neben foto.jpg / logo.png entsteht automatisch foto.jpg.webp / logo.png.webp.
+   Die Adresse auf der Website bleibt gleich: Browser, die WebP können (alle aktuellen),
+   bekommen per .htaccess automatisch die kleinere Datei, alle anderen das Original.
+   Lohnt sich WebP bei einem Bild nicht (nicht kleiner), bleibt eine leere Merk-Datei
+   liegen – die wird nie ausgeliefert, verhindert aber unnötige neue Versuche.
+   Kann der Server kein WebP, passiert einfach nichts. */
+function pg_webp_supported(){
+  return function_exists('imagewebp') && function_exists('imagecreatetruecolor');
+}
+// Automatisch erzeugte Kopie/Merk-Datei (Original liegt daneben)? → in Listen ausblenden
+function pg_media_is_webp_copy($name){
+  return (bool) preg_match('/\.(jpe?g|png)\.webp$/i', (string) $name) && is_file(PG_MEDIA_DIR . '/' . substr($name, 0, -5));
+}
+function pg_make_webp($path){
+  if (!pg_webp_supported() || !is_file($path)) return false;
+  $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+  if (!in_array($ext, ['jpg', 'jpeg', 'png'], true)) return false;
+  // Merk-Datei „lohnt sich nicht / geht nicht" – wird nie ausgeliefert, verhindert ständige neue Versuche
+  $stamp = function() use ($path) { @touch($path . '.webp', max(time(), (int) @filemtime($path))); };
+  $skip = function() use ($path, $stamp) { @file_put_contents($path . '.webp', ''); $stamp(); return false; };
+  $info = @getimagesize($path);
+  if (!$info || $info[0] < 1 || $info[1] < 1) return $skip();
+  // genug Arbeitsspeicher? (sehr große Fotos auf kleinen Servern auslassen)
+  $lim = trim((string) ini_get('memory_limit'));
+  $limB = (int) $lim * (['g' => 1073741824, 'm' => 1048576, 'k' => 1024][strtolower(substr($lim, -1))] ?? 1);
+  if ($info[0] * $info[1] > 25000000 || ($limB > 0 && memory_get_usage() + $info[0] * $info[1] * 6 + 16777216 > $limB)) return $skip();
+  $img = $ext === 'png'
+    ? (function_exists('imagecreatefrompng') ? @imagecreatefrompng($path) : null)
+    : (function_exists('imagecreatefromjpeg') ? @imagecreatefromjpeg($path) : null);
+  if (!$img) return $skip();
+  if ($ext === 'png') {
+    if (!imageistruecolor($img)) imagepalettetotruecolor($img);
+    imagealphablending($img, false); imagesavealpha($img, true);
+  } elseif (function_exists('exif_read_data')) {
+    // Handy-Fotos: Drehung aus den EXIF-Angaben übernehmen (die WebP-Kopie hat keine EXIF-Drehung)
+    $ex = @exif_read_data($path);
+    $o = (int) (is_array($ex) ? ($ex['Orientation'] ?? 0) : 0);
+    if (in_array($o, [3, 6, 8], true) && function_exists('imagerotate')) {
+      $rot = @imagerotate($img, $o === 3 ? 180 : ($o === 6 ? -90 : 90), 0);
+      if ($rot) { imagedestroy($img); $img = $rot; }
+    }
+  }
+  // Logos & Freisteller (PNG mit Transparenz) verlustfrei – Kanten bleiben exakt;
+  // Fotos, Screenshots und Bilder ohne Transparenz in hoher Qualität (viel kleiner)
+  if ($ext === 'png' && pg_png_has_alpha($img)) $q = defined('IMG_WEBP_LOSSLESS') ? IMG_WEBP_LOSSLESS : 92;
+  else $q = $ext === 'png' ? 88 : 80;
+  $tmp = $path . '.webp.tmp';
+  $ok = @imagewebp($img, $tmp, $q);
+  imagedestroy($img);
+  $orig = (int) @filesize($path);
+  $new = ($ok && is_file($tmp)) ? (int) @filesize($tmp) : 0;
+  if ($new > 0 && $new < $orig * 0.95 && @rename($tmp, $path . '.webp')) { $stamp(); return true; }
+  @unlink($tmp);
+  return $skip();
+}
+// Hat ein (PNG-)Bild durchsichtige Stellen? Stichproben im Raster + kompletter Rand
+function pg_png_has_alpha($img){
+  $w = imagesx($img); $h = imagesy($img);
+  $a = function($x, $y) use ($img) { return ((imagecolorat($img, $x, $y) >> 24) & 0x7F) > 0; };
+  for ($x = 0; $x < $w; $x++) if ($a($x, 0) || $a($x, $h - 1)) return true;
+  for ($y = 0; $y < $h; $y++) if ($a(0, $y) || $a($w - 1, $y)) return true;
+  $step = max(1, (int) floor(sqrt($w * $h / 40000)));
+  for ($y = 0; $y < $h; $y += $step) for ($x = 0; $x < $w; $x += $step) if ($a($x, $y)) return true;
+  return false;
+}
+// JPG/PNG-Bilder ohne aktuelle WebP-Kopie (fehlt oder älter als das Bild)
+function pg_webp_todo(){
+  $out = [];
+  if (!is_dir(PG_MEDIA_DIR)) return $out;
+  foreach (scandir(PG_MEDIA_DIR) as $f) {
+    if ($f[0] === '.' || !preg_match('/\.(jpe?g|png)$/i', $f)) continue;
+    $p = PG_MEDIA_DIR . '/' . $f;
+    if (!is_file($p)) continue;
+    if (is_file($p . '.webp') && (int) @filemtime($p . '.webp') >= (int) @filemtime($p)) continue;
+    $out[] = $f;
+  }
+  return $out;
 }
 
 /* =====================================================================
@@ -2499,9 +2581,11 @@ function pg_media_large($bytes = 3145728){
   $out = [];
   if (!is_dir(PG_MEDIA_DIR)) return $out;
   foreach (scandir(PG_MEDIA_DIR) as $f) {
-    if ($f[0] === '.' || !preg_match('/\.(jpe?g|png|webp|gif)$/i', $f)) continue;
+    if ($f[0] === '.' || !preg_match('/\.(jpe?g|png|webp|gif)$/i', $f) || pg_media_is_webp_copy($f)) continue;
     $s = (int) @filesize(PG_MEDIA_DIR . '/' . $f);
-    if ($s > $bytes) $out[$f] = $s;
+    // hat das Bild eine kleine WebP-Kopie, bekommen Besucher ohnehin die (→ kein Hinweis nötig)
+    $w = (int) @filesize(PG_MEDIA_DIR . '/' . $f . '.webp');
+    if ($s > $bytes && !($w > 0 && $w <= $bytes)) $out[$f] = $s;
   }
   arsort($out);
   return $out;

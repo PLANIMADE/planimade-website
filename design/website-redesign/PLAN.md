@@ -138,8 +138,24 @@ Man kann jede Phase einzeln hochladen oder mehrere zusammen.
    Reiter Impressum/Datenschutz; auf Englisch Hinweis, dass die Rechtstexte auf Deutsch gelten. *404* und alle
    „nicht gefunden“-Fälle (Spiel, Beitrag, Welt) einheitlich; die 404-Seite funktioniert auch bei tieferen Adressen.
    Geändert: `games.html`, `devlog.php`, `404.html`, `assets/app.js`, `assets/site.css`.
-5. **Feinschliff:** Tailwind-Laufzeit entfernen (schnellerer Seitenaufbau), Bilder beim Upload zusätzlich als WebP,
-   Handy-Ansichten, Ladezeit, englische Texte, Gesamttest.
+5. **Feinschliff – erledigt (28.11.2026), Version 56:**
+   *Schneller Seitenaufbau:* Das Tailwind-Programm aus dem Internet (rechnete die Gestaltung bei jedem Besuch im
+   Browser aus) ist ersetzt durch die feste, 9 KB kleine Datei `assets/tailwind.css` – gebaut mit Tailwind 3.4.17
+   (dieselbe Version wie vorher) und denselben Einstellungen; Bauanleitung in `design/website-redesign/tailwind/`.
+   Automatischer Vorher/Nachher-Vergleich aller Elemente und Eigenschaften auf 52 Seitenzuständen (Computer + Handy,
+   Menü, Team-Profil, Abzeichen, Formulare, Cookie-Hinweis): identisch. Die Markdown-Bibliothek lädt jetzt in fester
+   Version (15.0.12, wie bisher) und ohne den Seitenaufbau zu blockieren.
+   *Schnellere Bilder (WebP):* Beim Hochladen entsteht zu jedem JPG/PNG automatisch `name.jpg.webp`
+   (Fotos/Bilder ohne Transparenz in hoher Qualität, Logos/Freisteller verlustfrei; Handy-Fotos richtig gedreht);
+   die `.htaccess` liefert sie unter derselben Adresse an Browser, die WebP können (mit `Vary: Accept`), sonst das
+   Original. Im Admin unter *Medien* einmalig „⚡ Jetzt für … ältere Bilder erstellen“ (läuft in Etappen). In der
+   Testumgebung mit den echten Bildern: 28 Bilder zusammen 28 MB kleiner (z. B. Titelbild 7 MB → 0,2 MB).
+   Kopien erscheinen in keiner Liste (Medien, Auswahl, Suche, Größen-Hinweis) und werden beim Löschen mitgelöscht.
+   Mit echtem Apache geprüft (Auslieferung, Vary, Datenschutz-Regeln für `data/` unverändert 37/37).
+   *Englische Seite:* Meldungen nach dem Absenden (Newsletter, Kontakt, Kommentare, Warteliste, Vorschläge),
+   Cookie-Hinweis und Bedien-Beschriftungen jetzt auch auf Englisch.
+   Geändert: alle Seiten-Dateien (Kopfbereich), `assets/app.js`, `assets/tailwind.css` (neu), `.htaccess`,
+   `admin/lib.php`, `admin/index.php`, `PLANIGAMES-SETUP.md`.
 
 **Hinweis Hintergrund-Effekt:** Im Admin steht unter *Studio → Hintergrund & Atmosphäre* noch „Nur Partikel, viel,
 lebhaft“. Die aufsteigenden Partikel gibt es in der Design-Vorschau nicht – für denselben ruhigen Look dort

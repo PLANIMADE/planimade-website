@@ -83,6 +83,28 @@ für `data/` und `media/` ggf. **775**.
    veraltete Übersetzungen im Hintergrund nach.
 4. Kurz prüfen: *Postfach → Einstellungen → „Verbindung testen“*.
 
+### Hinweise zum Website-Update v7 (neues Design, Version 56)
+
+- **Mit hochladen** (wie immer alles außer `data/` und `media/`), besonders wichtig:
+  die neue Datei **`assets/tailwind.css`** und die geänderte **`.htaccess`** im
+  Hauptordner. Ohne `assets/tailwind.css` fehlen einzelne Abstände/Farben, weil die
+  Website das frühere Tailwind-Programm aus dem Internet nicht mehr lädt (dadurch
+  baut sich jede Seite schneller und ohne kurzes Flackern auf).
+- **Schnellere Bilder (WebP):** Ab jetzt legt das Admin zu jedem hochgeladenen
+  JPG/PNG automatisch eine kleinere WebP-Version daneben (`foto.jpg.webp`). Die
+  `.htaccess` liefert sie an alle Browser aus, die WebP können – Adresse und
+  Aussehen bleiben gleich, die Datei ist oft 70–95 % kleiner. **Einmalig** nach dem
+  Update im Admin unter **Medien** auf **„⚡ Jetzt für … ältere Bilder erstellen“**
+  klicken (bei vielen großen Bildern ggf. mehrmals, es läuft in Etappen).
+  Die WebP-Kopien erscheinen nicht in der Medien-Liste; löschst du ein Bild,
+  verschwindet seine Kopie mit.
+- Ersetzt du ein Bild einmal **per FTP** unter gleichem Namen, danach im Admin unter
+  *Medien* wieder auf „Jetzt erstellen“ klicken – bis dahin bekommen Browser die
+  ältere WebP-Version.
+- Die Bauanleitung für `assets/tailwind.css` liegt außerhalb des Upload-Ordners in
+  `design/website-redesign/tailwind/` (nur nötig, wenn neue Tailwind-Klassen
+  dazukommen).
+
 ---
 
 ## Der „Website-Builder" für Game-Seiten

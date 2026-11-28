@@ -21,6 +21,14 @@ Options -Indexes
 
   RewriteRule ^sitemap\.xml$ sitemap.php [L]
 
+  # --- Schnellere Bilder: WebP-Version ausliefern, falls vorhanden ---
+  # Der Admin legt beim Hochladen neben foto.jpg automatisch foto.jpg.webp an.
+  # Browser, die WebP können, bekommen unter derselben Adresse die kleinere Datei;
+  # fehlt sie (oder ist sie leer), kommt ganz normal das Original.
+  RewriteCond %{HTTP_ACCEPT} image/webp
+  RewriteCond %{REQUEST_FILENAME}.webp -s
+  RewriteRule ^media/(.+)\.(jpe?g|png)$ media/$1.$2.webp [NC,T=image/webp,L]
+
   # --- Saubere URLs: /games statt /games.html ---
   # 1) Extensionslose Anfrage intern auf die echte .html-/.php-Datei mappen
   RewriteCond %{REQUEST_FILENAME} !-d
@@ -48,6 +56,7 @@ Options -Indexes
 # Web-App-Manifest korrekt ausliefern (für „Zum Homescreen hinzufügen")
 <IfModule mod_mime.c>
   AddType application/manifest+json .webmanifest
+  AddType image/webp .webp
 </IfModule>
 
 # Caching: Bilder/Videos lange, aber Code (HTML/CSS/JS) immer frisch prüfen
@@ -68,4 +77,8 @@ Options -Indexes
   <Files "sw.js">
     Header set Cache-Control "no-cache, must-revalidate"
   </Files>
+  # JPG/PNG gibt es je nach Browser als Original oder WebP – Zwischenspeicher sollen das unterscheiden
+  <FilesMatch "\.(jpe?g|png)(\.webp)?$">
+    Header append Vary Accept
+  </FilesMatch>
 </IfModule>

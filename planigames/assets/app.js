@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "55";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "56";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
@@ -197,6 +197,7 @@
             press_cover: "Titelbild", press_games_h: "Logos & Titelbilder", press_nodl: "Noch keine Downloads hinterlegt.", press_off: "Das Press Kit ist gerade nicht verfügbar.",
             c_heading: "Sag Hallo!", c_optional: "(optional)", c_alt_mail: "Lieber per E-Mail?", c_alt_press: "Für Presse & Creator",
             c_privacy: "Mit dem Absenden werden deine Angaben zur Bearbeitung deiner Anfrage gespeichert. Mehr dazu in der {link}.", c_privacy_link: "Datenschutzerklärung",
+            err_generic: "Hat nicht geklappt. Bitte später erneut.", err_conn: "Verbindung fehlgeschlagen. Bitte später erneut.",
             c_off_h: "Schreib uns eine E-Mail", c_off_p: "Das Kontaktformular ist gerade ausgeschaltet – erreichbar sind wir trotzdem:", c_off_p2: "Das Kontaktformular ist gerade ausgeschaltet.",
         },
         en: {
@@ -267,6 +268,7 @@
             press_cover: "Key art", press_games_h: "Logos & key art", press_nodl: "No downloads yet.", press_off: "The press kit isn't available right now.",
             c_heading: "Say hello!", c_optional: "(optional)", c_alt_mail: "Prefer email?", c_alt_press: "For press & creators",
             c_privacy: "When you send this, your details are stored to handle your request. More in our {link}.", c_privacy_link: "privacy policy",
+            err_generic: "That didn't work. Please try again later.", err_conn: "Connection failed. Please try again later.",
             c_off_h: "Send us an email", c_off_p: "The contact form is switched off right now – you can still reach us:", c_off_p2: "The contact form is switched off right now.",
         },
     };
@@ -436,14 +438,16 @@
         if (cfg.enabled === false) return;
         if (!openSettings && pgConsentGet()) return;   // bereits entschieden
         const cur = pgConsentGet() || {};
-        const msg = cfg.message || "Wir nutzen nur, was die Seite zum Laufen braucht. Für eingebettete YouTube-Trailer brauchen wir deine Zustimmung.";
-        const acc = cfg.acceptLabel || "Alle akzeptieren";
-        const dec = cfg.declineLabel || "Nur Notwendige";
+        const en = LANG === "en";
+        const msg = cfg.message || (en ? "We only use what the site needs to work. For embedded YouTube trailers we need your consent."
+                                       : "Wir nutzen nur, was die Seite zum Laufen braucht. Für eingebettete YouTube-Trailer brauchen wir deine Zustimmung.");
+        const acc = cfg.acceptLabel || (en ? "Accept all" : "Alle akzeptieren");
+        const dec = cfg.declineLabel || (en ? "Necessary only" : "Nur Notwendige");
         $("#cookie-banner")?.remove();
         const el = document.createElement("div");
         el.id = "cookie-banner";
         el.setAttribute("role", "dialog");
-        el.setAttribute("aria-label", "Cookie-Hinweis");
+        el.setAttribute("aria-label", en ? "Cookie notice" : "Cookie-Hinweis");
         el.innerHTML = `
             <p class="cb-text">${esc(msg)} <a href="rechtliches.html?doc=datenschutz">${esc(t("foot_datenschutz"))}</a></p>
             <div class="cb-settings"${openSettings ? "" : " hidden"}>
@@ -1128,6 +1132,25 @@
 
     // ---------- Mitmachen: Vorschlagsbox & Warteliste (Spiel-Blöcke, eigene Liste je Spiel) ----------
     // Logik wie bisher (Abstimmen, Freigabe, Platz in der Warteliste, Empfehlungslink) – nur im Design v7.
+    const SERVER_EN = {
+        "Anmeldung derzeit nicht möglich.": "Sign-up isn't possible right now.",
+        "Bitte gib eine gültige E-Mail-Adresse ein.": "Please enter a valid email address.",
+        "Speichern nicht möglich. Bitte später erneut versuchen.": "Couldn't save that. Please try again later.",
+        "Du bist bereits angemeldet – schön, dass du dabei bist! 🧡": "You're already subscribed – great to have you! 🧡",
+        "Fast geschafft! Wir haben dir den Bestätigungslink (erneut) geschickt. 📩": "Almost there! We've sent you the confirmation link (again). 📩",
+        "Fast geschafft! Bitte bestätige den Link in deiner E-Mail. 📩": "Almost there! Please confirm the link in your email. 📩",
+        "Das Kontaktformular ist derzeit deaktiviert.": "The contact form is switched off right now.",
+        "Bitte fülle Name, eine gültige E-Mail und eine Nachricht aus.": "Please fill in your name, a valid email and a message.",
+        "Kommentare sind deaktiviert.": "Comments are switched off.",
+        "Bitte Name und Kommentar ausfüllen.": "Please fill in your name and a comment.",
+        "Bitte kurz warten, bevor du erneut kommentierst.": "Please wait a moment before commenting again.",
+        "Die Warteliste ist nur auf den Spiel-Seiten verfügbar.": "The waitlist is only available on the game pages.",
+        "Bitte kurz warten und erneut versuchen.": "Please wait a moment and try again.",
+        "Vorschläge können nur auf den Spiel-Seiten eingereicht werden.": "Ideas can only be submitted on the game pages.",
+        "Bitte einen etwas längeren Vorschlag eingeben.": "Please enter a slightly longer idea.",
+        "Bitte kurz warten, bevor du erneut einreichst.": "Please wait a moment before submitting again.",
+    };
+    const srvMsg = (m) => (LANG === "en" && m && SERVER_EN[m]) || m;
     const pgMsg = (el, kind, text) => { if (!el) return; el.className = "pg-msg is-" + kind; el.hidden = false; el.textContent = text; };
     function suggCard(b, g, i = 0) {
         const en = LANG === "en", id = `pg-idea-${slugify(g.slug || "x")}-${i}`;
@@ -1195,7 +1218,7 @@
             try {
                 const r = await fetch("suggestions.php", { method: "POST", body: fd });
                 const j = await r.json();
-                if (j.error) { pgMsg(msg, "err", j.error); return; }
+                if (j.error) { pgMsg(msg, "err", srvMsg(j.error)); return; }
                 form.reset();
                 pgMsg(msg, "ok", en ? "Thanks! Your idea will appear after review." : "Danke! Deine Idee erscheint nach der Prüfung.");
                 confetti({ count: 60, y: innerHeight * 0.6 });
@@ -1296,7 +1319,7 @@
             try {
                 const r = await fetch("waitlist.php", { method: "POST", body: fd });
                 const j = await r.json();
-                if (j.error) { pgMsg(msg, "err", j.error); return; }
+                if (j.error) { pgMsg(msg, "err", srvMsg(j.error)); return; }
                 msg.hidden = true;
                 if (j.token) { try { localStorage.setItem("pg_wl_token" + sfx, j.token); } catch {} }
                 showStatus(j);
@@ -1865,10 +1888,10 @@
         if (!$("#lightbox")) {
             document.body.insertAdjacentHTML("beforeend", `
                 <div id="lightbox" class="hidden" aria-hidden="true">
-                    <button class="lb-close" data-lb-close aria-label="Schließen">✕</button>
-                    <button class="lb-nav lb-prev" data-lb-prev aria-label="Zurück">‹</button>
+                    <button class="lb-close" data-lb-close aria-label="${LANG === "en" ? "Close" : "Schließen"}">✕</button>
+                    <button class="lb-nav lb-prev" data-lb-prev aria-label="${LANG === "en" ? "Previous" : "Zurück"}">‹</button>
                     <img class="lb-img" alt="">
-                    <button class="lb-nav lb-next" data-lb-next aria-label="Weiter">›</button>
+                    <button class="lb-nav lb-next" data-lb-next aria-label="${LANG === "en" ? "Next" : "Weiter"}">›</button>
                     <div class="lb-count"></div>
                 </div>`);
         }
@@ -2111,7 +2134,7 @@
             try {
                 const r = await fetch("comments.php", { method: "POST", body: fd });
                 const j = await r.json();
-                if (j.error) { pgMsg(msg, "err", j.error); return; }
+                if (j.error) { pgMsg(msg, "err", srvMsg(j.error)); return; }
                 form.reset();
                 pgMsg(msg, "ok", en ? "Thanks! Your comment will appear after review." : "Danke! Dein Kommentar erscheint nach der Prüfung.");
                 msg.classList.add("cmt-success");
@@ -2521,7 +2544,7 @@
             <header id="site-header" class="pg-hd">
                 <div class="pg-wrap pg-hd-in">
                     <a href="index.html" class="pg-brand" data-brand="sm" aria-label="${esc((DATA.studio && DATA.studio.name) || "PLANIGAMES")} – ${t("home_label")}">${brandHTML("sm")}</a>
-                    <nav class="pg-nav" aria-label="Hauptmenü">${navLinks()}</nav>
+                    <nav class="pg-nav" aria-label="${LANG === "en" ? "Main menu" : "Hauptmenü"}">${navLinks()}</nav>
                     <div class="pg-hd-r">
                         ${langSwitch()}
                         ${tipHTML("pg-btn-sm")}
@@ -2531,7 +2554,7 @@
                 </div>
             </header>
             <div id="mobile-menu" class="pg-mn" aria-hidden="true">
-                <nav class="pg-mn-nav" aria-label="Menü">${mobileNavLinks()}</nav>
+                <nav class="pg-mn-nav" aria-label="${LANG === "en" ? "Menu" : "Menü"}">${mobileNavLinks()}</nav>
                 <div class="pg-mn-foot">
                     <div class="pg-mn-row">${ctaHTML("")}${tipHTML("")}</div>
                     ${langSwitch()}
@@ -2591,7 +2614,7 @@
                             <a href="rechtliches.html?doc=impressum">${t("foot_impressum")}</a>
                             <a href="rechtliches.html?doc=datenschutz">${t("foot_datenschutz")}</a>
                             <a href="#" data-cookie-open>${t("cookie_settings")}</a>
-                            <a href="admin/" title="Zum Dashboard">🔒 Admin</a>
+                            <a href="admin/" title="${LANG === "en" ? "Admin dashboard" : "Zum Dashboard"}">🔒 Admin</a>
                         </span>
                     </div>
                 </div>
@@ -2671,16 +2694,17 @@
                 const r = await fetch(form.getAttribute("action") || "subscribe.php", { method: "POST", body: new FormData(form) });
                 const j = await r.json().catch(() => ({}));
                 if (r.ok && j.ok) {
-                    const msg = j.message || nl.successMessage || "Danke! Du bist dabei. 🧡";
+                    const msg = LANG === "en" ? (SERVER_EN[j.message] || nl.successMessage || "Thanks! You're in. 🧡")
+                                              : (j.message || nl.successMessage || "Danke! Du bist dabei. 🧡");
                     form.innerHTML = `<div class="pg-form-ok" role="status">${esc(msg)}</div>`;
                     const rc = form.getBoundingClientRect();
                     confetti({ count: 110, x: rc.left + rc.width / 2, y: rc.top + rc.height / 2 });
                     pgBadge("subscriber");
                 } else {
-                    flashFormError(form, j.error || "Hat nicht geklappt. Bitte später erneut.");
+                    flashFormError(form, srvMsg(j.error) || t("err_generic"));
                 }
             } catch {
-                flashFormError(form, "Verbindung fehlgeschlagen. Bitte später erneut.");
+                flashFormError(form, t("err_conn"));
             }
             delete form.dataset.busy;
         });
@@ -2700,14 +2724,15 @@
                 const r = await fetch(form.getAttribute("action") || "contact.php", { method: "POST", body: new FormData(form) });
                 const j = await r.json().catch(() => ({}));
                 if (r.ok && j.ok) {
-                    const msg = j.message || c.successMessage || "Danke für deine Nachricht! 🧡";
+                    const msg = LANG === "en" ? (c.successMessage || "Thanks for your message! 🧡")
+                                              : (j.message || c.successMessage || "Danke für deine Nachricht! 🧡");
                     form.innerHTML = `<div class="pg-cform-ok" role="status"><span class="pg-icn">${pgIc("check")}</span><p>${esc(msg)}</p></div>`;
                 } else {
-                    flashFormError(form, j.error || "Hat nicht geklappt. Bitte später erneut.");
+                    flashFormError(form, srvMsg(j.error) || t("err_generic"));
                     if (btn) btn.disabled = false;
                 }
             } catch {
-                flashFormError(form, "Verbindung fehlgeschlagen. Bitte später erneut.");
+                flashFormError(form, t("err_conn"));
                 if (btn) btn.disabled = false;
             }
             delete form.dataset.busy;
@@ -2750,7 +2775,7 @@
         ov.id = "pg-member-modal";
         ov.className = "pg-modal";
         ov.innerHTML = `<div class="pg-modal-box">
-            <button class="pg-modal-x" data-mm-close aria-label="Schließen">✕</button>
+            <button class="pg-modal-x" data-mm-close aria-label="${LANG === "en" ? "Close" : "Schließen"}">✕</button>
             <div class="pg-member-head">
                 ${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.photoAlt || m.name)}" style="object-position:${focusPos(m.photo)}">` : `<div class="pg-member-emoji">${esc(m.emoji || "🧙")}</div>`}
                 <div>
@@ -3060,7 +3085,7 @@
         document.getElementById("pg-member-modal")?.remove();
         const ov = document.createElement("div");
         ov.id = "pg-member-modal"; ov.className = "pg-modal";
-        ov.innerHTML = `<div class="pg-modal-box"><button class="pg-modal-x" data-mm-close aria-label="Schließen">✕</button>
+        ov.innerHTML = `<div class="pg-modal-box"><button class="pg-modal-x" data-mm-close aria-label="${LANG === "en" ? "Close" : "Schließen"}">✕</button>
             <h3 style="font-family:'Montserrat',sans-serif;font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:.3rem">🏆 ${LANG === "en" ? "Your badges" : "Deine Abzeichen"}</h3>
             <p class="text-zinc-400" style="font-size:.88rem;margin-bottom:1.2rem">${Object.keys(earned).length}/${BADGES.length} ${LANG === "en" ? "unlocked — earned by engaging with the site." : "freigeschaltet – durch Mitmachen auf der Seite."}</p>
             <div class="pg-badge-grid">${BADGES.map(b => {
