@@ -22,6 +22,18 @@ if (is_file($pg_games_file)) {
   }
 }
 
+// Knopf-Ziele (Startseiten-Durchlauf, Kopfbereich der Spielseite)
+$pg_btn_main = [
+  'game' => 'Zum Spiel (Spielseite)', 'wishlist' => 'Steam-Wishlist (Link aus „Einstellungen“)', 'trailer' => 'Trailer ansehen',
+  'playtest' => 'Playtest / Warteliste', 'demo' => 'Demo spielen', 'devlog' => 'Devlog des Spiels', 'lore' => 'Welt- / Lore-Seite',
+  'custom' => 'Eigener Link', 'none' => 'Kein Knopf',
+];
+$pg_btn_second = ['auto' => 'Automatisch (Wishlist → Trailer → Playtest)'] + $pg_btn_main;
+$pg_btn_hero = ['auto' => 'Automatisch (wie bisher)'] + array_diff_key($pg_btn_main, ['game' => 1]);
+// Spiele ohne „allgemein“-Eintrag (Press Kit, Kopfzeilen-Knopf)
+$pg_game_only = array_diff_key($pg_game_options, ['' => 1]);
+$pg_game_pick = ['' => '— Aktuelles Projekt —'] + $pg_game_only;
+
 return [
 
   // ================= STUDIO / STARTSEITE =================
@@ -56,15 +68,25 @@ return [
       ['widget'=>'heading','label'=>'Über uns','hint'=>'Studio-Vorstellung, Kennzahlen, Bilder & Werte.'],
       ['name'=>'aboutTitle','label'=>'Über uns – Überschrift','widget'=>'string'],
       ['name'=>'aboutBody','label'=>'Über uns – Text','widget'=>'markdown'],
-      ['name'=>'aboutImages','label'=>'Bilder für „Über uns“ (bis zu 3)','widget'=>'list','label_singular'=>'Bild','hint'=>'Leer = automatisch: ein Spiel-Cover, ein Bild aus einer Galerie und das Bild des neuesten Devlog-Beitrags.','fields'=>[
-        ['name'=>'image','label'=>'Bild','widget'=>'image'],
-      ]],
+      ['name'=>'aboutImage1','label'=>'Bild 1 – groß links','widget'=>'image','hint'=>'Hochformat, z. B. 1200 × 1600 px. Mit „🎯 Fokus“ legst du fest, welcher Bildteil sichtbar bleibt.'],
+      ['name'=>'aboutImage2','label'=>'Bild 2 – oben rechts','widget'=>'image','hint'=>'Quadratisch bis leicht quer, z. B. 1200 × 1000 px.'],
+      ['name'=>'aboutImage3','label'=>'Bild 3 – unten rechts','widget'=>'image','hint'=>'Quadratisch bis leicht quer, z. B. 1200 × 1000 px. Es werden genau diese Bilder gezeigt – ohne Bild steht der Text allein (mit 1–2 Bildern passt sich die Anordnung an).'],
       ['name'=>'pillars','label'=>'Werte / Stärken (Kacheln)','widget'=>'list','summary'=>'title','fields'=>[
-        ['name'=>'icon','label'=>'Icon / Emoji','widget'=>'string','hint'=>'z. B. 🪄'],
+        ['name'=>'icon','label'=>'Icon','widget'=>'icon','hint'=>'Anklicken zum Auswählen.'],
         ['name'=>'title','label'=>'Titel','widget'=>'string'],
         ['name'=>'text','label'=>'Text','widget'=>'text'],
       ]],
       ['widget'=>'heading','label'=>'Bereiche, Banner & Funktionen','hint'=>'Optionale Module – zum Bearbeiten aufklappen.'],
+      ['name'=>'headerCta','label'=>'Knopf oben rechts (Kopfzeile)','widget'=>'object','hint'=>'Der farbige Knopf oben rechts auf jeder Seite (am Handy im Menü). Standard: Playtest des aktuellen Projekts.','fields'=>[
+        ['name'=>'mode','label'=>'Wohin führt der Knopf?','widget'=>'select','default'=>'auto','options'=>[
+          'auto'=>'Automatisch: Playtest des aktuellen Projekts (sonst „Spiele entdecken“)',
+          'wishlist'=>'Steam-Wishlist eines Spiels','playtest'=>'Playtest / Warteliste eines Spiels','game'=>'Spielseite eines Spiels',
+          'trailer'=>'Trailer eines Spiels','custom'=>'Eigener Link','off'=>'Kein Knopf',
+        ]],
+        ['name'=>'game','label'=>'Spiel','widget'=>'select','options'=>$pg_game_pick,'showIf'=>['mode','wishlist,playtest,game,trailer'],'hint'=>'Für Wishlist, Playtest, Spielseite und Trailer. „Aktuelles Projekt“ = das Spiel mit dem Häkchen „Aktuelles Projekt“.'],
+        ['name'=>'label','label'=>'Text auf dem Knopf','widget'=>'string','hint'=>'z. B. „FRONTLINERS wishlisten“. Leer = passender Standardtext.'],
+        ['name'=>'url','label'=>'Eigener Link','widget'=>'string','showIf'=>['mode','custom'],'hint'=>'z. B. https://store.steampowered.com/app/…'],
+      ]],
       ['name'=>'newsletter','label'=>'Newsletter-Anmeldung','widget'=>'object','hint'=>'Steuert den Newsletter-Block über dem Footer (Startseite, Spiele, Devlog, Kontakt, Presse).','fields'=>[
         ['name'=>'enabled','label'=>'Newsletter aktiv','widget'=>'boolean','default'=>true],
         ['name'=>'heading','label'=>'Überschrift (Startseite)','widget'=>'string'],
@@ -129,7 +151,7 @@ return [
         ['name'=>'label','label'=>'Beschriftung','widget'=>'string','default'=>'Unterstützen'],
         ['name'=>'url','label'=>'Link','widget'=>'string','hint'=>'z. B. https://ko-fi.com/deinstudio'],
       ]],
-      ['name'=>'presskit','label'=>'Press Kit','widget'=>'object','hint'=>'Eigene Seite (presse.html) für Presse & Creator. Logos, Fakten, Downloads.','fields'=>[
+      ['name'=>'presskit','label'=>'Press Kit','widget'=>'object','page'=>'presskit','hint'=>'Eigene Seite (presse.html) für Presse & Creator. Bearbeitet wird es im Admin unter „Spielbetrieb → Press Kit“.','fields'=>[
         ['name'=>'enabled','label'=>'Press Kit aktiv','widget'=>'boolean','default'=>true],
         ['name'=>'intro','label'=>'Einleitung','widget'=>'markdown','hint'=>'Kurzvorstellung für Presse & Content-Creator.'],
         ['name'=>'contactEmail','label'=>'Presse-Kontakt (E-Mail)','widget'=>'string','hint'=>'Leer = Studio-Kontakt-E-Mail.'],
@@ -140,7 +162,21 @@ return [
         ['name'=>'downloads','label'=>'Download-Pakete','widget'=>'list','summary'=>'label','fields'=>[
           ['name'=>'label','label'=>'Titel','widget'=>'string','hint'=>'z. B. Logo-Paket, Screenshots'],
           ['name'=>'note','label'=>'Beschreibung','widget'=>'string'],
-          ['name'=>'file','label'=>'Datei (ZIP/Bild)','widget'=>'file'],
+          ['name'=>'file','label'=>'Datei (ZIP/Bild/PDF)','widget'=>'file'],
+        ]],
+        ['name'=>'gamesMode','label'=>'Welche Spiele erscheinen?','widget'=>'select','default'=>'auto','options'=>[
+          'auto'=>'Automatisch: alle Spiele mit Logo oder Titelbild','custom'=>'Nur die unten ausgewählten Spiele','none'=>'Keine Spiele zeigen',
+        ]],
+        ['name'=>'games','label'=>'Ausgewählte Spiele','widget'=>'list','showIf'=>['gamesMode','custom'],'summary'=>'game','label_singular'=>'Spiel','hint'=>'Die Reihenfolge hier ist die Reihenfolge im Press Kit.','fields'=>[
+          ['name'=>'game','label'=>'Spiel','widget'=>'select','options'=>$pg_game_only],
+          ['name'=>'text','label'=>'Kurztext für die Presse (optional)','widget'=>'text','hint'=>'Leer = der Satz aus dem Kopfbereich des Spiels.'],
+          ['name'=>'logo','label'=>'Logo zum Herunterladen anbieten','widget'=>'boolean','default'=>true],
+          ['name'=>'cover','label'=>'Titelbild zum Herunterladen anbieten','widget'=>'boolean','default'=>true],
+          ['name'=>'trailer','label'=>'Trailer-Link (optional)','widget'=>'string','i18n'=>false,'hint'=>'z. B. YouTube-Link – erscheint als Knopf „Trailer“.'],
+          ['name'=>'files','label'=>'Weitere Dateien (Screenshots, Pressemitteilung …)','widget'=>'list','summary'=>'label','label_singular'=>'Datei','fields'=>[
+            ['name'=>'label','label'=>'Bezeichnung','widget'=>'string','hint'=>'z. B. „Screenshot Burgbelagerung“ oder „Pressemitteilung (PDF)“'],
+            ['name'=>'file','label'=>'Datei','widget'=>'file'],
+          ]],
         ]],
       ]],
       ['name'=>'cookie','label'=>'Cookie-Hinweis','widget'=>'object','hint'=>'DSGVO-Banner. Blendet eingebettete YouTube-Trailer bis zur Zustimmung aus.','fields'=>[
@@ -226,12 +262,21 @@ return [
         ['name'=>'genre','label'=>'Genre-Zeile','widget'=>'string','hint'=>'Kurz, z. B. „Multiplayer-Shooter · PC“. Steht klein neben dem Status.'],
         ['name'=>'summary','label'=>'Kurzbeschreibung (Startseite & Karten)','widget'=>'text','hint'=>'1–2 Sätze. Leer = der erste Satz aus dem Textabschnitt „Über das Spiel“.'],
         ['name'=>'homeImage','label'=>'Bild im Startseiten-Durchlauf','widget'=>'image','hint'=>'Querformat, ca. 1920×1080 px. Leer = Cover-Bild (beim aktuellen Projekt: das Hero-Hintergrundbild aus „Studio & Startseite“).'],
+        ['widget'=>'heading','label'=>'Durchlauf: Video & Knöpfe','tab'=>'look','hint'=>'Was im Spiele-Durchlauf oben auf der Startseite läuft und welche Knöpfe man dort anklicken kann.'],
+        ['name'=>'homeMedia','label'=>'Hintergrund im Durchlauf','widget'=>'select','default'=>'image','options'=>['image'=>'Bild','video'=>'Video (läuft automatisch, stumm, in Schleife)'],'hint'=>'Bei „Video“ läuft das Video unten; das Bild oben dient als Vorschaubild, bis es geladen ist.'],
+        ['name'=>'homeVideo','label'=>'Video im Durchlauf (MP4/WebM)','widget'=>'file','showIf'=>['homeMedia','video'],'hint'=>'Querformat 16:9, am besten 10–20 Sekunden und unter ca. 15 MB.'],
+        ['name'=>'slideBtn1','label'=>'Knopf 1 (Hauptknopf)','widget'=>'select','default'=>'game','options'=>$pg_btn_main],
+        ['name'=>'slideBtn1Label','label'=>'Knopf 1 – eigener Text (optional)','widget'=>'string','hint'=>'Leer = passender Standardtext, z. B. „Zum Spiel“ oder „Auf Steam wishlisten“.'],
+        ['name'=>'slideBtn1Url','label'=>'Knopf 1 – eigener Link','widget'=>'string','showIf'=>['slideBtn1','custom'],'hint'=>'z. B. https://store.steampowered.com/app/…'],
+        ['name'=>'slideBtn2','label'=>'Knopf 2','widget'=>'select','default'=>'auto','options'=>$pg_btn_second,'hint'=>'Gibt es das gewählte Ziel nicht (z. B. noch kein Wishlist-Link), entfällt der Knopf.'],
+        ['name'=>'slideBtn2Label','label'=>'Knopf 2 – eigener Text (optional)','widget'=>'string'],
+        ['name'=>'slideBtn2Url','label'=>'Knopf 2 – eigener Link','widget'=>'string','showIf'=>['slideBtn2','custom']],
         ['widget'=>'heading','label'=>'Steckbrief (Spielseite)','tab'=>'look','hint'=>'Leiste unten im Kopfbereich der Spielseite – bis zu 4 Zeilen, z. B. Genre · Spieler · Plattform · Release. Leer = die Kennzahlen aus dem Block „Kennzahlen“.'],
         ['name'=>'facts','label'=>'Steckbrief-Zeilen','widget'=>'list','summary'=>'label','label_singular'=>'Zeile','fields'=>[
           ['name'=>'label','label'=>'Bezeichnung','widget'=>'string','hint'=>'z. B. Genre, Spieler, Plattform, Release'],
           ['name'=>'value','label'=>'Wert','widget'=>'string','hint'=>'z. B. Multiplayer-Shooter, bis zu 60, PC, 2027'],
         ]],
-        ['widget'=>'heading','label'=>'Seiten-Blöcke','tab'=>'page','hint'=>'Inhalte der Spielseite. Die Website zeigt sie in einer festen, durchdachten Reihenfolge (Über das Spiel → Spielen → Einblicke → Features → Roadmap → Mitmachen → FAQ → Devlog) – die Reihenfolge hier ist nur für die Übersicht.'],
+        ['widget'=>'heading','label'=>'Seiten-Blöcke','tab'=>'page','hint'=>'Inhalte der Spielseite – die Website zeigt sie genau in dieser Reihenfolge (der Kopfbereich steht immer oben, Devlog und „Weitere Spiele“ kommen ans Ende). Direkt aufeinanderfolgende Blöcke derselben Art werden zu einem Abschnitt zusammengefasst, z. B. Trailer + Galerie oder Warteliste + Vorschläge.'],
         ['name'=>'blocks','label'=>'Seiten-Blöcke (Website-Builder)','widget'=>'blocks','types'=>[
           'hero'=>['label'=>'Hero (Kopfbereich)','fields'=>[
             ['name'=>'tagline','label'=>'Tagline (überschreibt Standard)','widget'=>'text'],
@@ -241,6 +286,12 @@ return [
             ['name'=>'poster','label'=>'Video-Vorschaubild','widget'=>'image','hint'=>'Querformat 16:9, ca. 1600×900 px.'],
             ['name'=>'ctaLabel','label'=>'Button-Text','widget'=>'string','default'=>'Auf Steam wishlisten'],
             ['name'=>'trailerUrl','label'=>'Trailer-Link (Button)','widget'=>'string'],
+            ['name'=>'btn1','label'=>'Knopf 1 im Kopfbereich','widget'=>'select','default'=>'auto','options'=>$pg_btn_hero,'hint'=>'Automatisch = Wishlist (falls Link vorhanden), sonst Playtest/Warteliste oder Demo.'],
+            ['name'=>'btn1Label','label'=>'Knopf 1 – eigener Text (optional)','widget'=>'string'],
+            ['name'=>'btn1Url','label'=>'Knopf 1 – eigener Link','widget'=>'string','showIf'=>['btn1','custom']],
+            ['name'=>'btn2','label'=>'Knopf 2 im Kopfbereich','widget'=>'select','default'=>'auto','options'=>$pg_btn_hero,'hint'=>'Automatisch = Trailer (falls vorhanden), sonst der nächste passende Knopf.'],
+            ['name'=>'btn2Label','label'=>'Knopf 2 – eigener Text (optional)','widget'=>'string'],
+            ['name'=>'btn2Url','label'=>'Knopf 2 – eigener Link','widget'=>'string','showIf'=>['btn2','custom']],
           ]],
           'richtext'=>['label'=>'Textabschnitt','fields'=>[
             ['name'=>'kicker','label'=>'Kicker (kleine Zeile)','widget'=>'string'],
@@ -250,7 +301,7 @@ return [
           'features'=>['label'=>'Feature-Kacheln','fields'=>[
             ['name'=>'heading','label'=>'Überschrift','widget'=>'string'],
             ['name'=>'items','label'=>'Kacheln','widget'=>'list','summary'=>'title','fields'=>[
-              ['name'=>'icon','label'=>'Icon / Emoji','widget'=>'string'],
+              ['name'=>'icon','label'=>'Icon','widget'=>'icon','hint'=>'Anklicken zum Auswählen.'],
               ['name'=>'title','label'=>'Titel','widget'=>'string'],
               ['name'=>'text','label'=>'Text','widget'=>'text'],
             ]],

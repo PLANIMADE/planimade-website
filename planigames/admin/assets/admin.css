@@ -2333,3 +2333,15 @@ a.mx-att:hover{border-color:var(--accent-line)}
 @media (max-width:860px){
   .mx-settings.mx-set-main,.mx-settings.mx-set-boxes{grid-column:1}
 }
+
+/* ---- Icon-Auswahl (Werte, Feature-Kacheln) ---- */
+.iconpick .ip-grid{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px solid var(--line2);border-radius:12px;background:var(--panel2);max-height:196px;overflow:auto}
+.ip-btn{display:grid;place-items:center;width:38px;height:38px;padding:0;border-radius:10px;border:1px solid transparent;background:var(--panel3);color:var(--ink2);transition:background .15s,border-color .15s,color .15s}
+.ip-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ip-btn:hover{background:var(--panel4);color:var(--ink)}
+.ip-btn.on{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+/* ---- Press Kit (eigene Seite) & Link im Studio-Menü ---- */
+.pk-page .ck-card{margin-bottom:16px}
+.sx-tab.sx-link{text-decoration:none}
+.sx-tab.sx-link .ic:last-child{width:13px;height:13px;margin-left:auto}
+

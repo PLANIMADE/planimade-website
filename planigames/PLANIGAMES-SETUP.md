@@ -101,6 +101,13 @@ für `data/` und `media/` ggf. **775**.
 - Ersetzt du ein Bild einmal **per FTP** unter gleichem Namen, danach im Admin unter
   *Medien* wieder auf „Jetzt erstellen“ klicken – bis dahin bekommen Browser die
   ältere WebP-Version.
+- **Wo stelle ich was ein? (seit Version 57)**
+  - Knöpfe und Video im Spiele-Durchlauf der Startseite: *Spiele → Spiel → Darstellung → „Durchlauf: Video & Knöpfe“*.
+  - Knöpfe im Kopfbereich einer Spielseite: *Spiele → Spiel → Seiten-Aufbau → Hero-Block*.
+  - Knopf oben rechts: *Studio & Startseite → „Knopf oben rechts (Kopfzeile)“*.
+  - Bilder bei „Über uns“: *Studio & Startseite → Über uns* (drei feste Plätze, mit 🎯 Fokus den Bildausschnitt wählen).
+  - Press Kit: eigener Menüpunkt *Spielbetrieb → Press Kit*.
+  - Die Spielseite zeigt die Seiten-Blöcke genau in der Reihenfolge, in der sie im Admin stehen.
 - Die Bauanleitung für `assets/tailwind.css` liegt außerhalb des Upload-Ordners in
   `design/website-redesign/tailwind/` (nur nötig, wenn neue Tailwind-Klassen
   dazukommen).

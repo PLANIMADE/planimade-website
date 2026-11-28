@@ -30,6 +30,7 @@
     const added = itemsBox(list).lastElementChild;
     focusFirst(added);
     injectLogoPlacers();   // neu hinzugefügte Spiele bekommen ihren „Logo platzieren“-Button
+    if (window.pgSyncShowIf) window.pgSyncShowIf();
   }
 
   function addBlock(blocks) {
@@ -41,6 +42,7 @@
     itemsBox(blocks).insertAdjacentHTML("beforeend", html);
     const added = itemsBox(blocks).lastElementChild;
     focusFirst(added);
+    if (window.pgSyncShowIf) window.pgSyncShowIf();
   }
 
   function focusFirst(item) {
@@ -772,6 +774,44 @@
       });
     }
   }
+
+  // ---- Felder nur bei passender Auswahl zeigen (z. B. „Eigener Link“) – der Wert bleibt erhalten ----
+  function showIfCtrl(el) {
+    const ref = el.dataset.showIf;
+    for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+      const s = a.querySelector('select[name$="[' + ref + ']"]');
+      if (s) return s;
+    }
+    return null;
+  }
+  function syncShowIf() {
+    document.querySelectorAll("[data-show-if]").forEach((el) => {
+      const s = showIfCtrl(el);
+      if (!s) return;
+      const show = String(el.dataset.showIn || "").split(",").includes(s.value);
+      const wrap = el.parentElement && el.parentElement.classList.contains("gfield") && el.parentElement.children.length === 1 ? el.parentElement : el;
+      wrap.hidden = !show;
+    });
+  }
+  window.pgSyncShowIf = syncShowIf;
+  document.addEventListener("change", (e) => { if (e.target.matches && e.target.matches("select")) syncShowIf(); });
+  syncShowIf();
+
+  // ---- Icon-Auswahl: Icon anklicken = auswählen ----
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-iconpick] [data-icon-key]");
+    if (!b) return;
+    e.preventDefault();
+    const box = b.closest("[data-iconpick]");
+    const inp = box.querySelector("[data-iconpick-input]");
+    if (!inp) return;
+    inp.value = b.dataset.iconKey;
+    box.querySelectorAll("[data-icon-key]").forEach((x) => { const on = x === b; x.classList.toggle("on", on); x.setAttribute("aria-pressed", on ? "true" : "false"); });
+    const note = box.nextElementSibling;
+    if (note && note.classList.contains("hint") && /^Bisher:/.test(note.textContent)) note.remove();
+    inp.dispatchEvent(new Event("input", { bubbles: true }));
+    inp.dispatchEvent(new Event("change", { bubbles: true }));
+  });
 
   // ---- Medien-Bibliothek: direkter Upload ----
   const libUp = document.getElementById("lib-upload");

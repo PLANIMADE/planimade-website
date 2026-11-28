@@ -495,6 +495,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
     exit;
   }
   $data = pg_normalize_fields($SCHEMA[$key]['fields'], $_POST['d'] ?? []);
+  // Bereiche mit eigener Admin-Seite (z. B. Press Kit) werden dort gespeichert – hier unverändert übernehmen
+  $pgOld = null;
+  foreach ($SCHEMA[$key]['fields'] as $pgF) {
+    if (empty($pgF['page']) || empty($pgF['name'])) continue;
+    if ($pgOld === null) $pgOld = pg_load_json($SCHEMA[$key]['file']);
+    if (is_array($pgOld) && array_key_exists($pgF['name'], $pgOld)) $data[$pgF['name']] = $pgOld[$pgF['name']];
+  }
 
   // Auto-Newsletter: veröffentlichte Patchnotes mit "notify" einmalig versenden (nur DE-Basis)
   $sentCount = 0;
@@ -1332,6 +1339,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_webp'])) {
     if (pg_make_webp(PG_MEDIA_DIR . '/' . $f)) $made++;
   }
   header('Location: index.php?view=media&webp=' . $made . '&webpleft=' . count(pg_webp_todo())); exit;
+}
+
+/* ---- Press Kit: eigene Seite (Daten liegen wie bisher in studio.json unter „presskit“) ---- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['presskit_save'])) {
+  pg_csrf_check();
+  if (!pg_can('studio')) { http_response_code(403); exit('Keine Berechtigung.'); }
+  $pkDef = null;
+  foreach ($SCHEMA['studio']['fields'] as $f) if (($f['name'] ?? '') === 'presskit') $pkDef = $f;
+  $file = $SCHEMA['studio']['file'];
+  $all = pg_load_json($file);
+  if (!$pkDef || !is_array($all) || !$all) { header('Location: index.php?view=presskit&error=1'); exit; }   // nie eine leere Datei schreiben
+  $all['presskit'] = pg_normalize_field($pkDef, $_POST['d']['presskit'] ?? []);
+  $ok = pg_save_json($file, $all);
+  if ($ok) pg_log_activity('Gespeichert', 'Press Kit (DE)');
+  header('Location: index.php?view=presskit&' . ($ok ? 'saved=1' : 'error=1')); exit;
+}
+if (($_GET['view'] ?? '') === 'presskit') {
+  if (!pg_can('studio')) { header('Location: index.php'); exit; }
+  require_once __DIR__ . '/view-games.php';                     // Karten-Baustein
+  $pkDef = null;
+  foreach ($SCHEMA['studio']['fields'] as $f) if (($f['name'] ?? '') === 'presskit') $pkDef = $f;
+  $studioData = pg_load_json($SCHEMA['studio']['file']);
+  $pk = is_array($studioData['presskit'] ?? null) ? $studioData['presskit'] : [];
+  $sub = function ($names) use ($pkDef) { return array_values(array_filter($pkDef['fields'], fn($f) => in_array($f['name'] ?? '', $names, true))); };
+  $on = !isset($pk['enabled']) || !empty($pk['enabled']);
+  $GLOBALS['pg_crumb_group'] = 'Spielbetrieb';
+  pg_view_head('Press Kit');
+  pg_view_topbar($SCHEMA, null);
+  echo '<div class="editor wide sys pk-page">';
+  if (isset($_GET['saved'])) echo '<div class="flash ok">✓ Gespeichert. Das Press Kit ist live auf der Website.</div>';
+  if (isset($_GET['error'])) echo '<div class="flash err">Konnte nicht speichern – Schreibrechte am Ordner data/ prüfen.</div>';
+  echo '<form method="post" class="pk-form" data-pk-form><input type="hidden" name="csrf" value="' . pg_h(pg_csrf()) . '"><input type="hidden" name="presskit_save" value="1">';
+  echo '<div class="editor-head"><div><h1>Press Kit</h1><p class="muted">Was Presse &amp; Creator auf <code>presse.html</code> finden: Einleitung, Fakten, Downloads und eure Spiele mit Logo, Titelbild und weiteren Dateien.</p></div>'
+     . '<div class="gd-acts editor-actions"><a class="btn btn-sm" href="index.php?collection=studio&amp;lang=en" title="Englische Texte des Press Kits bearbeiten">EN</a>'
+     . '<a class="btn btn-sm" href="../presse.html?lang=de" target="_blank" rel="noopener">' . pg_icon('ext') . 'Ansehen</a>'
+     . '<button class="btn btn-primary btn-sm" type="submit">' . pg_icon('check') . 'Speichern</button></div></div>';
+  $chip = '<span class="chip ' . ($on ? 'st-rel' : '') . '" style="margin-left:auto"><i></i>' . ($on ? 'aktiv' : 'aus') . '</span>';
+  echo pg_gv_card('download', 'Allgemein', pg_render_fields($sub(['enabled', 'intro', 'contactEmail']), $pk, 'd[presskit]', 'studio.presskit'), $chip, 'Ist das Press Kit aus, zeigt presse.html „nicht verfügbar“ und der Link im Footer verschwindet.');
+  echo pg_gv_card('list', 'Fakten (Fact Sheet)', pg_render_fields($sub(['facts']), $pk, 'd[presskit]', 'studio.presskit'), '', 'z. B. Studio, Gegründet, Standort, Aktuelles Spiel – genau diese Zeilen erscheinen.');
+  echo pg_gv_card('download', 'Downloads (Studio)', pg_render_fields($sub(['downloads']), $pk, 'd[presskit]', 'studio.presskit'), '', 'Dateien für alle: z. B. Studio-Logo, Logo-Paket (ZIP), Pressemitteilung (PDF).');
+  echo pg_gv_card('game', 'Spiele im Press Kit', pg_render_fields($sub(['gamesMode', 'games']), $pk, 'd[presskit]', 'studio.presskit'), '', 'Bestimme, welche Spiele mit welchen Dateien erscheinen.');
+  echo '<div class="editor-foot g-foot"><span class="hint">Englische Texte: oben „EN“.</span><button class="btn btn-primary" type="submit">' . pg_icon('check') . 'Speichern</button></div>';
+  echo '</form></div>';
+  pg_view_foot();
+  exit;
 }
 
 /* ---- Medien-Bibliothek (alle eingeloggten) ---- */

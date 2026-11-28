@@ -493,9 +493,10 @@ a:hover .pg-link .pg-ic { transform: translateX(3px); }
 @media (prefers-reduced-motion: reduce) {
     .pg-rv { transform: none; transition: none; }
     .pg-hs-img img, .pg-hs-img video { transform: none; transition: none; }
-    .pg-hs-slide > *, .pg-hs-slide.on > * { transition: none; }
-    .pg-tick-in, .pg-hs-slide.on .pg-chip i { animation: none; }
+    .pg-hs-slide.on .pg-chip i { animation: none; }
 }
+/* Laufband: läuft immer (auch bei „Bewegung reduzieren“), hält an, solange die Maus darauf liegt */
+.pg-tick:hover .pg-tick-in { animation-play-state: paused; }
 
 /* =============================================================
    Spielseite (Phase 3) – wie im freigegebenen Probedesign v7
@@ -1070,3 +1071,17 @@ a.pg-link { text-decoration: none; }
 @media (prefers-reduced-motion: reduce) {
     .pg-post-end > a, .pg-calt, .react-btn, .share-btn { transition: none; }
 }
+
+/* =============================================================
+   Feedback-Runde: Abschnitte ohne Überschrift, Icons, Press Kit
+   ============================================================= */
+/* Banner, Widget, Welt-Teaser oder Kennzahlen ohne eigene Überschrift – stehen genau dort, wo sie im Admin einsortiert sind */
+.pg-sec.pg-sec-compact { padding: clamp(36px, 4.5vw, 60px) 0; }
+.pg-sec-compact .pg-ctaband, .pg-sec-compact .pg-widget, .pg-sec-compact .pg-gstats { margin-top: 0; }
+.pg-sec-compact .pg-ctaband + .pg-ctaband, .pg-sec-compact .pg-ctaband + .pg-widget, .pg-sec-compact .pg-widget + .pg-ctaband { margin-top: 16px; }
+.pg-note-ic { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 10px; color: var(--accent-3, var(--accent)); background: rgba(255, 255, 255, .06); }
+.pg-note-ic .pg-ic { width: 16px; height: 16px; }
+.pg-loc .pg-ic, .pg-member-meta .pg-ic { width: 14px; height: 14px; vertical-align: -2px; color: var(--accent-3, var(--accent)); }
+.pg-ft-bot .pg-ic { width: 13px; height: 13px; vertical-align: -2px; }
+.pg-pcard-acts .pg-btn { max-width: 100%; }
+

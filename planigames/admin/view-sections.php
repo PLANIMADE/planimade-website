@@ -9,7 +9,7 @@ require_once __DIR__ . '/view-games.php';                       // gemeinsame Ba
 
 function pg_sections_icon($label){
   $map = ['impressum' => 'legal', 'datenschutz' => 'lock', 'identit' => 'studio', 'hero' => 'image', 'startseite' => 'image', 'über uns' => 'team', 'newsletter' => 'mega', 'hintergrund' => 'palette',
-          'community' => 'chat', 'maskottchen' => 'spark', 'unterstützen' => 'star', 'press' => 'download', 'cookie' => 'shield', 'kontakt' => 'mail',
+          'community' => 'chat', 'maskottchen' => 'spark', 'unterstützen' => 'star', 'press' => 'download', 'cookie' => 'shield', 'kontakt' => 'mail', 'knopf' => 'link',
           'footer' => 'link'];
   $l = mb_strtolower($label);
   foreach ($map as $k => $ic) if (strpos($l, $k) !== false) return $ic;
@@ -18,6 +18,7 @@ function pg_sections_icon($label){
 // Abschnitte aus dem Schema: Überschriften = Reiter; Abschnitte nur aus Modulen → jedes Modul ein eigener Reiter
 function pg_sections_build($fields){
   $tabs = []; $cur = null;
+  $fields = array_values(array_filter($fields, fn($f) => empty($f['page'])));
   foreach ($fields as $f) {
     if (($f['widget'] ?? '') === 'heading') { $cur = count($tabs); $tabs[] = ['label' => (string) $f['label'], 'hint' => (string) ($f['hint'] ?? ''), 'fields' => []]; continue; }
     if ($cur === null) { $cur = count($tabs); $tabs[] = ['label' => '', 'hint' => '', 'fields' => []]; }
@@ -71,6 +72,7 @@ function pg_sections_panel($key, $tab, $data){
 function pg_sections_view($SCHEMA, $key){
   $coll = $SCHEMA[$key];
   $data = pg_load_json($coll['file']);
+  if ($key === 'studio') $data = pg_studio_migrate($data);   // z. B. alte „Über uns“-Bilderliste → feste Plätze
   $tabs = pg_sections_build($coll['fields']);
   $want = preg_replace('/[^a-z0-9\-]/', '', (string) ($_GET['tab'] ?? ''));
   $active = $tabs[0]['id'] ?? '';
@@ -109,6 +111,10 @@ function pg_sections_view($SCHEMA, $key){
     }
     echo '<button type="button" class="sx-tab' . ($t['id'] === $active ? ' on' : '') . '" data-sx="' . pg_h($t['id']) . '">' . pg_icon($t['icon']) . '<span>' . pg_h($t['label'] !== '' ? $t['label'] : 'Allgemein') . '</span>'
        . ($state !== '' ? '<i class="sx-dot ' . $state . '" title="' . ($state === 'on' ? 'aktiv' : 'ausgeschaltet') . '"></i>' : '') . '</button>';
+  }
+  foreach ($coll['fields'] as $pf) {
+    if (empty($pf['page'])) continue;
+    echo '<a class="sx-tab sx-link" href="index.php?view=' . pg_h($pf['page']) . '">' . pg_icon(pg_sections_icon((string) ($pf['label'] ?? ''))) . '<span>' . pg_h($pf['label'] ?? $pf['name']) . '</span>' . pg_icon('ext') . '</a>';
   }
   echo '</nav><div class="sx-body">';
   foreach ($tabs as $t) {

@@ -8,8 +8,8 @@ const PG_DATA_DIR    = __DIR__ . '/../data';
 const PG_MEDIA_DIR   = __DIR__ . '/../media';
 const PG_USERS_FILE  = __DIR__ . '/../data/users.json';
 const PG_INVITES_FILE= __DIR__ . '/../data/invites.json';
-const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip'];
-const PG_ADMIN_V     = '97';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
+const PG_UPLOAD_EXT  = ['jpg','jpeg','png','webp','gif','svg','avif','mp4','webm','ogg','mov','zip','pdf'];
+const PG_ADMIN_V     = '98';   // Cache-Bust für admin.css/admin.js – bei jeder Änderung hochzählen
 
 function pg_h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
@@ -1833,6 +1833,7 @@ function pg_nav_model($SCHEMA){
   if (pg_can('mail') || pg_can('contacts')) $com[] = ['v:templates', 'index.php?view=templates', 'zap', 'Schnellantworten', 0, false];
   $ops = [];
   if (pg_is_owner()) $ops[] = ['v:keys', 'index.php?view=keys', 'key', 'Keys & Presse', 0, false];
+  if (pg_can('studio')) $ops[] = ['v:presskit', 'index.php?view=presskit', 'download', 'Press Kit', 0, false];
   $tools = [
     ['v:board', 'index.php?view=board', 'kanban', 'Planungs-Board', 0, false],
     ['v:media', 'index.php?view=media', 'image', 'Medien', 0, false],
@@ -2057,6 +2058,89 @@ function pg_slugify($s){
   return trim($s, '-');
 }
 
+/* ---------------- Linien-Icons der Website (Auswahl im Admin) ----------------
+   Gleicher Icon-Satz wie in assets/app.js (PG_IC). Gespeichert wird der Name (z. B. „wand“). */
+function pg_site_icons(){
+  return [
+    'wand' => ['Zauberstab', '<path d="M4 20 15 9M14 4v3M18.5 5.5l-2 2M20 10h-3M9.5 5.5l2 2"/>'],
+    'spark' => ['Funkeln', '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>'],
+    'star' => ['Stern', '<path d="M12 3.5l2.6 5.3 5.9.9-4.25 4.1 1 5.8L12 16.9l-5.25 2.7 1-5.8L3.5 9.7l5.9-.9z"/>'],
+    'heart' => ['Herz', '<path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7.5 3c0 5.4-7.5 10-7.5 10z"/>'],
+    'pad' => ['Gamepad', '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7 10.5v4M5 12.5h4M15.5 11.5h.01M18 13.5h.01"/>'],
+    'users' => ['Team', '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.8-3.2 3-5 5.5-5s4.7 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.6 14.2c2.5-.4 4.3 1.2 4.9 4"/>'],
+    'palette' => ['Farbpalette', '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.8 0-1.2-1-1.6-1-2.7 0-1 .9-1.7 2-1.7H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/>'],
+    'brush' => ['Pinsel', '<path d="M18.5 3.5 10 12l2 2 8.5-8.5a1.4 1.4 0 0 0-2-2z"/><path d="M10 12c-2.5 0-4 1.5-4 3.5 0 1.6-.8 2.9-2.5 3.5 4.5 1.5 9.5-.5 8.5-5z"/>'],
+    'bolt' => ['Blitz', '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'],
+    'rocket' => ['Rakete', '<path d="M9 15 5.5 11.5C7.5 6.5 12 4 19.5 4.5 20 12 17.5 16.5 12.5 18.5z"/><path d="M6.5 14.5 4 20l5.5-2.5"/><circle cx="14.5" cy="9.5" r="1.6"/>'],
+    'shield' => ['Schild', '<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6z"/>'],
+    'swords' => ['Schwerter', '<path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 17.5 21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2"/>'],
+    'castle' => ['Burg', '<path d="M4 21V5h3v3h2V5h2v3h2V5h2v3h2V5h3v16zM10 21v-4a2 2 0 0 1 4 0v4"/>'],
+    'crown' => ['Krone', '<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>'],
+    'gem' => ['Kristall', '<path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18M9 3l-1.5 6L12 21l4.5-12L15 3"/>'],
+    'flame' => ['Flamme', '<path d="M12 21c-4 0-6.5-2.6-6.5-6.2 0-3.6 2.6-5.6 3.5-8.8 1.9 1.4 2.8 3.2 3 4.9C13.3 9.5 14 7.6 13.8 5c3 2.2 4.7 5.6 4.7 9.4 0 3.8-2.6 6.6-6.5 6.6z"/>'],
+    'skull' => ['Totenkopf', '<path d="M12 3C7.6 3 4.5 6.1 4.5 10.2c0 2.5 1.2 4.4 3 5.5V19h9v-3.3c1.8-1.1 3-3 3-5.5C19.5 6.1 16.4 3 12 3z"/><circle cx="9" cy="11" r="1.6"/><circle cx="15" cy="11" r="1.6"/><path d="M10 19v2M14 19v2"/>'],
+    'ghost' => ['Geist', '<path d="M5 21V10a7 7 0 0 1 14 0v11l-2.5-2-2.3 2-2.2-2-2.2 2-2.3-2z"/><path d="M9.5 10h.01M14.5 10h.01"/>'],
+    'target' => ['Ziel', '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12h.01"/>'],
+    'trophy' => ['Pokal', '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/>'],
+    'globe' => ['Welt', '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>'],
+    'map' => ['Karte', '<path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6zM9 4v14M15 6v14"/>'],
+    'compass' => ['Kompass', '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>'],
+    'mountain' => ['Berg', '<path d="M2.5 20 9.5 8l4 6.5 2.5-3.5 5.5 9z"/>'],
+    'tree' => ['Baum', '<path d="M12 3 6 11h3l-4 6h14l-4-6h3zM12 17v4"/>'],
+    'moon' => ['Mond', '<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/>'],
+    'sun' => ['Sonne', '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>'],
+    'music' => ['Musik', '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>'],
+    'headphones' => ['Kopfhörer', '<path d="M4 18v-5a8 8 0 0 1 16 0v5"/><rect x="3" y="14" width="4.5" height="6.5" rx="1.8"/><rect x="16.5" y="14" width="4.5" height="6.5" rx="1.8"/>'],
+    'puzzle' => ['Puzzle', '<path d="M5 8h3.5a2 2 0 1 1 4 0H16v3.5a2 2 0 1 1 0 4V19h-3.5a2 2 0 1 0-4 0H5v-3.5a2 2 0 1 0 0-4z"/>'],
+    'dice' => ['Würfel', '<rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01"/>'],
+    'clock' => ['Uhr', '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'],
+    'chat' => ['Sprechblase', '<path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-8.5L6 20v-3.5H5A1.5 1.5 0 0 1 3.5 15V7A1.5 1.5 0 0 1 5 5.5z"/>'],
+    'eye' => ['Auge', '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>'],
+    'lock' => ['Schloss', '<rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>'],
+    'key' => ['Schlüssel', '<circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 8.7-8.7M16 7l2.5 2.5M14 9l2 2"/>'],
+    'gift' => ['Geschenk', '<rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8.5h14V12M12 8v12.5M12 8c-1.5-3.5-5.5-3.5-5.5-1S9 8 12 8zm0 0c1.5-3.5 5.5-3.5 5.5-1S15 8 12 8z"/>'],
+    'code' => ['Code', '<path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4.5l-3 15"/>'],
+    'camera' => ['Kamera', '<path d="M4 7.5h3l1.8-2.5h6.4L17 7.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8.5a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>'],
+    'film' => ['Film', '<rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M7.5 4v16M16.5 4v16M3.5 8h4M3.5 12h4M3.5 16h4M16.5 8h4M16.5 12h4M16.5 16h4"/>'],
+    'book' => ['Buch', '<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v14H6.5A1.5 1.5 0 0 0 5 18.5zM5 18.5A1.5 1.5 0 0 0 6.5 20H19v-3"/>'],
+    'flag' => ['Flagge', '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'],
+    'check' => ['Haken', '<path d="M5 12.5 10 17l9-10"/>'],
+    'screen' => ['Bildschirm', '<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/>'],
+    'tag' => ['Etikett', '<path d="M3 12V4.5A1.5 1.5 0 0 1 4.5 3H12l9 9-9 9z"/><circle cx="8" cy="8" r="1.4"/>'],
+    'cal' => ['Kalender', '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'],
+    'news' => ['Zeitung', '<path d="M4 5h12v14H6a2 2 0 0 1-2-2zM16 9h4v8a2 2 0 0 1-2 2h-2M7.5 9h5M7.5 12.5h5M7.5 16h3"/>'],
+    'atom' => ['Physik', '<circle cx="12" cy="12" r="1.4"/><ellipse cx="12" cy="12" rx="9" ry="3.6"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(120 12 12)"/>'],
+    'smile' => ['Lächeln', '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1 1.3 2.2 2 3.5 2s2.5-.7 3.5-2M9 9.5h.01M15 9.5h.01"/>'],
+    'bulb' => ['Idee', '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/>'],
+    'pin' => ['Ort', '<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/>'],
+    'box' => ['Paket', '<path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/>'],
+  ];
+}
+// Name eines Icons – ältere Einträge mit Emoji (z. B. 🪄) werden dem passenden Icon zugeordnet
+function pg_site_icon_key($v){
+  static $map = ['🪄' => 'wand', '✨' => 'spark', '💫' => 'spark', '⭐' => 'star', '🌟' => 'star', '❤' => 'heart', '💜' => 'heart', '🧡' => 'heart', '💛' => 'heart', '💚' => 'heart', '💙' => 'heart', '🖤' => 'heart', '🤍' => 'heart', '💖' => 'heart', '💕' => 'heart', '♥' => 'heart', '🎮' => 'pad', '🕹' => 'pad', '🌀' => 'pad', '👾' => 'pad', '🤝' => 'users', '👥' => 'users', '👫' => 'users', '🧑‍🤝‍🧑' => 'users', '👪' => 'users', '🫂' => 'users', '🎨' => 'palette', '🖌' => 'brush', '✏' => 'brush', '🖍' => 'brush', '⚡' => 'bolt', '🚀' => 'rocket', '🛡' => 'shield', '⚔' => 'swords', '🗡' => 'swords', '🔫' => 'target', '🏰' => 'castle', '🏯' => 'castle', '👑' => 'crown', '💎' => 'gem', '🔮' => 'gem', '🔥' => 'flame', '💀' => 'skull', '☠' => 'skull', '🧟' => 'skull', '🧟‍♂' => 'skull', '🧟‍♀' => 'skull', '👻' => 'ghost', '🎯' => 'target', '🏆' => 'trophy', '🥇' => 'trophy', '🏅' => 'trophy', '🌍' => 'globe', '🌎' => 'globe', '🌏' => 'globe', '🌐' => 'globe', '🗺' => 'map', '🧭' => 'compass', '⛰' => 'mountain', '🏔' => 'mountain', '🌲' => 'tree', '🌳' => 'tree', '🌙' => 'moon', '☀' => 'sun', '🎵' => 'music', '🎶' => 'music', '🎧' => 'headphones', '🧩' => 'puzzle', '🎲' => 'dice', '⏱' => 'clock', '⏰' => 'clock', '🕒' => 'clock', '⌛' => 'clock', '⏳' => 'clock', '💬' => 'chat', '🗨' => 'chat', '👀' => 'eye', '👁' => 'eye', '🔒' => 'lock', '🔐' => 'lock', '🔑' => 'key', '🗝' => 'key', '🎁' => 'gift', '💻' => 'code', '⌨' => 'code', '🖥' => 'screen', '📷' => 'camera', '📸' => 'camera', '🎬' => 'film', '🎥' => 'film', '📖' => 'book', '📚' => 'book', '📜' => 'book', '🚩' => 'flag', '🏁' => 'flag', '✅' => 'check', '✔' => 'check', '🏷' => 'tag', '📅' => 'cal', '📆' => 'cal', '📰' => 'news', '📝' => 'news', '🧙' => 'wand', '🧙‍♂' => 'wand', '🧙‍♀' => 'wand', '🤹' => 'atom', '🤹‍♂' => 'atom', '🤹‍♀' => 'atom', '⚛' => 'atom', '😂' => 'smile', '😄' => 'smile', '😊' => 'smile', '🙂' => 'smile', '😎' => 'smile', '🤪' => 'smile', '💡' => 'bulb', '📍' => 'pin', '📦' => 'box', '🪟' => 'windows', '🍎' => 'apple', '🐧' => 'terminal', '🤖' => 'android'];
+  $v = trim((string) $v);
+  $all = pg_site_icons();
+  if (isset($all[$v])) return $v;
+  $k = str_replace(["\u{FE0E}", "\u{FE0F}"], '', $v);
+  if (isset($map[$k])) return $map[$k];
+  $first = mb_substr($k, 0, 1);
+  return $map[$first] ?? 'spark';
+}
+
+/* Ältere Daten an neue Felder angleichen (beim Anzeigen im Admin; gespeichert wird erst beim nächsten Speichern):
+   „Bilder für Über uns“ (Liste) → drei feste Bildplätze */
+function pg_studio_migrate($data){
+  if (!is_array($data)) return $data;
+  $have = trim((string) ($data['aboutImage1'] ?? '')) . trim((string) ($data['aboutImage2'] ?? '')) . trim((string) ($data['aboutImage3'] ?? ''));
+  if ($have === '' && !empty($data['aboutImages']) && is_array($data['aboutImages'])) {
+    $imgs = [];
+    foreach ($data['aboutImages'] as $x) { $p = is_array($x) ? (string) ($x['image'] ?? '') : (string) $x; if (trim($p) !== '') $imgs[] = $p; }
+    foreach (array_slice($imgs, 0, 3) as $i => $p) $data['aboutImage' . ($i + 1)] = $p;
+  }
+  return $data;
+}
+
 /* ---------------- Datei-Upload ---------------- */
 /* Datei aus einem normalen (Nicht-AJAX) Formular nach media/ speichern.
    Gibt den /media-Pfad zurück, '' wenn nichts/ungültig. Bei $imagesOnly nur Bilder. */
@@ -2257,6 +2341,11 @@ function pg_render_fields($fields, $values, $prefix, $pathKey){
 }
 
 function pg_render_field($f, $val, $name, $pathKey){
+  // „showIf“ => [Feld, 'wert1,wert2']: Feld nur zeigen, wenn das Auswahlfeld daneben passt (Wert wird trotzdem gespeichert)
+  if (!empty($f['showIf']) && is_array($f['showIf'])) {
+    $g = $f; unset($g['showIf']);
+    return '<div class="showif" data-show-if="' . pg_h($f['showIf'][0]) . '" data-show-in="' . pg_h($f['showIf'][1]) . '">' . pg_render_field($g, $val, $name, $pathKey) . '</div>';
+  }
   $w = $f['widget'];
   $label = pg_h($f['label'] ?? $f['name']);
   $hint = !empty($f['hint']) ? '<p class="hint">' . pg_h($f['hint']) . '</p>' : '';
@@ -2313,7 +2402,7 @@ function pg_render_field($f, $val, $name, $pathKey){
       break;
     case 'image':
     case 'file':
-      $accept = $w === 'image' ? 'image/*' : 'image/*,video/*,.zip,application/zip';
+      $accept = $w === 'image' ? 'image/*' : 'image/*,video/*,.zip,application/zip,.pdf,application/pdf';
       $prev = $val ? '<a href="' . pg_h($val) . '" target="_blank" class="media-prev">' . pg_h($val) . '</a>' : '';
       $thumb = '';
       if ($w === 'image') {                                     // kleine Vorschau des gewählten Bildes
@@ -2326,6 +2415,19 @@ function pg_render_field($f, $val, $name, $pathKey){
              . ($w === 'image' ? '<button type="button" class="btn-up" data-media-focus title="Bildausschnitt / Fokuspunkt">🎯 Fokus</button>' : '')
              . '<label class="btn-up">Hochladen<input type="file" accept="' . $accept . '" hidden data-media-file></label>'
              . '<span class="media-status">' . $prev . '</span></div>';
+      break;
+    case 'icon':
+      // Raster mit den Linien-Icons der Website; ältere Emoji-Einträge zeigen das passende Icon als ausgewählt
+      $cur = pg_site_icon_key((string) $val);
+      $all = pg_site_icons();
+      $btns = '';
+      foreach ($all as $k => $ic) {
+        $on = $k === $cur;
+        $btns .= '<button type="button" class="ip-btn' . ($on ? ' on' : '') . '" data-icon-key="' . pg_h($k) . '" title="' . pg_h($ic[0]) . '" aria-label="' . pg_h($ic[0]) . '" aria-pressed="' . ($on ? 'true' : 'false') . '">'
+               . '<svg viewBox="0 0 24 24" aria-hidden="true">' . $ic[1] . '</svg></button>';
+      }
+      $note = ($val !== '' && !isset($all[(string) $val])) ? '<p class="hint">Bisher: ' . pg_h($val) . ' – wird als Icon „' . pg_h($all[$cur][0] ?? '') . '“ gezeigt. Einfach ein anderes Icon anklicken, um zu wechseln.</p>' : '';
+      $field = '<div class="iconpick" data-iconpick><input type="hidden" name="' . pg_h($name) . '" value="' . pg_h($val) . '" data-iconpick-input><div class="ip-grid">' . $btns . '</div></div>' . $note;
       break;
     case 'string':
     default:

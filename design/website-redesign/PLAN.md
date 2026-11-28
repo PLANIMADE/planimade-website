@@ -157,6 +157,27 @@ Man kann jede Phase einzeln hochladen oder mehrere zusammen.
    Geändert: alle Seiten-Dateien (Kopfbereich), `assets/app.js`, `assets/tailwind.css` (neu), `.htaccess`,
    `admin/lib.php`, `admin/index.php`, `PLANIGAMES-SETUP.md`.
 
+6. **Feedback-Runde – erledigt (28.11.2026), Version 57:**
+   *Durchlauf & Laufband* spielen immer automatisch – auch wenn das Gerät „Bewegung reduzieren“ meldet (genau das
+   war bei euch eingestellt und hat beides angehalten); der Pause-Knopf bleibt, das Laufband hält bei Mauskontakt.
+   *Knöpfe im Durchlauf* je Spiel frei wählbar (Admin → Spiel → Darstellung → „Durchlauf: Video & Knöpfe“):
+   Zum Spiel, Steam-Wishlist, Trailer, Playtest/Warteliste, Demo, Devlog, Welt-Seite, eigener Link oder keiner –
+   mit eigenem Text; „Automatisch“ = bisheriges Verhalten. *Video im Durchlauf*: je Spiel Bild oder Video
+   (MP4/WebM, stumm, Schleife). *Knöpfe im Kopfbereich der Spielseite* ebenso wählbar (Hero-Block).
+   *Knopf oben rechts*: Admin → Studio & Startseite → „Knopf oben rechts (Kopfzeile)“ (Playtest, Wishlist,
+   Spielseite oder Trailer eines Spiels, eigener Link, aus; eigener Text). *Über uns*: drei feste Bildplätze mit
+   Formatangabe und Bildausschnitt (🎯 Fokus) statt automatisch gewählter Bilder; eine früher angelegte Bilderliste
+   wird übernommen. *Icons statt Emojis*: gezeichnete Linien-Icons (wie im Probedesign) bei Werten, Feature-Kacheln,
+   Download-Plattformen, Pause-Hinweis, Team-Ort und Admin-Link; im Admin per Klick aus 52 Icons wählbar, alte
+   Emojis werden automatisch passend übersetzt. *Spielseite*: Abschnitte erscheinen genau in der Reihenfolge der
+   Seiten-Blöcke im Admin; direkt aufeinanderfolgende Blöcke derselben Art werden zu einem Abschnitt, ein einzelnes
+   Banner/Widget/Welt-Teaser steht ohne Überschrift genau an seiner Stelle. *Press Kit*: eigener Menüpunkt
+   „Spielbetrieb → Press Kit“ (Einleitung, Kontakt, Fakten, Downloads, Auswahl der Spiele mit Kurztext,
+   Logo/Titelbild an/aus, Trailer-Link und weiteren Dateien; PDFs sind jetzt als Upload erlaubt). Felder wie
+   „Eigener Link“ erscheinen im Admin nur, wenn sie gebraucht werden.
+   Geändert: alle Seiten-Dateien (Version 57), `assets/app.js`, `assets/site.css`, `admin/schema.php`, `admin/lib.php`,
+   `admin/index.php`, `admin/view-sections.php`, `admin/assets/admin.css`, `admin/assets/admin.js`.
+
 **Hinweis Hintergrund-Effekt:** Im Admin steht unter *Studio → Hintergrund & Atmosphäre* noch „Nur Partikel, viel,
 lebhaft“. Die aufsteigenden Partikel gibt es in der Design-Vorschau nicht – für denselben ruhigen Look dort
 „Aus / minimal“ wählen (Einstellung bleibt euch überlassen, die Funktion selbst ist unverändert).

@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const VERSION = "56";   // muss zur ?v=… in den HTML-Dateien passen
+    const VERSION = "57";   // muss zur ?v=… in den HTML-Dateien passen
     try { console.log("%cPLANIGAMES app.js v" + VERSION + " geladen", "color:#ff7d1a;font-weight:700"); } catch (e) {}
 
     // Aufräumen: der frühere Frontend-Service-Worker (Homescreen-Installation) ist entfernt –
@@ -197,6 +197,7 @@
             press_cover: "Titelbild", press_games_h: "Logos & Titelbilder", press_nodl: "Noch keine Downloads hinterlegt.", press_off: "Das Press Kit ist gerade nicht verfügbar.",
             c_heading: "Sag Hallo!", c_optional: "(optional)", c_alt_mail: "Lieber per E-Mail?", c_alt_press: "Für Presse & Creator",
             c_privacy: "Mit dem Absenden werden deine Angaben zur Bearbeitung deiner Anfrage gespeichert. Mehr dazu in der {link}.", c_privacy_link: "Datenschutzerklärung",
+            lore_explore: "Welt erkunden", press_trailer: "Trailer",
             err_generic: "Hat nicht geklappt. Bitte später erneut.", err_conn: "Verbindung fehlgeschlagen. Bitte später erneut.",
             c_off_h: "Schreib uns eine E-Mail", c_off_p: "Das Kontaktformular ist gerade ausgeschaltet – erreichbar sind wir trotzdem:", c_off_p2: "Das Kontaktformular ist gerade ausgeschaltet.",
         },
@@ -268,6 +269,7 @@
             press_cover: "Key art", press_games_h: "Logos & key art", press_nodl: "No downloads yet.", press_off: "The press kit isn't available right now.",
             c_heading: "Say hello!", c_optional: "(optional)", c_alt_mail: "Prefer email?", c_alt_press: "For press & creators",
             c_privacy: "When you send this, your details are stored to handle your request. More in our {link}.", c_privacy_link: "privacy policy",
+            lore_explore: "Explore the world", press_trailer: "Trailer",
             err_generic: "That didn't work. Please try again later.", err_conn: "Connection failed. Please try again later.",
             c_off_h: "Send us an email", c_off_p: "The contact form is switched off right now – you can still reach us:", c_off_p2: "The contact form is switched off right now.",
         },
@@ -300,7 +302,8 @@
     // - Leeres Englisch (oder leeres Deutsch) → Deutsch.
     const SHARED_KEYS = new Set(["type", "slug", "hidden", "status", "align", "platform", "effect", "density", "game",
         "steamAppId", "itchEmbed", "youtube", "version", "publishAt", "draft", "notify", "featured", "enabled",
-        "icon", "emoji", "email", "accent", "accent2", "particleColor", "logoScale", "logoLayout", "logoPos", "logoGap", "logoBox"]);
+        "icon", "emoji", "email", "accent", "accent2", "particleColor", "logoScale", "logoLayout", "logoPos", "logoGap", "logoBox",
+        "homeMedia", "slideBtn1", "slideBtn2", "btn1", "btn2", "mode", "gamesMode"]);
     const looksShared = (v) => /^(\/|https?:\/\/|www\.|#|data:|mailto:|tel:)/i.test(v)
         || /\.(png|jpe?g|webp|gif|svg|avif|mp4|webm|mov|zip|pdf)(\?[^#]*)?(#.*)?$/i.test(v)
         || /^\d{4}-\d{2}-\d{2}/.test(v);
@@ -755,11 +758,12 @@
     function applyShared(name, merged, de) {
         if (!merged || !de) return;
         if (name === "studio") {
-            ["name", "background", "logo", "favicon", "heroBackground", "heroVideo", "aboutImages"].forEach(k => {
+            ["name", "background", "logo", "favicon", "heroBackground", "heroVideo", "aboutImages", "aboutImage1", "aboutImage2", "aboutImage3"].forEach(k => {
                 if (de[k] !== undefined) merged[k] = de[k];
             });
         } else if (name === "games" && Array.isArray(merged.games) && Array.isArray(de.games)) {
-            const SHARED_GAME = ["title", "accent", "accent2", "particleColor", "cover", "homeImage", "logo", "logoScale", "logoPos", "logoLayout", "logoGap", "logoBox", "wishlistUrl", "status", "featured", "slug"];
+            const SHARED_GAME = ["title", "accent", "accent2", "particleColor", "cover", "homeImage", "homeMedia", "homeVideo", "slideBtn1", "slideBtn2", "slideBtn1Url", "slideBtn2Url",
+                "logo", "logoScale", "logoPos", "logoLayout", "logoGap", "logoBox", "wishlistUrl", "status", "featured", "slug"];
             merged.games.forEach((g, i) => {
                 const d = de.games[i]; if (!d) return;
                 SHARED_GAME.forEach(k => { if (d[k] !== undefined) g[k] = d[k]; });
@@ -835,21 +839,13 @@
 
     // ---------- Spiele-Durchlauf ----------
     function homeVisual(g, s, isCur) {
+        // im Admin je Spiel: „Hintergrund im Durchlauf“ = Bild oder Video (das Bild dient dann als Vorschaubild)
+        const vid = g.homeMedia === "video" ? String(g.homeVideo || "").trim() : "";
+        if (vid) return { img: g.homeImage || g.cover || "", video: vid };
         if (g.homeImage) return { img: g.homeImage, video: "" };
         // aktuelles Projekt: Hintergrund aus „Studio & Startseite" (falls gesetzt)
         if (isCur && (s.heroBackground || s.heroVideo)) return { img: s.heroBackground || g.cover || "", video: s.heroVideo || "" };
         return { img: g.cover || "", video: "" };
-    }
-    function slideSecondary(g) {
-        const hb = heroBlockOf(g);
-        const wish = String(g.wishlistUrl || "").trim();
-        if (/^https?:\/\//i.test(wish)) return `<a class="pg-btn pg-btn-s" href="${esc(wish)}" target="_blank" rel="noopener">${esc(hb.ctaLabel || t("wishlist"))}</a>`;
-        const tr = (g.blocks || []).find(b => b && b.type === "trailer" && !b.hidden && /^https?:\/\//i.test(String(b.youtube || "").trim()));
-        const trUrl = String(hb.trailerUrl || (tr && tr.youtube) || "").trim();
-        if (/^https?:\/\//i.test(trUrl)) return `<a class="pg-btn pg-btn-s" href="${esc(trUrl)}" target="_blank" rel="noopener">${pgIc("play")} ${t("trailer_watch")}</a>`;
-        const wl = (g.blocks || []).find(b => b && b.type === "waitlist" && !b.hidden);
-        if (wl) return `<a class="pg-btn pg-btn-s" href="${gameHref(g)}#warteliste">${t(/beta/i.test(String(wl.heading || "")) ? "cta_beta" : "cta_playtest")}</a>`;
-        return "";
     }
     function homeFigure(g, i, s, isCur) {
         const v = homeVisual(g, s, isCur);
@@ -870,7 +866,7 @@
                 <div class="pg-meta">${pgChip(g.status)}${genre ? `<span class="pg-genre">${esc(genre)}</span>` : ""}</div>
                 ${tag ? `<p class="pg-hs-tag">${esc(tag)}</p>` : ""}
                 ${sum ? `<p class="pg-hs-txt">${esc(sum)}</p>` : ""}
-                <div class="pg-row"><a class="pg-btn pg-btn-p" href="${gameHref(g)}">${t("to_game2")} ${pgIc("arrow")}</a>${slideSecondary(g)}</div>
+                <div class="pg-row">${slideButtons(g)}</div>
             </div>`;
     }
     function homeTab(g, i) {
@@ -940,24 +936,16 @@
     }
 
     // ---------- Über uns ----------
-    function aboutImages(s, games, posts) {
-        const own = (Array.isArray(s.aboutImages) ? s.aboutImages : [])
-            .map(x => (x && typeof x === "object") ? (x.image || x.src || "") : x).filter(x => typeof x === "string" && x.trim());
-        if (own.length) return own.slice(0, 3);
-        const covers = games.filter(g => g && g.cover), cur = covers.find(g => g.featured);
-        const gallery = [];
-        games.forEach(g => (g.blocks || []).filter(b => b && b.type === "gallery" && !b.hidden).forEach(b =>
-            (b.images || b.items || []).forEach(im => { const src = typeof im === "string" ? im : (im && (im.src || im.image)); if (src) gallery.push(src); })));
-        const postImgs = posts.map(p => p.cover).filter(Boolean);
-        const out = [];
-        const add = (src) => { const k = String(src || "").split("#")[0]; if (k && out.length < 3 && !out.some(o => o.split("#")[0] === k)) out.push(src); };
-        add((covers.find(g => g !== cur) || {}).cover);   // großes Bild: ein Spiel neben dem aktuellen Projekt
-        add(gallery[0]); add(postImgs[0]);
-        gallery.slice(1).forEach(add); postImgs.slice(1).forEach(add); covers.forEach(g => add(g.cover));
-        return out;
+    // Bilder für „Über uns“: die drei Plätze aus dem Admin (Studio & Startseite → Über uns) – keine Zufallsbilder.
+    // Ältere Liste („Bilder für Über uns“) gilt weiter, bis im Admin gespeichert wurde.
+    function aboutImages(s) {
+        const own = [s.aboutImage1, s.aboutImage2, s.aboutImage3].map(x => String(x || "").trim()).filter(Boolean);
+        if (own.length) return own;
+        return (Array.isArray(s.aboutImages) ? s.aboutImages : []).map(x => ((x && typeof x === "object") ? (x.image || x.src || "") : x))
+            .filter(x => typeof x === "string" && x.trim()).slice(0, 3);
     }
     function homeAbout(s, games, posts, members, num) {
-        const imgs = aboutImages(s, games, posts);
+        const imgs = aboutImages(s);
         const stats = [];
         if (String(s.founded || "").trim()) stats.push([s.founded, t("stat_founded")]);
         if (members.length) stats.push([members.length, t("stat_team")]);
@@ -975,7 +963,7 @@
                 </div>
                 ${imgs.length ? `<div class="pg-collage pg-rv" data-n="${imgs.length}">${imgs.map(src => `<figure><img src="${esc(src)}" alt="" loading="lazy" style="object-position:${focusPos(src)}"></figure>`).join("")}</div>` : ""}
             </div>
-            ${pillars.length ? `<div class="pg-vals">${pillars.map(p => `<div class="pg-val pg-rv"><span class="pg-icn pg-emo">${esc(p.icon || "✦")}</span><h3>${esc(p.title || "")}</h3><p>${esc(p.text || "")}</p></div>`).join("")}</div>` : ""}
+            ${pillars.length ? `<div class="pg-vals">${pillars.map(p => `<div class="pg-val pg-rv"><span class="pg-icn">${siteIcon(p.icon)}</span><h3>${esc(p.title || "")}</h3><p>${esc(p.text || "")}</p></div>`).join("")}</div>` : ""}
         </div></section>`;
     }
 
@@ -989,7 +977,7 @@
                 return `<figure class="pg-tm pg-rv"${more ? ` data-member="${i}" role="button" tabindex="0" aria-label="${esc(m.name || "")} – ${t("profile_view")}"` : ""}>
                     <div class="pg-tm-ph">${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.photoAlt || m.name || "")}" loading="lazy" style="object-position:${focusPos(m.photo)}">` : `<span class="pg-tm-emo">${esc(m.emoji || "🧙")}</span>`}
                         <div class="pg-nm"><b>${esc(m.name || "")}</b>${m.role ? `<span>${esc(m.role)}</span>` : ""}</div>${more ? `<span class="pg-tm-more">${t("profile_view")}</span>` : ""}</div>
-                    <figcaption>${quote ? `<p class="pg-q">${esc(quote)}</p>` : ""}${m.location ? `<p class="pg-loc">📍 ${esc(m.location)}</p>` : ""}</figcaption>
+                    <figcaption>${quote ? `<p class="pg-q">${esc(quote)}</p>` : ""}${m.location ? `<p class="pg-loc">${pgIc("pin")} ${esc(m.location)}</p>` : ""}</figcaption>
                 </figure>`;
             }).join("")}</div>
         </div></section>`;
@@ -1017,6 +1005,70 @@
             ${pgSh(num, "Devlog", esc(t("devlog_fresh2")), "", `<a class="pg-btn pg-btn-s pg-btn-sm" href="devlog.php">${t("all_posts")} ${pgIc("arrow")}</a>`)}
             <div class="pg-dl${rest.length ? "" : " solo"}">${homePost(first, gOf(first), "big")}${rest.length ? `<div class="pg-dl-side">${rest.map(p => homePost(p, gOf(p), "mini")).join("")}</div>` : ""}</div>
         </div></section>`;
+    }
+
+    // ---------- Knöpfe, die im Admin frei gewählt werden (Durchlauf, Kopfbereich der Spielseite, Kopfzeile) ----------
+    const gameBlocks = (g) => (Array.isArray(g && g.blocks) ? g.blocks : []).filter(b => b && !b.hidden);
+    function trailerUrlOf(g) {
+        const tr = gameBlocks(g).find(b => b.type === "trailer" && /^https?:\/\//i.test(String(b.youtube || "").trim()));
+        const u = String(heroBlockOf(g).trailerUrl || (tr && tr.youtube) || "").trim();
+        return /^https?:\/\//i.test(u) ? u : "";
+    }
+    // Ziel eines Knopfs für ein Spiel → { href, label, ext, play, arrow } – oder null, wenn es das Ziel (noch) nicht gibt.
+    // where: "home" (Startseite/Kopfzeile → Links auf die Spielseite) oder "game" (auf der Spielseite selbst → Sprungmarken)
+    function btnTarget(kind, g, where, label, url) {
+        if (!g) return null;
+        const own = plainText(label);
+        const L = (x) => own || x;
+        const base = where === "game" ? "" : gameHref(g);
+        const hb = heroBlockOf(g);
+        switch (kind) {
+            case "game":
+                return where === "game" ? null : { href: gameHref(g), label: L(t("to_game2")), arrow: true };
+            case "wishlist": {
+                const w = String(g.wishlistUrl || "").trim();
+                return /^https?:\/\//i.test(w) ? { href: w, ext: true, label: L(String(hb.ctaLabel || "").trim() || t("wishlist")) } : null;
+            }
+            case "trailer": {
+                const u = trailerUrlOf(g);
+                if (u) return { href: u, ext: true, play: true, label: L(t("trailer_watch")) };
+                return gameBlocks(g).some(b => b.type === "trailer" && (b.youtube || b.url || b.file)) ? { href: base + "#einblicke", play: true, label: L(t("trailer_watch")) } : null;
+            }
+            case "playtest": {
+                const wl = gameBlocks(g).find(b => b.type === "waitlist");
+                if (!wl) return null;
+                const h = String(wl.heading || "");
+                const lab = g.status === "paused" ? t("cta_notify")
+                    : where === "game" ? (/beta/i.test(h) ? t("cta_wl_beta") : /playtest/i.test(h) ? t("cta_wl_playtest") : t("cta_wl"))
+                    : t(/beta/i.test(h) ? "cta_beta" : "cta_playtest");
+                return { href: base + "#warteliste", arrow: true, label: L(lab) };
+            }
+            case "demo":
+                return gameBlocks(g).some(d => d.type === "download" && (d.embedUrl || (d.builds || []).some(x => x && (x.url || x.file))))
+                    ? { href: base + "#spielen", arrow: true, label: L(t("cta_demo")) } : null;
+            case "devlog":
+                return { href: "devlog.php?game=" + encodeURIComponent(g.slug || ""), arrow: true, label: L(t("cta_devlog")) };
+            case "lore":
+                return g.lore && g.lore.enabled ? { href: "lore.html?slug=" + encodeURIComponent(g.slug || ""), arrow: true, label: L(t("lore_explore")) } : null;
+            case "custom": {
+                const u = String(url || "").trim();
+                if (!isRealLink(u)) return null;
+                return { href: u, ext: /^https?:\/\//i.test(u), arrow: !/^https?:\/\//i.test(u), label: L(t("more_info")) };
+            }
+        }
+        return null;
+    }
+    const btnHTML = (c, cls) => `<a class="pg-btn ${cls}" href="${esc(c.href)}"${c.ext ? ' target="_blank" rel="noopener"' : ""}>${c.play ? pgIc("play") + " " : ""}${esc(c.label)}${c.arrow && /pg-btn-p/.test(cls) ? " " + pgIc("arrow") : ""}</a>`;
+    // bisheriger Automatismus für Knopf 2 im Durchlauf: Wishlist → Trailer → Playtest
+    const autoSlideSecondary = (g) => btnTarget("wishlist", g, "home") || btnTarget("trailer", g, "home") || btnTarget("playtest", g, "home");
+    // Knöpfe einer Folie im Startseiten-Durchlauf (im Admin je Spiel unter „Darstellung → Startseite & Spielkarten“)
+    function slideButtons(g) {
+        const k1 = String(g.slideBtn1 || "game"), k2 = String(g.slideBtn2 || "auto");
+        let b1 = k1 === "none" ? null : btnTarget(k1, g, "home", g.slideBtn1Label, g.slideBtn1Url);
+        if (!b1 && k1 !== "none") b1 = btnTarget("game", g, "home");            // gewähltes Ziel fehlt → Zum Spiel
+        let b2 = k2 === "none" ? null : k2 === "auto" ? autoSlideSecondary(g) : btnTarget(k2, g, "home", g.slideBtn2Label, g.slideBtn2Url);
+        if (b1 && b2 && b1.href === b2.href) b2 = null;
+        return [b1, b2].filter(Boolean).map((c, i) => btnHTML(c, i ? "pg-btn-s" : "pg-btn-p")).join("");
     }
 
     let stopHomeHero = null;
@@ -1063,7 +1115,7 @@
         const figs = $$(".pg-hs-img", hs), slides = $$(".pg-hs-slide", hs), tabs = $$(".pg-hs-tab", hs);
         const n = slides.length;
         const vids = figs.map(f => f.querySelector("video"));
-        const playVid = (k) => vids.forEach((v, j) => { if (!v) return; if (j === k && !RM) { const p = v.play(); if (p && p.catch) p.catch(() => {}); } else v.pause(); });
+        const playVid = (k) => vids.forEach((v, j) => { if (!v) return; if (j === k) { v.muted = true; const p = v.play(); if (p && p.catch) p.catch(() => {}); } else v.pause(); });
         // Bilder der weiteren Spiele nachladen, sobald das erste Bild da ist
         const loadRest = () => figs.forEach(f => { const im = f.querySelector("img[data-src]"); if (im) { im.src = im.dataset.src; im.removeAttribute("data-src"); } });
         const firstImg = figs[0] && figs[0].querySelector("img");
@@ -1125,7 +1177,8 @@
         document.addEventListener("visibilitychange", vis);
         const ob = "IntersectionObserver" in window ? new IntersectionObserver(([en]) => (en.isIntersecting ? release("off") : hold("off")), { threshold: 0.15 }) : null;
         if (ob) ob.observe(hs);
-        if (RM) { hs.classList.add("pg-is-static"); setPause(true); }
+        // Der Durchlauf spielt immer automatisch – auch wenn das Gerät „Bewegung reduzieren“ meldet
+        // (ausdrücklich so gewünscht; anhalten lässt er sich jederzeit über den Pause-Knopf).
         go(0);
         return () => { clearTimeout(timer); document.removeEventListener("visibilitychange", vis); if (ob) ob.disconnect(); };
     }
@@ -1422,8 +1475,9 @@
         const of = (type) => blocks.filter(b => (b.type || b._type) === type);
         const hb = of("hero")[0] || {};
         const secs = gameSections(g, of, gamePosts(g), games.filter(x => x !== g));
+        let num = 0;   // Nummern nur für Abschnitte mit Überschrift (01, 02 …)
         root.innerHTML = blockHero(hb, g) + gameSubnav(g, secs, heroCtas(g, hb, of))
-            + secs.map((s, i) => `<section class="pg-sec${i % 2 ? " pg-band" : ""}" id="${s.id}">${s.html(i + 1)}</section>`).join("");
+            + secs.map((s, i) => `<section class="pg-sec${i % 2 ? " pg-band" : ""}${s.compact ? " pg-sec-compact" : ""}" id="${s.id}">${s.html(s.compact ? 0 : ++num)}</section>`).join("");
 
         initMagnetic(); observeReveals(root);
         initLightbox(); initCountdowns(root);
@@ -1453,8 +1507,19 @@
     // Abstand zwischen Status-Zeile, Logo und Text (px, einstellbar unter „Kopfbereich gestalten“)
     function logoGap(g) { const n = Number(g.logoGap); return Number.isFinite(n) && String(g.logoGap ?? "").trim() !== "" ? Math.min(160, Math.max(0, Math.round(n))) : 20; }
 
-    // Nächster Schritt im Kopfbereich: Wishlist → Warteliste (Playtest/Beta/Benachrichtigen) → Demo; dazu Trailer
+    // Knöpfe im Kopfbereich – im Admin am Hero-Block wählbar; „Automatisch“ = bisherige Logik
     function heroCtas(g, hb, of) {
+        const auto = autoHeroCtas(g, hb, of);
+        const k1 = String(hb.btn1 || "auto"), k2 = String(hb.btn2 || "auto");
+        if (k1 === "auto" && k2 === "auto") return auto;
+        const pick = (k, lbl, url) => (k === "none" ? null : btnTarget(k, g, "game", lbl, url));
+        const b1 = k1 === "auto" ? auto[0] || null : pick(k1, hb.btn1Label, hb.btn1Url);
+        let b2 = k2 === "auto" ? auto.find(c => !b1 || c.href !== b1.href) || null : pick(k2, hb.btn2Label, hb.btn2Url);
+        if (b1 && b2 && b1.href === b2.href) b2 = null;
+        return [b1, b2].filter(Boolean);
+    }
+    // Nächster Schritt im Kopfbereich: Wishlist → Warteliste (Playtest/Beta/Benachrichtigen) → Demo; dazu Trailer
+    function autoHeroCtas(g, hb, of) {
         const out = [];
         const wish = String(g.wishlistUrl || "").trim();
         if (/^https?:\/\//i.test(wish)) out.push({ href: wish, ext: true, label: hb.ctaLabel || t("wishlist") });
@@ -1470,7 +1535,7 @@
         else if (of("trailer").some(tb => tb.youtube || tb.url || tb.file)) out.push({ href: "#einblicke", play: true, label: t("trailer_watch") });
         return out.slice(0, 2);
     }
-    const ctaLink = (c, cls) => `<a class="pg-btn ${cls}" href="${esc(c.href)}"${c.ext ? ' target="_blank" rel="noopener"' : ""}>${c.play ? pgIc("play") + " " : ""}${esc(c.label)}${c.play ? "" : " " + pgIc("arrow")}</a>`;
+    const ctaLink = (c, cls) => `<a class="pg-btn ${cls}" href="${esc(c.href)}"${c.ext ? ' target="_blank" rel="noopener"' : ""}>${c.play ? pgIc("play") + " " : ""}${esc(c.label)}${c.play || c.ext ? "" : " " + pgIc("arrow")}</a>`;
 
     // Steckbrief-Leiste: eigene Angaben (Admin) – sonst die Kennzahlen des Spiels
     function factIcon(label) {
@@ -1564,143 +1629,205 @@
         $("[data-sn-top]", nav)?.addEventListener("click", (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: "smooth" }); });
     }
 
-    // ---------- Abschnitte der Spielseite (feste Reihenfolge, fehlende Blöcke entfallen) ----------
+    // ---------- Abschnitte der Spielseite: genau in der Reihenfolge der Seiten-Blöcke im Admin ----------
+    // Direkt aufeinanderfolgende, zusammengehörige Blöcke bilden einen Abschnitt (z. B. Trailer + Galerie = „Einblicke“,
+    // Warteliste + Vorschläge = „Mitmachen“). Ein Banner (Call-to-Action), Widget, Welt-Teaser oder reine Kennzahlen
+    // stehen ohne eigene Abschnitts-Überschrift genau dort, wo sie im Admin einsortiert sind.
+    // Hero (oben), „Abstand“-Blöcke (macht das Design) und leere Blöcke entfallen; Devlog & „Weitere Spiele“ kommen ans Ende.
+    const SEC_KIND = { richtext: "about", stats: "about", download: "play", requirements: "tech", trailer: "media", gallery: "media",
+        features: "features", lore: "features", quotes: "quotes", countdown: "countdown", roadmap: "roadmap",
+        waitlist: "join", suggestions: "join", storewidget: "join", cta: "join", faq: "faq" };
+    const SEC_ID = { about: "ueber", play: "spielen", tech: "technik", media: "einblicke", features: "features", quotes: "stimmen",
+        countdown: "countdown", roadmap: "roadmap", join: "mitmachen", faq: "faq" };
+    const SEC_NAV = { about: "sn_about", play: "sn_play", media: "sn_media", features: "sn_features", roadmap: "sn_roadmap", join: "sn_join", faq: "sn_faq" };
+    const cdIso = (d) => (String(d).includes("T") ? String(d) : String(d).replace(" ", "T"));
+    const statsHTML = (items) => `<div class="pg-gstats pg-rv" style="--n:${Math.min(4, items.length)}">${items.map(x => `<div><b>${esc(x.value)}</b><span>${esc(x.label || "")}</span></div>`).join("")}</div>`;
+
+    function blockHasContent(b, g, facts) {
+        switch (b.type) {
+            case "richtext": return !!(String(b.body || "").trim() || String(b.heading || "").trim());
+            case "stats": return !facts.fromStats && (b.items || []).some(x => x && String(x.value || "").trim());
+            case "download": return !!(b.embedUrl || (b.builds || []).some(x => x && (x.url || x.file)));
+            case "requirements": return ["min", "rec"].some(k => b[k] && ["os", "cpu", "ram", "gpu", "storage"].some(f => String(b[k][f] || "").trim()));
+            case "trailer": return !!(b.youtube || b.url || b.file);
+            case "gallery": return (b.images || []).some(im => (typeof im === "string" ? im : im && im.image));
+            case "features": return (b.items || []).some(x => x && (x.title || x.text));
+            case "lore": return !!loreTeaser(b, g);
+            case "quotes": return (b.items || []).some(x => x && x.text);
+            case "countdown": return !!(b.date && !isNaN(Date.parse(cdIso(b.date))));
+            case "roadmap": return (b.items || []).some(x => x && x.title);
+            case "waitlist": case "suggestions": return true;
+            case "storewidget": return !!pgStoreWidget(b);
+            case "cta": return isRealLink(b.url) || /^https?:\/\//i.test(String(g.wishlistUrl || ""));
+            case "faq": return (b.items || []).some(x => x && x.question);
+        }
+        return false;
+    }
+
+    // Renderer je Abschnitts-Art: (Spiel, Blöcke der Gruppe, Optionen) → { html(n), compact?, idBase? }
+    const GAME_SECTION = {
+        about(g, bl, o) {
+            const rts = bl.filter(b => b.type === "richtext");
+            const stats = bl.filter(b => b.type === "stats").flatMap(b => b.items || []).filter(x => x && String(x.value || "").trim());
+            if (!rts.length) return { compact: true, idBase: "zahlen", html: () => `<div class="pg-wrap">${statsHTML(stats)}</div>` };
+            return { html: (n) => {
+                const [first, ...more] = rts;
+                const kick = plainText(first.kicker);
+                const kickAsLabel = kick && kick.length <= 26 && kick !== o.tagline;
+                const stmt = kick && !kickAsLabel && kick !== o.tagline ? kick : "";
+                const h = String(first.heading || "").trim() || (o.first ? fmtT("h_about_q", g.title) : "");
+                return `${String(first.body || "").trim() ? `<div class="pg-wrap pg-ov">
+                        <div class="pg-rv">${pgKick(n, kickAsLabel ? esc(kick) : t("sec_about"))}${h ? `<h2 class="pg-h2">${esc(h)}</h2>` : ""}${stmt ? `<p class="pg-stmt">${esc(stmt)}</p>` : ""}</div>
+                        <div class="pg-prose pg-rv">${md(first.body || "")}</div>
+                    </div>` : `<div class="pg-wrap">${pgSh(n, kickAsLabel ? esc(kick) : t("sec_about"), esc(h || g.title || ""))}</div>`}
+                    ${more.map(rt => `<div class="pg-wrap pg-ov pg-ov-more">
+                        <div class="pg-rv">${rt.kicker ? `<span class="pg-kicker">${esc(plainText(rt.kicker))}</span>` : ""}${rt.heading ? `<h3 class="pg-h3">${esc(rt.heading)}</h3>` : ""}</div>
+                        <div class="pg-prose pg-rv">${md(rt.body || "")}</div></div>`).join("")}
+                    ${stats.length ? `<div class="pg-wrap">${statsHTML(stats)}</div>` : ""}`;
+            } };
+        },
+        play(g, bl) {
+            return { html: (n) => `<div class="pg-wrap">
+                ${pgSh(n, t("sec_play"), esc(bl[0].heading || t("h_play")), bl[0].text ? esc(bl[0].text) : "")}
+                ${bl.map((d, i) => `${i && d.heading ? `<h3 class="pg-h3 pg-sub">${esc(d.heading)}</h3>` : ""}${i && d.text ? `<p class="pg-lead pg-sub-lead">${esc(d.text)}</p>` : ""}${pgEmbed(d)}${pgBuilds(d)}`).join("")}
+            </div>` };
+        },
+        tech(g, bl, o) {
+            return { html: (n) => `<div class="pg-wrap">
+                ${pgSh(n, t("sec_tech"), esc(bl[0].heading || (o.en ? "System requirements" : "Systemanforderungen")), bl[0].note ? esc(bl[0].note) : "")}
+                ${bl.map(r => `<div class="pg-reqs">${pgReqCol(r.min, o.en ? "Minimum" : "Minimal")}${pgReqCol(r.rec, o.en ? "Recommended" : "Empfohlen")}</div>`).join("")}
+            </div>` };
+        },
+        media(g, bl, o) {
+            const vids = bl.filter(b => b.type === "trailer");
+            const imgs = bl.filter(b => b.type === "gallery").flatMap(b => (b.images || []).map(im => (typeof im === "string" ? { src: im, alt: "" } : { src: im && im.image, alt: (im && im.alt) || "" }))).filter(x => x.src);
+            const grp = "g-media-" + o.occ;
+            return { html: (n) => {
+                const gh = bl.find(b => b.type === "gallery" && b.heading);
+                const h = vids.length > 1 ? (vids[0].heading && !o.first ? vids[0].heading : t("h_media_multi")) : ((vids[0] && vids[0].heading) || (gh && gh.heading) || t("h_media_one"));
+                const shot = (im, i) => `<button type="button" class="pg-shot pg-rv" data-lb data-lb-group="${grp}" data-lb-index="${i}" aria-label="${esc(im.alt || (o.en ? "Enlarge image" : "Bild vergrößern"))}"><img src="${esc(im.src)}" alt="${esc(im.alt)}" loading="lazy" style="object-position:${focusPos(im.src)}"></button>`;
+                let body;
+                if (vids.length === 1 && imgs.length >= 3) {
+                    body = `<div class="pg-bento">${pgVideo(vids[0], false)}${imgs.slice(0, 3).map(shot).join("")}</div>`
+                        + (imgs.length > 3 ? `<div class="pg-gal">${imgs.slice(3).map((im, i) => shot(im, i + 3)).join("")}</div>` : "");
+                } else {
+                    body = (vids.length ? `<div class="pg-vids${vids.length > 1 ? " two" : ""}">${vids.map(v => pgVideo(v, vids.length > 1)).join("")}</div>` : "")
+                        + (imgs.length ? `<div class="pg-gal${vids.length ? "" : " solo"}">${imgs.map(shot).join("")}</div>` : "");
+                }
+                return `<div class="pg-wrap">${pgSh(n, t("sec_media"), esc(h))}${body}</div>`;
+            } };
+        },
+        features(g, bl, o) {
+            const fb = bl.filter(b => b.type === "features");
+            const parts = bl.map((b, bi) => {
+                if (b.type === "lore") return loreTeaser(b, g);
+                const items = (b.items || []).filter(x => x && (x.title || x.text));
+                const k = fb.indexOf(b);
+                return `${k > 0 && b.heading ? `<h3 class="pg-h3 pg-sub">${esc(b.heading)}</h3>` : ""}<div class="pg-feats" data-n="${items.length >= 4 && items.length % 3 !== 0 ? 4 : Math.min(3, items.length)}">${items.map(f =>
+                    `<div class="pg-feat pg-rv"><span class="pg-icn">${siteIcon(f.icon)}</span><h3>${esc(f.title || "")}</h3>${f.text ? `<p>${esc(f.text)}</p>` : ""}</div>`).join("")}</div>`;
+            });
+            if (!fb.length) return { compact: true, idBase: "welt", html: () => `<div class="pg-wrap">${parts.join("")}</div>` };
+            return { html: (n) => `<div class="pg-wrap">${pgSh(n, t("sec_features"), esc(fb[0].heading || t("h_features")))}${parts.join("")}</div>` };
+        },
+        quotes(g, bl) {
+            return { html: (n) => `<div class="pg-wrap">
+                ${pgSh(n, t("sec_quotes"), esc(bl[0].heading || t("h_quotes")))}
+                <div class="pg-quotes">${bl.flatMap(b => b.items || []).filter(x => x && x.text).map(q => `<figure class="pg-quote pg-rv"><blockquote>${esc(q.text)}</blockquote>${q.author || q.source ? `<figcaption>${esc(q.author || "")}${q.source ? `<span>${esc(q.source)}</span>` : ""}</figcaption>` : ""}</figure>`).join("")}</div>
+            </div>` };
+        },
+        countdown(g, bl, o) {
+            return { html: (n) => `<div class="pg-wrap">${bl.map(c => {
+                const units = [["d", o.en ? "days" : "Tage"], ["h", o.en ? "hrs" : "Std"], ["m", "Min"], ["s", o.en ? "sec" : "Sek"]];
+                return `<div class="pg-cd pg-rv">${pgKick(n, t("sec_countdown"))}<h2 class="pg-h2">${esc(c.heading || "Release in")}</h2>${c.label ? `<p class="pg-lead">${esc(c.label)}</p>` : ""}
+                    <div class="pg-cd-grid" data-countdown="${Date.parse(cdIso(c.date))}">${units.map(([k, l]) => `<div><b data-cd="${k}">--</b><span>${l}</span></div>`).join("")}</div>
+                    <div class="cd-done pg-cd-done hidden"></div></div>`;
+            }).join("")}</div>` };
+        },
+        roadmap(g, bl, o) {
+            return { html: (n) => {
+                const paused = g.status === "paused";
+                const rh = String(bl[0].heading || "").trim();
+                const lab = { done: o.en ? "Done" : "Erledigt", active: o.en ? "In progress" : "In Arbeit", planned: o.en ? "Planned" : "Geplant" };
+                const ic = { done: "check", active: "bolt", planned: "flag" };
+                const note = paused ? `<div class="pg-note"><span class="pg-note-ic" aria-hidden="true">${pgIc("pause")}</span><span>${esc(plainText(g.pauseNote) || fmtT("paused_default", g.title))}${o.posts[0] ? `<br><a class="pg-link" href="devlog.php?slug=${encodeURIComponent(o.posts[0].slug || "")}">${t("to_post")} ${pgIc("arrow")}</a>` : ""}</span></div>` : "";
+                return `<div class="pg-wrap pg-roadmap">
+                    <div class="pg-rv">${pgKick(n, t("sec_roadmap"))}<h2 class="pg-h2">${esc(rh && !/^roadmap$/i.test(rh) ? rh : t("h_roadmap"))}</h2>
+                        <p class="pg-lead">${t(paused ? "lead_roadmap_paused" : "lead_roadmap")}</p>${note}</div>
+                    <div>${bl.map((b, bi) => `${bi && b.heading ? `<h3 class="pg-h3 pg-sub">${esc(b.heading)}</h3>` : ""}<ol class="pg-tl pg-rv${paused ? " muted" : ""}">${(b.items || []).filter(x => x && x.title).map(m => {
+                        const st = ["done", "active", "planned"].includes(m.status) ? m.status : "planned";
+                        const date = paused && st === "planned" ? "" : plainText(m.date);
+                        return `<li class="${st}"><span class="pg-dot">${pgIc(ic[st])}</span><span><small>${date ? esc(date) + " · " : ""}${lab[st]}</small><b>${esc(m.title)}</b>${m.text ? `<p>${esc(m.text)}</p>` : ""}</span></li>`;
+                    }).join("")}</ol>`).join("")}</div>
+                </div>`;
+            } };
+        },
+        join(g, bl, o) {
+            // Reihenfolge wie im Admin: nebeneinanderliegende Warteliste/Vorschläge teilen sich eine Zeile
+            const out = []; let cards = [];
+            const flush = () => { if (cards.length) out.push(`<div class="pg-mit${cards.length === 1 ? " solo" : ""}">${cards.join("")}</div>`); cards = []; };
+            const cnt = { waitlist: o.wlCount, suggestions: o.sgCount };
+            bl.forEach(b => {
+                if (b.type === "waitlist") cards.push(wlCard(b, g, cnt.waitlist.n++));
+                else if (b.type === "suggestions") cards.push(suggCard(b, g, cnt.suggestions.n++));
+                else {
+                    flush();
+                    if (b.type === "storewidget") out.push(pgStoreWidget(b));
+                    else if (b.type === "cta") {
+                        const href = isRealLink(b.url) ? b.url : g.wishlistUrl;
+                        out.push(`<div class="pg-ctaband pg-rv"><div><h3>${esc(b.heading || (o.en ? "Ready for the adventure?" : "Bereit für das Abenteuer?"))}</h3>${b.text ? `<p>${esc(b.text)}</p>` : ""}</div>
+                            <a class="pg-btn pg-btn-p" href="${esc(href)}"${/^https?:/i.test(href) ? ' target="_blank" rel="noopener"' : ""}>${esc(b.label || t("wishlist"))} ${pgIc("arrow")}</a></div>`);
+                    }
+                }
+            });
+            flush();
+            const withCards = bl.some(b => b.type === "waitlist" || b.type === "suggestions");
+            if (!withCards) return { compact: true, idBase: "aufruf", html: () => `<div class="pg-wrap">${out.join("")}</div>` };
+            return { html: (n) => `<div class="pg-wrap">${pgSh(n, t("sec_join"), esc(t("h_join")), esc(t("lead_join")))}${out.join("")}</div>` };
+        },
+        faq(g, bl) {
+            const fq = bl.flatMap(b => (b.items || []).filter(x => x && x.question));
+            return { html: (n) => {
+                const fh = String(bl[0].heading || "").trim();
+                return `<div class="pg-wrap">${pgSh(n, "FAQ", esc(fh && !/^faq$/i.test(fh) ? fh : t("h_faq")))}
+                    <div class="pg-faq">${fq.map(q => `<details class="pg-rv"><summary>${esc(q.question)}</summary><div class="pg-prose">${md(q.answer || "")}</div></details>`).join("")}</div></div>`;
+            } };
+        },
+    };
+
     function gameSections(g, of, posts, others) {
         const en = LANG === "en";
-        const secs = [];
         const tagline = slideTagline(g);
         const facts = gameFacts(g, of);
+        const blocks = (Array.isArray(g.blocks) ? g.blocks : []).filter(b => b && !b.hidden);
+        // aufeinanderfolgende Blöcke derselben Art zusammenfassen – Reihenfolge wie im Admin
+        const groups = [];
+        blocks.forEach(b => {
+            const kind = SEC_KIND[b.type || b._type];
+            if (!kind || !blockHasContent(b, g, facts)) return;
+            const last = groups[groups.length - 1];
+            if (last && last.kind === kind) last.blocks.push(b); else groups.push({ kind, blocks: [b] });
+        });
+        const secs = [], occ = {}, ids = {}, navDone = {};
+        const wlCount = { n: 0 }, sgCount = { n: 0 };
+        const uid = (base) => { ids[base] = (ids[base] || 0) + 1; return ids[base] > 1 ? `${base}-${ids[base]}` : base; };
+        groups.forEach(gr => {
+            occ[gr.kind] = (occ[gr.kind] || 0) + 1;
+            const sec = GAME_SECTION[gr.kind](g, gr.blocks, { first: occ[gr.kind] === 1, occ: occ[gr.kind], en, tagline, posts, facts, wlCount, sgCount });
+            if (!sec) return;
+            sec.id = uid(sec.compact ? sec.idBase : SEC_ID[gr.kind]);
+            // im Abschnitts-Menü: der erste vollwertige Abschnitt jeder Art
+            sec.nav = !sec.compact && SEC_NAV[gr.kind] && !navDone[gr.kind] ? (navDone[gr.kind] = true, t(SEC_NAV[gr.kind])) : "";
+            secs.push(sec);
+        });
 
-        // 1) Über das Spiel – Textabschnitte (+ Kennzahlen, falls nicht schon im Steckbrief)
-        const rts = of("richtext").filter(b => String(b.body || "").trim() || b.heading);
-        const stats = facts.fromStats ? [] : of("stats").flatMap(b => b.items || []).filter(x => x && String(x.value || "").trim());
-        if (rts.length || stats.length) secs.push({ id: "ueber", nav: t("sn_about"), html: (n) => {
-            const [first, ...more] = rts;
-            const kick = first ? plainText(first.kicker) : "";
-            const kickAsLabel = kick && kick.length <= 26 && kick !== tagline;
-            const stmt = kick && !kickAsLabel && kick !== tagline ? kick : "";
-            return `${first ? `<div class="pg-wrap pg-ov">
-                    <div class="pg-rv">${pgKick(n, kickAsLabel ? esc(kick) : t("sec_about"))}<h2 class="pg-h2">${esc(first.heading || fmtT("h_about_q", g.title))}</h2>${stmt ? `<p class="pg-stmt">${esc(stmt)}</p>` : ""}</div>
-                    <div class="pg-prose pg-rv">${md(first.body || "")}</div>
-                </div>` : `<div class="pg-wrap">${pgSh(n, t("sec_about"), esc(fmtT("h_about_q", g.title)))}</div>`}
-                ${more.map(rt => `<div class="pg-wrap pg-ov pg-ov-more">
-                    <div class="pg-rv">${rt.kicker ? `<span class="pg-kicker">${esc(plainText(rt.kicker))}</span>` : ""}${rt.heading ? `<h3 class="pg-h3">${esc(rt.heading)}</h3>` : ""}</div>
-                    <div class="pg-prose pg-rv">${md(rt.body || "")}</div></div>`).join("")}
-                ${stats.length ? `<div class="pg-wrap"><div class="pg-gstats pg-rv" style="--n:${Math.min(4, stats.length)}">${stats.map(x => `<div><b>${esc(x.value)}</b><span>${esc(x.label || "")}</span></div>`).join("")}</div></div>` : ""}`;
-        } });
-
-        // 2) Selbst spielen – Demo & Downloads (+ spielbare Web-Demo nach Zustimmung)
-        const dls = of("download").filter(d => d.embedUrl || (d.builds || []).some(x => x && (x.url || x.file)));
-        if (dls.length) secs.push({ id: "spielen", nav: t("sn_play"), html: (n) => `<div class="pg-wrap">
-                ${pgSh(n, t("sec_play"), esc(dls[0].heading || t("h_play")), dls[0].text ? esc(dls[0].text) : "")}
-                ${dls.map((d, i) => `${i && d.heading ? `<h3 class="pg-h3 pg-sub">${esc(d.heading)}</h3>` : ""}${i && d.text ? `<p class="pg-lead pg-sub-lead">${esc(d.text)}</p>` : ""}${pgEmbed(d)}${pgBuilds(d)}`).join("")}
-            </div>` });
-
-        // 3) Systemanforderungen
-        const reqs = of("requirements").filter(r => ["min", "rec"].some(k => r[k] && ["os", "cpu", "ram", "gpu", "storage"].some(f => String(r[k][f] || "").trim())));
-        if (reqs.length) secs.push({ id: "technik", nav: "", html: (n) => `<div class="pg-wrap">
-                ${pgSh(n, t("sec_tech"), esc(reqs[0].heading || (en ? "System requirements" : "Systemanforderungen")), reqs[0].note ? esc(reqs[0].note) : "")}
-                ${reqs.map(r => `<div class="pg-reqs">${pgReqCol(r.min, en ? "Minimum" : "Minimal")}${pgReqCol(r.rec, en ? "Recommended" : "Empfohlen")}</div>`).join("")}
-            </div>` });
-
-        // 4) Einblicke – Trailer, Videos & Bilder
-        const vids = of("trailer").filter(tb => tb.youtube || tb.url || tb.file);
-        const imgs = of("gallery").flatMap(b => (b.images || []).map(im => (typeof im === "string" ? { src: im, alt: "" } : { src: im && im.image, alt: (im && im.alt) || "" }))).filter(x => x.src);
-        if (vids.length || imgs.length) secs.push({ id: "einblicke", nav: t("sn_media"), html: (n) => {
-            const gh = of("gallery").find(b => b.heading);
-            const h = vids.length > 1 ? t("h_media_multi") : ((vids[0] && vids[0].heading) || (gh && gh.heading) || t("h_media_one"));
-            const shot = (im, i) => `<button type="button" class="pg-shot pg-rv" data-lb data-lb-group="g-media" data-lb-index="${i}" aria-label="${esc(im.alt || (en ? "Enlarge image" : "Bild vergrößern"))}"><img src="${esc(im.src)}" alt="${esc(im.alt)}" loading="lazy" style="object-position:${focusPos(im.src)}"></button>`;
-            let body;
-            if (vids.length === 1 && imgs.length >= 3) {
-                body = `<div class="pg-bento">${pgVideo(vids[0], false)}${imgs.slice(0, 3).map(shot).join("")}</div>`
-                    + (imgs.length > 3 ? `<div class="pg-gal">${imgs.slice(3).map((im, i) => shot(im, i + 3)).join("")}</div>` : "");
-            } else {
-                body = (vids.length ? `<div class="pg-vids${vids.length > 1 ? " two" : ""}">${vids.map(v => pgVideo(v, vids.length > 1)).join("")}</div>` : "")
-                    + (imgs.length ? `<div class="pg-gal${vids.length ? "" : " solo"}">${imgs.map(shot).join("")}</div>` : "");
-            }
-            return `<div class="pg-wrap">${pgSh(n, t("sec_media"), esc(h))}${body}</div>`;
-        } });
-
-        // 5) Features – Kacheln (+ Welt-Teaser)
-        const fb = of("features").filter(b => (b.items || []).some(x => x && (x.title || x.text)));
-        const lore = of("lore").map(b => loreTeaser(b, g)).filter(Boolean);
-        if (fb.length || lore.length) secs.push({ id: "features", nav: t("sn_features"), html: (n) => `<div class="pg-wrap">
-                ${pgSh(n, t("sec_features"), esc((fb[0] && fb[0].heading) || t("h_features")))}
-                ${fb.map((b, bi) => {
-                    const items = (b.items || []).filter(x => x && (x.title || x.text));
-                    return `${bi && b.heading ? `<h3 class="pg-h3 pg-sub">${esc(b.heading)}</h3>` : ""}<div class="pg-feats" data-n="${items.length >= 4 && items.length % 3 !== 0 ? 4 : Math.min(3, items.length)}">${items.map(f =>
-                        `<div class="pg-feat pg-rv"><span class="pg-icn pg-emo">${esc(f.icon || "✦")}</span><h3>${esc(f.title || "")}</h3>${f.text ? `<p>${esc(f.text)}</p>` : ""}</div>`).join("")}</div>`;
-                }).join("")}
-                ${lore.join("")}
-            </div>` });
-
-        // 6) Stimmen – Zitate & Reviews
-        const qs2 = of("quotes").filter(b => (b.items || []).some(x => x && x.text));
-        if (qs2.length) secs.push({ id: "stimmen", nav: "", html: (n) => `<div class="pg-wrap">
-                ${pgSh(n, t("sec_quotes"), esc(qs2[0].heading || t("h_quotes")))}
-                <div class="pg-quotes">${qs2.flatMap(b => b.items || []).filter(x => x && x.text).map(q => `<figure class="pg-quote pg-rv"><blockquote>${esc(q.text)}</blockquote>${q.author || q.source ? `<figcaption>${esc(q.author || "")}${q.source ? `<span>${esc(q.source)}</span>` : ""}</figcaption>` : ""}</figure>`).join("")}</div>
-            </div>` });
-
-        // 7) Countdown
-        const cds = of("countdown").filter(c => c.date && !isNaN(Date.parse(String(c.date).includes("T") ? c.date : String(c.date).replace(" ", "T"))));
-        if (cds.length) secs.push({ id: "countdown", nav: "", html: (n) => `<div class="pg-wrap">${cds.map(c => {
-                const raw = String(c.date).includes("T") ? c.date : String(c.date).replace(" ", "T");
-                const units = [["d", en ? "days" : "Tage"], ["h", en ? "hrs" : "Std"], ["m", "Min"], ["s", en ? "sec" : "Sek"]];
-                return `<div class="pg-cd pg-rv">${pgKick(n, t("sec_countdown"))}<h2 class="pg-h2">${esc(c.heading || (en ? "Release in" : "Release in"))}</h2>${c.label ? `<p class="pg-lead">${esc(c.label)}</p>` : ""}
-                    <div class="pg-cd-grid" data-countdown="${Date.parse(raw)}">${units.map(([k, l]) => `<div><b data-cd="${k}">--</b><span>${l}</span></div>`).join("")}</div>
-                    <div class="cd-done pg-cd-done hidden"></div></div>`;
-            }).join("")}</div>` });
-
-        // 8) Roadmap – Zeitleiste (ohne Prozent); bei „Pausiert" Hinweis statt Termine
-        const rms = of("roadmap").filter(b => (b.items || []).some(x => x && x.title));
-        if (rms.length) secs.push({ id: "roadmap", nav: t("sn_roadmap"), html: (n) => {
-            const paused = g.status === "paused";
-            const rh = String(rms[0].heading || "").trim();
-            const lab = { done: en ? "Done" : "Erledigt", active: en ? "In progress" : "In Arbeit", planned: en ? "Planned" : "Geplant" };
-            const ic = { done: "check", active: "bolt", planned: "flag" };
-            const note = paused ? `<div class="pg-note"><span aria-hidden="true">⏸️</span><span>${esc(plainText(g.pauseNote) || fmtT("paused_default", g.title))}${posts[0] ? `<br><a class="pg-link" href="devlog.php?slug=${encodeURIComponent(posts[0].slug || "")}">${t("to_post")} ${pgIc("arrow")}</a>` : ""}</span></div>` : "";
-            return `<div class="pg-wrap pg-roadmap">
-                <div class="pg-rv">${pgKick(n, t("sec_roadmap"))}<h2 class="pg-h2">${esc(rh && !/^roadmap$/i.test(rh) ? rh : t("h_roadmap"))}</h2>
-                    <p class="pg-lead">${t(paused ? "lead_roadmap_paused" : "lead_roadmap")}</p>${note}</div>
-                <div>${rms.map((b, bi) => `${bi && b.heading ? `<h3 class="pg-h3 pg-sub">${esc(b.heading)}</h3>` : ""}<ol class="pg-tl pg-rv${paused ? " muted" : ""}">${(b.items || []).filter(x => x && x.title).map(m => {
-                    const st = ["done", "active", "planned"].includes(m.status) ? m.status : "planned";
-                    const date = paused && st === "planned" ? "" : plainText(m.date);
-                    return `<li class="${st}"><span class="pg-dot">${pgIc(ic[st])}</span><span><small>${date ? esc(date) + " · " : ""}${lab[st]}</small><b>${esc(m.title)}</b>${m.text ? `<p>${esc(m.text)}</p>` : ""}</span></li>`;
-                }).join("")}</ol>`).join("")}</div>
-            </div>`;
-        } });
-
-        // 9) Mitmachen – Warteliste, Vorschläge, Store-Widget, Aufruf
-        const wls = of("waitlist"), sgs = of("suggestions");
-        const sws = of("storewidget").map(pgStoreWidget).filter(Boolean);
-        const ctas = of("cta").filter(c => isRealLink(c.url) || /^https?:\/\//i.test(String(g.wishlistUrl || "")));
-        if (wls.length || sgs.length || sws.length || ctas.length) secs.push({ id: "mitmachen", nav: t("sn_join"), html: (n) => {
-            const cards = wls.map((b, i) => wlCard(b, g, i)).concat(sgs.map((b, i) => suggCard(b, g, i)));
-            return `<div class="pg-wrap">
-                ${pgSh(n, t("sec_join"), esc(t("h_join")), esc(t("lead_join")))}
-                ${cards.length ? `<div class="pg-mit${cards.length === 1 ? " solo" : ""}">${cards.join("")}</div>` : ""}
-                ${sws.join("")}
-                ${ctas.map(c => { const href = isRealLink(c.url) ? c.url : g.wishlistUrl; return `<div class="pg-ctaband pg-rv"><div><h3>${esc(c.heading || (en ? "Ready for the adventure?" : "Bereit für das Abenteuer?"))}</h3>${c.text ? `<p>${esc(c.text)}</p>` : ""}</div>
-                    <a class="pg-btn pg-btn-p" href="${esc(href)}"${/^https?:/i.test(href) ? ' target="_blank" rel="noopener"' : ""}>${esc(c.label || t("wishlist"))} ${pgIc("arrow")}</a></div>`; }).join("")}
-            </div>`;
-        } });
-
-        // 10) FAQ
-        const fq = of("faq").flatMap(b => (b.items || []).filter(x => x && x.question));
-        if (fq.length) secs.push({ id: "faq", nav: t("sn_faq"), html: (n) => {
-            const fh = String((of("faq")[0] || {}).heading || "").trim();
-            return `<div class="pg-wrap">${pgSh(n, "FAQ", esc(fh && !/^faq$/i.test(fh) ? fh : t("h_faq")))}
-                <div class="pg-faq">${fq.map(q => `<details class="pg-rv"><summary>${esc(q.question)}</summary><div class="pg-prose">${md(q.answer || "")}</div></details>`).join("")}</div></div>`;
-        } });
-
-        // 11) Devlog zu diesem Spiel
-        if (posts.length) secs.push({ id: "devlog", nav: t("sn_devlog"), html: (n) => `<div class="pg-wrap">
+        // Devlog zu diesem Spiel
+        if (posts.length) secs.push({ id: uid("devlog"), nav: t("sn_devlog"), html: (n) => `<div class="pg-wrap">
                 ${pgSh(n, "Devlog", esc(fmtT("h_devlog_game", g.title)), "", posts.length > 3 ? `<a class="pg-btn pg-btn-s pg-btn-sm" href="devlog.php?game=${encodeURIComponent(g.slug || "")}">${t("all_posts")} ${pgIc("arrow")}</a>` : "")}
                 <div class="pg-posts">${posts.slice(0, 3).map(p => homePost(p, g, "")).join("")}${posts.length < 3 ? `<a class="pg-morecard pg-rv" href="devlog.php"><span class="pg-icn">${pgIc("news")}</span><h3>${t("allposts_h")}</h3><p>${t("allposts_p")}</p><span class="pg-link">${t("to_devlog")} ${pgIc("arrow")}</span></a>` : ""}</div>
             </div>` });
 
-        // 12) Weitere Spiele
-        if (others.length) secs.push({ id: "mehr", nav: "", html: (n) => `<div class="pg-wrap">
+        // Weitere Spiele
+        if (others.length) secs.push({ id: uid("mehr"), nav: "", html: (n) => `<div class="pg-wrap">
                 ${pgSh(n, t("sec_more"), esc(t("h_more")))}
                 <div class="pg-mgs" data-n="${Math.min(3, others.length)}">${others.map(o => `<a class="pg-mg pg-rv" href="${gameHref(o)}" style="${accentStyle(o)}">
                     ${o.cover ? `<img src="${esc(o.cover)}" alt="" loading="lazy" style="object-position:${focusPos(o.cover)}">` : ""}${pgChip(o.status)}
@@ -1740,14 +1867,14 @@
 
     // Download-Pakete & spielbare Web-Demo (erst nach Zustimmung)
     function pgBuilds(b) {
-        const PLAT = { windows: ["🪟", "Windows"], mac: ["🍎", "macOS"], linux: ["🐧", "Linux"], android: ["🤖", "Android"], web: ["🌐", "Web"], other: ["📦", "Download"] };
+        const PLAT = { windows: ["windows", "Windows"], mac: ["apple", "macOS"], linux: ["terminal", "Linux"], android: ["android", "Android"], web: ["globe", "Web"], other: ["box", "Download"] };
         const list = (b.builds || []).filter(x => x && (x.url || x.file));
         if (!list.length) return "";
         return `<div class="pg-builds">${list.map(d => {
             const p = PLAT[d.platform] || PLAT.other, ext = !!d.url;
             const meta = [d.version, d.size, p[1]].filter(Boolean).map(plainText).join(" · ");
             return `<a class="pg-build pg-rv" href="${esc(d.url || d.file)}"${ext ? ' target="_blank" rel="noopener"' : " download"}>
-                <span class="pg-icn pg-emo">${p[0]}</span><span class="pg-build-tx"><b>${esc(d.label || p[1])}</b>${meta ? `<small>${esc(meta)}</small>` : ""}</span>
+                <span class="pg-icn">${pgIc(p[0])}</span><span class="pg-build-tx"><b>${esc(d.label || p[1])}</b>${meta ? `<small>${esc(meta)}</small>` : ""}</span>
                 <span class="pg-build-dl" aria-hidden="true">${pgIc(ext ? "ext" : "dl")}</span><span class="pg-sr">${ext ? "" : t("download")}</span></a>`;
         }).join("")}</div>`;
     }
@@ -2271,8 +2398,12 @@
         const extOf = (u) => ((fileOf(u).match(/\.([a-z0-9]{2,4})$/i) || [])[1] || "").toUpperCase();
         const facts = (p.facts || []).filter(f => f && (f.label || f.value));
         const downloads = (p.downloads || []).filter(d => d && d.file);
-        const pgames = games.filter(g => g.cover || logoPath(g));
-        await Promise.all(pgames.filter(g => logoPath(g)).map(g => ensureLogoBox(g, 1200)));
+        // Spiele: automatisch (alle mit Logo/Titelbild), nur die im Admin ausgewählten – oder keine
+        const mode = String(p.gamesMode || "auto");
+        const pgames = mode === "none" ? []
+            : mode === "custom" ? (Array.isArray(p.games) ? p.games : []).filter(c => c && c.game).map(c => ({ c, g: games.find(x => x.slug === c.game) })).filter(e => e.g)
+            : games.filter(g => g.cover || logoPath(g)).map(g => ({ c: {}, g }));
+        await Promise.all(pgames.filter(e => logoPath(e.g)).map(e => ensureLogoBox(e.g, 1200)));
 
         const dlRow = (d) => {
             const ext = extOf(d.file);
@@ -2281,8 +2412,11 @@
                 <span class="pg-build-tx"><b>${esc(d.label || t("download"))}</b>${d.note ? `<small>${esc(d.note)}</small>` : ""}</span>
                 <span class="pg-build-dl" aria-hidden="true">${pgIc("dl")}</span><span class="pg-sr">${t("download")}</span></a>`;
         };
-        const pressCard = (g) => {
-            const logo = logoPath(g), tag = slideTagline(g);
+        const pressCard = ({ g, c }) => {
+            const logo = c.logo === false ? "" : logoPath(g), cover = c.cover === false ? "" : String(g.cover || "");
+            const tag = plainText(c.text) || slideTagline(g);
+            const files = (Array.isArray(c.files) ? c.files : []).filter(f => f && f.file);
+            const trailer = String(c.trailer || "").trim();
             const img = g.cover
                 ? `<img src="${esc(g.cover)}" alt="${esc(g.coverAlt || g.title || "")}" loading="lazy" style="object-position:${focusPos(g.cover)}">`
                 : `<span class="pg-ph-blank"></span>${logoFit(g, 9000, 70, "pg-card-logo", false)}`;
@@ -2291,7 +2425,9 @@
                 <div class="pg-pcard-b">${pgChip(g.status)}<h3>${esc(g.title || "")}</h3>${tag ? `<p>${esc(tag)}</p>` : ""}
                     <div class="pg-pcard-acts">
                         ${logo ? `<a class="pg-btn pg-btn-s pg-btn-sm" href="${esc(fileOf(logo))}" download>${pgIc("dl")} Logo</a>` : ""}
-                        ${g.cover ? `<a class="pg-btn pg-btn-s pg-btn-sm" href="${esc(fileOf(g.cover))}" download>${pgIc("dl")} ${t("press_cover")}</a>` : ""}
+                        ${cover ? `<a class="pg-btn pg-btn-s pg-btn-sm" href="${esc(fileOf(cover))}" download>${pgIc("dl")} ${t("press_cover")}</a>` : ""}
+                        ${files.map(f => `<a class="pg-btn pg-btn-s pg-btn-sm" href="${esc(fileOf(f.file))}" download>${pgIc("dl")} ${esc(plainText(f.label) || extOf(f.file) || t("download"))}</a>`).join("")}
+                        ${/^https?:\/\//i.test(trailer) ? `<a class="pg-btn pg-btn-s pg-btn-sm" href="${esc(trailer)}" target="_blank" rel="noopener">${pgIc("play")} ${t("press_trailer")}</a>` : ""}
                         <a class="pg-link" href="${gameHref(g)}">${t("to_game2")} ${pgIc("arrow")}</a>
                     </div></div></div>`;
         };
@@ -2469,7 +2605,62 @@
         chat: '<path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-8.5L6 20v-3.5H5A1.5 1.5 0 0 1 3.5 15V7A1.5 1.5 0 0 1 5 5.5z"/>',
         mail: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>',
         reddit: '<ellipse cx="12" cy="14" rx="7.5" ry="5.5"/><circle cx="18.5" cy="5" r="1.6"/><path d="M12 8.5 13.2 4l3.7 1M9.2 13.2h.01M14.8 13.2h.01M9.5 16.2c1.6.9 3.4.9 5 0"/>',
+        wand: '<path d="M4 20 15 9M14 4v3M18.5 5.5l-2 2M20 10h-3M9.5 5.5l2 2"/>',
+        star: '<path d="M12 3.5l2.6 5.3 5.9.9-4.25 4.1 1 5.8L12 16.9l-5.25 2.7 1-5.8L3.5 9.7l5.9-.9z"/>',
+        heart: '<path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7.5 3c0 5.4-7.5 10-7.5 10z"/>',
+        palette: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.8 0-1.2-1-1.6-1-2.7 0-1 .9-1.7 2-1.7H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/>',
+        brush: '<path d="M18.5 3.5 10 12l2 2 8.5-8.5a1.4 1.4 0 0 0-2-2z"/><path d="M10 12c-2.5 0-4 1.5-4 3.5 0 1.6-.8 2.9-2.5 3.5 4.5 1.5 9.5-.5 8.5-5z"/>',
+        rocket: '<path d="M9 15 5.5 11.5C7.5 6.5 12 4 19.5 4.5 20 12 17.5 16.5 12.5 18.5z"/><path d="M6.5 14.5 4 20l5.5-2.5"/><circle cx="14.5" cy="9.5" r="1.6"/>',
+        shield: '<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6z"/>',
+        swords: '<path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 17.5 21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2"/>',
+        castle: '<path d="M4 21V5h3v3h2V5h2v3h2V5h2v3h2V5h3v16zM10 21v-4a2 2 0 0 1 4 0v4"/>',
+        crown: '<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>',
+        gem: '<path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18M9 3l-1.5 6L12 21l4.5-12L15 3"/>',
+        flame: '<path d="M12 21c-4 0-6.5-2.6-6.5-6.2 0-3.6 2.6-5.6 3.5-8.8 1.9 1.4 2.8 3.2 3 4.9C13.3 9.5 14 7.6 13.8 5c3 2.2 4.7 5.6 4.7 9.4 0 3.8-2.6 6.6-6.5 6.6z"/>',
+        skull: '<path d="M12 3C7.6 3 4.5 6.1 4.5 10.2c0 2.5 1.2 4.4 3 5.5V19h9v-3.3c1.8-1.1 3-3 3-5.5C19.5 6.1 16.4 3 12 3z"/><circle cx="9" cy="11" r="1.6"/><circle cx="15" cy="11" r="1.6"/><path d="M10 19v2M14 19v2"/>',
+        ghost: '<path d="M5 21V10a7 7 0 0 1 14 0v11l-2.5-2-2.3 2-2.2-2-2.2 2-2.3-2z"/><path d="M9.5 10h.01M14.5 10h.01"/>',
+        target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12h.01"/>',
+        trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/>',
+        globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>',
+        map: '<path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6zM9 4v14M15 6v14"/>',
+        compass: '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>',
+        mountain: '<path d="M2.5 20 9.5 8l4 6.5 2.5-3.5 5.5 9z"/>',
+        tree: '<path d="M12 3 6 11h3l-4 6h14l-4-6h3zM12 17v4"/>',
+        moon: '<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/>',
+        sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+        music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+        headphones: '<path d="M4 18v-5a8 8 0 0 1 16 0v5"/><rect x="3" y="14" width="4.5" height="6.5" rx="1.8"/><rect x="16.5" y="14" width="4.5" height="6.5" rx="1.8"/>',
+        puzzle: '<path d="M5 8h3.5a2 2 0 1 1 4 0H16v3.5a2 2 0 1 1 0 4V19h-3.5a2 2 0 1 0-4 0H5v-3.5a2 2 0 1 0 0-4z"/>',
+        dice: '<rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01"/>',
+        clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+        lock: '<rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
+        key: '<circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 8.7-8.7M16 7l2.5 2.5M14 9l2 2"/>',
+        gift: '<rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8.5h14V12M12 8v12.5M12 8c-1.5-3.5-5.5-3.5-5.5-1S9 8 12 8zm0 0c1.5-3.5 5.5-3.5 5.5-1S15 8 12 8z"/>',
+        code: '<path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4.5l-3 15"/>',
+        camera: '<path d="M4 7.5h3l1.8-2.5h6.4L17 7.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8.5a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>',
+        film: '<rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M7.5 4v16M16.5 4v16M3.5 8h4M3.5 12h4M3.5 16h4M16.5 8h4M16.5 12h4M16.5 16h4"/>',
+        book: '<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v14H6.5A1.5 1.5 0 0 0 5 18.5zM5 18.5A1.5 1.5 0 0 0 6.5 20H19v-3"/>',
+        atom: '<circle cx="12" cy="12" r="1.4"/><ellipse cx="12" cy="12" rx="9" ry="3.6"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(120 12 12)"/>',
+        smile: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1 1.3 2.2 2 3.5 2s2.5-.7 3.5-2M9 9.5h.01M15 9.5h.01"/>',
+        bulb: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/>',
+        pin: '<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/>',
+        box: '<path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/>',
+        windows: '<path d="M3.5 5.5 10.5 4.5v7h-7zM13 4.2l7.5-1.2v8.5H13zM3.5 13h7v7l-7-1zM13 13h7.5v8.5L13 20.3z"/>',
+        apple: '<path d="M15.8 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.8-.9-3-.8-1.6 0-3 .9-3.8 2.3-1.6 2.8-.4 6.9 1.2 9.1.8 1.1 1.7 2.3 2.9 2.3 1.1 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.2.9-1.3 1.3-2.5 1.3-2.6-.1 0-2.5-.9-2.5-3.7zM13.6 5.6c.6-.8 1-1.8.9-2.8-.9 0-2 .6-2.6 1.4-.6.7-1.1 1.7-.9 2.7 1 .1 2-.5 2.6-1.3z"/>',
+        terminal: '<rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="m7 9.5 3 2.5-3 2.5M12.5 15H17"/>',
+        android: '<path d="M5.5 10.5a6.5 6.5 0 0 1 13 0V17a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM5.5 11h13M8 4.5l1.3 2M16 4.5l-1.3 2M9.5 8h.01M14.5 8h.01"/>',
     };
+    // Ältere Einträge mit Emoji (z. B. 🪄 bei den Werten) zeigen automatisch das passende Icon
+    const EMOJI_IC = { "🪄": "wand", "✨": "spark", "💫": "spark", "⭐": "star", "🌟": "star", "❤": "heart", "💜": "heart", "🧡": "heart", "💛": "heart", "💚": "heart", "💙": "heart", "🖤": "heart", "🤍": "heart", "💖": "heart", "💕": "heart", "♥": "heart", "🎮": "pad", "🕹": "pad", "🌀": "pad", "👾": "pad", "🤝": "users", "👥": "users", "👫": "users", "🧑‍🤝‍🧑": "users", "👪": "users", "🫂": "users", "🎨": "palette", "🖌": "brush", "✏": "brush", "🖍": "brush", "⚡": "bolt", "🚀": "rocket", "🛡": "shield", "⚔": "swords", "🗡": "swords", "🔫": "target", "🏰": "castle", "🏯": "castle", "👑": "crown", "💎": "gem", "🔮": "gem", "🔥": "flame", "💀": "skull", "☠": "skull", "🧟": "skull", "🧟‍♂": "skull", "🧟‍♀": "skull", "👻": "ghost", "🎯": "target", "🏆": "trophy", "🥇": "trophy", "🏅": "trophy", "🌍": "globe", "🌎": "globe", "🌏": "globe", "🌐": "globe", "🗺": "map", "🧭": "compass", "⛰": "mountain", "🏔": "mountain", "🌲": "tree", "🌳": "tree", "🌙": "moon", "☀": "sun", "🎵": "music", "🎶": "music", "🎧": "headphones", "🧩": "puzzle", "🎲": "dice", "⏱": "clock", "⏰": "clock", "🕒": "clock", "⌛": "clock", "⏳": "clock", "💬": "chat", "🗨": "chat", "👀": "eye", "👁": "eye", "🔒": "lock", "🔐": "lock", "🔑": "key", "🗝": "key", "🎁": "gift", "💻": "code", "⌨": "code", "🖥": "screen", "📷": "camera", "📸": "camera", "🎬": "film", "🎥": "film", "📖": "book", "📚": "book", "📜": "book", "🚩": "flag", "🏁": "flag", "✅": "check", "✔": "check", "🏷": "tag", "📅": "cal", "📆": "cal", "📰": "news", "📝": "news", "🧙": "wand", "🧙‍♂": "wand", "🧙‍♀": "wand", "🤹": "atom", "🤹‍♂": "atom", "🤹‍♀": "atom", "⚛": "atom", "😂": "smile", "😄": "smile", "😊": "smile", "🙂": "smile", "😎": "smile", "🤪": "smile", "💡": "bulb", "📍": "pin", "📦": "box", "🪟": "windows", "🍎": "apple", "🐧": "terminal", "🤖": "android" };
+    // Icon aus dem Admin (Name wie „wand“) oder älteres Emoji → Linien-Icon; Unbekanntes → Funkeln
+    function iconKey(v) {
+        const raw = String(v || "").trim();
+        if (PG_IC[raw]) return raw;
+        const k = raw.replace(/[\uFE0E\uFE0F]/g, "");
+        return EMOJI_IC[k] || (Array.from(k)[0] && EMOJI_IC[Array.from(k)[0]]) || "spark";
+    }
+    const siteIcon = (v) => pgIc(iconKey(v));
     const pgIc = (n) => `<svg class="pg-ic" viewBox="0 0 24 24" aria-hidden="true">${PG_IC[n] || PG_IC.link}</svg>`;
 
     // Social-Kanal erkennen (Icon, Farbe, Kurzbeschreibung) – anhand Adresse oder Beschriftung
@@ -2517,14 +2708,24 @@
         return out;
     }
     // Hauptbutton der Kopfzeile: Playtest des aktuellen Projekts (falls es eine Warteliste hat), sonst Spiele
+    // Knopf oben rechts (im Admin: Studio & Startseite → „Knopf oben rechts“). Automatisch = Playtest des aktuellen Projekts.
     function headerCta() {
-        const games = (DATA.games && DATA.games.games) || [];
-        const f = games.find(g => g && g.featured);
-        const wl = f && (f.blocks || []).some(b => b && b.type === "waitlist" && !b.hidden);
-        return wl ? { href: `game.php?slug=${encodeURIComponent(f.slug)}#warteliste`, label: t("cta_playtest") }
-                  : { href: "games.html", label: t("cta_discover") };
+        const st = DATA.studio || {}, cfg = (st.headerCta && typeof st.headerCta === "object") ? st.headerCta : {};
+        const games = ((DATA.games && DATA.games.games) || []).filter(g => g && typeof g === "object");
+        const f = games.find(g => g.featured) || null;
+        const mode = String(cfg.mode || "auto");
+        if (mode === "off") return null;
+        const own = plainText(cfg.label);
+        const pick = (cfg.game && games.find(g => g.slug === cfg.game)) || f;
+        let c = null;
+        if (mode === "custom") c = btnTarget("custom", {}, "home", own || t("more_info"), cfg.url);
+        else if (["wishlist", "playtest", "game", "trailer", "demo", "devlog"].includes(mode)) c = btnTarget(mode, pick, "home", own);
+        if (c) return c;
+        const wl = f && gameBlocks(f).some(b => b.type === "waitlist");
+        return wl ? { href: `game.php?slug=${encodeURIComponent(f.slug)}#warteliste`, label: own || t("cta_playtest") }
+                  : { href: "games.html", label: own || t("cta_discover") };
     }
-    // Seiten mit eigenem „Bleib dran"-Block (Newsletter + Kanäle) über dem Footer
+
     const STAY_PAGES = ["home", "games", "devlog", "contact", "presskit"];
 
     function injectChrome() {
@@ -2536,7 +2737,7 @@
                 <div id="fx-layer"></div>`);
         }
         const cta = headerCta();
-        const ctaHTML = (cls) => `<a href="${esc(cta.href)}" class="pg-btn pg-btn-p ${cls}" data-hd-cta>${esc(cta.label)}</a>`;
+        const ctaHTML = (cls) => cta ? `<a href="${esc(cta.href)}" class="pg-btn pg-btn-p ${cls}" data-hd-cta${cta.ext ? ' target="_blank" rel="noopener"' : ""}>${esc(cta.label)}</a>` : "";
         const tipHTML = (cls) => `<a href="#" class="pg-btn pg-btn-s ${cls}" data-tipjar-slot target="_blank" rel="noopener" hidden>${t("support")}</a>`;
 
         const headerMount = $("[data-shell='header']");
@@ -2614,7 +2815,7 @@
                             <a href="rechtliches.html?doc=impressum">${t("foot_impressum")}</a>
                             <a href="rechtliches.html?doc=datenschutz">${t("foot_datenschutz")}</a>
                             <a href="#" data-cookie-open>${t("cookie_settings")}</a>
-                            <a href="admin/" title="${LANG === "en" ? "Admin dashboard" : "Zum Dashboard"}">🔒 Admin</a>
+                            <a href="admin/" title="${LANG === "en" ? "Admin dashboard" : "Zum Dashboard"}">${pgIc("lock")} Admin</a>
                         </span>
                     </div>
                 </div>
@@ -2785,7 +2986,7 @@
                 </div>
             </div>
             ${m.bio ? `<div class="prose-pg pg-member-bio">${md(m.bio)}</div>` : ""}
-            ${(m.location || m.funFact) ? `<div class="pg-member-meta">${m.location ? `<span>📍 ${esc(m.location)}</span>` : ""}${m.funFact ? `<span>✨ ${esc(m.funFact)}</span>` : ""}</div>` : ""}
+            ${(m.location || m.funFact) ? `<div class="pg-member-meta">${m.location ? `<span>${pgIc("pin")} ${esc(m.location)}</span>` : ""}${m.funFact ? `<span>✨ ${esc(m.funFact)}</span>` : ""}</div>` : ""}
             ${socials.length ? `<div class="pg-member-socials">${socials.map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener" class="btn-ghost px-4 py-2 rounded-full text-sm font-semibold">${esc(s.label || "Link")} ↗</a>`).join("")}</div>` : ""}
         </div>`;
         document.body.appendChild(ov);
