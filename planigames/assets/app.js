@@ -102,15 +102,13 @@
     }
     // Teilen-Leiste (X, Bluesky, Reddit, Link kopieren)
     function shareBar(title) {
-        const url = location.href;
-        const u = encodeURIComponent(url), tt = encodeURIComponent(title);
-        const ico = (label, href, svg) => `<a href="${href}" target="_blank" rel="noopener" aria-label="${label}" title="${label}" class="share-btn">${svg}</a>`;
-        return `<div class="flex items-center gap-2 flex-wrap">
-            <span class="font-mono text-[10px] uppercase tracking-widest text-zinc-500 mr-0.5">${t("share")}</span>
-            ${ico("X / Twitter", `https://twitter.com/intent/tweet?text=${tt}&url=${u}`, "𝕏")}
-            ${ico("Bluesky", `https://bsky.app/intent/compose?text=${tt}%20${u}`, "🦋")}
-            ${ico("Reddit", `https://www.reddit.com/submit?url=${u}&title=${tt}`, "👽")}
-            <button type="button" class="share-btn" data-share-copy aria-label="${t("copy_link")}" title="${t("copy_link")}">🔗</button>
+        const u = encodeURIComponent(location.href), tt = encodeURIComponent(title);
+        const ico = (label, href, ic) => `<a href="${href}" target="_blank" rel="noopener" aria-label="${label}" title="${label}" class="share-btn">${pgIc(ic)}</a>`;
+        return `<div class="pg-share"><span class="pg-share-l">${t("share")}</span>
+            ${ico("X / Twitter", `https://twitter.com/intent/tweet?text=${tt}&url=${u}`, "x")}
+            ${ico("Bluesky", `https://bsky.app/intent/compose?text=${tt}%20${u}`, "bsky")}
+            ${ico("Reddit", `https://www.reddit.com/submit?url=${u}&title=${tt}`, "reddit")}
+            <button type="button" class="share-btn" data-share-copy aria-label="${t("copy_link")}" title="${t("copy_link")}">${pgIc("link")}</button>
         </div>`;
     }
 
@@ -190,6 +188,16 @@
             cta_notify: "Benachrichtigt werden", cta_wl_beta: "Zur Beta anmelden", cta_wl_playtest: "Für den Playtest eintragen", cta_wl: "Auf die Warteliste",
             cta_demo: "Demo spielen", wl_intro: "Trag dich ein – wir sagen dir Bescheid, sobald du spielen kannst.",
             wl_tick1: "Deinen Platz in der Warteliste siehst du sofort", wl_tick2: "Mit deinem Link Freunde einladen und aufsteigen",
+            n_game: "Spiel", n_games: "Spiele", n_demo: "Demo-Sammlung", n_demos: "Demo-Sammlungen", more_posts: "Weitere Beiträge laden",
+            no_posts_game: "Zu {title} gibt es noch keine Beiträge.", nf_post: "Diesen Beitrag gibt es (noch) nicht.", nf_games: "Spiele ansehen",
+            nf_title: "Diese Welt existiert (noch) nicht.", nf_sub: "Vielleicht wurde sie wegteleportiert. Hier geht's zurück ins Studio.",
+            comments_n: "Kommentare", more_label: "Weiterlesen", more_game: "Mehr zum Spiel", next_post: "Nächster Beitrag",
+            post_wish: "Gefällt dir {title}? Eine Wishlist auf Steam hilft uns enorm.",
+            legal_title: "Rechtliches", legal_de_note: "Die rechtlichen Angaben sind auf Deutsch verbindlich.",
+            press_cover: "Titelbild", press_games_h: "Logos & Titelbilder", press_nodl: "Noch keine Downloads hinterlegt.", press_off: "Das Press Kit ist gerade nicht verfügbar.",
+            c_heading: "Sag Hallo!", c_optional: "(optional)", c_alt_mail: "Lieber per E-Mail?", c_alt_press: "Für Presse & Creator",
+            c_privacy: "Mit dem Absenden werden deine Angaben zur Bearbeitung deiner Anfrage gespeichert. Mehr dazu in der {link}.", c_privacy_link: "Datenschutzerklärung",
+            c_off_h: "Schreib uns eine E-Mail", c_off_p: "Das Kontaktformular ist gerade ausgeschaltet – erreichbar sind wir trotzdem:", c_off_p2: "Das Kontaktformular ist gerade ausgeschaltet.",
         },
         en: {
             nav_studio: "Studio", nav_games: "Games", nav_devlog: "Devlog", nav_contact: "Contact",
@@ -250,6 +258,16 @@
             cta_notify: "Get notified", cta_wl_beta: "Join the beta", cta_wl_playtest: "Sign up for the playtest", cta_wl: "Join the waitlist",
             cta_demo: "Play the demo", wl_intro: "Sign up – we'll let you know as soon as you can play.",
             wl_tick1: "See your spot on the waitlist right away", wl_tick2: "Invite friends with your link and move up",
+            n_game: "game", n_games: "games", n_demo: "demo collection", n_demos: "demo collections", more_posts: "Load more posts",
+            no_posts_game: "There are no posts about {title} yet.", nf_post: "This post doesn't exist (yet).", nf_games: "Browse games",
+            nf_title: "This world doesn't exist (yet).", nf_sub: "Maybe it got teleported away. Here's the way back to the studio.",
+            comments_n: "Comments", more_label: "Keep reading", more_game: "More about the game", next_post: "Next post",
+            post_wish: "Enjoying {title}? A wishlist on Steam helps us a lot.",
+            legal_title: "Legal", legal_de_note: "The legal information is provided in German.",
+            press_cover: "Key art", press_games_h: "Logos & key art", press_nodl: "No downloads yet.", press_off: "The press kit isn't available right now.",
+            c_heading: "Say hello!", c_optional: "(optional)", c_alt_mail: "Prefer email?", c_alt_press: "For press & creators",
+            c_privacy: "When you send this, your details are stored to handle your request. More in our {link}.", c_privacy_link: "privacy policy",
+            c_off_h: "Send us an email", c_off_p: "The contact form is switched off right now – you can still reach us:", c_off_p2: "The contact form is switched off right now.",
         },
     };
     function detectLang() {
@@ -974,14 +992,14 @@
     }
 
     // ---------- Devlog ----------
-    function homePost(p, g, cls) {
+    function homePost(p, g, cls, opt = {}) {
         const mini = cls === "mini";
         const fig = p.cover ? `<img src="${esc(p.cover)}" alt="${esc(p.coverAlt || "")}" loading="lazy" style="object-position:${focusPos(p.cover)}">`
             : (g && g.cover ? `<img class="pg-ph-img" src="${esc(g.cover)}" alt="" loading="lazy" style="object-position:${focusPos(g.cover)}">${logoFit(g, mini ? 2600 : 9000, mini ? 40 : 70, "pg-card-logo", false)}`
                             : `<span class="pg-ph-blank"></span>`);
-        return `<a class="pg-post pg-rv ${cls}" href="devlog.php?slug=${encodeURIComponent(p.slug || "")}" style="${accentStyle(g || {})}">
+        return `<a class="pg-post pg-rv ${cls}" href="devlog.php?slug=${encodeURIComponent(p.slug || "")}" style="${accentStyle(g || {})}"${opt.hidden ? " hidden" : ""}>
             <figure>${fig}</figure>
-            <div class="pg-pbody"><div class="pg-pmeta">${g ? `<span class="pg-chip pg-chip-game"><i></i>${esc(g.title || "")}</span>` : ""}${p.version ? `<span class="pg-ver">v${esc(p.version)}</span>` : ""}<time datetime="${esc(p.date || "")}">${esc(fmtDate(p.date))}</time></div>
+            <div class="pg-pbody"><div class="pg-pmeta">${g ? `<span class="pg-chip pg-chip-game"><i></i>${esc(g.title || "")}</span>` : ""}${p.version ? `<span class="pg-ver">v${esc(p.version)}</span>` : ""}<time datetime="${esc(p.date || "")}">${esc(fmtDate(p.date))}</time>${opt.cmt ? `<span class="pg-cmt-n">${pgIc("chat")}<span class="pg-sr">${t("comments_n")}: </span>${opt.cmt}</span>` : ""}</div>
                 <h3>${esc(p.title || "")}</h3>${!mini && p.excerpt ? `<p>${esc(plainText(p.excerpt))}</p>` : ""}<span class="pg-link">${t("read_more2")} ${pgIc("arrow")}</span></div>
         </a>`;
     }
@@ -1321,37 +1339,37 @@
         observeReveals(mount);
     }
 
-    function gameCard(g) {
-        return `
-        <a href="game.php?slug=${esc(g.slug)}" class="reveal tilt-card group relative block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]" style="--accent:${esc(g.accent || "#8b5cf6")}">
-            <div class="card-glow"></div><div class="card-shine"></div>
-            <div class="relative aspect-[16/10] overflow-hidden">
-                ${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.coverAlt || g.title)}" style="object-position:${focusPos(g.cover)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">`
-                          : `<div class="w-full h-full grid-lines bg-white/[0.03]"></div>`}
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
-                <div class="absolute top-3 left-3">${statusBadge(g.status)}</div>
-            </div>
-            <div class="relative p-6">
-                <h3 class="font-display text-2xl font-extrabold text-white group-hover:text-gradient">${esc(g.title)}</h3>
-                <p class="text-sm text-zinc-400 mt-2 line-clamp-2">${esc(g.tagline || "")}</p>
-                <div class="mt-4 font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] flex items-center gap-2">
-                    ${t("more_info")} <span class="transition-transform group-hover:translate-x-1">→</span></div>
-            </div>
-        </a>`;
-    }
-
     /* =========================================================
-       4) GAMES-ÜBERSICHT
+       4) SPIELE-ÜBERSICHT — Design v7
+       Spiele mit Titelbild als Karten (wie auf der Startseite), Sammlungen ohne
+       Titelbild (z. B. „Browser-Demos") als Kasten mit den Downloads darunter.
        ========================================================= */
+    function gamesDemoBox(g) {
+        const dl = (g.blocks || []).find(b => b && b.type === "download" && !b.hidden && (b.builds || []).some(x => x && (x.url || x.file)));
+        if (!dl) return homeExtraRow(g);
+        const lead = plainText(g.summary) || plainText(heroBlockOf(g).tagline) || plainText(g.tagline);
+        return `<div class="pg-demobox pg-rv" id="${esc(slugify(g.slug || "demos"))}" style="${accentStyle(g)}">
+            <div class="pg-demobox-tx">${pgKick(0, esc(t(ST_KEY[pgStatus(g.status)])))}<h2 class="pg-h2">${esc(g.title || "")}</h2>
+                ${lead ? `<p class="pg-lead">${esc(lead)}</p>` : ""}
+                <a class="pg-link" href="${gameHref(g)}">${t("more_info")} ${pgIc("arrow")}</a></div>
+            ${pgBuilds(dl)}
+        </div>`;
+    }
     async function renderGamesList() {
         await loadData("games");
-        const games = (DATA.games && DATA.games.games) || [];
-        const grid = $("[data-games='all']");
-        if (!grid) return;
-        if (!games.length) { grid.innerHTML = `<p class="text-zinc-500">${t("msg_no_games")}</p>`; return; }
-        grid.innerHTML = games.map(gameCard).join("");
-        initTilt(grid); observeReveals(grid);
-        setText("[data-games='count']", games.length + " " + (LANG === "en" ? "titles" : "Titel"));
+        const games = ((DATA.games && DATA.games.games) || []).filter(g => g && typeof g === "object");
+        const root = $("[data-games='all']");
+        if (!root) return;
+        if (!games.length) { root.innerHTML = `<p class="pg-empty">${t("msg_no_games")}</p>`; return; }
+        const main = games.filter(g => g.cover), extra = games.filter(g => !g.cover);
+        const cur = main.find(g => g.featured) || null;
+        await Promise.all(games.filter(g => logoPath(g)).map(g => ensureLogoBox(g, 1200)));
+        root.innerHTML = (main.length ? `<div class="pg-games"${main.length % 2 ? " data-odd" : ""}>${main.map(g => homeCard(g, g === cur)).join("")}</div>` : "")
+            + extra.map(gamesDemoBox).join("");
+        observeReveals(root);
+        const nDemo = extra.filter(g => pgStatus(g.status) === "demo").length, nGame = games.length - nDemo;
+        setText("[data-games='count']", [nGame ? `${nGame} ${t(nGame === 1 ? "n_game" : "n_games")}` : "",
+            nDemo ? `${nDemo} ${t(nDemo === 1 ? "n_demo" : "n_demos")}` : ""].filter(Boolean).join(" · "));
     }
 
     /* =========================================================
@@ -1927,91 +1945,99 @@
     /* =========================================================
        6) DEVLOG / PATCH NOTES
        ========================================================= */
+    // Spiel eines Beitrags (tolerant: Adresse oder Titel)
+    function postGame(p, games) {
+        const v = String((p && p.game) || "").trim().toLowerCase();
+        if (!v) return null;
+        return games.find(x => x && (String(x.slug || "").toLowerCase() === v || String(x.title || "").toLowerCase() === v)) || null;
+    }
     async function renderDevlog() {
         await loadData("games", "patchnotes");
-        const games = (DATA.games && DATA.games.games) || [];
+        const games = ((DATA.games && DATA.games.games) || []).filter(g => g && typeof g === "object");
         const posts = ((DATA.patchnotes && DATA.patchnotes.posts) || [])
             .filter(isPublished).slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
         const slug = qs.get("slug");
 
-        if (slug) return renderDevlogSingle(posts.find(p => p.slug === slug), games);
+        if (slug) return renderDevlogSingle(posts.find(p => p.slug === slug), games, posts);
 
         const list = $("[data-devlog='list']");
         if (!list) return;
-        if (!posts.length) { list.innerHTML = `<p class="text-zinc-500">${t("msg_no_posts")}</p>`; return; }
+        await Promise.all(games.filter(g => logoPath(g)).map(g => ensureLogoBox(g, 1200)));
 
-        // Filter-Chips pro Spiel
+        // Filter pro Spiel – nur Spiele, zu denen es Beiträge gibt
+        const want = String(qs.get("game") || "").trim().toLowerCase();
+        const activeGame = want ? games.find(g => String(g.slug || "").toLowerCase() === want) || null : null;
+        const withPosts = games.filter(g => gamePosts(g).length);
         const filterWrap = $("[data-devlog='filters']");
-        const activeGame = qs.get("game");
         if (filterWrap) {
-            filterWrap.innerHTML = [`<a href="devlog.php" class="badge px-4 py-1.5 rounded-full border ${!activeGame ? "bg-white text-black border-white" : "border-white/15 text-zinc-300 hover:border-white/40"}">${t("all")}</a>`]
-                .concat(games.map(g => `<a href="devlog.php?game=${esc(g.slug)}" class="badge px-4 py-1.5 rounded-full border ${activeGame === g.slug ? "bg-white text-black border-white" : "border-white/15 text-zinc-300 hover:border-white/40"}">${esc(g.title)}</a>`)).join("");
+            const on = ' class="on" aria-current="page"';
+            filterWrap.innerHTML = (withPosts.length > 1 || activeGame)
+                ? [`<a href="devlog.php"${activeGame ? "" : on}>${t("all")}</a>`]
+                    .concat(withPosts.map(g => `<a href="devlog.php?game=${encodeURIComponent(g.slug || "")}"${activeGame === g ? on : ""}>${esc(g.title || "")}</a>`)).join("")
+                : "";
+            filterWrap.hidden = !filterWrap.innerHTML;
         }
+        if (activeGame) applyAccent(activeGame.accent, activeGame.accent2);
 
-        const shown = activeGame ? posts.filter(p => p.game === activeGame) : posts;
-        // Kommentar-Anzahlen je Beitrag (für 💬-Badge)
+        const shown = activeGame ? gamePosts(activeGame) : posts;
+        if (!shown.length) { list.innerHTML = `<p class="pg-empty">${activeGame ? fmtT("no_posts_game", activeGame.title) : t("msg_no_posts")}</p>`; return; }
+        // Kommentar-Anzahlen je Beitrag (Sprechblase auf der Karte)
         let cmtCounts = {};
         try { const rc = await fetch("comments.php?counts=1"); cmtCounts = ((await rc.json()) || {}).counts || {}; } catch {}
-        list.innerHTML = shown.map(p => {
-            const g = games.find(x => x.slug === p.game);
-            const cmtN = cmtCounts[p.slug] || 0;
-            return `
-            <a href="devlog.php?slug=${esc(p.slug)}" class="reveal tilt-card group relative block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]" style="--accent:${esc(g?.accent || "#8b5cf6")}">
-                <div class="card-glow"></div>
-                <div class="grid md:grid-cols-[260px_1fr]">
-                    <div class="relative aspect-video md:aspect-auto overflow-hidden">
-                        ${p.cover ? `<img src="${esc(p.cover)}" alt="${esc(p.coverAlt || p.title || "")}" style="object-position:${focusPos(p.cover)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">`
-                                  : `<div class="w-full h-full grid-lines bg-white/[0.03] min-h-[160px]"></div>`}
-                    </div>
-                    <div class="p-7">
-                        <div class="flex items-center gap-2 flex-wrap mb-3">
-                            <span class="font-mono text-xs text-zinc-500">${esc(fmtDate(p.date))}</span>
-                            ${g ? `<span class="badge px-2 py-0.5 rounded border border-white/10 text-zinc-400">${esc(g.title)}</span>` : ""}
-                            ${p.version ? `<span class="badge text-[color:var(--accent)]">v${esc(p.version)}</span>` : ""}
-                            ${cmtN ? `<span class="badge px-2 py-0.5 rounded border border-white/10 text-zinc-400">💬 ${cmtN}</span>` : ""}
-                        </div>
-                        <h2 class="font-display text-2xl font-extrabold text-white group-hover:text-gradient">${esc(p.title)}</h2>
-                        ${p.excerpt ? `<p class="text-zinc-400 mt-2 line-clamp-2">${esc(p.excerpt)}</p>` : ""}
-                        <div class="mt-4 font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)]">${t("read_more")}</div>
-                    </div>
-                </div>
-            </a>`;
-        }).join("");
-        initTilt(list); observeReveals(list);
+        const PAGE = 12;   // danach „Weitere Beiträge"
+        const n = shown.length, wide = n === 1 || n >= 3;   // erster Beitrag quer über die volle Breite
+        const rest = wide ? n - 1 : n;
+        // Spiel-Filter mit unvollständiger letzter Reihe: Karte „Alle Beiträge" füllt die Lücke
+        const filler = activeGame && n <= PAGE + 1 && rest % 3
+            ? `<a class="pg-morecard pg-rv" href="devlog.php"><span class="pg-icn">${pgIc("news")}</span><h3>${t("allposts_h")}</h3><p>${t("allposts_p")}</p><span class="pg-link">${t("to_devlog")} ${pgIc("arrow")}</span></a>` : "";
+        list.innerHTML = shown.map((p, i) => homePost(p, postGame(p, games), i || !wide ? "" : "wide", { cmt: cmtCounts[p.slug] || 0, hidden: i > PAGE })).join("") + filler;
+        observeReveals(list);
+        if (shown.length > PAGE + 1) {
+            list.insertAdjacentHTML("afterend", `<div class="pg-more-wrap"><button type="button" class="pg-btn pg-btn-s" data-devlog-more>${t("more_posts")}</button></div>`);
+            const btn = $("[data-devlog-more]");
+            btn.addEventListener("click", () => {
+                const rest = $$(".pg-post[hidden]", list);
+                rest.slice(0, PAGE).forEach(el => { el.hidden = false; });
+                if (rest.length <= PAGE) btn.parentNode.remove();
+            });
+        }
     }
 
-    function renderDevlogSingle(p, games) {
+    function renderDevlogSingle(p, games, posts = []) {
         const root = $("[data-devlog='single']");
         const list = $("[data-devlog='list-wrap']");
-        if (list) list.classList.add("hidden");
+        if (list) { list.hidden = true; list.classList.add("hidden"); }
         if (!root) return;
-        root.classList.remove("hidden");
-        if (!p) { root.innerHTML = notFound(t("nf_text")); return; }
-        const g = games.find(x => x.slug === p.game);
+        root.hidden = false; root.classList.remove("hidden");
+        if (!p) { root.innerHTML = notFound(t("nf_post")); return; }
+        const g = postGame(p, games);
         if (g) applyAccent(g.accent, g.accent2);
         document.title = `${p.title} — PLANIGAMES Devlog`;
+        const i = posts.indexOf(p);
+        const next = posts.length > 1 && i >= 0 ? posts[(i + 1) % posts.length] : null;
+        const ng = next ? postGame(next, games) : null;
+        // Schlagworte ohne Doppelte und ohne den Spielnamen (steht schon oben)
+        const seen = new Set([String((g && g.slug) || "").toLowerCase(), String((g && g.title) || "").toLowerCase()]);
+        const tags = (p.tags || []).map(x => String(x || "").trim()).filter(x => { const k = x.toLowerCase(); if (!x || seen.has(k)) return false; seen.add(k); return true; });
+        const wish = g && /^https?:\/\//i.test(String(g.wishlistUrl || "").trim()) ? String(g.wishlistUrl).trim() : "";
         root.innerHTML = `
-            <div class="max-w-3xl mx-auto px-6 pt-36 pb-24">
-                <a href="devlog.php" class="font-mono text-[11px] uppercase tracking-widest text-zinc-500 hover:text-white">${t("back_all")}</a>
-                <div class="flex items-center gap-2 flex-wrap mt-8 mb-5">
-                    <span class="font-mono text-xs text-zinc-500">${esc(fmtDate(p.date))}</span>
-                    <span class="font-mono text-xs text-zinc-600">· ${readingTime(p.body)} ${t("read_time")}</span>
-                    ${g ? `<a href="game.php?slug=${esc(g.slug)}" class="badge px-2 py-0.5 rounded border border-white/10 text-zinc-300 hover:border-white/40">${esc(g.title)}</a>` : ""}
-                    ${p.version ? `<span class="badge text-[color:var(--accent)]">v${esc(p.version)}</span>` : ""}
-                    ${(p.tags || []).map(t => `<span class="badge text-zinc-600">#${esc(t)}</span>`).join("")}
-                </div>
-                <h1 class="font-display text-4xl md:text-6xl font-extrabold text-white leading-[1.05] mb-8">${esc(p.title)}</h1>
-                ${p.cover ? `<img src="${esc(p.cover)}" alt="${esc(p.coverAlt || p.title || "")}" class="w-full rounded-2xl border border-white/10 mb-10">` : ""}
-                <div class="prose-pg">${md(p.body || "")}</div>
-                <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-4 mt-14 pt-8 border-t border-white/10">
-                    ${reactionsBar()}
-                    ${shareBar(p.title)}
-                </div>
+            <section class="pg-pghead pg-pghead-article"><div class="pg-wrap"><div class="pg-article">
+                <nav class="pg-crumb" aria-label="Breadcrumb"><a href="devlog.php">Devlog</a>${g ? `<span aria-hidden="true">/</span><a href="devlog.php?game=${encodeURIComponent(g.slug || "")}">${esc(g.title || "")}</a>` : ""}</nav>
+                <h1 class="pg-h1">${esc(p.title || "")}</h1>
+                <div class="pg-ameta">${g ? `<a class="pg-chip pg-chip-game" href="${gameHref(g)}"><i></i>${esc(g.title || "")}</a>` : ""}<span class="pg-ameta-t"><time datetime="${esc(p.date || "")}">${esc(fmtDate(p.date))}</time><span aria-hidden="true">·</span><span>${readingTime(p.body)} ${t("read_time")}</span></span>${p.version ? `<span class="pg-ver">v${esc(p.version)}</span>` : ""}</div>
+            </div></div></section>
+            <section class="pg-sec pg-sec-article"><div class="pg-wrap"><div class="pg-article">
+                ${p.cover ? `<figure class="pg-post-img"><img src="${esc(p.cover)}" alt="${esc(p.coverAlt || "")}" style="object-position:${focusPos(p.cover)}"></figure>` : ""}
+                <div class="pg-prose">${md(p.body || "")}</div>
+                ${tags.length ? `<p class="pg-tags">${tags.map(x => `<span>#${esc(x)}</span>`).join("")}</p>` : ""}
+                <div class="pg-post-acts">${reactionsBar()}${shareBar(p.title || "")}</div>
+                ${wish ? `<div class="pg-post-cta"><p>${esc(fmtT("post_wish", g.title))}</p><a class="pg-btn pg-btn-p" href="${esc(wish)}" target="_blank" rel="noopener">${pgIc("steam")} ${t("wishlist")}</a></div>` : ""}
                 ${commentsSection()}
-                ${g && g.wishlistUrl ? `<div class="mt-16 pt-10 border-t border-white/10 text-center">
-                    <a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-accent magnetic inline-block px-9 py-4 rounded-full font-semibold">${esc(g.title)} auf Steam wishlisten</a></div>` : ""}
-            </div>`;
-        initMagnetic();
+                ${g || next ? `<nav class="pg-post-end" aria-label="${t("more_label")}">
+                    ${g ? `<a href="${gameHref(g)}" style="${accentStyle(g)}"><span><small>${t("more_game")}</small><b>${esc(g.title || "")}</b></span><span class="pg-link">${t("to_game2")} ${pgIc("arrow")}</span></a>` : ""}
+                    ${next ? `<a href="devlog.php?slug=${encodeURIComponent(next.slug || "")}" style="${accentStyle(ng || {})}"><span><small>${t("next_post")}</small><b>${esc(next.title || "")}</b></span><span class="pg-link">${t("read_more2")} ${pgIc("arrow")}</span></a>` : ""}
+                </nav>` : ""}
+            </div></div></section>`;
         initShareCopy();
         initReactions(p.slug);
         initComments(p.slug);
@@ -2020,20 +2046,20 @@
     function commentsSection() {
         const en = LANG === "en";
         return `
-        <section class="mt-16 pt-10 border-t border-white/10" data-comments>
-            <h2 class="font-display text-2xl md:text-3xl font-extrabold text-white mb-6">${en ? "Comments" : "Kommentare"}<span data-comments-count class="ml-3 align-middle text-base font-mono font-medium text-zinc-500"></span></h2>
-            <div data-comments-list class="flex flex-col gap-4 mb-8"></div>
-            <form data-comments-form class="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
-                <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
-                <div class="flex flex-col sm:flex-row gap-3 mb-3">
-                    <input name="name" required maxlength="60" placeholder="${en ? "Your name" : "Dein Name"}" class="flex-1 bg-black/30 border border-white/15 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none">
+        <section class="pg-cmts" id="kommentare" data-comments>
+            <h2 class="pg-h3">${en ? "Comments" : "Kommentare"} <span data-comments-count class="pg-cmts-n"></span></h2>
+            <div data-comments-list class="pg-cmts-list"></div>
+            <form data-comments-form class="pg-card pg-cmt-form">
+                <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="pg-hp">
+                <label class="pg-sr" for="pg-cmt-name">${en ? "Your name" : "Dein Name"}</label>
+                <input id="pg-cmt-name" name="name" required maxlength="60" autocomplete="nickname" placeholder="${en ? "Your name" : "Dein Name"}">
+                <label class="pg-sr" for="pg-cmt-body">${en ? "Your comment" : "Dein Kommentar"}</label>
+                <textarea id="pg-cmt-body" name="body" required maxlength="3000" rows="4" placeholder="${en ? "Write a comment…" : "Schreib einen Kommentar…"}"></textarea>
+                <div class="pg-cmt-foot">
+                    <span class="pg-fine">${en ? "Comments are reviewed before they appear." : "Kommentare werden vor der Veröffentlichung geprüft."}</span>
+                    <button class="pg-btn pg-btn-p">${en ? "Post comment" : "Kommentar senden"}</button>
                 </div>
-                <textarea name="body" required maxlength="3000" rows="4" placeholder="${en ? "Write a comment…" : "Schreib einen Kommentar…"}" class="w-full bg-black/30 border border-white/15 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500 focus:border-[color:var(--accent)] outline-none"></textarea>
-                <div class="flex items-center justify-between gap-3 mt-3 flex-wrap">
-                    <span class="text-xs text-zinc-500">${en ? "Comments are reviewed before they appear." : "Kommentare werden vor der Veröffentlichung geprüft."}</span>
-                    <button class="btn-accent magnetic px-7 py-3 rounded-full font-semibold">${en ? "Post comment" : "Kommentar senden"}</button>
-                </div>
-                <p data-comments-msg class="text-sm mt-3 hidden"></p>
+                <p data-comments-msg class="pg-msg" hidden></p>
             </form>
         </section>`;
     }
@@ -2046,22 +2072,21 @@
         const form = wrap.querySelector("[data-comments-form]");
         const msg = wrap.querySelector("[data-comments-msg]");
         const countEl = wrap.querySelector("[data-comments-count]");
-        const renderC = (c, pending) => `<div class="cmt-item${pending ? " cmt-new" : ""} rounded-2xl border ${pending ? "border-[color:var(--accent)]/50" : "border-white/8"} bg-white/[0.02] p-5">
-            <div class="flex items-center gap-2 mb-2 flex-wrap">
-                <span class="font-semibold text-white">${esc(c.name)}</span>
-                <span class="font-mono text-xs text-zinc-600">${pending ? (en ? "just now" : "gerade eben") : esc(fmtDate(c.date))}</span>
-                ${pending ? `<span class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--accent)]">⏳ ${en ? "under review" : "wird geprüft"}</span>` : ""}
-            </div>
-            <p class="text-zinc-300 whitespace-pre-wrap leading-relaxed">${esc(c.body)}</p>
+        const initial = (n) => (Array.from(String(n || "").trim())[0] || "?").toUpperCase();
+        const renderC = (c, pending) => `<div class="cmt-item pg-cmt${pending ? " cmt-new is-pending" : ""}">
+            <div class="pg-cmt-h"><span class="pg-cmt-av" aria-hidden="true">${esc(initial(c.name))}</span><b>${esc(c.name)}</b>
+                <span class="pg-cmt-d">${pending ? (en ? "just now" : "gerade eben") : esc(fmtDate(c.date))}</span>
+                ${pending ? `<span class="pg-cmt-pend">${en ? "under review" : "wird geprüft"}</span>` : ""}</div>
+            <p>${esc(c.body)}</p>
         </div>`;
         // bereits freigegebene Kommentare laden
         try {
             const r = await fetch(`comments.php?slug=${encodeURIComponent(slug)}`);
             const j = await r.json();
             const cs = (j && j.comments) || [];
-            if (countEl) countEl.textContent = cs.length ? `(${cs.length})` : "";
+            if (countEl) countEl.textContent = cs.length ? String(cs.length) : "";
             if (!cs.length) {
-                list.innerHTML = `<p class="text-zinc-500 text-sm">${en ? "No comments yet — be the first!" : "Noch keine Kommentare — sei die*der Erste!"}</p>`;
+                list.innerHTML = `<p>${en ? "No comments yet — be the first!" : "Noch keine Kommentare — sei die*der Erste!"}</p>`;
             } else {
                 const INITIAL = 5;
                 const older = cs.slice(0, Math.max(0, cs.length - INITIAL));
@@ -2081,21 +2106,21 @@
             const fd = new FormData(form);
             fd.append("slug", slug);
             const btn = form.querySelector("button");
-            msg.className = "text-sm mt-3 text-zinc-400"; msg.textContent = en ? "Sending…" : "Wird gesendet…";
+            pgMsg(msg, "info", en ? "Sending…" : "Wird gesendet…");
             if (btn) btn.disabled = true;
             try {
                 const r = await fetch("comments.php", { method: "POST", body: fd });
                 const j = await r.json();
-                if (j.error) { msg.className = "text-sm mt-3 text-red-400"; msg.textContent = j.error; return; }
+                if (j.error) { pgMsg(msg, "err", j.error); return; }
                 form.reset();
-                msg.className = "cmt-success text-sm mt-3";
-                msg.innerHTML = `<span class="cmt-check">✓</span> ${en ? "Thanks! Your comment will appear after review." : "Danke! Dein Kommentar erscheint nach der Prüfung."}`;
+                pgMsg(msg, "ok", en ? "Thanks! Your comment will appear after review." : "Danke! Dein Kommentar erscheint nach der Prüfung.");
+                msg.classList.add("cmt-success");
                 pgBadge("commenter");
                 // eigene Vorschau (ausstehend) oben einfügen
                 const empty = list.querySelector(":scope > p");
                 if (empty) empty.remove();
                 list.insertAdjacentHTML("afterbegin", renderC({ name, body, date: new Date().toISOString() }, true));
-            } catch { msg.className = "text-sm mt-3 text-red-400"; msg.textContent = en ? "Something went wrong." : "Etwas ist schiefgelaufen."; }
+            } catch { pgMsg(msg, "err", en ? "Something went wrong." : "Etwas ist schiefgelaufen."); }
             finally { if (btn) btn.disabled = false; }
         });
     }
@@ -2107,21 +2132,26 @@
         const data = await fetchJSON("data/legal.json") || {};
         const root = $("[data-legal]");
         if (!root) return;
+        const en = LANG === "en";
         const doc = qs.get("doc");
-        const section = (body) => `<div class="prose-pg">${md(body || "_Inhalt folgt._")}</div>`;
+        // Rechtstexte gibt es verbindlich auf Deutsch – auch auf der englischen Seite
+        const section = (body) => `<div class="pg-prose">${md(body || "_Inhalt folgt._")}</div>`;
         let inner, title;
-        if (doc === "datenschutz") { inner = section(data.datenschutz); title = "Datenschutz"; }
-        else if (doc === "impressum") { inner = section(data.impressum); title = "Impressum"; }
+        if (doc === "datenschutz") { inner = section(data.datenschutz); title = t("foot_datenschutz"); }
+        else if (doc === "impressum") { inner = section(data.impressum); title = t("foot_impressum"); }
         else {
-            inner = section(data.impressum) + `<hr class="my-16 border-white/10">` + section(data.datenschutz);
-            title = "Rechtliches";
+            inner = `<div id="impressum">${section(data.impressum)}</div><hr class="pg-legal-hr"><div id="datenschutz">${section(data.datenschutz)}</div>`;
+            title = t("legal_title");
         }
         document.title = `${title} — PLANIGAMES`;
-        root.innerHTML = `<section class="px-6 pt-36 pb-24"><div class="max-w-3xl mx-auto reveal">
-            <div class="flex gap-2 mb-10">
-                <a href="rechtliches.html?doc=impressum" class="badge px-4 py-1.5 rounded-full border ${doc === "impressum" ? "bg-white text-black border-white" : "border-white/15 text-zinc-300 hover:border-white/40"}">Impressum</a>
-                <a href="rechtliches.html?doc=datenschutz" class="badge px-4 py-1.5 rounded-full border ${doc === "datenschutz" ? "bg-white text-black border-white" : "border-white/15 text-zinc-300 hover:border-white/40"}">Datenschutz</a>
-            </div>${inner}</div></section>`;
+        const tab = (k, label) => `<a href="rechtliches.html?doc=${k}"${doc === k ? ' class="on" aria-current="page"' : ""}>${esc(label)}</a>`;
+        root.innerHTML = `
+            <section class="pg-pghead"><div class="pg-wrap"><div class="pg-article">
+                ${pgKick(0, "PLANIGAMES")}<h1 class="pg-h1">${esc(t("legal_title"))}</h1>
+                <nav class="pg-filters" aria-label="${esc(t("legal_title"))}">${tab("impressum", t("foot_impressum"))}${tab("datenschutz", t("foot_datenschutz"))}</nav>
+                ${en ? `<p class="pg-fine pg-legal-note">${esc(t("legal_de_note"))}</p>` : ""}
+            </div></div></section>
+            <section class="pg-sec pg-sec-tight"><div class="pg-wrap"><div class="pg-article pg-legal pg-rv"${en ? ' lang="de"' : ""}>${inner}</div></div></section>`;
         observeReveals(root);
     }
 
@@ -2145,25 +2175,25 @@
         setParticleColor(g.particleColor || g.accent);
         document.title = (d.title || g.title) + " — PLANIGAMES";
         const scenes = (Array.isArray(d.scenes) ? d.scenes : []).filter(s => s && (s.heading || s.text || s.image));
-        const back = `<a href="game.php?slug=${esc(g.slug)}" class="lore-back">← ${esc(g.title)}</a>`;
+        const back = `<a href="${gameHref(g)}" class="lore-back">← ${esc(g.title)}</a>`;
 
-        const hero = `<header class="lore-hero">
+        const hero = `<header class="lore-hero${d.hero ? "" : " is-plain"}">
             ${d.hero ? `<div class="lore-hero-bg"><img src="${esc(d.hero)}" alt="" data-lore-px></div>` : ""}
-            <div class="lore-hero-inner reveal">
+            <div class="lore-hero-inner pg-rv">
                 ${back}
-                <h1 class="font-display text-4xl md:text-6xl font-extrabold text-white leading-[1.05] mt-4">${esc(d.title || (en ? "The world of " : "Die Welt von ") + g.title)}</h1>
-                ${d.intro ? `<p class="mt-5 text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto">${esc(d.intro)}</p>` : ""}
-                ${scenes.length ? `<div class="lore-scroll-hint mt-10" aria-hidden="true">↓</div>` : ""}
+                <h1 class="pg-h1 pg-lore-h1">${esc(d.title || (en ? "The world of " : "Die Welt von ") + g.title)}</h1>
+                ${d.intro ? `<p class="pg-lead pg-lore-lead">${esc(d.intro)}</p>` : ""}
+                ${scenes.length ? `<div class="lore-scroll-hint" aria-hidden="true">↓</div>` : ""}
             </div></header>`;
 
         const body = scenes.length
             ? scenes.map((s, i) => loreScene(s, i)).join("")
-            : `<section class="px-6 py-24 text-center text-zinc-500">${en ? "The story will be told soon…" : "Die Geschichte wird bald erzählt …"}</section>`;
+            : `<section class="pg-lore-empty">${en ? "The story will be told soon…" : "Die Geschichte wird bald erzählt …"}</section>`;
 
-        const foot = `<div class="px-6 pb-24 text-center"><a href="game.php?slug=${esc(g.slug)}" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold inline-block">← ${en ? "Back to " : "Zurück zu "}${esc(g.title)}</a></div>`;
+        const foot = `<div class="pg-lore-foot"><a href="${gameHref(g)}" class="pg-btn pg-btn-p">← ${en ? "Back to " : "Zurück zu "}${esc(g.title)}</a></div>`;
 
         root.innerHTML = hero + `<div class="lore-scenes">${body}</div>` + foot;
-        observeReveals(root); initMagnetic();
+        observeReveals(root);
         initLoreParallax(root);
     }
     function loreScene(s, i) {
@@ -2172,15 +2202,15 @@
         if (align === "full" && s.image) {
             return `<section class="lore-scene lore-full">
                 <div class="lore-full-bg"><img src="${esc(s.image)}" alt="" loading="lazy" data-lore-px></div>
-                <div class="lore-full-inner reveal">
-                    ${s.heading ? `<h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-4">${esc(s.heading)}</h2>` : ""}
-                    <div class="prose-pg text-zinc-200">${md(s.text || "")}</div>
+                <div class="lore-full-inner pg-rv">
+                    ${s.heading ? `<h2 class="pg-h2">${esc(s.heading)}</h2>` : ""}
+                    <div class="pg-prose">${md(s.text || "")}</div>
                 </div></section>`;
         }
-        const textCol = `<div class="lore-text reveal">
-            ${s.heading ? `<h2 class="font-display text-3xl md:text-4xl font-extrabold text-white mb-4">${esc(s.heading)}</h2>` : ""}
-            <div class="prose-pg text-zinc-300">${md(s.text || "")}</div></div>`;
-        const imgCol = s.image ? `<div class="lore-img reveal"><img src="${esc(s.image)}" alt="${esc(s.heading || "")}" loading="lazy" data-lore-px></div>` : "";
+        const textCol = `<div class="lore-text pg-rv">
+            ${s.heading ? `<h2 class="pg-h2">${esc(s.heading)}</h2>` : ""}
+            <div class="pg-prose">${md(s.text || "")}</div></div>`;
+        const imgCol = s.image ? `<div class="lore-img pg-rv"><img src="${esc(s.image)}" alt="${esc(s.heading || "")}" loading="lazy" data-lore-px></div>` : "";
         const right = align === "right";
         return `<section class="lore-scene lore-split ${right ? "img-right" : "img-left"}">${right ? textCol + imgCol : imgCol + textCol}</section>`;
     }
@@ -2203,114 +2233,106 @@
         upd();
     }
 
+    // ---------- Press Kit ----------
     async function renderPressKit() {
         await loadData("studio", "games");
         const s = DATA.studio || {};
         const p = s.presskit || {};
-        const games = (DATA.games && DATA.games.games) || [];
+        const games = ((DATA.games && DATA.games.games) || []).filter(g => g && typeof g === "object");
         const root = $("[data-presskit]");
         if (!root) return;
-        const contact = p.contactEmail || s.email || "";
         document.title = `Press Kit — ${s.name || "PLANIGAMES"}`;
+        if (p.enabled === false) { root.innerHTML = notFound(t("press_off")); return; }
+        const contact = p.contactEmail || s.email || "";
+        const fileOf = (u) => String(u || "").split("#")[0];
+        const extOf = (u) => ((fileOf(u).match(/\.([a-z0-9]{2,4})$/i) || [])[1] || "").toUpperCase();
+        const facts = (p.facts || []).filter(f => f && (f.label || f.value));
+        const downloads = (p.downloads || []).filter(d => d && d.file);
+        const pgames = games.filter(g => g.cover || logoPath(g));
+        await Promise.all(pgames.filter(g => logoPath(g)).map(g => ensureLogoBox(g, 1200)));
 
-        const facts = (p.facts || []).filter(f => f && (f.label || f.value)).map(f => `
-            <div class="flex justify-between gap-4 py-3 border-b border-white/8">
-                <span class="text-zinc-400">${esc(f.label || "")}</span>
-                <span class="text-white font-medium text-right">${esc(f.value || "")}</span>
-            </div>`).join("");
-
-        const downloads = (p.downloads || []).filter(d => d && d.file).map(d => `
-            <a href="${esc(d.file)}" download class="tilt-card group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5 hover:border-[color:var(--accent)] transition-colors">
-                <div class="card-glow"></div>
-                <span class="text-3xl shrink-0">📦</span>
-                <span class="flex-1 min-w-0">
-                    <span class="block font-semibold text-white">${esc(d.label || t("download"))}</span>
-                    ${d.note ? `<span class="block text-sm text-zinc-400">${esc(d.note)}</span>` : ""}
-                </span>
-                <span class="badge text-[color:var(--accent)] whitespace-nowrap">${t("download")} ↓</span>
-            </a>`).join("");
-
-        const gameCards = games.map(g => `
-            <div class="rounded-2xl border border-white/10 overflow-hidden bg-white/[0.02]">
-                <div class="aspect-[16/9] overflow-hidden">${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.coverAlt || g.title)}" style="object-position:${focusPos(g.cover)}" class="w-full h-full object-cover">` : `<div class="w-full h-full grid-lines"></div>`}</div>
-                <div class="p-5">
-                    <div class="flex items-center gap-2 mb-2">${statusBadge(g.status)}</div>
-                    <h3 class="font-display text-xl font-bold text-white">${esc(g.title)}</h3>
-                    <p class="text-sm text-zinc-400 mt-1 line-clamp-3">${esc(g.tagline || "")}</p>
-                    <a href="game.php?slug=${esc(g.slug)}" class="inline-block mt-4 badge text-[color:var(--accent)]">${t("to_game")}</a>
-                </div>
-            </div>`).join("");
+        const dlRow = (d) => {
+            const ext = extOf(d.file);
+            return `<a class="pg-build pg-rv" href="${esc(fileOf(d.file))}" download>
+                <span class="pg-icn${ext ? " pg-ext" : ""}">${ext ? esc(ext) : pgIc("dl")}</span>
+                <span class="pg-build-tx"><b>${esc(d.label || t("download"))}</b>${d.note ? `<small>${esc(d.note)}</small>` : ""}</span>
+                <span class="pg-build-dl" aria-hidden="true">${pgIc("dl")}</span><span class="pg-sr">${t("download")}</span></a>`;
+        };
+        const pressCard = (g) => {
+            const logo = logoPath(g), tag = slideTagline(g);
+            const img = g.cover
+                ? `<img src="${esc(g.cover)}" alt="${esc(g.coverAlt || g.title || "")}" loading="lazy" style="object-position:${focusPos(g.cover)}">`
+                : `<span class="pg-ph-blank"></span>${logoFit(g, 9000, 70, "pg-card-logo", false)}`;
+            return `<div class="pg-pcard pg-rv" style="${accentStyle(g)}">
+                <a class="pg-pcard-img" href="${gameHref(g)}" aria-label="${esc(g.title || "")}">${img}</a>
+                <div class="pg-pcard-b">${pgChip(g.status)}<h3>${esc(g.title || "")}</h3>${tag ? `<p>${esc(tag)}</p>` : ""}
+                    <div class="pg-pcard-acts">
+                        ${logo ? `<a class="pg-btn pg-btn-s pg-btn-sm" href="${esc(fileOf(logo))}" download>${pgIc("dl")} Logo</a>` : ""}
+                        ${g.cover ? `<a class="pg-btn pg-btn-s pg-btn-sm" href="${esc(fileOf(g.cover))}" download>${pgIc("dl")} ${t("press_cover")}</a>` : ""}
+                        <a class="pg-link" href="${gameHref(g)}">${t("to_game2")} ${pgIc("arrow")}</a>
+                    </div></div></div>`;
+        };
 
         root.innerHTML = `
-            <section class="px-6 pt-36 pb-16">
-                <div class="max-w-5xl mx-auto">
-                    <div class="font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] mb-4 reveal">${t("presskit")}</div>
-                    <h1 class="font-display text-5xl md:text-7xl font-extrabold text-white mb-8 reveal">${esc(s.name || "PLANIGAMES")}</h1>
-                    <div class="prose-pg max-w-2xl reveal">${md(p.intro || "")}</div>
+            <section class="pg-pghead"><div class="pg-wrap">
+                ${pgKick(0, esc(t("presskit")))}<h1 class="pg-h1">${esc(s.name || "PLANIGAMES")}</h1>
+                ${p.intro ? `<div class="pg-prose pg-press-intro">${md(p.intro)}</div>` : ""}
+                ${contact || downloads.length ? `<div class="pg-row pg-press-btns">${contact ? `<a class="pg-btn pg-btn-p" href="mailto:${esc(contact)}">${pgIc("mail")} ${t("press_contact")}</a>` : ""}${downloads.length ? `<a class="pg-btn pg-btn-s" href="#downloads">${pgIc("dl")} ${t("press_downloads")}</a>` : ""}</div>` : ""}
+            </div></section>
+            <section class="pg-sec pg-sec-tight"><div class="pg-wrap pg-press">
+                <div class="pg-card pg-facts pg-rv"><h2 class="pg-h3">${t("press_facts")}</h2>
+                    ${facts.length ? `<dl>${facts.map(f => `<div><dt>${esc(f.label || "")}</dt><dd>${esc(f.value || "")}</dd></div>`).join("")}</dl>` : `<p class="pg-fine">—</p>`}</div>
+                <div class="pg-press-dl" id="downloads"><h2 class="pg-h3">${t("press_downloads")}</h2>
+                    ${downloads.length ? `<div class="pg-builds pg-dls">${downloads.map(dlRow).join("")}</div>` : `<p class="pg-fine">${t("press_nodl")}</p>`}
+                    ${contact ? `<div class="pg-press-contact pg-rv"><span class="pg-icn">${pgIc("mail")}</span><span><small>${t("press_contact")}</small><a href="mailto:${esc(contact)}">${esc(contact)}</a></span></div>` : ""}
                 </div>
-            </section>
-            <section class="px-6 pb-20">
-                <div class="max-w-5xl mx-auto grid lg:grid-cols-2 gap-12">
-                    <div class="reveal">
-                        <h2 class="font-display text-2xl font-bold text-white mb-5">${t("press_facts")}</h2>
-                        <div>${facts || `<p class="text-zinc-500">—</p>`}</div>
-                        ${contact ? `<h2 class="font-display text-2xl font-bold text-white mt-10 mb-3">${t("press_contact")}</h2>
-                            <a href="mailto:${esc(contact)}" class="btn-accent magnetic inline-block px-7 py-3.5 rounded-full font-semibold text-sm">${esc(contact)}</a>` : ""}
-                    </div>
-                    <div class="reveal">
-                        <h2 class="font-display text-2xl font-bold text-white mb-5">${t("press_downloads")}</h2>
-                        <div class="flex flex-col gap-3">${downloads || `<p class="text-zinc-500">${LANG === "en" ? "No downloads yet." : "Noch keine Downloads hinterlegt."}</p>`}</div>
-                    </div>
-                </div>
-            </section>
-            ${games.length ? `<section class="px-6 pb-28"><div class="max-w-5xl mx-auto">
-                <h2 class="font-display text-3xl md:text-4xl font-extrabold text-white mb-8 reveal">${t("press_games")}</h2>
-                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">${gameCards}</div></div></section>` : ""}`;
-        initTilt(root); observeReveals(root);
+            </div></section>
+            ${pgames.length ? `<section class="pg-sec pg-band"><div class="pg-wrap">
+                ${pgSh(0, esc(t("press_games")), esc(t("press_games_h")))}
+                <div class="pg-pcards">${pgames.map(pressCard).join("")}</div>
+            </div></section>` : ""}`;
+        observeReveals(root);
     }
 
+    // ---------- Kontakt ----------
     async function renderContact() {
         await loadData("studio");
         const s = DATA.studio || {};
         const c = s.contact || {};
         const root = $("[data-contact]");
         if (!root) return;
-        document.title = `${LANG === "en" ? "Contact" : "Kontakt"} — ${s.name || "PLANIGAMES"}`;
+        document.title = `${t("nav_contact")} — ${s.name || "PLANIGAMES"}`;
         const email = s.email || "";
-        root.innerHTML = `
-            <section class="px-6 pt-36 pb-24">
-                <div class="max-w-2xl mx-auto">
-                    <div class="font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] mb-4 reveal">${t("nav_contact")}</div>
-                    <h1 class="font-display text-5xl md:text-7xl font-extrabold text-white mb-6 reveal">${esc(c.heading || "Sag Hallo 👋")}</h1>
-                    <p class="text-zinc-300 text-lg leading-relaxed mb-10 max-w-xl reveal">${esc(c.intro || "")}</p>
-                    <form action="contact.php" method="POST" data-contact-form class="reveal grid gap-4 relative overflow-hidden rounded-3xl border border-white/10 p-6 md:p-8"
-                          style="background:radial-gradient(120% 130% at 50% 0%, color-mix(in srgb,var(--accent) 12%, transparent), transparent 60%)">
-                        <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
-                        <div class="grid sm:grid-cols-2 gap-4">
-                            <label class="block">
-                                <span class="block text-sm text-zinc-400 mb-1.5">${t("c_name")}</span>
-                                <input type="text" name="name" required placeholder="${t("c_name_ph")}" class="w-full bg-black/30 border border-white/15 rounded-2xl px-5 py-3.5 text-white placeholder:text-zinc-600 focus:border-[color:var(--accent)] outline-none">
-                            </label>
-                            <label class="block">
-                                <span class="block text-sm text-zinc-400 mb-1.5">${t("c_email")}</span>
-                                <input type="email" name="email" required placeholder="${t("c_email_ph")}" class="w-full bg-black/30 border border-white/15 rounded-2xl px-5 py-3.5 text-white placeholder:text-zinc-600 focus:border-[color:var(--accent)] outline-none">
-                            </label>
-                        </div>
-                        <label class="block">
-                            <span class="block text-sm text-zinc-400 mb-1.5">${t("c_subject")}</span>
-                            <input type="text" name="subject" placeholder="${t("c_subject_ph")}" class="w-full bg-black/30 border border-white/15 rounded-2xl px-5 py-3.5 text-white placeholder:text-zinc-600 focus:border-[color:var(--accent)] outline-none">
-                        </label>
-                        <label class="block">
-                            <span class="block text-sm text-zinc-400 mb-1.5">${t("c_message")}</span>
-                            <textarea name="message" required rows="6" placeholder="${t("c_message_ph")}" class="w-full bg-black/30 border border-white/15 rounded-2xl px-5 py-3.5 text-white placeholder:text-zinc-600 focus:border-[color:var(--accent)] outline-none resize-y"></textarea>
-                        </label>
-                        <div class="flex items-center justify-between gap-4 flex-wrap mt-1">
-                            <button class="btn-accent magnetic px-8 py-4 rounded-full font-semibold">${esc(c.buttonLabel || t("c_send"))}</button>
-                            ${email ? `<span class="text-sm text-zinc-500">${t("c_or_mail")} <a href="mailto:${esc(email)}" class="text-[color:var(--accent)] hover:underline">${esc(email)}</a></span>` : ""}
-                        </div>
-                    </form>
+        // wie contact.php: ausgeschaltet, wenn „enabled" gesetzt, aber leer/aus ist
+        const off = c.enabled !== undefined && [false, 0, "", "0", null].includes(c.enabled);
+        const press = !s.presskit || s.presskit.enabled !== false;
+        const alt = (email ? `<a class="pg-calt" href="mailto:${esc(email)}"><span class="pg-icn">${pgIc("mail")}</span><span><small>${t("c_alt_mail")}</small><b>${esc(email)}</b></span></a>` : "")
+            + (press ? `<a class="pg-calt" href="presse.html"><span class="pg-icn">${pgIc("news")}</span><span><small>${t("c_alt_press")}</small><b>${t("presskit")}</b></span></a>` : "");
+        const privacy = esc(t("c_privacy")).replace("{link}", `<a href="rechtliches.html?doc=datenschutz">${esc(t("c_privacy_link"))}</a>`);
+        const form = off
+            ? `<div class="pg-card pg-cform pg-cform-off pg-rv"><h2 class="pg-h3">${t("c_off_h")}</h2><p>${email ? `${t("c_off_p")} <a href="mailto:${esc(email)}">${esc(email)}</a>` : t("c_off_p2")}</p></div>`
+            : `<form action="contact.php" method="POST" data-contact-form class="pg-card pg-cform pg-rv">
+                <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="pg-hp">
+                <div class="pg-cf-row">
+                    <label class="pg-field"><span>${t("c_name")}</span><input type="text" name="name" required maxlength="120" autocomplete="name" placeholder="${t("c_name_ph")}"></label>
+                    <label class="pg-field"><span>${t("c_email")}</span><input type="email" name="email" required maxlength="180" autocomplete="email" placeholder="${t("c_email_ph")}"></label>
                 </div>
-            </section>`;
+                <label class="pg-field"><span>${t("c_subject")} <i>${t("c_optional")}</i></span><input type="text" name="subject" maxlength="160" placeholder="${t("c_subject_ph")}"></label>
+                <label class="pg-field"><span>${t("c_message")}</span><textarea name="message" required rows="6" maxlength="5000" placeholder="${t("c_message_ph")}"></textarea></label>
+                <div class="pg-cf-foot">
+                    <button class="pg-btn pg-btn-p">${esc(c.buttonLabel || t("c_send"))} ${pgIc("arrow")}</button>
+                    <p class="pg-fine">${privacy}</p>
+                </div>
+            </form>`;
+        root.innerHTML = `
+            <section class="pg-pghead"><div class="pg-wrap pg-contact">
+                <div class="pg-contact-intro">
+                    ${pgKick(0, esc(t("nav_contact")))}<h1 class="pg-h1">${esc(c.heading || t("c_heading"))}</h1>
+                    ${c.intro ? `<p class="pg-lead">${esc(c.intro)}</p>` : ""}
+                    ${alt ? `<div class="pg-calts">${alt}</div>` : ""}
+                </div>
+                ${form}
+            </div></section>`;
         observeReveals(root);
     }
 
@@ -2327,11 +2349,13 @@
         } catch (e) { return false; }
     }
 
+    // „Nicht gefunden" innerhalb einer Seite (unbekanntes Spiel, Beitrag, Welt …)
     function notFound(msg) {
-        return `<div class="min-h-[60vh] grid place-items-center text-center px-6">
-            <div><div class="text-6xl mb-6">🪄</div>
-            <p class="text-zinc-400 mb-6">${esc(msg)}</p>
-            <a href="index.html" class="btn-ghost magnetic inline-block px-7 py-3 rounded-full">${t("nf_home")}</a></div></div>`;
+        return `<section class="pg-404"><div class="pg-wrap">
+            <span class="pg-404-num" aria-hidden="true">404</span>
+            <h1 class="pg-h1">${esc(msg)}</h1>
+            <div class="pg-row"><a class="pg-btn pg-btn-p" href="index.html">${t("nf_home")}</a><a class="pg-btn pg-btn-s" href="games.html">${t("nf_games")}</a></div>
+        </div></section>`;
     }
 
     // Nach dem dynamischen Rendern die Sprungmarke aus der Adresse (z. B. #warteliste) anfahren
@@ -2419,6 +2443,9 @@
         screen: '<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/>',
         cal: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
         spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+        chat: '<path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-8.5L6 20v-3.5H5A1.5 1.5 0 0 1 3.5 15V7A1.5 1.5 0 0 1 5 5.5z"/>',
+        mail: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>',
+        reddit: '<ellipse cx="12" cy="14" rx="7.5" ry="5.5"/><circle cx="18.5" cy="5" r="1.6"/><path d="M12 8.5 13.2 4l3.7 1M9.2 13.2h.01M14.8 13.2h.01M9.5 16.2c1.6.9 3.4.9 5 0"/>',
     };
     const pgIc = (n) => `<svg class="pg-ic" viewBox="0 0 24 24" aria-hidden="true">${PG_IC[n] || PG_IC.link}</svg>`;
 
@@ -2645,7 +2672,7 @@
                 const j = await r.json().catch(() => ({}));
                 if (r.ok && j.ok) {
                     const msg = j.message || nl.successMessage || "Danke! Du bist dabei. 🧡";
-                    form.innerHTML = `<div class="w-full text-center text-[color:var(--accent)] font-semibold py-2">${esc(msg)}</div>`;
+                    form.innerHTML = `<div class="pg-form-ok" role="status">${esc(msg)}</div>`;
                     const rc = form.getBoundingClientRect();
                     confetti({ count: 110, x: rc.left + rc.width / 2, y: rc.top + rc.height / 2 });
                     pgBadge("subscriber");
@@ -2674,8 +2701,7 @@
                 const j = await r.json().catch(() => ({}));
                 if (r.ok && j.ok) {
                     const msg = j.message || c.successMessage || "Danke für deine Nachricht! 🧡";
-                    form.innerHTML = `<div class="text-center py-8"><div class="text-5xl mb-4">🧡</div>
-                        <p class="text-[color:var(--accent)] font-semibold text-lg">${esc(msg)}</p></div>`;
+                    form.innerHTML = `<div class="pg-cform-ok" role="status"><span class="pg-icn">${pgIc("check")}</span><p>${esc(msg)}</p></div>`;
                 } else {
                     flashFormError(form, j.error || "Hat nicht geklappt. Bitte später erneut.");
                     if (btn) btn.disabled = false;
@@ -2695,10 +2721,11 @@
             const btn = e.target.closest("[data-share-copy]");
             if (!btn) return;
             const done = () => {
-                const old = btn.textContent;
-                btn.textContent = "✓";
+                if (btn.classList.contains("copied")) return;
+                const old = btn.innerHTML;
+                btn.innerHTML = pgIc("check");
                 btn.classList.add("copied");
-                setTimeout(() => { btn.textContent = old; btn.classList.remove("copied"); }, 1400);
+                setTimeout(() => { btn.innerHTML = old; btn.classList.remove("copied"); }, 1400);
             };
             if (navigator.clipboard) navigator.clipboard.writeText(location.href).then(done).catch(done);
             else done();
@@ -2707,7 +2734,7 @@
 
     function flashFormError(form, msg) {
         let n = form.querySelector("[data-nl-err]");
-        if (!n) { n = document.createElement("div"); n.dataset.nlErr = "1"; n.className = "w-full text-center text-red-400 text-sm mt-2 basis-full"; form.appendChild(n); }
+        if (!n) { n = document.createElement("div"); n.dataset.nlErr = "1"; n.className = "pg-msg is-err pg-form-err"; n.setAttribute("role", "alert"); form.appendChild(n); }
         n.textContent = msg;
     }
 

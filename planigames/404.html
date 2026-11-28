@@ -2,6 +2,7 @@
 <html lang="de" class="select-none">
 <head>
     <meta charset="UTF-8">
+    <base href="/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404 — Seite nicht gefunden | PLANIGAMES</title>
     <meta name="robots" content="noindex">
@@ -38,14 +39,14 @@
 
     <div data-shell="header"></div>
 
-    <main class="relative min-h-[80vh] grid place-items-center px-6 text-center">
-        <div class="reveal-on">
-            <div class="font-display text-[24vw] md:text-[14rem] leading-none font-extrabold text-gradient">404</div>
-            <h1 class="font-display text-3xl md:text-5xl font-extrabold text-white mt-2">Diese Welt existiert (noch) nicht.</h1>
-            <p class="text-zinc-400 max-w-md mx-auto mt-5 text-lg">Vielleicht wurde sie wegteleportiert. Hier geht's zurück ins Studio.</p>
-            <div class="mt-9 flex flex-wrap gap-3 justify-center">
-                <a href="index.html" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold">Zur Startseite</a>
-                <a href="games.html" class="btn-ghost magnetic px-8 py-4 rounded-full font-semibold">Spiele ansehen</a>
+    <main class="pg-404 pg-404-page">
+        <div class="pg-wrap">
+            <span class="pg-404-num" aria-hidden="true">404</span>
+            <h1 class="pg-h1" data-i18n="nf_title">Diese Welt existiert (noch) nicht.</h1>
+            <p class="pg-lead" data-i18n="nf_sub">Vielleicht wurde sie wegteleportiert. Hier geht's zurück ins Studio.</p>
+            <div class="pg-row">
+                <a href="index.html" class="pg-btn pg-btn-p" data-i18n="nf_home">Zur Startseite</a>
+                <a href="games.html" class="pg-btn pg-btn-s" data-i18n="nf_games">Spiele ansehen</a>
             </div>
         </div>
     </main>

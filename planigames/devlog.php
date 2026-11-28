@@ -40,28 +40,20 @@
     <div data-shell="header"></div>
 
     <!-- Einzelner Beitrag (per ?slug=) — anfangs versteckt -->
-    <article data-devlog="single" class="hidden"></article>
+    <article data-devlog="single" hidden></article>
 
     <!-- Listenansicht -->
-    <div data-devlog="list-wrap">
-        <section class="relative px-6 pt-40 pb-12">
-            <div class="absolute inset-0 grid-lines opacity-50"></div>
-            <div class="relative max-w-5xl mx-auto">
-                <div class="font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] mb-5 reveal-on" data-i18n="devlog_kicker">Entwicklungstagebuch</div>
-                <h1 class="font-display text-5xl md:text-8xl font-extrabold text-white leading-[0.92] reveal-on">
-                    <span class="line-mask"><span class="line-inner block" data-i18n="devlog_title">Devlog &amp; Patch Notes</span></span>
-                </h1>
-                <p class="reveal mt-7 text-lg md:text-xl text-zinc-300 max-w-2xl" data-i18n="devlog_sub">Updates, Patchnotes und Blicke hinter die Kulissen. Frisch aus der Werkstatt.</p>
-                <div data-devlog="filters" class="flex flex-wrap gap-2 mt-9 reveal"></div>
-            </div>
-        </section>
-
-        <section class="relative px-6 pb-28">
-            <div class="max-w-5xl mx-auto">
-                <div data-devlog="list" class="grid gap-5"></div>
-            </div>
-        </section>
-    </div>
+    <main data-devlog="list-wrap">
+        <section class="pg-pghead"><div class="pg-wrap">
+            <span class="pg-kicker" data-i18n="devlog_kicker">Entwicklungstagebuch</span>
+            <h1 class="pg-h1" data-i18n="devlog_title">Devlog &amp; Patch Notes</h1>
+            <p class="pg-lead" data-i18n="devlog_sub">Updates, Patchnotes und Blicke hinter die Kulissen. Frisch aus der Werkstatt.</p>
+            <nav class="pg-filters" data-devlog="filters" aria-label="Filter" hidden></nav>
+        </div></section>
+        <section class="pg-sec pg-sec-tight"><div class="pg-wrap">
+            <div data-devlog="list" class="pg-posts"></div>
+        </div></section>
+    </main>
 
     <div data-shell="footer"></div>
 </body>

@@ -48,22 +48,14 @@
 
     <div data-shell="header"></div>
 
-    <section class="relative px-6 pt-40 pb-16">
-        <div class="absolute inset-0 grid-lines opacity-50"></div>
-        <div class="relative max-w-6xl mx-auto">
-            <div class="font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] mb-5 reveal-on" data-games="count">Unsere Titel</div>
-            <h1 class="font-display text-5xl md:text-8xl font-extrabold text-white leading-[0.92] reveal-on">
-                <span class="line-mask"><span class="line-inner block" data-i18n="games_title">Unsere Spiele</span></span>
-            </h1>
-            <p class="reveal mt-7 text-lg md:text-xl text-zinc-300 max-w-2xl" data-i18n="games_sub">Jede Welt mit eigenem Charakter, eigener Farbe, eigener Magie. Klick dich rein.</p>
-        </div>
-    </section>
-
-    <section class="relative px-6 pb-28">
-        <div class="max-w-6xl mx-auto">
-            <div data-games="all" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
-        </div>
-    </section>
+    <main>
+        <section class="pg-pghead"><div class="pg-wrap">
+            <span class="pg-kicker" data-games="count" data-i18n="games_kicker">Unsere Titel</span>
+            <h1 class="pg-h1" data-i18n="games_title">Unsere Spiele</h1>
+            <p class="pg-lead" data-i18n="games_sub">Jede Welt mit eigenem Charakter, eigener Farbe, eigener Magie. Klick dich rein.</p>
+        </div></section>
+        <section class="pg-sec pg-sec-tight"><div class="pg-wrap" data-games="all"></div></section>
+    </main>
 
     <div data-shell="footer"></div>
 </body>

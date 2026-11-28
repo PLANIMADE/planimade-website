@@ -124,7 +124,20 @@ Man kann jede Phase einzeln hochladen oder mehrere zusammen.
    **Neu im Admin:** *Darstellung → Steckbrief (Spielseite)* (bis zu 4 Zeilen, sonst die Kennzahlen),
    *Einstellungen → Hinweis bei „Pausiert“*; Hinweistexte (Reihenfolge, Handy-Ansicht) angepasst.
    „Kopfbereich gestalten“ (Logo-Platzierung) arbeitet unverändert mit der neuen Seite.
-4. **Unterseiten:** Spiele-Übersicht, Devlog (Liste + Beitrag), Presse-Kit, Kontakt, Lore, Rechtliches, 404.
+4. **Unterseiten – erledigt (28.11.2026):** alle übrigen Seiten im neuen Look mit ruhigem Seitenkopf.
+   *Spiele:* Karten wie auf der Startseite, Sammlungen ohne Titelbild (Browser-Demos) als Kasten mit allen Downloads,
+   Zähler „3 Spiele · 1 Demo-Sammlung“. *Devlog:* Filter nur für Spiele mit Beiträgen (als Links, teilbar),
+   neuester Beitrag groß, Sprechblase mit Kommentar-Anzahl, ab 13 Beiträgen „Weitere Beiträge laden“; bei einem
+   Spiel-Filter füllt „Alle Beiträge im Devlog“ eine halbe Reihe. *Beitrag:* Brotkrumen, Titel, Spiel-Schild,
+   Datum + Lesezeit, Titelbild, Text, Schlagworte (ohne Doppelte), Reaktionen und Teilen (Symbole statt Emojis),
+   Kommentare (Anfangsbuchstabe als Bild, „wird geprüft“-Vorschau, ältere nachladen), unten „Mehr zum Spiel“ und
+   „Nächster Beitrag“; Wishlist-Kasten nur mit echtem Steam-Link. *Kontakt:* Formular mit Datenschutz-Hinweis,
+   daneben E-Mail und Press Kit; ist das Formular im Admin aus, steht dort die E-Mail-Adresse. *Press Kit:*
+   Fakten, Downloads mit Dateityp, Presse-Kontakt, je Spiel Logo + Titelbild zum Herunterladen; ist es im Admin aus,
+   erscheint „nicht verfügbar“. *Lore:* neue Überschriften/Knöpfe, ohne Titelbild kompakter Kopf. *Rechtliches:*
+   Reiter Impressum/Datenschutz; auf Englisch Hinweis, dass die Rechtstexte auf Deutsch gelten. *404* und alle
+   „nicht gefunden“-Fälle (Spiel, Beitrag, Welt) einheitlich; die 404-Seite funktioniert auch bei tieferen Adressen.
+   Geändert: `games.html`, `devlog.php`, `404.html`, `assets/app.js`, `assets/site.css`.
 5. **Feinschliff:** Tailwind-Laufzeit entfernen (schnellerer Seitenaufbau), Bilder beim Upload zusätzlich als WebP,
    Handy-Ansichten, Ladezeit, englische Texte, Gesamttest.
 
