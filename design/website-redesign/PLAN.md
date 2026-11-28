@@ -165,7 +165,8 @@ Man kann jede Phase einzeln hochladen oder mehrere zusammen.
    mit eigenem Text; „Automatisch“ = bisheriges Verhalten. *Video im Durchlauf*: je Spiel Bild oder Video
    (MP4/WebM, stumm, Schleife). *Knöpfe im Kopfbereich der Spielseite* ebenso wählbar (Hero-Block).
    *Knopf oben rechts*: Admin → Studio & Startseite → „Knopf oben rechts (Kopfzeile)“ (Playtest, Wishlist,
-   Spielseite oder Trailer eines Spiels, eigener Link, aus; eigener Text). *Über uns*: drei feste Bildplätze mit
+   Spielseite oder Trailer eines Spiels, eigener Link, aus; eigener Text – fehlt das Ziel noch, z. B. der
+   Wishlist-Link, erscheint so lange der Standard-Knopf mit Standard-Text). *Über uns*: drei feste Bildplätze mit
    Formatangabe und Bildausschnitt (🎯 Fokus) statt automatisch gewählter Bilder; eine früher angelegte Bilderliste
    wird übernommen. *Icons statt Emojis*: gezeichnete Linien-Icons (wie im Probedesign) bei Werten, Feature-Kacheln,
    Download-Plattformen, Pause-Hinweis, Team-Ort und Admin-Link; im Admin per Klick aus 52 Icons wählbar, alte

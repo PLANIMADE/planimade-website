@@ -104,7 +104,8 @@ für `data/` und `media/` ggf. **775**.
 - **Wo stelle ich was ein? (seit Version 57)**
   - Knöpfe und Video im Spiele-Durchlauf der Startseite: *Spiele → Spiel → Darstellung → „Durchlauf: Video & Knöpfe“*.
   - Knöpfe im Kopfbereich einer Spielseite: *Spiele → Spiel → Seiten-Aufbau → Hero-Block*.
-  - Knopf oben rechts: *Studio & Startseite → „Knopf oben rechts (Kopfzeile)“*.
+  - Knopf oben rechts: *Studio & Startseite → „Knopf oben rechts (Kopfzeile)“*. Fehlt das gewählte Ziel noch
+    (z. B. kein Wishlist-Link eingetragen), zeigt er so lange den Standard-Knopf – danach stellt er sich von selbst um.
   - Bilder bei „Über uns“: *Studio & Startseite → Über uns* (drei feste Plätze, mit 🎯 Fokus den Bildausschnitt wählen).
   - Press Kit: eigener Menüpunkt *Spielbetrieb → Press Kit*.
   - Die Spielseite zeigt die Seiten-Blöcke genau in der Reihenfolge, in der sie im Admin stehen.

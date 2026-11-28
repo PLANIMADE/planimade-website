@@ -77,7 +77,7 @@ return [
         ['name'=>'text','label'=>'Text','widget'=>'text'],
       ]],
       ['widget'=>'heading','label'=>'Bereiche, Banner & Funktionen','hint'=>'Optionale Module – zum Bearbeiten aufklappen.'],
-      ['name'=>'headerCta','label'=>'Knopf oben rechts (Kopfzeile)','widget'=>'object','hint'=>'Der farbige Knopf oben rechts auf jeder Seite (am Handy im Menü). Standard: Playtest des aktuellen Projekts.','fields'=>[
+      ['name'=>'headerCta','label'=>'Knopf oben rechts (Kopfzeile)','widget'=>'object','hint'=>'Der farbige Knopf oben rechts auf jeder Seite (am Handy im Menü). Standard: Playtest des aktuellen Projekts. Fehlt das gewählte Ziel noch (z. B. kein Wishlist-Link eingetragen), erscheint so lange der Standard-Knopf mit Standard-Text – sobald das Ziel da ist, stellt er sich von selbst um.','fields'=>[
         ['name'=>'mode','label'=>'Wohin führt der Knopf?','widget'=>'select','default'=>'auto','options'=>[
           'auto'=>'Automatisch: Playtest des aktuellen Projekts (sonst „Spiele entdecken“)',
           'wishlist'=>'Steam-Wishlist eines Spiels','playtest'=>'Playtest / Warteliste eines Spiels','game'=>'Spielseite eines Spiels',

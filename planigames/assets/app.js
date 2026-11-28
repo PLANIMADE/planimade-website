@@ -2721,9 +2721,12 @@
         if (mode === "custom") c = btnTarget("custom", {}, "home", own || t("more_info"), cfg.url);
         else if (["wishlist", "playtest", "game", "trailer", "demo", "devlog"].includes(mode)) c = btnTarget(mode, pick, "home", own);
         if (c) return c;
+        // Gewähltes Ziel fehlt (noch), z. B. kein Wishlist-Link → Standard-Knopf mit Standard-Text.
+        // Ein eigener Text gehört zum gewählten Ziel („FRONTLINERS wishlisten“ soll nie zum Playtest führen) – nur bei „Automatisch“ gilt er immer.
+        const lbl = mode === "auto" ? own : "";
         const wl = f && gameBlocks(f).some(b => b.type === "waitlist");
-        return wl ? { href: `game.php?slug=${encodeURIComponent(f.slug)}#warteliste`, label: own || t("cta_playtest") }
-                  : { href: "games.html", label: own || t("cta_discover") };
+        return wl ? { href: `game.php?slug=${encodeURIComponent(f.slug)}#warteliste`, label: lbl || t("cta_playtest") }
+                  : { href: "games.html", label: lbl || t("cta_discover") };
     }
 
     const STAY_PAGES = ["home", "games", "devlog", "contact", "presskit"];
