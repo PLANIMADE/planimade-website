@@ -98,8 +98,21 @@ Man kann jede Phase einzeln hochladen oder mehrere zusammen.
    Footer), sobald im Admin unter *Studio → Community-Banner* ein echter Einladungslink steht.
    Geändert: alle Seiten-Dateien (Kopfbereich), `assets/app.js`, `assets/planigames.css`, `assets/site.css` (neu),
    `admin/schema.php` (nur Hinweistexte).
-2. **Startseite:** Spiele-Durchlauf (startet immer mit FRONTLINERS), Abschnitte und Karten wie im Probedesign,
-   eine Anmeldung statt drei.
+2. **Startseite – erledigt (28.11.2026):** Spiele-Durchlauf oben (startet mit dem „Aktuellen Projekt“ = FRONTLINERS;
+   Bild, Logo, Status, Genre, Satz, Beschreibung und Buttons wechseln gemeinsam; Pause, Wischen, Pfeiltasten;
+   am Handy Bild oben in voller Breite mit weichem Übergang) → Laufband → 01 Unsere Spiele (Karten aller Spiele mit
+   Titelbild, Spiele ohne Bild wie „Browser-Demos“ als schmale Zeile) → 02 Über uns (Claim, Text, Kennzahlen
+   aus den Daten, Bild-Collage, Werte) → 03 Team (Klick öffnet das Profil) → 04 Devlog (großer + 3 kleine Beiträge)
+   → ein Newsletter-Block mit Kanälen statt drei Anmeldungen. Alles kommt aus den Admin-Daten; fehlen Angaben,
+   wird sinnvoll ergänzt (z. B. Beschreibung = erster Satz aus „Über das Spiel“).
+   **Neu im Admin:** Status „Pausiert“ (Auswahl, Übersicht, Cockpit, Website); je Spiel unter *Darstellung →
+   Startseite & Spielkarten*: Genre-Zeile, Kurzbeschreibung, Bild im Durchlauf; unter *Studio & Startseite*:
+   bis zu 3 Bilder für „Über uns“; Hinweistexte an das neue Design angepasst. Bestehende Daten bleiben gültig.
+   Discord (sobald verlinkt) erscheint im „Folge uns“-Bereich mit Überschrift, Text und Button-Text des
+   Community-Banners. Seitentitel & Google-Beschreibung der Startseite neutral formuliert (statt „Aktuell entsteht
+   Wobbly Wizards“).
+   Geändert: `index.html`, `assets/app.js`, `assets/site.css`, `admin/schema.php`, `admin/view-games.php`,
+   `admin/index.php`, `admin/lib.php` (nur Versionsnummer), `admin/assets/admin.css` (Schild „Pausiert“).
 3. **Spielseite:** feste Reihenfolge, Steckbrief-Leiste, Abschnitts-Menü, Medien-Raster, Roadmap-Zeitleiste,
    Mitmachen an einem Ort, „Pausiert“-Logik.
 4. **Unterseiten:** Spiele-Übersicht, Devlog (Liste + Beitrag), Presse-Kit, Kontakt, Lore, Rechtliches, 404.

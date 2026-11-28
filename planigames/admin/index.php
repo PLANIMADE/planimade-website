@@ -2001,7 +2001,7 @@ echo '</div>';
 /* ── Spiele ── */
 if (pg_can('games') && $gamesData) {
   $stLbl = ['development' => ['In Entwicklung', 'st-dev'], 'announced' => ['Angekündigt', 'st-ann'], 'demo' => ['Demo verfügbar', 'st-demo'],
-            'early' => ['Early Access', 'st-early'], 'released' => ['Veröffentlicht', 'st-rel']];
+            'early' => ['Early Access', 'st-early'], 'released' => ['Veröffentlicht', 'st-rel'], 'paused' => ['Pausiert', 'st-paused']];
   echo '<div class="ck-sec"><h2>Deine Spiele</h2><a class="ck-more" href="index.php?collection=games">Alle verwalten' . pg_icon('chev') . '</a></div>';
   echo '<div class="ck-games-wrap"><div class="ck-games" data-n="' . min(5, count($gamesData)) . '">';
   foreach ($gamesData as $g) {

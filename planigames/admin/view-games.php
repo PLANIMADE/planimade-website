@@ -53,7 +53,7 @@ function pg_games_view($SCHEMA, $lang){
     return $n;
   };
   $stLbl = ['development' => ['In Entwicklung', 'st-dev'], 'announced' => ['Angekündigt', 'st-ann'], 'demo' => ['Demo verfügbar', 'st-demo'],
-            'early' => ['Early Access', 'st-early'], 'released' => ['Veröffentlicht', 'st-rel']];
+            'early' => ['Early Access', 'st-early'], 'released' => ['Veröffentlicht', 'st-rel'], 'paused' => ['Pausiert', 'st-paused']];
 
   // EN-Stand dieses Spiels (Deutsch ist die Vorlage: „aktuell“ = passt zum deutschen Text)
   $trc = $g && $slug !== '' ? pg_tr_state($SCHEMA, 'games', 'games.@' . $slug)['count'] : ['total' => 0, 'ok' => 0, 'outdated' => 0, 'missing' => 0, 'unchecked' => 0];
@@ -93,7 +93,7 @@ function pg_games_view($SCHEMA, $lang){
   if (count($games) > 3) {
     echo '<label class="g-inp">' . pg_icon('search') . '<input type="search" placeholder="Spiel suchen…" data-game-search aria-label="Spiele durchsuchen"></label>';
     echo '<div class="g-seg" data-game-filter><button type="button" class="on" data-gf="">Alle<span class="n">' . count($games) . '</span></button>';
-    $short = ['development' => 'Entwicklung', 'announced' => 'Angekündigt', 'demo' => 'Demo', 'early' => 'Early Access', 'released' => 'Veröffentlicht'];
+    $short = ['development' => 'Entwicklung', 'announced' => 'Angekündigt', 'demo' => 'Demo', 'early' => 'Early Access', 'released' => 'Veröffentlicht', 'paused' => 'Pausiert'];
     foreach ($stLbl as $k => [$l]) if (!empty($statusCount[$k])) echo '<button type="button" data-gf="' . pg_h($k) . '" title="' . pg_h($l) . '">' . pg_h($short[$k] ?? $l) . '<span class="n">' . $statusCount[$k] . '</span></button>';
     echo '</div>';
   }
@@ -218,6 +218,7 @@ function pg_games_view($SCHEMA, $lang){
       [!empty($g['cover']), 'Cover-Bild', 'Für Karten, Startseite & Teilen-Vorschau', 'look', 'cover'],
       [!empty($g['logo']), 'Logo (transparent)', 'Erscheint im Kopfbereich statt des Titels', 'look', 'logo'],
       [trim((string) ($g['tagline'] ?? '')) !== '', 'Kurzbeschreibung', 'Für Karten, Google & Teilen-Vorschau', 'settings', 'tagline'],
+      [trim((string) ($g['genre'] ?? '')) !== '', 'Genre-Zeile', 'Für Startseite & Spielkarten (z. B. „Multiplayer-Shooter · PC“)', 'look', 'genre'],
       [!empty($g['wishlistUrl']), 'Store-/Wishlist-Link', 'Haupt-Button im Kopfbereich', 'settings', 'wishlistUrl'],
       [$hasTrailer, 'Trailer', 'Erhöht die Verweildauer deutlich', 'page', 'blocks'],
       [in_array('waitlist', $types, true) || in_array('suggestions', $types, true), 'Warteliste oder Vorschlagsbox', 'Sammelt Interessenten & Ideen', 'page', 'blocks'],

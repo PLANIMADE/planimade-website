@@ -902,6 +902,7 @@ body.split-on #editor,body.split-on .editor.lang-bar,body.split-on .editor.lang-
 .st-rel{color:var(--ok);background:var(--ok-soft);border-color:rgba(61,220,151,.3)}
 .st-ann{color:var(--ink2)}
 .st-early{color:var(--violet);background:var(--violet-soft);border-color:rgba(177,151,252,.3)}
+.st-paused{color:var(--ink2);background:rgba(150,150,170,.1);border-color:rgba(150,150,170,.3)}
 
 .ck{max-width:1400px}
 .ck-card{background:linear-gradient(180deg,rgba(20,20,24,.92),rgba(14,14,17,.92));border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);min-width:0}

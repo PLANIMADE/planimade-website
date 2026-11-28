@@ -171,6 +171,11 @@
             soc_x: "News & Updates", soc_steam: "Wunschliste & News", soc_twitch: "Live aus der Entwicklung",
             soc_bsky: "News & Updates", menu_open: "Menü öffnen", menu_close: "Menü schließen",
             home_label: "Startseite", lang_label: "Sprache",
+            st_paused: "Pausiert", hs_label: "Unsere Spiele", hs_pause: "Durchlauf anhalten", hs_play: "Durchlauf fortsetzen",
+            hs_show: "zeigen", hs_of: "von", to_game2: "Zum Spiel", trailer_watch: "Trailer ansehen", cta_beta: "Zur Beta",
+            worlds_h: ["Eine Welt. Eine Handschrift.", "Zwei Welten. Eine Handschrift.", "Drei Welten. Eine Handschrift.", "Vier Welten. Eine Handschrift.", "Fünf Welten. Eine Handschrift.", "Sechs Welten. Eine Handschrift."],
+            worlds_n: "Welten. Eine Handschrift.", stat_founded: "gegründet", stat_team: "Köpfe im Team", stat_games: "eigene Spiele",
+            team_label: "Das Team", devlog_fresh2: "Frisch aus der Werkstatt.", read_more2: "Weiterlesen", profile_view: "Profil ansehen",
         },
         en: {
             nav_studio: "Studio", nav_games: "Games", nav_devlog: "Devlog", nav_contact: "Contact",
@@ -212,6 +217,11 @@
             soc_x: "News & updates", soc_steam: "Wishlist & news", soc_twitch: "Live from development",
             soc_bsky: "News & updates", menu_open: "Open menu", menu_close: "Close menu",
             home_label: "Home", lang_label: "Language",
+            st_paused: "Paused", hs_label: "Our games", hs_pause: "Pause slideshow", hs_play: "Resume slideshow",
+            hs_show: "show", hs_of: "of", to_game2: "View game", trailer_watch: "Watch trailer", cta_beta: "Join the beta",
+            worlds_h: ["One world. One signature.", "Two worlds. One signature.", "Three worlds. One signature.", "Four worlds. One signature.", "Five worlds. One signature.", "Six worlds. One signature."],
+            worlds_n: "worlds. One signature.", stat_founded: "founded", stat_team: "people on the team", stat_games: "original games",
+            team_label: "The team", devlog_fresh2: "Fresh from the workshop.", read_more2: "Read more", profile_view: "View profile",
         },
     };
     function detectLang() {
@@ -553,7 +563,7 @@
     }
 
     function initReveal() {
-        const els = $$(".reveal, .reveal-on");
+        const els = $$(".reveal, .reveal-on, .pg-rv");
         if (!("IntersectionObserver" in window) || !els.length) {
             els.forEach(el => el.classList.add("in", "reveal-on")); return;
         }
@@ -573,10 +583,11 @@
         // WICHTIG: querySelectorAll findet nur Nachfahren – das root-Element selbst
         // (z. B. der Countdown-Mount mit class="reveal") muss separat berücksichtigt werden,
         // sonst bekommt es nie ".in" und bleibt unsichtbar (opacity:0).
-        const els = $$(".reveal, .reveal-on", root);
-        if (root && root.classList && (root.classList.contains("reveal") || root.classList.contains("reveal-on"))) {
+        const els = $$(".reveal, .reveal-on, .pg-rv", root);
+        if (root && root.classList && (root.classList.contains("reveal") || root.classList.contains("reveal-on") || root.classList.contains("pg-rv"))) {
             els.unshift(root);
         }
+        if (!("IntersectionObserver" in window)) { els.forEach(el => el.classList.add("in", "reveal-on")); return; }
         els.forEach(el => {
             const io = new IntersectionObserver((entries, obs) => {
                 entries.forEach(en => {
@@ -617,20 +628,6 @@
     }
 
     function initYear() { $$("[data-year]").forEach(el => el.textContent = new Date().getFullYear()); }
-
-    // Laufband nahtlos füllen: jede Hälfte breiter als der Viewport -> kein „Stopp"
-    function initMarquee() {
-        const halves = $$(".marquee-half");
-        if (!halves.length) return;
-        // Im Admin editierbar: studio.marquee (eine Phrase pro Zeile)
-        const raw = (DATA.studio && DATA.studio.marquee) || "";
-        let phrases = String(raw).split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-        if (!phrases.length) phrases = ["Original Worlds", "Handcrafted Magic", "Indie & Proud", "Wobbly Wizards"];
-        const group = phrases.map(p => `<span>${esc(p)}</span><span class="text-[color:var(--accent)]">✦</span>`).join("");
-        const reps = Math.max(3, Math.ceil((window.innerWidth * 1.3) / 420));
-        const html = group.repeat(reps);
-        halves.forEach(h => h.innerHTML = html);
-    }
 
     /* Akzentfarbe live setzen (Game-Welten) */
     // Hex aufhellen (Anteil 0..1 Richtung Weiß) – für die abgeleitete helle Akzentfarbe
@@ -674,6 +671,7 @@
         demo:       { key: "st_demo",        cls: "text-amber-100 border-amber-300/60 bg-amber-300/20" },
         development:{ key: "st_development", cls: "text-orange-100 border-orange-400/60 bg-orange-400/20" },
         announced:  { key: "st_announced",   cls: "text-zinc-100 border-white/40 bg-white/15" },
+        paused:     { key: "st_paused",      cls: "text-zinc-300 border-white/25 bg-white/5" },
     };
     function statusBadge(s) {
         const m = STATUS[s] || STATUS.development;
@@ -707,11 +705,11 @@
     function applyShared(name, merged, de) {
         if (!merged || !de) return;
         if (name === "studio") {
-            ["name", "background", "logo", "favicon", "heroBackground", "heroVideo"].forEach(k => {
+            ["name", "background", "logo", "favicon", "heroBackground", "heroVideo", "aboutImages"].forEach(k => {
                 if (de[k] !== undefined) merged[k] = de[k];
             });
         } else if (name === "games" && Array.isArray(merged.games) && Array.isArray(de.games)) {
-            const SHARED_GAME = ["title", "accent", "accent2", "particleColor", "cover", "logo", "logoScale", "logoPos", "logoLayout", "logoGap", "logoBox", "wishlistUrl", "status", "featured", "slug"];
+            const SHARED_GAME = ["title", "accent", "accent2", "particleColor", "cover", "homeImage", "logo", "logoScale", "logoPos", "logoLayout", "logoGap", "logoBox", "wishlistUrl", "status", "featured", "slug"];
             merged.games.forEach((g, i) => {
                 const d = de.games[i]; if (!d) return;
                 SHARED_GAME.forEach(k => { if (d[k] !== undefined) g[k] = d[k]; });
@@ -722,98 +720,364 @@
     /* =========================================================
        3) STUDIO-HOME
        ========================================================= */
+    /* =========================================================
+       3) STUDIO-HOME — Design v7 „Kino trifft Ordnung"
+       Oben ein Durchlauf durch die Spiele: Bild, Logo, Status, Satz, Beschreibung und Buttons
+       wechseln gemeinsam. Darunter Spiele, Über uns, Team und Devlog – alles aus den CMS-Daten.
+       ========================================================= */
+    const RM = (() => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } })();
+    const pad2 = (n) => String(n).padStart(2, "0");
+    const heroBlockOf = (g) => ((g && g.blocks) || []).find(b => b && b.type === "hero" && !b.hidden) || {};
+    // Markdown/Zeilenumbrüche → schlichter Text (für kurze Zeilen auf Karten)
+    const plainText = (v) => String(v || "").replace(/\r/g, "")
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+        .replace(/[*_`>#]+/g, "").replace(/\s+/g, " ").trim();
+    function firstSentence(v) {
+        const s = plainText(v);
+        const m = s.match(/^(.{12,}?[.!?…])(?=\s|$)/);
+        return m ? m[1] : s;
+    }
+    // Großer Satz im Durchlauf: Tagline aus dem Kopfbereich der Spielseite, sonst die Tagline des Spiels (lang → erster Satz)
+    function slideTagline(g) {
+        const s = plainText(heroBlockOf(g).tagline || g.tagline || "");
+        return s.length > 90 ? firstSentence(s) : s;
+    }
+    // Beschreibung: eigenes Feld → erster Satz aus „Über das Spiel" (Textabschnitt) → Rest der Spiel-Tagline
+    function gameSummary(g, tag = "") {
+        const own = plainText(g.summary);
+        if (own) return own;
+        const rt = (g.blocks || []).find(b => b && b.type === "richtext" && !b.hidden && String(b.body || "").trim());
+        if (rt) { const fs = firstSentence(rt.body); if (fs && fs.length <= 230) return fs; }
+        const gt = plainText(g.tagline);
+        if (!gt || gt === tag) return "";
+        const head = tag.replace(/[.!?…]+$/, "");
+        if (head && gt.startsWith(head)) return gt.slice(head.length).replace(/^[.!?…\s]+/, "").trim();
+        return gt;
+    }
+    const ST_KEY = { released: "st_released", early: "st_early", demo: "st_demo", development: "st_development", announced: "st_announced", paused: "st_paused" };
+    const pgStatus = (st) => ST_KEY[st] ? st : "development";
+    const pgChip = (st) => `<span class="pg-chip pg-st-${pgStatus(st)}"><i></i>${t(ST_KEY[pgStatus(st)])}</span>`;
+    // Farben eines Spiels für einen einzelnen Bereich (Karte, Folie …) – wie setAccentVars, aber als Style-Text
+    function accentStyle(g) {
+        const c1 = (g && g.accent) || "#ff7d1a", c2 = (g && g.accent2) || c1;
+        const ink = (hexBrightness(c1) + hexBrightness(c2)) / 2 > 176 ? "#1a0d00" : "#ffffff";
+        return `--accent:${esc(c1)};--accent-2:${esc(c2)};--accent-3:${esc(lightenHex(c1, 0.28))};--accent-ink:${ink}`;
+    }
+    // Logo mit gleicher sichtbarer Fläche (breite und kompakte Logos wirken gleich groß), ohne durchsichtigen Rand
+    function logoFit(g, area, maxH, cls = "", named = true) {
+        const src = logoPath(g);
+        if (!src) return "";
+        const aria = named ? ` role="img" aria-label="${esc(g.title || "")}"` : ' aria-hidden="true"';
+        const box = logoBoxOf(g);
+        if (!box) {
+            const h = Math.round(Math.min(Math.sqrt(area / 2.6), maxH));
+            return `<span class="pg-lg pg-lg-plain ${cls}"${aria} style="--h:${h}px"><img src="${esc(src)}" alt=""></span>`;
+        }
+        const fw = box.x1 - box.x0, fh = box.y1 - box.y0, va = box.ar * fw / fh;
+        const h = Math.min(Math.sqrt(area / va), maxH), w = h * va;
+        return `<span class="pg-lg ${cls}"${aria} style="--w:${w.toFixed(1)}px;aspect-ratio:${va.toFixed(4)}">`
+            + `<img src="${esc(src)}" alt="" style="width:${(100 / fw).toFixed(3)}%;left:${(-100 * box.x0 / fw).toFixed(3)}%;top:${(-100 * box.y0 / fh).toFixed(3)}%"></span>`;
+    }
+    const pgKick = (num, label) => `<span class="pg-kicker">${num ? `<b>${pad2(num)}</b>` : ""}${label}</span>`;
+    const pgSh = (num, label, h, lead = "", right = "") =>
+        `<div class="pg-sh pg-rv"><div>${pgKick(num, label)}<h2 class="pg-h2">${h}</h2>${lead ? `<p class="pg-lead">${lead}</p>` : ""}</div>${right}</div>`;
+    const gameHref = (g) => `game.php?slug=${encodeURIComponent((g && g.slug) || "")}`;
+
+    // ---------- Spiele-Durchlauf ----------
+    function homeVisual(g, s, isCur) {
+        if (g.homeImage) return { img: g.homeImage, video: "" };
+        // aktuelles Projekt: Hintergrund aus „Studio & Startseite" (falls gesetzt)
+        if (isCur && (s.heroBackground || s.heroVideo)) return { img: s.heroBackground || g.cover || "", video: s.heroVideo || "" };
+        return { img: g.cover || "", video: "" };
+    }
+    function slideSecondary(g) {
+        const hb = heroBlockOf(g);
+        const wish = String(g.wishlistUrl || "").trim();
+        if (/^https?:\/\//i.test(wish)) return `<a class="pg-btn pg-btn-s" href="${esc(wish)}" target="_blank" rel="noopener">${esc(hb.ctaLabel || t("wishlist"))}</a>`;
+        const tr = (g.blocks || []).find(b => b && b.type === "trailer" && !b.hidden && /^https?:\/\//i.test(String(b.youtube || "").trim()));
+        const trUrl = String(hb.trailerUrl || (tr && tr.youtube) || "").trim();
+        if (/^https?:\/\//i.test(trUrl)) return `<a class="pg-btn pg-btn-s" href="${esc(trUrl)}" target="_blank" rel="noopener">${pgIc("play")} ${t("trailer_watch")}</a>`;
+        const wl = (g.blocks || []).find(b => b && b.type === "waitlist" && !b.hidden);
+        if (wl) return `<a class="pg-btn pg-btn-s" href="${gameHref(g)}#warteliste">${t(/beta/i.test(String(wl.heading || "")) ? "cta_beta" : "cta_playtest")}</a>`;
+        return "";
+    }
+    function homeFigure(g, i, s, isCur) {
+        const v = homeVisual(g, s, isCur);
+        const img = String(v.img || "");
+        const pos = focusPos(img);
+        const style = `--fp:${pos};--a:${esc((g && g.accent) || "#ff7d1a")}`;
+        if (v.video) {
+            return `<figure class="pg-hs-img${i ? "" : " on"}" style="${style}"><video muted loop playsinline preload="${i ? "none" : "auto"}"${img ? ` poster="${esc(img)}"` : ""} data-hs-video><source src="${esc(v.video)}"></video></figure>`;
+        }
+        if (!img) return `<figure class="pg-hs-img pg-hs-noimg${i ? "" : " on"}" style="${style}"></figure>`;
+        return `<figure class="pg-hs-img${i ? "" : " on"}" style="${style}"><img ${i ? "data-src" : 'fetchpriority="high" src'}="${esc(img)}" alt=""></figure>`;
+    }
+    function homeSlide(g, i, n) {
+        const tag = slideTagline(g), sum = gameSummary(g, tag), genre = plainText(g.genre);
+        const logo = logoPath(g) ? `<h2 class="pg-hs-logo">${logoFit(g, 30000, 120)}</h2>` : `<h2 class="pg-hs-title">${esc(g.title || "")}</h2>`;
+        return `<div class="pg-hs-slide${i ? "" : " on"}" id="pg-hs-${i}" role="group" aria-roledescription="Folie" aria-label="${i + 1} ${t("hs_of")} ${n}: ${esc(g.title || "")}" style="${accentStyle(g)}">
+                ${logo}
+                <div class="pg-meta">${pgChip(g.status)}${genre ? `<span class="pg-genre">${esc(genre)}</span>` : ""}</div>
+                ${tag ? `<p class="pg-hs-tag">${esc(tag)}</p>` : ""}
+                ${sum ? `<p class="pg-hs-txt">${esc(sum)}</p>` : ""}
+                <div class="pg-row"><a class="pg-btn pg-btn-p" href="${gameHref(g)}">${t("to_game2")} ${pgIc("arrow")}</a>${slideSecondary(g)}</div>
+            </div>`;
+    }
+    function homeTab(g, i) {
+        return `<button type="button" class="pg-hs-tab${i ? "" : " on"}" data-hs-go="${i}" aria-controls="pg-hs-${i}" aria-label="${esc(g.title || "")} ${t("hs_show")}"${i ? "" : ' aria-current="true"'} style="${accentStyle(g)}">
+                <span class="pg-hs-thumb">${g.cover ? `<img src="${esc(g.cover)}" alt="" loading="lazy" style="object-position:${focusPos(g.cover)}">` : ""}${logoFit(g, 2400, 30, "", false)}</span>
+                <span class="pg-hs-tt"><b>${esc(g.title || "")}</b><small class="pg-st-${pgStatus(g.status)}">${t(ST_KEY[pgStatus(g.status)])}</small></span><i class="pg-hs-bar"></i></button>`;
+    }
+    function homeHero(order, s, cur) {
+        const n = order.length;
+        const claim = `${esc(s.heroLine1 || "")} ${esc(s.heroLine2 || "")}`.trim();
+        const h1 = `<h1 class="pg-sr">${esc(s.name || "PLANIGAMES")}${claim ? " – " + claim : ""}</h1>`;
+        if (!n) {
+            // ohne Spiele mit Titelbild: ruhiger Studio-Kopfbereich mit dem Claim
+            const bg = s.heroBackground ? `<div class="pg-hs-media" aria-hidden="true"><figure class="pg-hs-img on" style="--fp:${focusPos(s.heroBackground)}"><img src="${esc(s.heroBackground)}" alt=""></figure></div>` : "";
+            return `<section class="pg-hs pg-hs-claim">${bg}<div class="pg-wrap pg-hs-body"><div class="pg-hs-slide on">
+                <h1 class="pg-h1">${esc(s.heroLine1 || s.name || "PLANIGAMES")}${s.heroLine2 ? `<br><span class="pg-grad">${esc(s.heroLine2)}</span>` : ""}</h1>
+                ${s.intro ? `<p class="pg-hs-txt">${esc(s.intro)}</p>` : ""}
+                <div class="pg-row"><a class="pg-btn pg-btn-p" href="games.html">${t("cta_discover")} ${pgIc("arrow")}</a><a class="pg-btn pg-btn-s" href="devlog.php">${t("cta_devlog")}</a></div>
+                <div data-hero-countdown></div></div></div></section>`;
+        }
+        return `<section class="pg-hs" data-hs aria-roledescription="Karussell" aria-label="${t("hs_label")}">
+            ${h1}
+            <div class="pg-hs-media" aria-hidden="true">${order.map((g, i) => homeFigure(g, i, s, g === cur)).join("")}</div>
+            <div class="pg-wrap pg-hs-body">
+                <div class="pg-hs-slides">${order.map((g, i) => homeSlide(g, i, n)).join("")}</div>
+                <div data-hero-countdown></div>
+                ${n > 1 ? `<div class="pg-hs-nav">
+                    <div class="pg-hs-navtop"><span>${t("hs_label")}</span><i class="pg-line"></i><span class="pg-hs-count"><b>01</b> / ${pad2(n)}</span><button type="button" class="pg-hs-pause" aria-pressed="false" aria-label="${t("hs_pause")}">${pgIc("pause")}</button></div>
+                    <div class="pg-hs-tabs" style="--n:${Math.min(n, 4)}">${order.map(homeTab).join("")}</div>
+                </div>` : ""}
+            </div>
+        </section>`;
+    }
+    function homeTicker(s) {
+        let ph = String(s.marquee || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+        if (!ph.length) ph = ["Original Worlds", "Handcrafted", "Indie & Proud"];
+        const est = ph.reduce((a, x) => a + x.length * 13 + 80, 0);
+        const reps = Math.max(1, Math.ceil(2800 / Math.max(300, est)));
+        const half = Array.from({ length: reps }, () => ph.map(x => `<span>${esc(x)}</span>`).join("")).join("");
+        return `<div class="pg-tick" aria-hidden="true"><div class="pg-tick-in">${half}${half}</div></div>`;
+    }
+
+    // ---------- Spiele-Karten ----------
+    function homeCard(g, isCur) {
+        const tag = slideTagline(g), sum = gameSummary(g, tag), genre = plainText(g.genre);
+        return `<a class="pg-gcard pg-rv" href="${gameHref(g)}" style="${accentStyle(g)}">
+            <div class="pg-gimg">${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.coverAlt || g.title || "")}" loading="lazy" style="object-position:${focusPos(g.cover)}">` : ""}
+                <div class="pg-chips">${pgChip(g.status)}${isCur ? `<span class="pg-chip pg-chip-hl">${t("current_project_tag")}</span>` : ""}</div>
+                ${logoPath(g) ? logoFit(g, 13000, 92, "pg-gimg-logo") : `<span class="pg-gimg-title">${esc(g.title || "")}</span>`}</div>
+            <div class="pg-gbody">${genre ? `<span class="pg-gmeta">${esc(genre)}</span>` : ""}${tag ? `<b class="pg-gtag">${esc(tag)}</b>` : ""}${sum ? `<p>${esc(sum)}</p>` : ""}<span class="pg-link">${t("to_game2")} ${pgIc("arrow")}</span></div>
+        </a>`;
+    }
+    function homeExtraRow(g) {
+        const txt = plainText(g.summary) || plainText(heroBlockOf(g).tagline) || plainText(g.tagline);
+        return `<a class="pg-demos pg-rv" href="${gameHref(g)}" style="${accentStyle(g)}"><span class="pg-icn">${pgIc("pad")}</span>`
+            + `<span class="pg-demos-tx"><b>${esc(g.title || "")}</b>${txt ? `<small>${esc(txt)}</small>` : ""}</span><span class="pg-link">${t("more_info")} ${pgIc("arrow")}</span></a>`;
+    }
+    function homeGames(list, extra, s, cur, num) {
+        if (!list.length && !extra.length) return "";
+        const n = list.length, hs = t("worlds_h");
+        const h = n >= 1 && n <= 6 && Array.isArray(hs) ? hs[n - 1] : `${n} ${t("worlds_n")}`;
+        return `<section class="pg-sec" id="unsere-spiele"><div class="pg-wrap">
+            ${pgSh(num, t("ourgames"), esc(h), s.intro ? esc(s.intro) : "", `<a class="pg-btn pg-btn-s pg-btn-sm" href="games.html">${t("foot_allgames")} ${pgIc("arrow")}</a>`)}
+            ${n ? `<div class="pg-games"${n % 2 ? " data-odd" : ""}>${list.map(g => homeCard(g, g === cur)).join("")}</div>` : ""}
+            ${extra.map(homeExtraRow).join("")}
+        </div></section>`;
+    }
+
+    // ---------- Über uns ----------
+    function aboutImages(s, games, posts) {
+        const own = (Array.isArray(s.aboutImages) ? s.aboutImages : [])
+            .map(x => (x && typeof x === "object") ? (x.image || x.src || "") : x).filter(x => typeof x === "string" && x.trim());
+        if (own.length) return own.slice(0, 3);
+        const covers = games.filter(g => g && g.cover), cur = covers.find(g => g.featured);
+        const gallery = [];
+        games.forEach(g => (g.blocks || []).filter(b => b && b.type === "gallery" && !b.hidden).forEach(b =>
+            (b.images || b.items || []).forEach(im => { const src = typeof im === "string" ? im : (im && (im.src || im.image)); if (src) gallery.push(src); })));
+        const postImgs = posts.map(p => p.cover).filter(Boolean);
+        const out = [];
+        const add = (src) => { const k = String(src || "").split("#")[0]; if (k && out.length < 3 && !out.some(o => o.split("#")[0] === k)) out.push(src); };
+        add((covers.find(g => g !== cur) || {}).cover);   // großes Bild: ein Spiel neben dem aktuellen Projekt
+        add(gallery[0]); add(postImgs[0]);
+        gallery.slice(1).forEach(add); postImgs.slice(1).forEach(add); covers.forEach(g => add(g.cover));
+        return out;
+    }
+    function homeAbout(s, games, posts, members, num) {
+        const imgs = aboutImages(s, games, posts);
+        const stats = [];
+        if (String(s.founded || "").trim()) stats.push([s.founded, t("stat_founded")]);
+        if (members.length) stats.push([members.length, t("stat_team")]);
+        const nGames = games.filter(g => g && g.cover).length;
+        if (nGames) stats.push([nGames, t("stat_games")]);
+        const pillars = (Array.isArray(s.pillars) ? s.pillars : []).filter(p => p && (p.title || p.text));
+        const head = s.heroLine1 || s.heroLine2
+            ? `<h2 class="pg-h2">${esc(s.heroLine1 || "")}${s.heroLine2 ? `${s.heroLine1 ? "<br>" : ""}<span class="pg-grad">${esc(s.heroLine2)}</span>` : ""}</h2>${s.aboutTitle ? `<p class="pg-stmt">${esc(s.aboutTitle)}</p>` : ""}`
+            : `<h2 class="pg-h2">${esc(s.aboutTitle || "")}</h2>`;
+        return `<section class="pg-sec pg-band" id="studio"><div class="pg-wrap">
+            <div class="pg-about${imgs.length ? "" : " solo"}">
+                <div class="pg-rv">${pgKick(num, t("foot_about_short"))}${head}
+                    ${s.aboutBody ? `<div class="pg-txt">${md(s.aboutBody)}</div>` : ""}
+                    ${stats.length ? `<div class="pg-stats" style="--n:${stats.length}">${stats.map(([v, l]) => `<div><b>${esc(String(v))}</b><span>${esc(l)}</span></div>`).join("")}</div>` : ""}
+                </div>
+                ${imgs.length ? `<div class="pg-collage pg-rv" data-n="${imgs.length}">${imgs.map(src => `<figure><img src="${esc(src)}" alt="" loading="lazy" style="object-position:${focusPos(src)}"></figure>`).join("")}</div>` : ""}
+            </div>
+            ${pillars.length ? `<div class="pg-vals">${pillars.map(p => `<div class="pg-val pg-rv"><span class="pg-icn pg-emo">${esc(p.icon || "✦")}</span><h3>${esc(p.title || "")}</h3><p>${esc(p.text || "")}</p></div>`).join("")}</div>` : ""}
+        </div></section>`;
+    }
+
+    // ---------- Team ----------
+    function homeTeam(members, num) {
+        const hasProfile = (m) => (m.bio && String(m.bio).trim()) || m.funFact || m.location || (m.socials || []).some(x => x && x.url && x.url !== "#");
+        return `<section class="pg-sec" id="team-section"><div class="pg-wrap">
+            ${pgSh(num, t("team_label"), esc(t("team_heading")))}
+            <div class="pg-team">${members.map((m, i) => {
+                const more = hasProfile(m), quote = plainText(m.tagline || m.funFact || "");
+                return `<figure class="pg-tm pg-rv"${more ? ` data-member="${i}" role="button" tabindex="0" aria-label="${esc(m.name || "")} – ${t("profile_view")}"` : ""}>
+                    <div class="pg-tm-ph">${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.photoAlt || m.name || "")}" loading="lazy" style="object-position:${focusPos(m.photo)}">` : `<span class="pg-tm-emo">${esc(m.emoji || "🧙")}</span>`}
+                        <div class="pg-nm"><b>${esc(m.name || "")}</b>${m.role ? `<span>${esc(m.role)}</span>` : ""}</div>${more ? `<span class="pg-tm-more">${t("profile_view")}</span>` : ""}</div>
+                    <figcaption>${quote ? `<p class="pg-q">${esc(quote)}</p>` : ""}${m.location ? `<p class="pg-loc">📍 ${esc(m.location)}</p>` : ""}</figcaption>
+                </figure>`;
+            }).join("")}</div>
+        </div></section>`;
+    }
+
+    // ---------- Devlog ----------
+    function homePost(p, g, cls) {
+        const mini = cls === "mini";
+        const fig = p.cover ? `<img src="${esc(p.cover)}" alt="${esc(p.coverAlt || "")}" loading="lazy" style="object-position:${focusPos(p.cover)}">`
+            : (g && g.cover ? `<img class="pg-ph-img" src="${esc(g.cover)}" alt="" loading="lazy" style="object-position:${focusPos(g.cover)}">${logoFit(g, mini ? 2600 : 9000, mini ? 40 : 70, "pg-card-logo", false)}`
+                            : `<span class="pg-ph-blank"></span>`);
+        return `<a class="pg-post pg-rv ${cls}" href="devlog.php?slug=${encodeURIComponent(p.slug || "")}" style="${accentStyle(g || {})}">
+            <figure>${fig}</figure>
+            <div class="pg-pbody"><div class="pg-pmeta">${g ? `<span class="pg-chip pg-chip-game"><i></i>${esc(g.title || "")}</span>` : ""}${p.version ? `<span class="pg-ver">v${esc(p.version)}</span>` : ""}<time datetime="${esc(p.date || "")}">${esc(fmtDate(p.date))}</time></div>
+                <h3>${esc(p.title || "")}</h3>${!mini && p.excerpt ? `<p>${esc(plainText(p.excerpt))}</p>` : ""}<span class="pg-link">${t("read_more2")} ${pgIc("arrow")}</span></div>
+        </a>`;
+    }
+    function homeDevlog(posts, games, num) {
+        const gOf = (p) => {
+            const v = String(p.game || "").trim().toLowerCase();
+            return games.find(x => x && v && (String(x.slug || "").toLowerCase() === v || String(x.title || "").toLowerCase() === v)) || null;
+        };
+        const [first, ...rest] = posts.slice(0, 4);
+        return `<section class="pg-sec pg-band" id="devlog-section"><div class="pg-wrap">
+            ${pgSh(num, "Devlog", esc(t("devlog_fresh2")), "", `<a class="pg-btn pg-btn-s pg-btn-sm" href="devlog.php">${t("all_posts")} ${pgIc("arrow")}</a>`)}
+            <div class="pg-dl${rest.length ? "" : " solo"}">${homePost(first, gOf(first), "big")}${rest.length ? `<div class="pg-dl-side">${rest.map(p => homePost(p, gOf(p), "mini")).join("")}</div>` : ""}</div>
+        </div></section>`;
+    }
+
+    let stopHomeHero = null;
     async function renderHome() {
         await loadData("studio", "team", "games", "patchnotes");
+        const root = $("[data-home]");
+        if (!root) return;
         const s = DATA.studio || {};
-        const games = (DATA.games && DATA.games.games) || [];
+        const games = ((DATA.games && DATA.games.games) || []).filter(g => g && typeof g === "object");
+        const members = ((DATA.team && DATA.team.members) || []).filter(m => m && (m.name || m.photo));
         const posts = ((DATA.patchnotes && DATA.patchnotes.posts) || [])
             .filter(isPublished).slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+        const main = games.filter(g => g.cover);          // Spiele mit Titelbild: Durchlauf + Karten
+        const extra = games.filter(g => !g.cover);        // z. B. „Browser-Demos": schmale Zeile unter den Karten
+        const cur = main.find(g => g.featured) || null;   // aktuelles Projekt startet den Durchlauf
+        const order = cur ? [cur, ...main.filter(g => g !== cur)] : main;
+        await Promise.all(games.filter(g => logoPath(g)).map(g => ensureLogoBox(g, 1200)));
 
-        // Texte aus dem CMS einsetzen
-        setText("[data-studio='name']", s.name);
-        setText("[data-studio='tagline']", s.tagline);
-        setText("[data-studio='founded']", s.founded);
-        setHTML("[data-studio='heroLine1']", esc(s.heroLine1 || ""));
-        setHTML("[data-studio='heroLine2']", esc(s.heroLine2 || ""));
-        setText("[data-studio='intro']", s.intro);
-        setText("[data-studio='aboutTitle']", s.aboutTitle);
+        let num = 0;
+        root.innerHTML = homeHero(order, s, cur) + homeTicker(s)
+            + homeGames(main, extra, s, cur, ++num)
+            + homeAbout(s, games, posts, members, ++num)
+            + (members.length ? homeTeam(members, ++num) : "")
+            + (posts.length ? homeDevlog(posts, games, ++num) : "");
 
-        initMarquee();
         renderHeroCountdown(s);
-
-        // Hero-Hintergrund (Bild/Video) – optional aus den Studio-Einstellungen
-        const heroBg = $("[data-hero-bg]");
-        if (heroBg && (s.heroVideo || s.heroBackground)) {
-            const media = s.heroVideo
-                ? `<video class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline ${s.heroBackground ? `poster="${esc(s.heroBackground)}"` : ""}><source src="${esc(s.heroVideo)}"></video>`
-                : `<img src="${esc(s.heroBackground)}" alt="" class="absolute inset-0 w-full h-full object-cover">`;
-            heroBg.innerHTML = media
-                + `<div class="absolute inset-0" style="background:linear-gradient(to top, var(--bg) 6%, color-mix(in srgb,var(--accent) 10%, transparent) 60%, rgba(0,0,0,.45))"></div>`
-                + `<div class="absolute inset-0 bg-black/40"></div>`;
+        const team = $(".pg-team", root);
+        if (team) {
+            const open = (el) => { const m = members[+el.dataset.member]; if (m) openMemberModal(m); };
+            team.addEventListener("click", (e) => { const c = e.target.closest("[data-member]"); if (c) open(c); });
+            team.addEventListener("keydown", (e) => { const c = e.target.closest("[data-member]"); if (c && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open(c); } });
         }
-        const aboutBody = $("[data-studio='aboutBody']");
-        if (aboutBody && s.aboutBody) aboutBody.innerHTML = md(s.aboutBody);
-
-        // Werte / Pillars
-        const pillars = $("[data-studio='pillars']");
-        if (pillars && Array.isArray(s.pillars)) {
-            pillars.innerHTML = s.pillars.map((p, i) => `
-                <div class="reveal tilt-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-7" style="transition-delay:${i * 80}ms">
-                    <div class="card-glow"></div><div class="card-shine"></div>
-                    <div class="text-3xl mb-4">${esc(p.icon || "✦")}</div>
-                    <h3 class="text-lg font-bold text-white mb-2">${esc(p.title || "")}</h3>
-                    <p class="text-sm text-zinc-400 leading-relaxed">${esc(p.text || "")}</p>
-                </div>`).join("");
-            initTilt(pillars); observeReveals(pillars);
-        }
-
-        // Team (eigene Datei team.json)
-        const team = $("[data-studio='team']");
-        const members = (DATA.team && DATA.team.members) || [];
-        if (team && members.length) {
-            const hasProfile = (m) => (m.bio && m.bio.trim()) || m.funFact || m.location || (m.socials || []).some(s => s.url && s.url !== "#");
-            team.innerHTML = members.map((m, i) => {
-                const more = hasProfile(m);
-                return `
-                <div class="reveal text-center w-48 sm:w-56 ${more ? "cursor-pointer group/m" : ""}" style="transition-delay:${i * 70}ms" ${more ? `data-member="${i}" role="button" tabindex="0"` : ""}>
-                    <div class="relative mx-auto w-40 h-40 sm:w-48 sm:h-48 rounded-3xl overflow-hidden border border-white/10 bg-white/5 transition-transform duration-500 hover:scale-[1.03]">
-                        ${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.photoAlt || m.name)}" style="object-position:${focusPos(m.photo)}" class="w-full h-full object-cover">`
-                                  : `<div class="w-full h-full grid place-items-center text-6xl">${esc(m.emoji || "🧙")}</div>`}
-                        <div class="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-3xl"></div>
-                        ${more ? `<div class="absolute inset-x-0 bottom-0 p-2 text-[10px] font-mono uppercase tracking-widest text-white/90 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover/m:opacity-100 transition">${LANG === "en" ? "View profile" : "Profil ansehen"}</div>` : ""}
-                    </div>
-                    <div class="mt-5 text-xl font-bold text-white">${esc(m.name || "")}</div>
-                    <div class="font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] mt-1.5">${esc(m.role || "")}</div>
-                    ${m.tagline ? `<div class="text-zinc-400 text-sm mt-2">${esc(m.tagline)}</div>` : ""}
-                </div>`;
-            }).join("");
-            observeReveals(team);
-            const openMember = (i) => openMemberModal(members[i]);
-            team.addEventListener("click", (e) => { const c = e.target.closest("[data-member]"); if (c) openMember(+c.dataset.member); });
-            team.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target.closest("[data-member]")) { e.preventDefault(); openMember(+e.target.closest("[data-member]").dataset.member); } });
-        } else { $("#team-section")?.remove(); }
-
-        // Featured Game + Games-Teaser
-        const featured = games.find(g => g.featured) || games[0];
-        if (featured) { await ensureLogoBox(featured, 1200); renderFeatured(featured); }
-        const grid = $("[data-games='teaser']");
-        if (grid && games.length) {
-            grid.innerHTML = games.map(gameCard).join("");
-            initTilt(grid); observeReveals(grid);
-        }
-
-        // Neueste Devlog-Einträge
-        const dl = $("[data-devlog='latest']");
-        if (dl) {
-            if (posts.length) {
-                dl.innerHTML = posts.slice(0, 3).map(p => devlogRow(p, games)).join("");
-                observeReveals(dl);
-            } else { $("#devlog-section")?.remove(); }
-        }
-
-        // Warteliste & Vorschlagsbox gibt es nur als Spiel-Seiten-Blöcke, nicht auf der Startseite.
-        renderCommunity(s);
+        observeReveals(root);
+        if (stopHomeHero) stopHomeHero();
+        stopHomeHero = initHomeSlider(root);
         scrollToHash();
+    }
+
+    // Durchlauf: alle 7 s das nächste Spiel. Hält an bei Pause-Knopf, Maus über den Spiel-Kacheln,
+    // Tastatur-Fokus, verdecktem Tab oder wenn der Kopfbereich aus dem Bild gescrollt ist.
+    function initHomeSlider(root) {
+        const hs = $("[data-hs]", root);
+        if (!hs) return null;
+        const figs = $$(".pg-hs-img", hs), slides = $$(".pg-hs-slide", hs), tabs = $$(".pg-hs-tab", hs);
+        const n = slides.length;
+        const vids = figs.map(f => f.querySelector("video"));
+        const playVid = (k) => vids.forEach((v, j) => { if (!v) return; if (j === k && !RM) { const p = v.play(); if (p && p.catch) p.catch(() => {}); } else v.pause(); });
+        // Bilder der weiteren Spiele nachladen, sobald das erste Bild da ist
+        const loadRest = () => figs.forEach(f => { const im = f.querySelector("img[data-src]"); if (im) { im.src = im.dataset.src; im.removeAttribute("data-src"); } });
+        const firstImg = figs[0] && figs[0].querySelector("img");
+        if (firstImg && !firstImg.complete) {
+            firstImg.addEventListener("load", () => setTimeout(loadRest, 150), { once: true });
+            firstImg.addEventListener("error", loadRest, { once: true });
+            setTimeout(loadRest, 2500);
+        } else setTimeout(loadRest, 150);
+        playVid(0);
+        if (n < 2) return null;
+
+        const count = $(".pg-hs-count b", hs), pauseBtn = $(".pg-hs-pause", hs), nav = $(".pg-hs-nav", hs), DUR = 7000;
+        let cur = 0, timer = 0, t0 = 0, left = DUR;
+        const holds = new Set();
+        hs.style.setProperty("--dur", DUR + "ms");
+        const arm = () => { clearTimeout(timer); timer = 0; if (holds.size) return; t0 = performance.now(); timer = setTimeout(() => go(cur + 1), left); };
+        const hold = (r) => { if (!holds.size && timer) { left = Math.max(0, left - (performance.now() - t0)); clearTimeout(timer); timer = 0; } holds.add(r); hs.classList.add("paused"); };
+        const release = (r) => { if (!holds.delete(r)) return; if (!holds.size) { hs.classList.remove("paused"); arm(); } };
+        function go(i) {
+            cur = (i + n) % n;
+            figs.forEach((x, k) => x.classList.toggle("on", k === cur));
+            slides.forEach((x, k) => x.classList.toggle("on", k === cur));
+            tabs.forEach((tb, k) => { tb.classList.remove("on"); tb.removeAttribute("aria-current"); if (k === cur) { void tb.offsetWidth; tb.classList.add("on"); tb.setAttribute("aria-current", "true"); } });
+            if (count) count.textContent = pad2(cur + 1);
+            if (figs[cur]) { const im = figs[cur].querySelector("img[data-src]"); if (im) loadRest(); }
+            playVid(cur);
+            left = DUR; arm();
+        }
+        tabs.forEach((tb, k) => {
+            tb.addEventListener("click", () => go(k));
+            tb.addEventListener("keydown", (e) => {
+                if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+                e.preventDefault();
+                const j = (k + (e.key === "ArrowRight" ? 1 : -1) + n) % n;
+                go(j); tabs[j].focus();
+            });
+        });
+        const setPause = (on) => {
+            if (!pauseBtn) return;
+            pauseBtn.setAttribute("aria-pressed", String(on));
+            pauseBtn.setAttribute("aria-label", t(on ? "hs_play" : "hs_pause"));
+            pauseBtn.innerHTML = pgIc(on ? "play" : "pause");
+            if (on) hold("user"); else release("user");
+        };
+        if (pauseBtn) pauseBtn.addEventListener("click", () => setPause(!holds.has("user")));
+        if (nav) {
+            nav.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") hold("hover"); });
+            nav.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") release("hover"); });
+        }
+        hs.addEventListener("focusin", (e) => { try { if (e.target.matches(":focus-visible")) hold("focus"); } catch (er) {} });
+        hs.addEventListener("focusout", (e) => { if (!hs.contains(e.relatedTarget)) release("focus"); });
+        let sx = 0, sy = 0;
+        hs.addEventListener("touchstart", (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+        hs.addEventListener("touchend", (e) => {
+            const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+            if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) go(cur + (dx < 0 ? 1 : -1));
+        }, { passive: true });
+        const vis = () => (document.hidden ? hold("hidden") : release("hidden"));
+        document.addEventListener("visibilitychange", vis);
+        const ob = "IntersectionObserver" in window ? new IntersectionObserver(([en]) => (en.isIntersecting ? release("off") : hold("off")), { threshold: 0.15 }) : null;
+        if (ob) ob.observe(hs);
+        if (RM) { hs.classList.add("pg-is-static"); setPause(true); }
+        go(0);
+        return () => { clearTimeout(timer); document.removeEventListener("visibilitychange", vis); if (ob) ob.disconnect(); };
     }
 
     // Vorschlagsbox (Community-Ideen mit Upvotes) – nur als Spiel-Seiten-Block.
@@ -1041,57 +1305,6 @@
         observeReveals(mount);
     }
 
-    // Discord-/Community-Banner (vor der Newsletter-Sektion einsetzen)
-    function renderCommunity(s) {
-        const c = s.community || {};
-        if (c.enabled === false || !communityLink(s)) return;   // ohne echten (externen) Einladungslink nichts zeigen
-        const nl = $("[data-newsletter-section]");
-        const sec = document.createElement("section");
-        sec.className = "relative px-6 py-12 md:py-20";
-        sec.innerHTML = `
-            <div class="max-w-6xl mx-auto reveal relative overflow-hidden rounded-3xl border border-white/10 p-10 md:p-14 flex flex-col md:flex-row items-center gap-8 md:gap-12"
-                 style="background:radial-gradient(120% 140% at 0% 0%, color-mix(in srgb,var(--accent) 20%, transparent), transparent 60%)">
-                <div class="text-6xl md:text-7xl shrink-0">💬</div>
-                <div class="flex-1 text-center md:text-left">
-                    <h2 class="font-display text-3xl md:text-5xl font-extrabold text-white mb-3">${esc(c.heading || "Komm in unsere Community")}</h2>
-                    <p class="text-zinc-300 text-lg max-w-2xl">${esc(c.text || "")}</p>
-                </div>
-                <a href="${esc(c.url)}" target="_blank" rel="noopener" class="btn-accent magnetic px-8 py-4 rounded-full font-semibold whitespace-nowrap shrink-0">${esc(c.buttonLabel || "Discord beitreten")}</a>
-            </div>`;
-        if (nl && nl.parentNode) nl.parentNode.insertBefore(sec, nl);
-        else document.body.appendChild(sec);
-        observeReveals(sec);
-    }
-
-    function renderFeatured(g) {
-        const wrap = $("[data-featured]");
-        if (!wrap) return;
-        // Game-Farbe nur innerhalb der Featured-Card – der Studio-Rahmen behält seinen Look.
-        // Beide Akzentfarben + adaptive Schrift setzen, sonst bleibt der Button-Verlauf orange.
-        setAccentVars(wrap.style, g.accent || "#8b5cf6", g.accent2 || g.accent || "#22d3ee");
-        const ls = logoScale(g);
-        wrap.innerHTML = `
-            <div class="relative grid lg:grid-cols-2 gap-10 items-center rounded-3xl border border-white/10 overflow-hidden bg-gradient-to-br from-white/[0.04] to-transparent p-2 md:p-3">
-                <a href="game.php?slug=${esc(g.slug)}" class="block relative aspect-[16/10] rounded-2xl overflow-hidden group">
-                    ${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.coverAlt || g.title)}" style="object-position:${focusPos(g.cover)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">`
-                              : `<div class="w-full h-full grid-lines bg-white/[0.03]"></div>`}
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent"></div>
-                </a>
-                <div class="p-5 md:p-8">
-                    <div class="flex items-center gap-3 mb-5">${statusBadge(g.status)}
-                        <span class="badge text-zinc-500">${t("current_project")}</span></div>
-                    ${logoPath(g) ? logoMarkup(g, { h: Math.round(80 * ls) + "px", cls: "pg-feat-logo mb-4 object-contain object-left", style: logoBoxOf(g) ? "" : "width:auto;max-width:100%" })
-                             : `<h2 class="font-display text-4xl md:text-6xl font-extrabold text-white mb-4">${esc(g.title)}</h2>`}
-                    <p class="text-zinc-300 text-lg leading-relaxed mb-7 max-w-xl">${esc(g.tagline || "")}</p>
-                    <div class="flex flex-wrap gap-3">
-                        <a href="game.php?slug=${esc(g.slug)}" class="btn-accent magnetic px-7 py-3.5 rounded-full font-semibold text-sm">${t("to_game")}</a>
-                        ${g.wishlistUrl ? `<a href="${esc(g.wishlistUrl)}" target="_blank" rel="noopener" class="btn-ghost magnetic px-7 py-3.5 rounded-full font-semibold text-sm">${t("wishlist")}</a>` : ""}
-                    </div>
-                </div>
-            </div>`;
-        initMagnetic();
-    }
-
     function gameCard(g) {
         return `
         <a href="game.php?slug=${esc(g.slug)}" class="reveal tilt-card group relative block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]" style="--accent:${esc(g.accent || "#8b5cf6")}">
@@ -1108,22 +1321,6 @@
                 <div class="mt-4 font-mono text-[11px] uppercase tracking-widest text-[color:var(--accent)] flex items-center gap-2">
                     ${t("more_info")} <span class="transition-transform group-hover:translate-x-1">→</span></div>
             </div>
-        </a>`;
-    }
-
-    function devlogRow(p, games) {
-        const g = games.find(x => x.slug === p.game);
-        return `
-        <a href="devlog.php?slug=${esc(p.slug)}" class="reveal group flex items-center gap-5 py-5 border-b border-white/8 hover:border-white/20 transition-colors">
-            <div class="font-mono text-xs text-zinc-500 w-28 shrink-0">${esc(fmtDate(p.date))}</div>
-            <div class="flex-1">
-                <div class="flex items-center gap-2 flex-wrap">
-                    ${g ? `<span class="badge px-2 py-0.5 rounded border border-white/10 text-zinc-400" style="--accent:${esc(g.accent || "#8b5cf6")}">${esc(g.title)}</span>` : ""}
-                    ${p.version ? `<span class="badge text-[color:var(--accent)]" style="--accent:${esc(g?.accent || "#8b5cf6")}">v${esc(p.version)}</span>` : ""}
-                </div>
-                <div class="text-white font-semibold mt-1 group-hover:text-gradient">${esc(p.title)}</div>
-            </div>
-            <div class="text-zinc-600 group-hover:text-white transition-transform group-hover:translate-x-1">→</div>
         </a>`;
     }
 
@@ -2238,6 +2435,8 @@
         twitch: '<path d="M4 3h16v11l-5 5h-4l-3 3v-3H4z"/><path d="M11 8v4M15 8v4"/>',
         bsky: '<path d="M12 10.5C10.2 7 7 4.6 5.2 5.4 3.5 6.2 5 12 8.4 12.4 5.6 13.3 5 16 7.2 16.8c2.4.8 3.9-2.5 4.8-5.6.9 3.1 2.4 6.4 4.8 5.6 2.2-.8 1.6-3.5-1.2-4.4 3.4-.4 4.9-6.2 3.2-7-1.8-.8-5 1.6-6.8 5.1z"/>',
         link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+        play: '<path class="pg-fill" d="M8 5.5v13l11-6.5z"/>', pause: '<path d="M9 5v14M15 5v14"/>',
+        pad: '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7 10.5v4M5 12.5h4M15.5 11.5h.01M18 13.5h.01"/>',
     };
     const pgIc = (n) => `<svg class="pg-ic" viewBox="0 0 24 24" aria-hidden="true">${PG_IC[n] || PG_IC.link}</svg>`;
 
@@ -2294,7 +2493,7 @@
                   : { href: "games.html", label: t("cta_discover") };
     }
     // Seiten mit eigenem „Bleib dran"-Block (Newsletter + Kanäle) über dem Footer
-    const STAY_PAGES = ["games", "devlog", "contact", "presskit"];
+    const STAY_PAGES = ["home", "games", "devlog", "contact", "presskit"];
 
     function injectChrome() {
         // Hintergrund-Effekte (im Admin unter „Hintergrund & Atmosphäre" steuerbar) einmalig einsetzen
@@ -2349,8 +2548,8 @@
                         <p class="pg-fine">${t("foot_newsletter_note")}</p>
                     </div>
                     <div class="pg-stay-side">
-                        <h3>${t("follow_h")}</h3>
-                        <p>${t("follow_sub")}</p>
+                        <h3 data-follow-h>${t("follow_h")}</h3>
+                        <p data-follow-p>${t("follow_sub")}</p>
                         <div class="pg-soc" data-foot-channels></div>
                     </div>
                 </div></div>
@@ -2409,10 +2608,16 @@
             + `<li><a href="kontakt.html">${t("foot_form")}</a></li>`
             + ch.map(c => `<li><a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.name)}</a></li>`).join("");
         const fl = $("[data-foot-channels]");
+        // Mit Discord-Link: Überschrift & Text aus dem Community-Banner (Admin) im „Folge uns"-Bereich
+        const cm = communityLink(s), cc = s.community || {};
+        if (cm && cc.heading) setText("[data-follow-h]", cc.heading);
+        if (cm && cc.text) setText("[data-follow-p]", cc.text);
         if (fl) {
             if (ch.length) {
+                // Discord-Eintrag trägt den Button-Text aus dem Community-Banner (z. B. „Discord beitreten")
+                const nameOf = (c) => (cm && c.url === cm.url && String(cc.buttonLabel || "").trim()) ? String(cc.buttonLabel).trim() : c.name;
                 fl.innerHTML = ch.map(c => `<a href="${esc(c.url)}" target="_blank" rel="noopener"><span class="pg-si" style="--x:${c.x}">${pgIc(c.ic)}</span>`
-                    + `<span><b>${esc(c.name)}</b>${c.desc ? `<small>${esc(c.desc)}</small>` : ""}</span>${pgIc("ext")}</a>`).join("");
+                    + `<span><b>${esc(nameOf(c))}</b>${c.desc ? `<small>${esc(c.desc)}</small>` : ""}</span>${pgIc("ext")}</a>`).join("");
             } else {
                 fl.closest(".pg-stay-side")?.remove();
                 $(".pg-stay")?.classList.add("solo");

@@ -40,29 +40,32 @@ return [
       ]],
       ['name'=>'tagline','label'=>'Untertitel / Tagline','widget'=>'string'],
       ['name'=>'founded','label'=>'Gegründet (Jahr)','widget'=>'string'],
-      ['widget'=>'heading','label'=>'Startseite · Hero','hint'=>'Der große Kopfbereich der Startseite.'],
-      ['name'=>'heroLine1','label'=>'Hero – Zeile 1','widget'=>'string','hint'=>'Große Überschrift, erste Zeile.'],
-      ['name'=>'heroLine2','label'=>'Hero – Zeile 2 (farbig)','widget'=>'string','hint'=>'Zweite Zeile, wird im Gold/Orange-Verlauf dargestellt.'],
-      ['name'=>'intro','label'=>'Hero – Einleitungstext','widget'=>'text'],
-      ['name'=>'marquee','label'=>'Laufband-Phrasen','widget'=>'text','hint'=>'Das durchlaufende Band unter dem Hero. Eine Phrase pro Zeile. Leer = Standard. Beispiel:'."\n".'Original Worlds'."\n".'Handcrafted Magic'."\n".'Indie & Proud'],
-      ['name'=>'heroCountdown','label'=>'Release-Countdown (Hero)','widget'=>'object','hint'=>'Zeigt einen Live-Countdown im Hero – z. B. bis Demo oder Release.','fields'=>[
+      ['widget'=>'heading','label'=>'Startseite','hint'=>'Oben läuft ein Durchlauf durch eure Spiele (Bild, Logo, Satz und Buttons kommen aus den Spielen). Diese Texte erscheinen darunter.'],
+      ['name'=>'heroLine1','label'=>'Claim – Zeile 1','widget'=>'string','hint'=>'Überschrift im Bereich „Über uns“, erste Zeile (z. B. „Unsere Ideen.“).'],
+      ['name'=>'heroLine2','label'=>'Claim – Zeile 2 (farbig)','widget'=>'string','hint'=>'Zweite Zeile im Orange-Verlauf (z. B. „Eure Abenteuer.“).'],
+      ['name'=>'intro','label'=>'Einleitung über den Spielkarten','widget'=>'text','hint'=>'Ein Satz über eure Spiele – steht im Abschnitt „Unsere Spiele“.'],
+      ['name'=>'marquee','label'=>'Laufband-Phrasen','widget'=>'text','hint'=>'Das durchlaufende Band unter dem Spiele-Durchlauf. Eine Phrase pro Zeile. Leer = Standard. Beispiel:'."\n".'Original Worlds'."\n".'Handcrafted Magic'."\n".'Indie & Proud'],
+      ['name'=>'heroCountdown','label'=>'Release-Countdown (Startseite oben)','widget'=>'object','hint'=>'Zeigt einen Live-Countdown im Spiele-Durchlauf – z. B. bis Demo oder Release.','fields'=>[
         ['name'=>'enabled','label'=>'Countdown anzeigen','widget'=>'boolean','default'=>false],
         ['name'=>'label','label'=>'Beschriftung','widget'=>'string','default'=>'Bis zum Release','hint'=>'z. B. „Bis zur Demo" oder „Release in".'],
         ['name'=>'date','label'=>'Zieldatum & Uhrzeit','widget'=>'datetime','hint'=>'Wann läuft der Countdown ab?'],
         ['name'=>'doneText','label'=>'Text nach Ablauf','widget'=>'string','default'=>'Jetzt verfügbar! 🎉'],
       ]],
-      ['name'=>'heroBackground','label'=>'Hero – Hintergrundbild (optional)','widget'=>'image','hint'=>'Querformat, ca. 2000×1200 px. Liegt hinter der Startseiten-Überschrift.'],
-      ['name'=>'heroVideo','label'=>'Hero – Hintergrund-Video (optional, mp4)','widget'=>'file','hint'=>'Läuft automatisch, stumm, als Loop. Überschreibt das Bild.'],
-      ['widget'=>'heading','label'=>'Über uns','hint'=>'Studio-Vorstellung & Werte.'],
+      ['name'=>'heroBackground','label'=>'Bild des aktuellen Projekts (Startseite)','widget'=>'image','hint'=>'Querformat, ca. 2000×1200 px. Erscheint im Durchlauf beim aktuellen Projekt – außer dort ist im Spiel ein eigenes „Bild im Startseiten-Durchlauf“ gesetzt.'],
+      ['name'=>'heroVideo','label'=>'Video des aktuellen Projekts (optional, mp4)','widget'=>'file','hint'=>'Läuft im Durchlauf beim aktuellen Projekt automatisch, stumm, als Loop. Das Bild darüber dient als Vorschaubild.'],
+      ['widget'=>'heading','label'=>'Über uns','hint'=>'Studio-Vorstellung, Kennzahlen, Bilder & Werte.'],
       ['name'=>'aboutTitle','label'=>'Über uns – Überschrift','widget'=>'string'],
       ['name'=>'aboutBody','label'=>'Über uns – Text','widget'=>'markdown'],
+      ['name'=>'aboutImages','label'=>'Bilder für „Über uns“ (bis zu 3)','widget'=>'list','label_singular'=>'Bild','hint'=>'Leer = automatisch: ein Spiel-Cover, ein Bild aus einer Galerie und das Bild des neuesten Devlog-Beitrags.','fields'=>[
+        ['name'=>'image','label'=>'Bild','widget'=>'image'],
+      ]],
       ['name'=>'pillars','label'=>'Werte / Stärken (Kacheln)','widget'=>'list','summary'=>'title','fields'=>[
         ['name'=>'icon','label'=>'Icon / Emoji','widget'=>'string','hint'=>'z. B. 🪄'],
         ['name'=>'title','label'=>'Titel','widget'=>'string'],
         ['name'=>'text','label'=>'Text','widget'=>'text'],
       ]],
       ['widget'=>'heading','label'=>'Bereiche, Banner & Funktionen','hint'=>'Optionale Module – zum Bearbeiten aufklappen.'],
-      ['name'=>'newsletter','label'=>'Newsletter-Anmeldung','widget'=>'object','hint'=>'Steuert das Anmeldeformular (Startseite & Footer).','fields'=>[
+      ['name'=>'newsletter','label'=>'Newsletter-Anmeldung','widget'=>'object','hint'=>'Steuert den Newsletter-Block über dem Footer (Startseite, Spiele, Devlog, Kontakt, Presse).','fields'=>[
         ['name'=>'enabled','label'=>'Newsletter aktiv','widget'=>'boolean','default'=>true],
         ['name'=>'heading','label'=>'Überschrift (Startseite)','widget'=>'string'],
         ['name'=>'text','label'=>'Text','widget'=>'text'],
@@ -86,11 +89,11 @@ return [
         ['name'=>'color','label'=>'Partikel-Farbe','widget'=>'color','default'=>'#ff7d1a','hint'=>'Standard: Orange. Für eine andere Stimmung anpassbar.'],
         ['name'=>'cursorSparkles','label'=>'Magie-Funken am Mauszeiger','widget'=>'boolean','default'=>false,'hint'=>'Feiner Funken-/Glitzerschweif, der dem Mauszeiger folgt (nur am PC mit Maus).'],
       ]],
-      ['name'=>'community','label'=>'Community-Banner (Discord)','widget'=>'object','hint'=>'Discord erscheint auf der Startseite, im „Folge uns“-Bereich und im Footer – sobald unten ein Einladungslink eingetragen ist.','fields'=>[
+      ['name'=>'community','label'=>'Community-Banner (Discord)','widget'=>'object','hint'=>'Sobald unten ein Einladungslink steht, erscheint Discord im „Folge uns“-Bereich (mit dieser Überschrift und diesem Text) und im Footer.','fields'=>[
         ['name'=>'enabled','label'=>'Banner anzeigen','widget'=>'boolean','default'=>true],
         ['name'=>'heading','label'=>'Überschrift','widget'=>'string','default'=>'Komm in unsere Community'],
         ['name'=>'text','label'=>'Text','widget'=>'text','default'=>'Sei beim Chaos dabei: Devlogs aus erster Hand, Playtests, Abstimmungen und ein Haufen wackeliger Magier warten auf dich.'],
-        ['name'=>'buttonLabel','label'=>'Button-Text','widget'=>'string','default'=>'Discord beitreten'],
+        ['name'=>'buttonLabel','label'=>'Button-Text','widget'=>'string','default'=>'Discord beitreten','hint'=>'Beschriftung des Discord-Eintrags im „Folge uns“-Bereich.'],
         ['name'=>'url','label'=>'Discord-Einladungslink','widget'=>'string','hint'=>'z. B. https://discord.gg/… – ohne Link (oder mit einem Link auf die eigene Website) wird Discord nirgends angezeigt.'],
       ]],
       // Vorschlagsbox & Beta-Warteliste gibt es ausschließlich als Spiel-Seiten-Blöcke
@@ -201,9 +204,9 @@ return [
         ['name'=>'slug','label'=>'Web-Adresse (Slug)','widget'=>'string','slug'=>true,'hint'=>'Kleinbuchstaben & Bindestriche. Wird über „Ändern…“ geändert – dabei ziehen Warteliste, Vorschläge, Board, Devlog & Statistik automatisch mit um.'],
         ['name'=>'tagline','label'=>'Kurzbeschreibung / Tagline','widget'=>'text'],
         ['name'=>'status','label'=>'Status','widget'=>'select','default'=>'development','options'=>[
-          'development'=>'In Entwicklung','announced'=>'Angekündigt','demo'=>'Demo verfügbar','early'=>'Early Access','released'=>'Veröffentlicht',
+          'development'=>'In Entwicklung','announced'=>'Angekündigt','demo'=>'Demo verfügbar','early'=>'Early Access','released'=>'Veröffentlicht','paused'=>'Pausiert',
         ]],
-        ['name'=>'featured','label'=>'Auf der Startseite hervorheben','widget'=>'boolean'],
+        ['name'=>'featured','label'=>'Aktuelles Projekt (Startseite)','widget'=>'boolean','hint'=>'Das erste so markierte Spiel startet den Durchlauf auf der Startseite und trägt das Schild „Aktuelles Projekt“.'],
         ['name'=>'wishlistUrl','label'=>'Wishlist / Store-Link','widget'=>'string','hint'=>'z. B. Steam-Seite. Erscheint als Haupt-Button im Kopfbereich.'],
         ['widget'=>'heading','label'=>'Farben der Spielwelt','tab'=>'look','hint'=>'Buttons, Verläufe & Partikel der Spielseite.'],
         ['name'=>'accent','label'=>'Akzentfarbe','widget'=>'color','default'=>'#ff7d1a','hint'=>'Hauptfarbe der Game-Welt (HEX). Buttons & Verläufe.'],
@@ -218,6 +221,10 @@ return [
           'left'=>'Links über dem Text (Standard)','center'=>'Mittig – alles zentriert','split'=>'Logo rechts neben dem Text',
         ],'hint'=>'Das Logo steht immer im Textblock – auf jedem Bildschirm gleich zum Text, ohne etwas zu überdecken. Auf dem Handy ist alles mittig.'],
         ['name'=>'logoGap','label'=>'Abstand ums Logo (px)','widget'=>'number','default'=>20,'hint'=>'Abstand zwischen Status-Badge, Logo und Text darunter (bei „Links“ und „Mittig“). Am Handy automatisch etwas kleiner. Am einfachsten über „Kopfbereich gestalten“.'],
+        ['widget'=>'heading','label'=>'Startseite & Spielkarten','tab'=>'look','hint'=>'Wie das Spiel im Durchlauf oben auf der Startseite und auf den Spielkarten erscheint. Alles freiwillig – leere Felder werden sinnvoll ergänzt.'],
+        ['name'=>'genre','label'=>'Genre-Zeile','widget'=>'string','hint'=>'Kurz, z. B. „Multiplayer-Shooter · PC“. Steht klein neben dem Status.'],
+        ['name'=>'summary','label'=>'Kurzbeschreibung (Startseite & Karten)','widget'=>'text','hint'=>'1–2 Sätze. Leer = der erste Satz aus dem Textabschnitt „Über das Spiel“.'],
+        ['name'=>'homeImage','label'=>'Bild im Startseiten-Durchlauf','widget'=>'image','hint'=>'Querformat, ca. 1920×1080 px. Leer = Cover-Bild (beim aktuellen Projekt: das Hero-Hintergrundbild aus „Studio & Startseite“).'],
         ['widget'=>'heading','label'=>'Seiten-Blöcke','tab'=>'page','hint'=>'Der Aufbau der Spielseite – Blöcke hinzufügen, sortieren, ausblenden.'],
         ['name'=>'blocks','label'=>'Seiten-Blöcke (Website-Builder)','widget'=>'blocks','types'=>[
           'hero'=>['label'=>'Hero (Kopfbereich)','fields'=>[
